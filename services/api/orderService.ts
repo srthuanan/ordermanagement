@@ -161,7 +161,7 @@ const COLOR_CODE_MAP: Record<string, string[]> = {
     'CE14': ['xam', 'grey', 'gray'],
     'CE12': ['bac', 'silver', 'desat'],
     'CE17': ['bac', 'silver'],
-    'CE31': ['bac', 'silver'],
+    'CE31': ['bac', 'silver', 'xam', 'gray', 'grey', 'stealth'],
     'CE1M': ['do', 'red'],
     'CE2Q': ['do', 'red', 'ruby'],
     '112Q': ['do', 'red'],
@@ -182,21 +182,22 @@ const COLOR_CODE_MAP: Record<string, string[]> = {
     'CE21': ['hong', 'pink'],
     'CE1X': ['hong', 'pink', 'tim'],
     '1821': ['hong', 'pink'],
-    'CE2N': ['nau', 'brown']
+    'CE2N': ['nau', 'brown'],
+    'CI20': ['nau', 'brown', 'desert']
 };
 
 const COLOR_SYNONYM_GROUPS: string[][] = [
     ['trang', 'white', 'brahminy'],
     ['den', 'black', 'jet'],
     ['do', 'red', 'crimson'],
-    ['xam', 'grey', 'gray', 'neptune', 'xi mang', 'cement', 'ghi'],
+    ['xam', 'grey', 'gray', 'neptune', 'xi mang', 'cement', 'ghi', 'stealth'],
     ['bac', 'silver', 'desat'],
     ['xanh duong', 'vinfast blue', 'blue', 'xanh'],
     ['reu', 'deep ocean', 'ocean', 'luc bao'],
     ['vang', 'yellow', 'gold', 'cat'],
     ['hong', 'pink'],
     ['aqua', 'mint', 'xanh la', 'xanh lam'],
-    ['nau', 'brown', 'saddle'],
+    ['nau', 'brown', 'saddle', 'desert'],
     ['be', 'beige', 'cotton']
 ];
 
@@ -205,6 +206,7 @@ const EXT_NAME_TO_CODE: Record<string, string> = {
     'white': 'CE18', 'trang': 'CE18', 'brahminy': 'CE18',
     'black': 'CE11', 'den': 'CE11', 'jet black': 'CE11',
     'solar ruby': 'CE2Q', 'ruby': 'CE2Q', 'do ruby': 'CE2Q',
+    'stealth gray': 'CE31', 'stealth grey': 'CE31', 'stealth': 'CE31',
     'crimson red': 'CE1M', 'red': 'CE1M', 'do': 'CE1M',
     'neptune grey': 'CE14', 'zenith grey': 'CE1V', 'grey': 'CE1V', 'gray': 'CE1V', 'xam': 'CE1V',
     'silver': 'CE17', 'desat silver': 'CE17', 'bac': 'CE17',
@@ -222,8 +224,9 @@ const EXT_NAME_TO_CODE: Record<string, string> = {
 const INT_CODE_GROUPS: Record<string, string[]> = {
     'CI11': ['CI11', 'CI1H'], // Đen
     'CI1H': ['CI11', 'CI1H'],
-    'CI12': ['CI12', 'CI18'], // Nâu / Mocha Nâu
-    'CI18': ['CI12', 'CI18'],
+    'CI12': ['CI12', 'CI18', 'CI20'], // Nâu / Mocha Nâu / Desert Brown
+    'CI18': ['CI12', 'CI18', 'CI20'],
+    'CI20': ['CI12', 'CI18', 'CI20'],
     'CI13': ['CI13'],         // Be
     'CI1M': ['CI1M', 'CI13']  // Xám / Xám Đen
 };
@@ -231,6 +234,7 @@ const INT_CODE_GROUPS: Record<string, string[]> = {
 const INT_NAME_TO_CODE: Record<string, string> = {
     'black': 'CI11', 'den': 'CI11', 'mau den': 'CI11',
     'brown': 'CI12', 'nau': 'CI12', 'mau nau': 'CI12', 'mocha': 'CI18', 'mocha nau': 'CI18',
+    'desert brown': 'CI20', 'desert': 'CI20',
     'beige': 'CI13', 'be': 'CI13', 'mau be': 'CI13', 'cotton': 'CI13',
     'grey': 'CI1M', 'gray': 'CI1M', 'xam': 'CI1M', 'xam den': 'CI1M', 'ghi': 'CI1M'
 };
@@ -386,13 +390,13 @@ export const DMS_VERSION_CODE_MAP: Record<string, { model: string; version: stri
 
     // VF Wild
     'HJ01V': { model: 'VFWILD', version: 'BASE', name: 'VF Wild Base Comfort' },
-    'HJ03V': { model: 'VFWILD', version: 'PLUS', name: 'VF Wild High Premium' },
+    'HJ03V': { model: 'VFWILD', version: 'PREMIUM', name: 'VF Wild High Premium' },
     // VF e34
     'GK1DI': { model: 'VFE34', version: 'BASE', name: 'VF e34' }
 };
 
 /**
- * Chuẩn hóa Dòng xe về Mã chuẩn (VF3, VF5, VF6, VF7, VF8, VF9, VFE34, MINIO, ECVAN, LIMO, VF2)
+ * Chuẩn hóa Dòng xe về Mã chuẩn (VF3, VF5, VF6, VF7, VF8, VF9, VFE34, MINIO, ECVAN, LIMO, VF2, VFWILD)
  */
 export const getModelCode = (model: string): string => {
     if (!model) return '';
@@ -412,6 +416,7 @@ export const getModelCode = (model: string): string => {
     if (c.includes('MINIO')) return 'VF2';
     if (c.includes('ECVAN') || c.includes('VAN')) return 'ECVAN';
     if (c.includes('LIMO')) return 'LIMO';
+    if (c.includes('WILD')) return 'VFWILD';
     return c;
 };
 
@@ -437,9 +442,9 @@ export const getVersionCode = (version: string): string => {
     if (norm.includes('CUA TRUOT') || norm.includes('SLIDING')) return 'SLIDING';
     if (norm.includes('PLUS') || norm.includes('NANG CAO') || norm.includes('METAL')) return 'PLUS';
     if (norm.includes('ECO')) return 'ECO';
-    if (norm.includes('BASE') || norm.includes('TIEU CHUAN')) return 'BASE';
+    if (norm.includes('BASE') || norm.includes('TIEU CHUAN') || norm.includes('COMFORT')) return 'BASE';
     if (norm.includes('STANDARD') || norm.includes('STD')) return 'STD';
-    if (norm.includes('PREMIUM')) return 'PREMIUM';
+    if (norm.includes('PREMIUM') || norm.includes('HIGH')) return 'PREMIUM';
     if (norm.includes('MPV') || norm.includes('7 CHO')) return 'MPV7';
     if (norm.includes('LIMO')) return 'LIMO';
     if (norm.includes('MINIO')) return 'MINIO';
@@ -524,6 +529,10 @@ export const resolveMaterialVersionCode = (dongXe?: string, phienBan?: string, r
         if (verCode === 'MPV7') return 'SL1WV';
         return 'SL1VV';
     }
+    if (modelCode === 'VFWILD') {
+        if (verCode === 'PREMIUM' || normVer.includes('HIGH') || normVer.includes('PREMIUM')) return 'HJ03V';
+        return 'HJ01V'; // Base Comfort mặc định
+    }
     if (modelCode === 'VF2') {
         return 'TH14V';
     }
@@ -607,7 +616,7 @@ export const checkVersionMatch = (inputVersion: string, dmsVersion: string): boo
     const v2 = getVersionCode(dmsVersion);
     if (v1 && v2) return v1 === v2;
 
-    const keyTerms = ['plus', 'eco', 'base', 's', 'standard', 'tieu chuan', 'nang cao', 'premium'];
+    const keyTerms = ['plus', 'eco', 'base', 's', 'standard', 'tieu chuan', 'nang cao', 'premium', 'high', 'comfort'];
     const s1 = normalizeNoDiacritics(inputVersion);
     const s2 = normalizeNoDiacritics(dmsVersion);
     const v1Terms = keyTerms.filter(t => s1.includes(t));

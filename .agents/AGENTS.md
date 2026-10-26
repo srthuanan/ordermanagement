@@ -1,5 +1,10 @@
 # Agent Rules
 
+- **Quy Tắc Không Tự Động Chạy NPX Sau Khi Chỉnh Sửa**:
+  1. Sau khi chỉnh sửa code hoặc giao diện, AI Agent **KHÔNG ĐƯỢC tự động chạy bất kỳ lệnh `npx` nào**.
+  2. Chỉ được phép chạy `npx` khi Người dùng yêu cầu trực tiếp trong tác vụ hiện tại.
+  3. Quy tắc này áp dụng cả cho kiểm tra TypeScript, build, Expo, Clasp và mọi công cụ được gọi thông qua `npx`.
+
 - **Quy Tắc Ghi Nhận Chỉ Đạo Quan Trọng (Important Directives & Memory Protocol)**:
   1. Kể từ hôm nay, bất cứ khi nào Người dùng (USER) đưa ra chỉ đạo quan trọng, lưu ý cốt lõi, quyết định kiến trúc hoặc quy chuẩn nghiệp vụ, AI Agent **BẮT BUỘC PHẢI CHỦ ĐỘNG GHI NHẬN VÀ LƯU NGAY** vào hệ thống quy tắc `.agents/AGENTS.md`.
   2. Mọi chỉ đạo sau khi ghi nhận phải được lưu trữ và commit vào Git để vĩnh viễn không bị lãng quên hay mai một, đảm bảo toàn bộ các phiên làm việc tiếp theo luôn tự động kế thừa và tuân thủ tuyệt đối.
@@ -102,5 +107,37 @@
 - **Quy Chuẩn Ánh Xạ Hình Ảnh Mã Màu 182G (Color Code 182G to 181Y Mapping Protocol)**:
   1. Đối với mã màu **182G** (Infinity Blanc Roof - Sky Blue), toàn bộ hệ thống (kho xe, tra cứu đơn hàng, yêu cầu ghép xe) **BẮT BUỘC KẾ THỪA VÀ DÙNG CHUNG HÌNH ẢNH CỦA MÃ MÀU 181Y** (Brahminy White Roof - Aquatic Azure Body / Zenith Gray).
   2. Quy chuẩn này đảm bảo các dòng xe như VF 3, VF 5 khi chọn hoặc tra cứu mã 182G luôn tự động hiển thị đầy đủ hình ảnh render 3D chính hãng sắc nét từ VinFast Shop CDN thay vì bị thiếu ảnh.
+
+- **Kiến Trúc App Di Động TVBH (TVBH Native Mobile App Protocol)**:
+  1. **Hình Thức Triển Khai**: Ứng dụng di động độc lập xây dựng bằng **React Native & Expo** (`tvbh-mobile/`), hỗ trợ xuất file cài đặt APK cho Android và TestFlight cho iOS qua EAS Build.
+  2. **3 Trụ Cột Tính Năng Cốt Lõi**:
+     - **(1) Tra cứu kho xe & Giữ xe nhanh**: Xem tồn kho thời gian thực từ Supabase `khoxe`, tìm kiếm theo số VIN / màu / dòng xe, giữ xe 24 giờ theo chuẩn FIFO (`rpc_hold_car`) và tự nhả xe.
+     - **(2) Yêu cầu xuất hóa đơn Mobile-First**: Điền thông tin xe và khách hàng, chọn chính sách bán hàng, chụp ảnh trực tiếp bằng Camera điện thoại (Hợp đồng, CCCD, UNC) và upload tự động lên Supabase Storage `documents`, ghi nhận vào `yeucauxhd`.
+     - **(3) Theo dõi tiến độ đơn hàng & M-Invoice**: Theo dõi trạng thái phê duyệt XHĐ của Kế toán, tra cứu số hóa đơn điện tử M-Invoice và mở xem file PDF 1-chạm.
+  3. **Đồng Bộ Dữ Liệu**: Sử dụng chung cơ sở dữ liệu Supabase và phân quyền tài khoản TVBH với hệ thống Web trung tâm.
+
+- **Quy Chuẩn Tách Biệt Tuyệt Đối Giao Diện Mobile & Laptop (Mobile-First Separation Protocol)**:
+  1. **Mục Tiêu & Phạm Vi**: Kể từ hôm nay, toàn bộ quá trình tái thiết kế và xây dựng lại giao diện ứng dụng khi truy cập bằng điện thoại di động (Mobile View / TVBH Mobile PWA / Expo) phải được thực hiện độc lập và chuyên biệt hóa 100% cho trải nghiệm trên màn hình điện thoại.
+  2. **Nguyên Tắc Bất Di Bất Dịch - Bảo Toàn Tuyệt Đối Giao Diện Laptop**:
+     - Mọi thay đổi, nâng cấp, cấu trúc lại component, styles hay routing cho giao diện Mobile **TUYỆT ĐỐI KHÔNG ĐƯỢC LÀM ẢNH HƯỞNG, BIẾN DẠNG HOẶC GÂY LỖI** cho bất kỳ màn hình nào trên Laptop / Desktop (màn hình > 768px).
+     - **Kiến Trúc Tách Biệt Rõ Ràng**: Các component mobile chỉ phát triển và hoạt động trong phạm vi nhận diện di động (`components/login/MobileLoginView.tsx`, `components/mobile/*`, `tvbh-mobile/`).
+     - Toàn bộ giao diện Desktop trung tâm (Bảng điều hành đơn hàng 3 cột Tri-Column Cockpit, Kế toán, Kho xe, KPI,...) giữ nguyên vẹn 100% độ ổn định và trải nghiệm vốn có.
+
+- **Quy Chuẩn Thời Hạn Giữ Xe Kho (24 Hours Stock Hold Protocol)**:
+  1. **Thời Hạn Mặc Định 24 Giờ**: Quy chuẩn nghiệp vụ cốt lõi của Showroom và hàm RPC Supabase (`rpc_hold_car`) quy định thời hạn giữ xe mặc định là **24 tiếng (24 giờ)**. Nếu rơi vào ngày Chủ Nhật sẽ được tự động cộng thêm 24 tiếng.
+  2. **Nhãn Hiển Thị Tác Nghiệp**: Toàn bộ hệ thống (Web Desktop, Mobile View, Mobile App) luôn thể hiện đúng thời hạn: **"Giữ xe (24h)"** hoặc **"Giữ xe"**; **"Gia hạn giữ xe"**; tuyệt đối không ghi nhầm thành 2 giờ.
+
+- **Quy Chuẩn Danh Mục Trạng Thái Xe Kho (Stock Vehicle Status Nomenclature Protocol)**:
+  1. **Chuẩn Hóa Danh Mục Trạng Thái Kho (`khoxe`)**:
+     - **"Chưa ghép"**: Xe tự do trong kho, chưa ghép vào hợp đồng / đơn hàng nào (TVBH có thể bấm Giữ xe 24h). Tuyệt đối không dùng nhãn "Sẵn sàng" làm trạng thái xe.
+     - **"Đã ghép"**: Xe đã được ghép vào hợp đồng / đơn hàng của showroom.
+     - **"Đang giữ"** (hoặc **"Tôi đang giữ"** khi TVBH hiện tại giữ): Xe đang trong thời gian giữ tạm thời 24h theo chuẩn FIFO.
+  2. **Tách Biệt Trạng Thái Ghép và Vị Trí Kho**:
+     - Vị trí xe như *"Đang vận tải"* hay *"Kho Thuận An"* là thuộc tính vị trí kho bãi (`Vị trí`), tuyệt đối không ghi đè lên nhãn trạng thái ghép đơn của xe.
+  3. **Bộ Lọc Kho Xe Di Động**:
+     - Bộ lọc trạng thái trên mobile bao gồm đủ 4 mục chuẩn: *Tất cả*, *Chưa ghép*, *Đang giữ*, *Đã ghép*.
+  4. **Đồng Bộ Giao Diện Thẻ Trạng Thái Giữa Các Tab (Hologram Iridescent Glass Badge)**:
+     - Thẻ trạng thái trên toàn bộ các tab di động (TAB Đơn hàng, TAB Kho xe) bắt buộc sử dụng chung một quy chuẩn thiết kế duy nhất: **Huy hiệu Kính Mờ Hologram Ánh Kim Sang Trọng (Frosted Glass Hologram & Iridescent Prism)**. Sử dụng lớp nền SVG chuyển sắc quang học, viền phản quang lăng kính tán sắc 1px, vệt sáng xiên 3D và chữ dập nổi kim loại, đảm bảo tính đồng bộ thị giác cao cấp tuyệt đối khi TVBH chuyển đổi giữa các tab.
+
 
 

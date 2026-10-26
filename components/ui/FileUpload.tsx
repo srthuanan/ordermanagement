@@ -6,9 +6,10 @@ interface FileUploadProps {
   isProcessing: boolean;
   ocrStatus: string;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+  compact?: boolean;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocrStatus, showToast }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocrStatus, showToast, compact = false }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -98,7 +99,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
         onChange={handleChange}
       />
       <div
-        className={`relative w-full h-24 border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground
+        className={`relative w-full ${compact ? 'h-16' : 'h-24'} border-2 border-dashed rounded-lg flex items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden bg-surface-ground
                     ${dragActive ? 'border-accent-primary bg-surface-accent' : 'border-border-primary'}
                     ${selectedFile ? 'border-solid border-accent-primary/50' : ''}`}
         onClick={onButtonClick}
@@ -108,7 +109,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
       >
         {!selectedFile && (
           <div className="text-center text-text-placeholder group-hover:text-text-primary transition-colors">
-            <i className="fas fa-cloud-upload-alt fa-lg mb-1 group-hover:text-accent-primary"></i>
+            <i className={`fas fa-cloud-upload-alt ${compact ? 'text-base mb-0.5' : 'fa-lg mb-1'} group-hover:text-accent-primary`}></i>
             <p className="font-semibold text-text-primary text-xs">Nhấn để tải ảnh</p>
             <p className="text-[10px] hidden md:block opacity-70">Tối đa 10MB</p>
           </div>

@@ -36,26 +36,26 @@ const DateFilter: React.FC<DateFilterProps> = ({
     }, []);
 
     return (
-        <div className="flex items-center gap-1 bg-white/60 backdrop-blur-md border border-white/80 shadow-sm rounded-xl px-2 py-1 relative z-[100]">
+        <div className="flex items-center gap-1 bg-white/80 backdrop-blur-md border border-slate-200/80 shadow-2xs rounded-xl px-2 py-1 relative z-[100]">
             {/* Month Dropdown */}
             <div className="relative" ref={monthRef}>
                 <button 
                     onClick={() => { setIsMonthOpen(!isMonthOpen); setIsYearOpen(false); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-50 rounded-lg transition-colors group cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
+                    className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-slate-50 rounded-lg transition-colors group cursor-pointer focus:outline-none"
                 >
-                    <i className="fas fa-calendar-alt text-accent-primary opacity-70 text-[11px]"></i>
+                    <i className="fas fa-calendar-alt text-slate-500 text-[11px]"></i>
                     <span className="text-[12px] font-bold text-slate-700 whitespace-nowrap">
                         {selectedMonth === null ? 'Cả Năm' : MONTHS[selectedMonth]}
                     </span>
-                    <i className={`fas fa-chevron-down text-[9px] text-slate-400 transition-transform duration-300 ${isMonthOpen ? 'rotate-180 text-accent-primary' : 'group-hover:text-accent-primary'}`}></i>
+                    <i className={`fas fa-chevron-down text-[8px] text-slate-400 transition-transform duration-300 ${isMonthOpen ? 'rotate-180 text-slate-700' : 'group-hover:text-slate-700'}`}></i>
                 </button>
 
                 {isMonthOpen && (
-                    <div className="absolute top-[calc(100%+0.5rem)] left-0 w-36 bg-white border border-slate-100 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] py-1.5 z-[110] animate-in fade-in zoom-in-95 duration-200 overflow-hidden ring-1 ring-slate-900/5">
+                    <div className="absolute top-[calc(100%+0.5rem)] left-0 w-36 bg-white border border-slate-200/80 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] py-1.5 z-[110] animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
                         <div className="max-h-60 overflow-y-auto custom-scrollbar">
                             <button
                                 onClick={() => { onMonthChange(null); setIsMonthOpen(false); }}
-                                className={`w-full text-left px-4 py-2.5 text-[12px] font-medium transition-colors hover:bg-slate-50 ${selectedMonth === null ? 'bg-accent-primary/10 text-accent-primary' : 'text-slate-600'}`}
+                                className={`w-full text-left px-3.5 py-2 text-[11.5px] font-medium transition-colors hover:bg-slate-50 ${selectedMonth === null ? 'bg-slate-700 text-white font-semibold' : 'text-slate-700'}`}
                             >
                                 Cả Năm
                             </button>
@@ -63,7 +63,7 @@ const DateFilter: React.FC<DateFilterProps> = ({
                                 <button
                                     key={index}
                                     onClick={() => { onMonthChange(index); setIsMonthOpen(false); }}
-                                    className={`w-full text-left px-4 py-2.5 text-[12px] font-medium transition-colors hover:bg-slate-50 ${selectedMonth === index ? 'bg-accent-primary/10 text-accent-primary' : 'text-slate-600'}`}
+                                    className={`w-full text-left px-3.5 py-2 text-[11.5px] font-medium transition-colors hover:bg-slate-50 ${selectedMonth === index ? 'bg-slate-700 text-white font-semibold' : 'text-slate-700'}`}
                                 >
                                     {month}
                                 </button>
@@ -79,22 +79,22 @@ const DateFilter: React.FC<DateFilterProps> = ({
             <div className="relative" ref={yearRef}>
                 <button 
                     onClick={() => { setIsYearOpen(!isYearOpen); setIsMonthOpen(false); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-50 rounded-lg transition-colors group cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-primary/20"
+                    className="flex items-center gap-1.5 px-2.5 py-1 hover:bg-slate-50 rounded-lg transition-colors group cursor-pointer focus:outline-none"
                 >
                     <span className="text-[12px] font-bold text-slate-700">
                         {selectedYear}
                     </span>
-                    <i className={`fas fa-chevron-down text-[9px] text-slate-400 transition-transform duration-300 ${isYearOpen ? 'rotate-180 text-accent-primary' : 'group-hover:text-accent-primary'}`}></i>
+                    <i className={`fas fa-chevron-down text-[8px] text-slate-400 transition-transform duration-300 ${isYearOpen ? 'rotate-180 text-slate-700' : 'group-hover:text-slate-700'}`}></i>
                 </button>
 
                 {isYearOpen && (
-                    <div className="absolute top-[calc(100%+0.5rem)] right-0 w-28 bg-white border border-slate-100 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] py-1.5 z-[110] animate-in fade-in zoom-in-95 duration-200 overflow-hidden ring-1 ring-slate-900/5">
+                    <div className="absolute top-[calc(100%+0.5rem)] right-0 w-28 bg-white border border-slate-200/80 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] py-1.5 z-[110] animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
                         <div className="max-h-60 overflow-y-auto custom-scrollbar">
                             {years.map((year) => (
                                 <button
                                     key={year}
                                     onClick={() => { onYearChange(year); setIsYearOpen(false); }}
-                                    className={`w-full text-left px-4 py-2.5 text-[12px] font-medium transition-colors hover:bg-slate-50 ${selectedYear === year ? 'bg-accent-primary/10 text-accent-primary' : 'text-slate-600'}`}
+                                    className={`w-full text-left px-3.5 py-2 text-[11.5px] font-medium transition-colors hover:bg-slate-50 ${selectedYear === year ? 'bg-slate-700 text-white font-semibold' : 'text-slate-700'}`}
                                 >
                                     {year}
                                 </button>

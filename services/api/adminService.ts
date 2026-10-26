@@ -268,7 +268,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     await logAction('ADD_CAR_BULK', { vin, version }, vin as string, 'stock'); 
                 }
             }
-            if (res.complete > 0) createNotification({ message: `Đã cập nhật <b>${res.complete} xe mới</b> vào kho dữ liệu. Sẵn sàng giao dịch!`, type: 'stock_hero', targetView: 'stock' });
+            if (res.complete > 0) createNotification({ message: `Đã tiếp nhận ${res.complete} xe mới vào danh mục kho bãi, sẵn sàng phân bổ.`, type: 'stock_hero', targetView: 'stock' });
             return { status: 'SUCCESS', message: `Hoàn tất: Thêm ${res.success} (${res.complete} đủ thông tin). Bỏ qua ${res.skipped}. Thất bại ${res.failed}.` };
         }
         if (action === 'bulkAddCarsDetailed') {
@@ -1519,7 +1519,7 @@ export const updateCarInfo = async (vin: string, updates: Partial<StockVehicle>)
             const justFilledInterior = up.noi_that !== undefined;
             const justFilledDms = up.ma_dms !== undefined;
             if (justFilledVersion || justFilledModel || justFilledExterior || justFilledInterior || justFilledDms) {
-                createNotification({ message: `<b>${updatedCar.dong_xe}</b> - ${updatedCar.phien_ban} (${finalVin}) đã nhập kho. Sẵn sàng giao dịch!`, type: 'stock_hero', targetView: 'stock', targetId: finalVin });
+                createNotification({ message: `${updatedCar.dong_xe} ${updatedCar.phien_ban} (${finalVin}) đã cập bến kho bãi, sẵn sàng bàn giao.`, type: 'stock_hero', targetView: 'stock', targetId: finalVin });
             }
         }
 

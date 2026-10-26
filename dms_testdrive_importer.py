@@ -454,8 +454,8 @@ class TestDriveImporterApp(tk.Tk):
             self.tree.set(item_id, "status", "Đang tạo...")
             self.lbl_status.config(text=f"Đang xử lý {idx+1}/{len(self.parsed_list)}: {item['name']}...")
 
+            # KHÔNG TRUYỀN TRƯỜNG 'name' ĐỂ HỆ THỐNG DMS TỰ ĐỘNG SINH MÃ CHUẨN: BK-YYYY-MM-DD-xxxxxx
             payload = {
-                "name": f"{item['name']} - Lái thử {model_text}",
                 "starttime": item["start"].strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "endtime": item["end"].strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "duration": 15,

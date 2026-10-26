@@ -29,6 +29,7 @@ interface TestDriveFormProps {
     isLoading: boolean;
     refetch: (isSilent?: boolean) => void;
     isReferenceAccount?: boolean;
+    mobileMode?: boolean;
 }
 
 const initialFormData: TestDriveBooking = {
@@ -82,7 +83,7 @@ const timeToMinutes = (time: string): number => {
 
 const BUFFER_MINUTES = 15;
 
-const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, isReferenceAccount }) => {
+const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, isReferenceAccount, mobileMode = false }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
         return { ...initialFormData, tenTuVan: currentUser || '' };
     });
@@ -90,7 +91,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<'create' | 'history'>(isReferenceAccount ? 'history' : 'create');
+    const [activeTab, setActiveTab] = useState<'create' | 'history'>(isReferenceAccount || mobileMode ? 'history' : 'create');
     const [selectedBookingForPreview, setSelectedBookingForPreview] = useState<TestDriveBooking | null>(null);
     const [dataForPrinting, setDataForPrinting] = useState<TestDriveBooking>(formData);
     const [checkinModalState, setCheckinModalState] = useState<{ booking: TestDriveBooking, mode: 'checkin' | 'checkout' | 'update' | 'view' } | null>(null);
@@ -539,9 +540,31 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     };
 
     return (
-        <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden">
+        <div className={mobileMode
+            ? 'relative flex h-full min-h-0 flex-col overflow-hidden bg-[#f2f2f7]'
+            : 'bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden'}>
             {activeTab === 'history' && (
-                <div className="flex-shrink-0 mb-2">
+                <div className={mobileMode ? 'flex-shrink-0 border-b border-slate-200/80 bg-white/90 px-3 py-2 backdrop-blur-xl' : 'flex-shrink-0 mb-2'}>
+                    {mobileMode && (
+                        <div className="space-y-2">
+                            <div className="flex rounded-[10px] bg-slate-100 p-0.5">
+                                <button type="button" className="flex-1 rounded-lg bg-white py-1.5 text-[11px] font-semibold text-slate-900 shadow-xs">Lịch lái thử</button>
+                                {!isReferenceAccount && (
+                                    <button type="button" onClick={() => setActiveTab('create')} className="flex-1 rounded-lg py-1.5 text-[11px] font-medium text-slate-500 active:bg-white">Tạo lịch mới</button>
+                                )}
+                            </div>
+                            <div className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">
+                                <i className="fas fa-search text-[11px] text-slate-400" />
+                                <input
+                                    value={historyFilters.keyword}
+                                    onChange={(event) => setHistoryFilters(prev => ({ ...prev, keyword: event.target.value }))}
+                                    placeholder="Tìm khách hàng, xe, số phiếu..."
+                                    className="min-w-0 flex-1 bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"
+                                />
+                            </div>
+                        </div>
+                    )}
+                    {!mobileMode && (
                     <TabbedFilter
                         tabs={historyTabs}
                         activeTab={activeHistoryCarTab}
@@ -612,12 +635,19 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                             />
                         </div>
                     </TabbedFilter>
+                    )}
                 </div>
             )}
 
 
             {activeTab === 'create' && (
-                <div className="flex-grow grid grid-cols-1 lg:grid-cols-5 gap-6 overflow-hidden print-hidden">
+                <div className={`flex-grow grid grid-cols-1 lg:grid-cols-5 overflow-hidden print-hidden ${mobileMode ? 'gap-0 pt-12' : 'gap-6'}`}>
+                    {mobileMode && (
+                        <div className="absolute left-3 right-3 top-2 z-30 flex rounded-[10px] bg-slate-100 p-0.5 shadow-sm">
+                            <button type="button" onClick={() => setActiveTab('history')} className="flex-1 rounded-lg py-1.5 text-[11px] font-medium text-slate-500">Lịch lái thử</button>
+                            <button type="button" className="flex-1 rounded-lg bg-white py-1.5 text-[11px] font-semibold text-slate-900 shadow-xs">Tạo lịch mới</button>
+                        </div>
+                    )}
                     <TestDriveFormInputs
                         formData={formData}
                         handleInputChange={handleInputChange}

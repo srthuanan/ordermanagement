@@ -7,6 +7,17 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <!-- Tự động định tuyến: Thiết bị Di Động trỏ thẳng vào ứng dụng tvbh-mobile (/m) -->
+  <script>
+    (function () {
+      var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      var params = new URLSearchParams(window.location.search);
+      var forceDesktop = params.get('mode') === 'desktop' || sessionStorage.getItem('view_mode') === 'desktop';
+      if (isMobile && !forceDesktop && window.location.pathname === '/') {
+        window.location.replace('/m' + window.location.search + window.location.hash);
+      }
+    })();
+  </script>
   <!-- Tự động chuyển hướng trong suốt từ GitHub Pages sang máy chủ Vercel tốc độ cao -->
   <script>
     (function () {
@@ -35,12 +46,16 @@
       y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
     })(window, document, "clarity", "script", "v3sj531foi");
   </script>
-  <title>OrderManagement</title>
+  <title>VinFast Thuận An - TVBH Mobile & Kho Xe</title>
   <meta name="description"
     content="Công cụ nội bộ dành cho tư vấn bán hàng để quản lý và theo dõi yêu cầu ghép xe, từ đơn hàng ban đầu đến xuất hóa đơn. Cập nhật dữ liệu thời gian thực, lịch sử chi tiết và quy trình làm việc được tối ưu hóa." />
   <link rel="icon" type="image/png" href="/logoweb.png" />
   <link rel="apple-touch-icon" href="/logoweb.png" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#090a0f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VinFast TVBH" />
+  <meta name="format-detection" content="telephone=no" />
 
   <!-- Chặn View Source & Inspect -->
   <script>

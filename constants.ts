@@ -12,18 +12,20 @@ export const versionsMap = {
     "VF 8": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus", "Eco_US", "Plus_US", "All New"],
     "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal", "Plus_CAP"],
     "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "VF LIMO": ["MPV 7"], "MINIO": ["MINIO"],
-    "EC Van": ["Base", "Plus", "Plus_Cửa trượt"]
+    "EC Van": ["Base", "Plus", "Plus_Cửa trượt"],
+    "VF Wild": ["Base", "High"]
 };
 
 export const allPossibleVersions = [
-    "Tiêu chuẩn", "Base", "Plus", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco", "Eco_HUD", "Eco Tiêu chuẩn", "Eco Nâng cấp",
+    "Tiêu chuẩn", "Base", "High", "Plus", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco", "Eco_HUD", "Eco Tiêu chuẩn", "Eco Nâng cấp",
     "Plus_Metal Tiêu chuẩn", "Plus_Metal Nâng cấp", "Plus_CAP_Metal", "Plus_Metal_3ZONES", "Eco_3ZONES",
     "Plus_CAP_Metal_3ZONES", "HERIO", "NERIO", "LIMO", "MINIO", "MPV 7",
     "Plus_US", "Plus Tiêu chuẩn 1", "Plus Tiêu chuẩn 2", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2",
     "Eco_HUD Tiêu chuẩn 1", "Eco_HUD Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 2",
     "Base Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1 (FWD)", "Plus_Metal Tiêu chuẩn 1 (AWD)",
     "Plus_Metal Tiêu chuẩn 2 (1 Cầu)", "Plus_Metal Tiêu chuẩn 2 (2 Cầu)",
-    "EC Van", "Plus_Cửa trượt", "Plus_CAP", "Eco_US", "All New"
+    "EC Van", "Plus_Cửa trượt", "Plus_CAP", "Eco_US", "All New",
+    "Base Comfort", "High Premium"
 ];
 
 // --- Color Rules ---
@@ -92,6 +94,15 @@ export const exteriorColorRules = [
             "Vitality Orange (CE32)",
             "Mysterioso Purple (CE2O)"
         ]
+    },
+    {
+        models: ["vf wild", "vfwild", "wild"],
+        colors: [
+            "Stealth Gray (CE31)",
+            "Jet Black (CE11)",
+            "White (CE18)",
+            "Solar Ruby (CE2Q)"
+        ]
     }
 ];
 
@@ -101,7 +112,8 @@ export const interiorColorRules = [
     { models: ["vf 6", "vf 7", "vf 8", "vf 9"], versions: ["plus tiêu chuẩn", "plus nâng cấp", "plus", "plus_metal nâng cấp", "plus_metal tiêu chuẩn", "plus_cap_metal_3zones", "plus_metal_3zones", "plus_cap_metal", "plus_metal", "plus_us", "plus tiêu chuẩn 1", "plus tiêu chuẩn 2", "plus_metal tiêu chuẩn 1", "plus_metal tiêu chuẩn 2", "plus_metal tiêu chuẩn 1 (fwd)", "plus_metal tiêu chuẩn 1 (awd)", "plus_metal tiêu chuẩn 2 (1 cầu)", "plus_metal tiêu chuẩn 2 (2 cầu)", "plus_cap", "all new"], colors: ["Black", "Brown", "Beige"] },
     { models: ["vf 6", "vf 7", "vf 8", "vf 9"], versions: ["eco tiêu chuẩn", "eco nâng cấp", "eco", "eco_hud", "eco_3zones", "eco tiêu chuẩn 1", "eco tiêu chuẩn 2", "eco_hud tiêu chuẩn 1", "eco_hud tiêu chuẩn 2", "eco_us"], colors: ["Black"] },
     { models: ["herio", "nerio", "limo", "vf limo", "ec van"], colors: ["Black", "Brown"] },
-    { models: ["minio"], colors: ["Grey"] }
+    { models: ["minio"], colors: ["Grey"] },
+    { models: ["vf wild", "vfwild", "wild"], colors: ["Black", "Brown"] }
 ];
 
 export const VALID_IMAGES_BY_MODEL: Record<string, string[]> = {
@@ -118,6 +130,8 @@ export const VALID_IMAGES_BY_MODEL: Record<string, string[]> = {
     "vflimo": ["ce11", "ce17", "ce18", "ce1m", "ce1u", "ce2q", "ce2j", "ce2n"],
     "nerio": ["ce11", "ce17", "ce1m", "ce1u", "ce2q"],
     "minio": ["ce11", "ce17", "ce18", "ce1m", "ce1u", "ce1w", "ce2k", "ce2q"],
+    "vfwild": ["ce31", "ce11", "ce18", "ce2q"],
+    "wild": ["ce31", "ce11", "ce18", "ce2q"],
 };
 
 export const getAvailableExteriors = (model?: string, version?: string): string[] => {

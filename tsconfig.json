@@ -31,7 +31,8 @@
     "vite.config.ts",
     "supabase",
     "scratch",
-    "vf-kim-son-trang-dai"
+    "vf-kim-son-trang-dai",
+    "tvbh-mobile"
   ],
   "references": [
     {

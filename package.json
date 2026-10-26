@@ -6,7 +6,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "tsc && vite build",
+        "build": "tsc && vite build && cd tvbh-mobile && npx expo export -p web --output-dir ../dist/tvbh-mobile",
+        "build:mobile": "cd tvbh-mobile && npx expo export -p web --output-dir ../dist/tvbh-mobile",
         "preview": "vite preview",
         "electron": "concurrently \"cross-env IS_ELECTRON=true vite\" \"wait-on http://localhost:5173 && electron .\"",
         "electron:build": "tsc && cross-env IS_ELECTRON=true vite build && electron-builder",

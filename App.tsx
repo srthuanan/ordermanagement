@@ -18,7 +18,9 @@ const CancelRequestModal = React.lazy(() => import('./components/modals/CancelRe
 const RequestInvoiceModal = React.lazy(() => import('./components/modals/RequestInvoiceModal'));
 const SupplementaryFileModal = React.lazy(() => import('./components/modals/SupplementaryFileModal'));
 const CreateRequestModal = React.lazy(() => import('./components/modals/CreateRequestModal'));
+const RequestForm = React.lazy(() => import('./components/RequestForm'));
 const SuperEditModal = React.lazy(() => import('./components/modals/SuperEditModal'));
+const EditOrderModal = React.lazy(() => import('./components/modals/EditOrderModal'));
 const ChangePasswordModal = React.lazy(() => import('./components/modals/ChangePasswordModal'));
 const ImagePreviewModal = React.lazy(() => import('./components/modals/ImagePreviewModal'));
 const ActionModal = React.lazy(() => import('./components/admin/ActionModal'));
@@ -46,6 +48,11 @@ import { useHoldReminder } from './hooks/useHoldReminder';
 
 
 import Header from './components/layout/Header';
+import { MobileDashboardView } from './components/mobile/MobileDashboardView';
+import { MobileOrdersView } from './components/mobile/MobileOrdersView';
+import { MobileBacklogOrdersView } from './components/mobile/MobileBacklogOrdersView';
+import { MobileStockView } from './components/mobile/MobileStockView';
+import { ChevronLeft } from 'lucide-react';
 import BottomNav from './components/layout/BottomNav';
 import RealtimeFooterClock from './components/layout/RealtimeFooterClock';
 import StockArrivalPopup from './components/ui/StockArrivalPopup';
@@ -98,12 +105,31 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         initialAdminState, showOrderInAdmin, showAdminTab, showInquiryInAdmin, clearInitialState
     } = useAppNavigation();
 
+    const [isMobileScreen, setIsMobileScreen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+        return false;
+    });
+
+    useEffect(() => {
+        const handleResize = () => {
+            const isMob = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            setIsMobileScreen(isMob);
+            if (!isMob && activeView === 'dashboard') {
+                setActiveView('orders');
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [activeView, setActiveView]);
+
     const {
         allHistoryData, setAllHistoryData, historyData, isLoadingHistory, errorHistory, refetchHistory, archivesLoadedFromCache,
         stockData, queuedVins, isLoadingStock, errorStock, refetchStock, highlightedVins,
         testDriveData, setTestDriveData, isLoadingTestDrive, refetchTestDrive,
         xuathoadonData, isLoadingXuathoadon, errorXuathoadon, refetchXuathoadon,
-        teamData, allUsers, fetchAdminData
+        teamData, allUsers, fetchAdminData, backlogCount
     } = useAppData({ currentUser, currentUserName, userRole, isCurrentUserAdmin, showToast });
 
     const {
@@ -181,6 +207,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         window.addEventListener('open-dnx-modal', handleOpenDnx);
         return () => window.removeEventListener('open-dnx-modal', handleOpenDnx);
     }, []);
+
+    // Lắng nghe sự kiện custom điều hướng sang kho xe từ Mobile / Backlog
+    useEffect(() => {
+        const handleNavigateStock = (e: any) => {
+            if (e.detail?.vin) {
+                setStockSearch(e.detail.vin);
+                setActiveView('stock');
+            }
+        };
+        window.addEventListener('navigate-stock', handleNavigateStock);
+        return () => window.removeEventListener('navigate-stock', handleNavigateStock);
+    }, [setActiveView]);
 
     // Lắng nghe Realtime khi Admin tạo phiếu DNX thành công để thông báo cho TVBH
     useEffect(() => {
@@ -1014,10 +1052,423 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             </div>
         );
     };
+
+    // Khi đang truy cập bằng điện thoại và ở màn hình Bàn điều khiển (Dashboard Lưới ICON)
+    if (isMobileScreen && activeView === 'dashboard') {
+        return (
+            <>
+                <MobileDashboardView
+                    currentUser={currentUser}
+                    currentUserName={currentUserName}
+                    userRole={userRole}
+                    isCurrentUserAdmin={isCurrentUserAdmin}
+                    onSelectTab={(tabId) => setActiveView(tabId)}
+                    onCreateRequest={() => setCreateRequestData({ isOpen: true })}
+                    renderChangePassword={(onBack) => (
+                        <Suspense
+                            fallback={(
+                                <div className="flex h-full items-center justify-center text-xs font-medium text-slate-500">
+                                    Đang tải cài đặt...
+                                </div>
+                            )}
+                        >
+                            <ChangePasswordModal
+                                isOpen
+                                embedded
+                                onClose={onBack}
+                                showToast={showToast}
+                                username={currentUserName}
+                            />
+                        </Suspense>
+                    )}
+                    onLogout={onLogout}
+                    ordersCount={historyData?.length || 0}
+                    stockCount={stockData?.length || 0}
+                    backlogCount={backlogCount || 0}
+                    isStockEnabled={isStockEnabled}
+                    isCrmEnabled={isCrmEnabled}
+                    unreadNotificationsCount={unreadCount}
+                    notifications={notifications}
+                    onNotificationClick={(n, e) => handleNotificationClick(n, e, {
+                        isAdmin: isCurrentUserAdmin,
+                        allHistoryData,
+                        setSelectedOrder,
+                        setActiveView,
+                        setStockFilter: (vin) => {
+                            setStockSearch(vin);
+                            setActiveView('stock');
+                        },
+                        showInquiryInAdmin,
+                        showAdminTab,
+                        setExtensionVehicle: (vin) => {
+                            const car = stockData.find((c: any) => c.VIN === vin);
+                            if (car) {
+                                setExtensionVehicle(car);
+                                setActiveView('stock');
+                            }
+                        }
+                    })}
+                    onMarkAllAsRead={handleMarkAllAsRead}
+                />
+
+                {createRequestData.isOpen && (
+                    <div className="fixed inset-0 z-[70] flex justify-center bg-[#f2f2f7]">
+                        <div className="flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white">
+                            <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-slate-100 px-3">
+                                <button
+                                    type="button"
+                                    onClick={handleCreateRequestClose}
+                                    className="inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-xs font-semibold text-slate-600 active:bg-slate-100"
+                                >
+                                    <ChevronLeft size={17} />
+                                    <span>Back</span>
+                                </button>
+                                <span className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-800">
+                                    Tạo đơn hàng
+                                </span>
+                                <span className="w-12" aria-hidden="true" />
+                            </div>
+                            <div className="min-h-0 flex-1 overflow-hidden">
+                                <Suspense
+                                    fallback={(
+                                        <div className="flex h-full items-center justify-center text-xs font-medium text-slate-500">
+                                            Đang tải biểu mẫu...
+                                        </div>
+                                    )}
+                                >
+                                    <RequestForm
+                                        onSuccess={handleFormSuccess}
+                                        showToast={showToast}
+                                        hideToast={hideToast}
+                                        existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                                        initialVehicle={createRequestData.initialVehicle}
+                                        currentUser={currentUser}
+                                        vehicleAnalyticsData={vehicleAnalyticsData}
+                                        onOpenImagePreview={openImagePreviewModal}
+                                        embeddedMobile
+                                    />
+                                </Suspense>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <Suspense fallback={null}>
+                    {imagePreview && (
+                        <ImagePreviewModal
+                            isOpen={!!imagePreview}
+                            onClose={() => setImagePreview(null)}
+                            images={imagePreview.images || []}
+                            startIndex={imagePreview.startIndex}
+                            customerName={imagePreview.customerName}
+                        />
+                    )}
+                </Suspense>
+            </>
+        );
+    }
+
+    // Khi đang truy cập bằng điện thoại và ở màn hình Đơn hàng (Mobile-First iOS Feed)
+    if (isMobileScreen && activeView === 'orders') {
+        return (
+            <>
+                <MobileOrdersView
+                    orders={allHistoryData}
+                    currentUser={currentUser}
+                    currentUserName={currentUserName}
+                    userRole={userRole}
+                    isCurrentUserAdmin={isCurrentUserAdmin}
+                    onBack={() => setActiveView('dashboard')}
+                    onViewDetails={handleViewDetails}
+                    selectedOrder={selectedOrder}
+                    setSelectedOrder={setSelectedOrder}
+                    onCancelOrder={setOrderToCancel}
+                    onRequestInvoice={setOrderToRequestInvoice}
+                    onInvoiceConfirm={handleRequestInvoice}
+                    onSupplement={setOrderToSupplement}
+                    onRequestVC={setOrderToRequestVC}
+                    onConfirmVC={setOrderToConfirmVC}
+                    onEditOrder={setOrderToEdit}
+                    onSelectPolicy={handleSelectPolicy}
+                    showToast={showToast}
+                    stockData={stockData}
+                    refetchHistory={refetchHistory}
+                />
+
+                <Suspense fallback={null}>
+                    {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
+                    {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
+                    {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
+                    {orderToEdit && (
+                        <EditOrderModal
+                            isOpen={!!orderToEdit}
+                            onClose={() => setOrderToEdit(null)}
+                            onSuccess={handleEditSuccess}
+                            showToast={showToast}
+                            order={orderToEdit}
+                            existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                            isAdmin={isCurrentUserAdmin}
+                        />
+                    )}
+                    {orderToSuperEdit && (
+                        <SuperEditModal
+                            isOpen={!!orderToSuperEdit}
+                            onClose={() => setOrderToSuperEdit(null)}
+                            onSuccess={handleSuperEditSuccess}
+                            order={orderToSuperEdit}
+                            showToast={showToast}
+                        />
+                    )}
+                    {orderToRequestVC && (
+                        <RequestVcModal
+                            order={orderToRequestVC}
+                            onClose={() => setOrderToRequestVC(null)}
+                            onSubmit={handleConfirmRequestVC}
+                        />
+                    )}
+                    {orderToConfirmVC && (
+                        <ActionModal
+                            isOpen={!!orderToConfirmVC}
+                            onClose={() => setOrderToConfirmVC(null)}
+                            title="Xác Thực UNC VinClub"
+                            description="Xác nhận bạn đã nhận được UNC cho yêu cầu VinClub của đơn hàng:"
+                            targetId={orderToConfirmVC['Số đơn hàng']}
+                            submitText="Đã Nhận UNC"
+                            submitColor="success"
+                            icon="fa-check-circle"
+                            onSubmit={handleConfirmVC}
+                        />
+                    )}
+                </Suspense>
+            </>
+        );
+    }
+
+    // Khi đang truy cập bằng điện thoại và ở màn hình Đơn tồn (Mobile-First iOS Feed)
+    if (isMobileScreen && activeView === 'backlog') {
+        return (
+            <MobileBacklogOrdersView
+                currentUser={currentUser}
+                currentUserName={currentUserName}
+                userRole={userRole}
+                isCurrentUserAdmin={isCurrentUserAdmin}
+                onBack={() => setActiveView('dashboard')}
+                showToast={showToast}
+                orders={allHistoryData}
+                onNavigateStock={(vin) => {
+                    setStockSearch(vin);
+                    setActiveView('stock');
+                }}
+            />
+        );
+    }
+
+    // Khi đang truy cập bằng điện thoại và ở màn hình Kho xe (Mobile-First iOS Feed đồng bộ Đơn hàng)
+    if (isMobileScreen && activeView === 'stock') {
+        return (
+            <>
+                <MobileStockView
+                    stockData={stockData}
+                    queuedVins={queuedVins}
+                    isLoading={isLoadingStock}
+                    error={errorStock}
+                    refetchStock={refetchStock}
+                    highlightedVins={highlightedVins}
+                    showToast={showToast}
+                    currentUser={currentUser}
+                    currentUserName={currentUserName}
+                    userRole={userRole}
+                    isAdmin={isCurrentUserAdmin}
+                    canHoldMore={canHoldMore}
+                    onCreateRequestForVehicle={handleCreateRequestForVehicle}
+                    renderCreateRequestForm={(vehicle, onCompleted) => (
+                        <Suspense
+                            fallback={(
+                                <div className="flex h-full items-center justify-center text-xs font-medium text-slate-500">
+                                    Đang tải biểu mẫu...
+                                </div>
+                            )}
+                        >
+                            <RequestForm
+                                onSuccess={(newOrder) => {
+                                    handleFormSuccess(newOrder);
+                                    onCompleted();
+                                }}
+                                showToast={showToast}
+                                hideToast={hideToast}
+                                existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                                initialVehicle={vehicle}
+                                currentUser={currentUser}
+                                vehicleAnalyticsData={vehicleAnalyticsData}
+                                onOpenImagePreview={openImagePreviewModal}
+                                embeddedMobile
+                            />
+                        </Suspense>
+                    )}
+                    onHoldCar={handleHoldCar}
+                    onReleaseCar={handleReleaseCar}
+                    onJoinQueue={handleJoinQueue}
+                    onLeaveQueue={handleLeaveQueue}
+                    onOpenExtensionModal={setExtensionVehicle}
+                    processingVin={processingVin}
+                    allOrders={allHistoryData}
+                    forcedSearch={stockSearch}
+                    isReferenceAccount={isReferenceAccount}
+                    onBack={() => setActiveView('dashboard')}
+                />
+
+                <Suspense fallback={null}>
+                    {createRequestData.isOpen && (
+                        <CreateRequestModal
+                            isOpen={createRequestData.isOpen}
+                            onClose={handleCreateRequestClose}
+                            onSuccess={handleFormSuccess}
+                            showToast={showToast}
+                            hideToast={hideToast}
+                            existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                            initialVehicle={createRequestData.initialVehicle}
+                            currentUser={currentUser}
+                            vehicleAnalyticsData={vehicleAnalyticsData}
+                            onOpenImagePreview={openImagePreviewModal}
+                        />
+                    )}
+
+                    {extensionVehicle && (
+                        <HoldExtensionModal
+                            isOpen={!!extensionVehicle}
+                            onClose={() => setExtensionVehicle(null)}
+                            vehicle={extensionVehicle}
+                            onRequestExtension={handleRequestExtension}
+                        />
+                    )}
+
+                    {imagePreview && (
+                        <ImagePreviewModal
+                            isOpen={!!imagePreview}
+                            onClose={() => setImagePreview(null)}
+                            images={imagePreview.images || []}
+                            startIndex={imagePreview.startIndex}
+                            customerName={imagePreview.customerName}
+                        />
+                    )}
+                </Suspense>
+            </>
+        );
+    }
+
+    // Mobile-first Khách hàng tiềm năng
+    if (isMobileScreen && activeView === 'crm') {
+        return (
+            <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#f2f2f7]">
+                <div className="relative flex h-12 flex-shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 backdrop-blur-xl">
+                    <button onClick={() => setActiveView('dashboard')} className="inline-flex h-8 items-center gap-0.5 rounded-lg px-1 text-[13px] font-semibold text-slate-700 active:bg-slate-100">
+                        <ChevronLeft size={18} strokeWidth={2.3} />
+                        <span>Back</span>
+                    </button>
+                    <span className="absolute left-1/2 -translate-x-1/2 text-[12px] font-bold uppercase tracking-[0.13em] text-slate-800">Khách Hàng</span>
+                    <span className="w-14" aria-hidden="true" />
+                </div>
+                <div className="min-h-0 flex-1">
+                    {!isCrmEnabled && !isCurrentUserAdmin ? (
+                        <div className="flex h-full flex-col items-center justify-center px-8 text-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-xl text-slate-300 shadow-sm ring-1 ring-slate-200"><i className="fas fa-user-slash" /></div>
+                            <h2 className="mt-4 text-base font-semibold text-slate-800">Đang tạm dừng tiếp nhận</h2>
+                            <p className="mt-1.5 text-xs leading-relaxed text-slate-500">Cổng khách hàng tiềm năng đang được quản trị viên cập nhật. Vui lòng quay lại sau.</p>
+                        </div>
+                    ) : (
+                        <Suspense fallback={<LoadingFallback />}>
+                            <CrmLeadImporterView
+                                currentUser={currentUser}
+                                currentUserName={currentUserName}
+                                userRole={userRole}
+                                isAdmin={isCurrentUserAdmin}
+                                showToast={showToast}
+                                isCrmEnabled={isCrmEnabled}
+                                onToggleCrmGlobal={handleToggleCrmGlobal}
+                                isTogglingCrm={isTogglingCrm}
+                                mobileMode
+                            />
+                        </Suspense>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // Mobile-first Lái thử
+    if (isMobileScreen && activeView === 'laithu') {
+        return (
+            <>
+                <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#f2f2f7]">
+                    <div className="relative flex h-12 flex-shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 backdrop-blur-xl">
+                        <button onClick={() => setActiveView('dashboard')} className="inline-flex h-8 items-center gap-0.5 rounded-lg px-1 text-[13px] font-semibold text-slate-700 active:bg-slate-100">
+                            <ChevronLeft size={18} strokeWidth={2.3} />
+                            <span>Back</span>
+                        </button>
+                        <span className="absolute left-1/2 -translate-x-1/2 text-[12px] font-bold uppercase tracking-[0.13em] text-slate-800">Lái Thử</span>
+                        <button onClick={() => refetchTestDrive()} title="Làm mới" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-95">
+                            <i className={`fas fa-rotate-right text-[11px] ${isLoadingTestDrive ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
+                    <div className="min-h-0 flex-1">
+                        <Suspense fallback={<LoadingFallback />}>
+                            <TestDriveForm
+                                showToast={showToast}
+                                hideToast={hideToast}
+                                onOpenImagePreview={openImagePreviewModal}
+                                currentUser={currentUser}
+                                isAdmin={isCurrentUserAdmin}
+                                allTestDrives={testDriveData}
+                                setAllTestDrives={setTestDriveData as any}
+                                isLoading={isLoadingTestDrive}
+                                refetch={refetchTestDrive}
+                                isReferenceAccount={isReferenceAccount}
+                                mobileMode
+                            />
+                        </Suspense>
+                    </div>
+                </div>
+                <Suspense fallback={null}>
+                    {imagePreview && (
+                        <ImagePreviewModal
+                            isOpen={!!imagePreview}
+                            onClose={() => setImagePreview(null)}
+                            images={imagePreview.images || []}
+                            startIndex={imagePreview.startIndex}
+                            customerName={imagePreview.customerName}
+                        />
+                    )}
+                </Suspense>
+            </>
+        );
+    }
+
     return (
         <>
             <GlobalNotificationProvider>
                 <CustomTitleBar />
+
+                {/* Mobile Sub-Header: Nút quay lại Bàn điều khiển khi đang mở tab con trên điện thoại */}
+                {isMobileScreen && activeView !== 'dashboard' && (
+                    <div className="lg:hidden sticky top-0 z-40 bg-white/90 backdrop-blur-md text-slate-800 px-3.5 py-2 flex items-center justify-between border-b border-slate-200/90 shadow-2xs">
+                        <button
+                            onClick={() => setActiveView('dashboard')}
+                            className="flex items-center space-x-0.5 text-[13px] font-semibold text-slate-700 hover:text-slate-900 active:scale-95 transition-all py-1 px-1.5 -ml-1 rounded-lg hover:bg-black/[0.04]"
+                        >
+                            <ChevronLeft size={17} strokeWidth={2.4} className="-mr-0.5 text-slate-600" />
+                            <span>Back</span>
+                        </button>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            {activeView === 'orders' ? 'Đơn Hàng' :
+                             activeView === 'stock' ? 'Kho Xe' :
+                             activeView === 'backlog' ? 'Đơn Tồn' :
+                             activeView === 'crm' ? 'Khách Hàng' :
+                             activeView === 'laithu' ? 'Lái Thử' :
+                             activeView === 'sold' ? 'Lịch Sử Bán Hàng' :
+                             activeView === 'admin' ? 'Quản Trị' : activeView}
+                        </span>
+                    </div>
+                )}
 
                 <div id="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)} className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}></div>
 

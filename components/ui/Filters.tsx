@@ -65,19 +65,12 @@ const Filters: React.FC<FiltersProps> = ({
     const [localKeyword, setLocalKeyword] = useState(filters.keyword || '');
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
     const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
-    const [expandedMobileFilters, setExpandedMobileFilters] = useState<string[]>([]);
     const datePickerRef = useRef<HTMLDivElement>(null);
 
     const dateValue = filters.dateRange || { start: '', end: '' };
 
     const handleDateChange = (part: 'start' | 'end', value: string) => {
         onFilterChange({ dateRange: { ...dateValue, [part]: value } });
-    }
-
-    const toggleMobileFilter = (id: string) => {
-        setExpandedMobileFilters(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
     };
 
     useEffect(() => {
@@ -259,12 +252,11 @@ const Filters: React.FC<FiltersProps> = ({
     return (
         <>
             {/* --- Mobile View --- */}
-            {/* --- Mobile View --- */}
-            <div className={`md:hidden flex w-full items-center gap-3 ${plain ? '' : ''}`}>
+            <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : ''}`}>
                 {!hideSearch && (
-                    <div className="relative flex-grow max-w-[180px] flex items-center min-w-0">
-                        <div className="absolute left-3 text-gray-400 z-10">
-                            <i className="fas fa-search text-sm"></i>
+                    <div className="relative flex-grow flex items-center min-w-0">
+                        <div className="absolute left-2.5 text-slate-400 z-10 pointer-events-none">
+                            <i className="fas fa-search text-xs"></i>
                         </div>
                         <input
                             type="text"
@@ -272,55 +264,101 @@ const Filters: React.FC<FiltersProps> = ({
                             placeholder={searchPlaceholder}
                             value={localKeyword}
                             onChange={(e) => setLocalKeyword(e.target.value)}
-                            className="w-full h-10 pl-10 pr-9 py-2 relative focus:outline-none text-text-primary placeholder:text-gray-400 text-sm bg-gray-50 rounded-xl border border-gray-100 focus:bg-white focus:border-accent-primary/50 focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300"
+                            className="w-full h-[32px] pl-8 pr-7 text-[11.5px] font-medium text-slate-800 placeholder:text-slate-400 bg-slate-100/90 rounded-xl border border-slate-200/80 focus:bg-white focus:border-slate-400 focus:outline-none transition-all"
                         />
                         {localKeyword && (
                             <button
                                 onClick={() => { setLocalKeyword(''); onFilterChange({ keyword: '' }); }}
-                                className="absolute right-3 text-gray-400 hover:text-danger w-6 h-6 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
+                                className="absolute right-2 text-slate-400 hover:text-slate-600 w-5 h-5 flex items-center justify-center rounded-full transition-colors"
                             >
-                                <i className="fas fa-times-circle text-xs"></i>
+                                <i className="fas fa-circle-xmark text-xs"></i>
                             </button>
                         )}
                     </div>
                 )}
-                <Button onClick={() => setIsMobilePanelOpen(true)} variant="ghost" className={`flex-shrink-0 w-10 h-10 relative !p-0 rounded-xl border border-gray-100 bg-white ${activeFilters.length > 0 ? 'border-accent-primary/30 text-accent-primary bg-accent-primary/5' : 'text-gray-500'}`}>
-                    <i className="fas fa-filter text-sm"></i>
+                <button
+                    onClick={() => setIsMobilePanelOpen(true)}
+                    className={`h-[32px] px-2.5 rounded-xl flex items-center space-x-1 font-medium text-[11px] transition-all active:scale-95 flex-shrink-0 border ${
+                        activeFilters.length > 0
+                            ? 'bg-slate-700 text-white border-slate-700 shadow-xs'
+                            : 'bg-slate-100/90 text-slate-700 hover:bg-slate-200/80 border-slate-200/80 shadow-2xs'
+                    }`}
+                >
+                    <i className="fas fa-sliders text-[10px]"></i>
+                    <span>Lọc</span>
                     {activeFilters.length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">{activeFilters.length}</span>
+                        <span className="w-3.5 h-3.5 rounded-full bg-white text-slate-700 font-bold text-[9px] flex items-center justify-center -mr-0.5">
+                            {activeFilters.length}
+                        </span>
                     )}
-                </Button>
-                <Button onClick={onRefresh} disabled={isLoading} variant="ghost" className="flex-shrink-0 w-10 h-10 !p-0 rounded-xl border border-gray-100 bg-white text-gray-500 hover:text-accent-primary hover:bg-gray-50" aria-label="Làm mới" title="Làm mới">
-                    <i className={`fas fa-sync-alt text-sm ${isLoading ? 'animate-spin' : ''}`}></i>
-                </Button>
+                </button>
+                <button
+                    onClick={onRefresh}
+                    disabled={isLoading}
+                    aria-label="Làm mới"
+                    title="Làm mới"
+                    className="w-8 h-[32px] rounded-xl flex items-center justify-center bg-slate-100/90 border border-slate-200/80 text-slate-600 hover:text-slate-900 active:scale-90 transition-all flex-shrink-0"
+                >
+                    <i className={`fas fa-sync-alt text-xs ${isLoading ? 'animate-spin' : ''}`}></i>
+                </button>
             </div>
 
-            {/* --- Mobile Filter Panel (Modal) --- */}
+            {/* --- Mobile Filter Panel (Modal Bottom Sheet iOS) --- */}
             {isMobilePanelOpen && createPortal(
-                <div className="fixed inset-0 z-[9999] flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
+                <div className="fixed inset-0 z-[9999] flex flex-col justify-end md:hidden">
                     {/* Backdrop */}
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
+                    <div
+                        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+                        onClick={() => setIsMobilePanelOpen(false)}
+                    />
 
-                    {/* Content */}
-                    <div className="relative z-10 bg-white rounded-t-3xl p-5 animate-slide-up-mobile flex flex-col max-h-[85vh] shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-5 pb-0 flex-shrink-0">
-                            <div>
-                                <h3 className="font-bold text-xl text-slate-800">Bộ Lọc</h3>
-                                <p className="text-xs text-slate-500 mt-1">Tùy chỉnh hiển thị danh sách</p>
-                            </div>
-                            <Button onClick={() => setIsMobilePanelOpen(false)} variant="ghost" className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-gray-200 !p-0 transition-transform active:scale-95"><i className="fas fa-times"></i></Button>
+                    {/* iOS Bottom Sheet Container */}
+                    <div
+                        className="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-[24px] shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col max-h-[60dvh] animate-in slide-in-from-bottom duration-250 overflow-hidden text-slate-800"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Grab handle */}
+                        <div className="pt-2 pb-0.5 flex justify-center">
+                            <div className="w-8 h-1 rounded-full bg-slate-300" />
                         </div>
 
-                        <div className="space-y-4 overflow-y-auto px-1 -mx-1 custom-scrollbar py-2 flex-grow">
+                        {/* Navigation Header */}
+                        <div className="px-4 py-1.5 border-b border-black/[0.06] flex items-center justify-between">
+                            <div className="w-16 flex justify-start">
+                                {hasActiveFilters ? (
+                                    <button
+                                        onClick={() => { onReset(); }}
+                                        className="text-[12.5px] font-medium text-slate-500 hover:text-slate-800 active:opacity-60 transition-opacity"
+                                    >
+                                        Đặt lại
+                                    </button>
+                                ) : (
+                                    <span className="w-1" />
+                                )}
+                            </div>
+
+                            <h3 className="text-[13.5px] font-bold text-slate-800 tracking-tight text-center flex-1">
+                                Bộ Lọc
+                            </h3>
+
+                            <div className="w-16 flex justify-end">
+                                <button
+                                    onClick={() => setIsMobilePanelOpen(false)}
+                                    className="text-[13.5px] font-bold text-slate-700 hover:text-slate-900 active:opacity-60 transition-opacity"
+                                >
+                                    Xong
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content Scrollable */}
+                        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 no-scrollbar">
                             {(dateRangeEnabled || dateFilterEnabled) && (
-                                <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                            <i className="fas fa-calendar-alt text-xs"></i>
-                                        </div>
-                                        <label className="text-sm font-bold text-slate-700">{dateRangeEnabled ? 'Khoảng Thời Gian' : 'Ngày'}</label>
-                                    </div>
-                                    <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-3' : 'grid-cols-1'}`}>
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">
+                                        {dateRangeEnabled ? 'Khoảng Thời Gian' : 'Ngày'}
+                                    </span>
+                                    <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-2' : 'grid-cols-1'}`}>
                                         <DatePicker label={dateRangeEnabled ? 'Từ ngày' : 'Chọn ngày'} value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
                                         {dateRangeEnabled && <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />}
                                     </div>
@@ -328,67 +366,49 @@ const Filters: React.FC<FiltersProps> = ({
                             )}
 
                             {dropdowns.map(dropdown => {
-                                const isExpanded = expandedMobileFilters.includes(dropdown.id);
                                 const hasSelection = (filters[dropdown.key] as string[])?.length > 0;
                                 const selectionCount = (filters[dropdown.key] as string[])?.length || 0;
 
                                 return (
-                                    <div key={'mobile-' + dropdown.id} className={`border rounded-2xl transition-all duration-300 overflow-hidden ${isExpanded ? 'bg-white border-accent-primary/40 shadow-md shadow-accent-primary/5' : 'bg-white border-gray-100'}`}>
-                                        <button
-                                            type="button"
-                                            onClick={() => toggleMobileFilter(dropdown.id)}
-                                            className="flex items-center justify-between w-full p-4 text-left group"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${hasSelection ? 'bg-accent-primary text-white shadow-md shadow-accent-primary/30' : 'bg-gray-50 text-gray-400 group-hover:bg-accent-primary/10 group-hover:text-accent-primary'}`}>
-                                                    <i className={`fas ${dropdown.icon} text-sm`}></i>
-                                                </div>
-                                                <div>
-                                                    <span className={`text-sm font-bold transition-colors block ${hasSelection ? 'text-accent-primary' : 'text-slate-700 group-hover:text-slate-900'}`}>{dropdown.label}</span>
-                                                    {hasSelection ? (
-                                                        <div className="text-[11px] text-accent-primary/80 font-medium mt-0.5">Đã chọn {selectionCount}</div>
-                                                    ) : (
-                                                        <div className="text-[11px] text-gray-400 mt-0.5">Tất cả</div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 border ${isExpanded ? 'rotate-180 bg-accent-primary/10 text-accent-primary border-accent-primary/20' : 'bg-white text-gray-300 border-gray-100'}`}>
-                                                <i className="fas fa-chevron-down text-xs"></i>
-                                            </div>
-                                        </button>
-
-                                        <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                                            <div className="overflow-hidden">
-                                                <div className="p-4 pt-0 border-t border-dashed border-gray-100">
-                                                    <div className="mt-4">
-                                                        <MultiSelectDropdown
-                                                            id={'mobile-' + dropdown.id}
-                                                            label={dropdown.label}
-                                                            options={dropdown.options}
-                                                            selectedOptions={(filters[dropdown.key] || []) as string[]}
-                                                            onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
-                                                            icon={dropdown.icon}
-                                                            displayMode={dropdown.displayMode}
-                                                            size="default"
-                                                            mode="chips"
-                                                            searchable={false}
-                                                            variant="modern"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
+                                    <div key={'mobile-' + dropdown.id}>
+                                        <div className="flex items-center justify-between mb-1.5 px-0.5">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                                {dropdown.label}
+                                            </span>
+                                            {hasSelection && (
+                                                <span className="text-[10px] font-semibold text-slate-700">
+                                                    Đã chọn: {selectionCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="mt-1">
+                                            <MultiSelectDropdown
+                                                id={'mobile-' + dropdown.id}
+                                                label={dropdown.label}
+                                                options={dropdown.options}
+                                                selectedOptions={(filters[dropdown.key] || []) as string[]}
+                                                onChange={(selected) => onFilterChange({ [dropdown.key]: selected })}
+                                                icon={dropdown.icon}
+                                                displayMode={dropdown.displayMode}
+                                                size="compact"
+                                                mode="chips"
+                                                searchable={false}
+                                                variant="modern"
+                                            />
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
-                        <div className="mt-2 grid grid-cols-2 gap-3 pt-4 border-t border-gray-100 flex-shrink-0">
-                            <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth className="rounded-xl h-12 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-slate-600 border-none">
-                                Xóa Lọc ({activeFilters.length})
-                            </Button>
-                            <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth className="rounded-xl h-12 text-sm font-bold shadow-lg shadow-accent-primary/25">
-                                Xem {totalCount} kết quả
-                            </Button>
+
+                        {/* Bottom CTA Button */}
+                        <div className="p-3 border-t border-black/[0.06] bg-white">
+                            <button
+                                onClick={() => setIsMobilePanelOpen(false)}
+                                className="w-full h-[38px] rounded-full bg-slate-700 hover:bg-slate-800 text-white font-semibold text-[13px] tracking-tight shadow-xs active:scale-[0.98] transition-all flex items-center justify-center space-x-1"
+                            >
+                                <span>Xem {totalCount} kết quả</span>
+                            </button>
                         </div>
                     </div>
                 </div>,

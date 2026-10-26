@@ -19,6 +19,7 @@ interface CrmLeadImporterViewProps {
     isCrmEnabled?: boolean;
     onToggleCrmGlobal?: () => void;
     isTogglingCrm?: boolean;
+    mobileMode?: boolean;
 }
 
 interface ParsedLeadRow {
@@ -196,7 +197,8 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     showToast,
     isCrmEnabled = true,
     onToggleCrmGlobal,
-    isTogglingCrm = false
+    isTogglingCrm = false,
+    mobileMode = false
 }) => {
     // Modal Admin xem danh sách TVBH đã sử dụng dịch vụ (chỉ dành cho Admin)
     const [showAdminTvbhModal, setShowAdminTvbhModal] = useState<boolean>(false);
@@ -258,6 +260,8 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     // CyberSoft Replica Grid States
     const [cyberSelectedRowIdx, setCyberSelectedRowIdx] = useState<number>(0);
     const [cyberSearchContact, setCyberSearchContact] = useState<string>('');
+    const [isMobileToolsOpen, setIsMobileToolsOpen] = useState(false);
+    const [mobileEditingLeadId, setMobileEditingLeadId] = useState<string | null>(null);
 
     // Load bank info from admin_bank_info setting
     useEffect(() => {
@@ -1448,7 +1452,102 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     }, [showPaymentModal, selectedUser]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-slate-100 overflow-hidden font-sans select-text p-2 sm:p-3 gap-2">
+        <div className={mobileMode
+            ? 'flex h-full min-h-0 flex-col overflow-hidden bg-[#f2f2f7] font-sans select-text'
+            : 'flex flex-col h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-slate-100 overflow-hidden font-sans select-text p-2 sm:p-3 gap-2'}>
+            {mobileMode ? (
+                <>
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".xlsx,.xls,.csv" className="hidden" />
+
+                    <div className="flex-shrink-0 space-y-2 border-b border-slate-200/80 bg-white/90 px-3 pb-3 pt-2 backdrop-blur-xl">
+                        <div className="flex items-center justify-between rounded-2xl border border-white bg-gradient-to-br from-teal-50 to-white px-3.5 py-3 shadow-[0_8px_24px_-20px_rgba(15,118,110,0.45)]">
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-600">Khách hàng tiềm năng</p>
+                                <p className="mt-1 truncate text-sm font-semibold text-slate-900">{selectedUserInfo?.fullName || currentUserName || currentUser}</p>
+                            </div>
+                            <div className="flex items-center gap-3 text-center">
+                                <div><p className="text-base font-bold text-slate-900">{counts.total}</p><p className="text-[9px] text-slate-400">Tổng</p></div>
+                                <div className="h-7 w-px bg-slate-200" />
+                                <div><p className="text-base font-bold text-teal-600">{counts.selected}</p><p className="text-[9px] text-slate-400">Đã chọn</p></div>
+                                <button type="button" onClick={() => setIsMobileToolsOpen(true)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200" title="Công cụ">
+                                    <i className="fas fa-ellipsis text-[11px]" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2">
+                            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-slate-900 text-[10.5px] font-semibold text-white active:scale-[0.98]">
+                                <i className="fas fa-file-arrow-up" /> Tải file
+                            </button>
+                            <button type="button" onClick={() => setShowPasteModal(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[10.5px] font-semibold text-slate-700 active:scale-[0.98]">
+                                <i className="fas fa-paste text-blue-500" /> Dán nhanh
+                            </button>
+                            <button type="button" onClick={handleDownloadTemplate} className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[10.5px] font-semibold text-slate-700 active:scale-[0.98]">
+                                <i className="fas fa-download text-emerald-500" /> File mẫu
+                            </button>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">
+                                <i className="fas fa-search text-[10px] text-slate-400" />
+                                <input value={cyberSearchContact} onChange={event => setCyberSearchContact(event.target.value)} placeholder="Tìm tên hoặc số điện thoại" className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-slate-400" />
+                            </label>
+                            <input type="month" value={selectedMonth} onChange={event => { setSelectedMonth(event.target.value); if (leadRows.length > 0) handleApplyMonthToAll(event.target.value); }} className="h-9 w-[116px] rounded-xl border border-slate-200 bg-white px-2 text-[10px] font-medium text-slate-600 outline-none" />
+                        </div>
+
+                        <div className="flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 [scrollbar-width:none]">
+                            {([
+                                ['all', `Tất cả ${counts.total}`],
+                                ['valid', `Hợp lệ ${counts.valid}`],
+                                ['duplicate', `Trùng ${counts.duplicate}`],
+                                ['invalid', `Lỗi ${counts.invalid}`],
+                                ['imported', `Đã nhập ${counts.imported}`],
+                            ] as const).map(([id, label]) => (
+                                <button key={id} type="button" onClick={() => setFilterTab(id)} className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[10px] font-semibold ${filterTab === id ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'}`}>
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5">
+                        {cyberFilteredRows.length === 0 ? (
+                            <div className="flex h-full flex-col items-center justify-center px-8 text-center">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-xl text-slate-300 shadow-sm ring-1 ring-slate-200/70"><i className="fas fa-user-plus" /></div>
+                                <p className="mt-4 text-sm font-semibold text-slate-700">Chưa có khách hàng</p>
+                                <p className="mt-1 text-[11px] leading-relaxed text-slate-400">Tải file Excel hoặc dán nhanh danh sách để bắt đầu.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {cyberFilteredRows.map(row => {
+                                    const model = metadata?.models.find(item => item.maKx === row.model)?.tenKx || row.model || 'Chưa chọn xe';
+                                    const hasIssue = !row.isValidPhone || !!row.duplicateInfo;
+                                    return (
+                                        <article key={row.id} onClick={() => setMobileEditingLeadId(row.id)} className="cursor-pointer rounded-2xl border border-slate-200/80 bg-white px-3 py-2.5 shadow-[0_5px_18px_-16px_rgba(15,23,42,0.5)] active:bg-slate-50">
+                                            <div className="flex items-center gap-3">
+                                                <button type="button" disabled={row.isImported || !row.isValidPhone} onClick={event => { event.stopPropagation(); handleRowChange(row.id, 'isSelected', !row.isSelected); }} className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[9px] ${row.isSelected ? 'border-teal-500 bg-teal-500 text-white' : 'border-slate-300 bg-white text-transparent'} disabled:opacity-40`}><i className="fas fa-check" /></button>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2"><p className="truncate text-[12px] font-semibold text-slate-900">{row.fullName || 'Chưa có tên'}</p><span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold ${row.isImported ? 'bg-blue-50 text-blue-600' : hasIssue ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>{row.isImported ? 'Đã nhập' : hasIssue ? 'Cần kiểm tra' : 'Hợp lệ'}</span></div>
+                                                    <p className="mt-1 truncate text-[10.5px] text-slate-500"><span className="font-mono text-slate-700">{row.phone || 'Chưa có SĐT'}</span><span className="px-1.5 text-slate-300">•</span>{model}</p>
+                                                </div>
+                                                {!row.isImported && <button type="button" onClick={event => { event.stopPropagation(); handleDeleteRow(row.id); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-300 active:bg-rose-50 active:text-rose-500"><i className="fas fa-trash-can text-[11px]" /></button>}
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex-shrink-0 border-t border-slate-200/80 bg-white/95 p-3 backdrop-blur-xl">
+                        <button type="button" onClick={handleImport} disabled={counts.selected === 0 || isImporting || !selectedUser} className="flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-slate-900 text-xs font-semibold text-white shadow-sm disabled:bg-slate-200 disabled:text-slate-400">
+                            <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-arrow-up-from-bracket'}`} />
+                            {isImporting ? 'Đang xử lý...' : counts.selected > 0 ? `Nhập ${counts.selected} khách · ${calculateLeadPrice(counts.selected).toLocaleString('vi-VN')}đ` : 'Chọn khách hàng để nhập'}
+                        </button>
+                    </div>
+                </>
+            ) : (
+            <>
             {/* Success Banner if present */}
             {lastImportStats && (
                 <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-lg shadow-sm flex items-center justify-between text-xs animate-fade-in shrink-0">
@@ -1990,10 +2089,67 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 </div>
             </div>
 
+            </>
+            )}
+
+            {mobileMode && isMobileToolsOpen && (
+                <div className="fixed inset-0 z-[1240] flex items-end justify-center bg-slate-950/35 backdrop-blur-xs" onClick={() => setIsMobileToolsOpen(false)}>
+                    <div className="w-full max-w-md rounded-t-[26px] bg-[#f8f8fa] px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
+                        <div className="mb-3 flex items-center justify-between">
+                            <div><h3 className="text-[15px] font-semibold text-slate-900">Công cụ khách hàng</h3><p className="text-[10px] text-slate-400">Đầy đủ thao tác quản lý dữ liệu</p></div>
+                            <button type="button" onClick={() => setIsMobileToolsOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200/70 text-slate-500"><i className="fas fa-times text-[11px]" /></button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2">
+                            {[
+                                { label: counts.selected === counts.valid ? 'Bỏ chọn' : 'Chọn hết', icon: 'fa-check-double', color: 'text-blue-600', action: () => handleToggleSelectAll(counts.selected !== counts.valid) },
+                                { label: 'Kiểm tra', icon: isCheckingDuplicates ? 'fa-spinner fa-spin' : 'fa-rotate', color: 'text-cyan-600', action: () => runDuplicateCheck() },
+                                { label: 'Sửa lỗi', icon: 'fa-wand-magic-sparkles', color: 'text-amber-600', action: handleAutoFixDuplicates },
+                                { label: 'Xáo xe', icon: 'fa-shuffle', color: 'text-violet-600', action: handleRandomizeAllRows },
+                                { label: 'Xuất Excel', icon: 'fa-file-excel', color: 'text-emerald-600', action: handleExportResultExcel },
+                                { label: 'Làm mới', icon: 'fa-arrows-rotate', color: 'text-slate-600', action: () => { setIsLoadingMeta(true); fetchCrmMetadata(true).then(result => { setIsLoadingMeta(false); if (result.success && result.data) setMetadata(result.data); }); } },
+                                { label: 'Xóa hết', icon: 'fa-trash-can', color: 'text-rose-600', action: handleClearAll },
+                                ...(isAdmin ? [{ label: 'Đổi TVBH', icon: 'fa-user-gear', color: 'text-indigo-600', action: () => setIsManualUserSelection(true) }] : []),
+                                ...(isAdmin ? [{ label: 'Lịch sử', icon: 'fa-clock-rotate-left', color: 'text-slate-600', action: () => setShowAdminTvbhModal(true) }] : []),
+                                ...(isAdmin && onToggleCrmGlobal ? [{ label: isCrmEnabled ? 'Tắt KHTN' : 'Mở KHTN', icon: isCrmEnabled ? 'fa-toggle-on' : 'fa-toggle-off', color: isCrmEnabled ? 'text-emerald-600' : 'text-amber-600', action: onToggleCrmGlobal }] : []),
+                            ].map(tool => (
+                                <button key={tool.label} type="button" onClick={() => { tool.action(); setIsMobileToolsOpen(false); }} className="flex min-h-[68px] flex-col items-center justify-center gap-2 rounded-2xl bg-white px-1 shadow-sm ring-1 ring-slate-200/70 active:scale-95">
+                                    <i className={`fas ${tool.icon} text-[15px] ${tool.color}`} />
+                                    <span className="text-[9.5px] font-medium text-slate-600">{tool.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {mobileMode && mobileEditingLeadId && (() => {
+                const row = leadRows.find(item => item.id === mobileEditingLeadId);
+                if (!row) return null;
+                const fieldClass = 'h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs text-slate-800 outline-none focus:border-blue-400 focus:bg-white';
+                return (
+                    <div className="fixed inset-0 z-[1230] flex items-end justify-center bg-slate-950/35 backdrop-blur-xs" onClick={() => setMobileEditingLeadId(null)}>
+                        <div className="flex max-h-[88dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+                            <div className="flex-shrink-0 px-4 pb-3 pt-2"><div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" /><div className="flex items-center justify-between"><div><h3 className="text-[15px] font-semibold text-slate-900">Chi tiết khách hàng</h3><p className="text-[10px] text-slate-400">Chỉnh sửa dữ liệu trước khi nhập</p></div><button type="button" onClick={() => setMobileEditingLeadId(null)} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i className="fas fa-times text-[11px]" /></button></div></div>
+                            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto border-y border-slate-100 bg-[#f8f8fa] p-4">
+                                <div className="grid grid-cols-1 gap-3"><label className="space-y-1"><span className="text-[10px] font-semibold text-slate-500">Tên khách hàng</span><input value={row.fullName} onChange={event => handleRowChange(row.id, 'fullName', event.target.value)} className={fieldClass} /></label><label className="space-y-1"><span className="text-[10px] font-semibold text-slate-500">Số điện thoại</span><input value={row.phone} onChange={event => handleRowChange(row.id, 'phone', event.target.value)} inputMode="tel" className={fieldClass} /></label></div>
+                                <label className="block space-y-1"><span className="text-[10px] font-semibold text-slate-500">Địa chỉ</span><input value={row.address} onChange={event => handleRowChange(row.id, 'address', event.target.value)} className={fieldClass} /></label>
+                                <div className="grid grid-cols-2 gap-2"><label className="space-y-1"><span className="text-[10px] font-semibold text-slate-500">Ngày tạo</span><input type="date" value={row.createdDate} onChange={event => handleRowChange(row.id, 'createdDate', event.target.value)} className={fieldClass} /></label><label className="space-y-1"><span className="text-[10px] font-semibold text-slate-500">Giờ tạo</span><input type="time" value={row.createdTime} onChange={event => handleRowChange(row.id, 'createdTime', event.target.value)} className={fieldClass} /></label></div>
+                                <label className="block space-y-1"><span className="text-[10px] font-semibold text-slate-500">Dòng xe</span><select value={row.model} onChange={event => handleRowChange(row.id, 'model', event.target.value)} className={fieldClass}><option value="">Chọn dòng xe</option>{metadata?.models.map(item => <option key={item.maKx} value={item.maKx}>{item.tenKx}</option>)}</select></label>
+                                <label className="block space-y-1"><span className="text-[10px] font-semibold text-slate-500">Màu xe</span><select value={row.color} onChange={event => handleRowChange(row.id, 'color', event.target.value)} className={fieldClass}><option value="">Chọn màu xe</option>{metadata?.colors?.map(item => <option key={item.maMau} value={item.maMau}>{item.tenMau}</option>)}</select></label>
+                                <label className="block space-y-1"><span className="text-[10px] font-semibold text-slate-500">Nguồn tiếp cận</span><select value={row.source} onChange={event => handleRowChange(row.id, 'source', event.target.value)} className={fieldClass}><option value="">Chọn nguồn</option>{metadata?.sources.map(item => <option key={item.maPtlh} value={item.maPtlh}>{item.tenPtlh}</option>)}</select></label>
+                                <label className="block space-y-1"><span className="text-[10px] font-semibold text-slate-500">Ghi chú</span><textarea value={row.note} onChange={event => handleRowChange(row.id, 'note', event.target.value)} rows={3} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs outline-none focus:border-blue-400 focus:bg-white" /></label>
+                            </div>
+                            <div className="flex flex-shrink-0 gap-2 p-3"><button type="button" onClick={() => { handleDeleteRow(row.id); setMobileEditingLeadId(null); }} className="h-11 flex-1 rounded-[14px] bg-rose-50 text-xs font-semibold text-rose-600">Xóa</button><button type="button" onClick={() => setMobileEditingLeadId(null)} className="h-11 flex-[2] rounded-[14px] bg-slate-900 text-xs font-semibold text-white">Hoàn tất</button></div>
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* Modal: Dán Danh Sách Nhanh Từ Zalo / Note */}
             {showPasteModal && (
-                <div className="fixed inset-0 z-[1250] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-                    <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 space-y-4 animate-fade-in-up">
+                <div className="fixed inset-0 z-[1250] flex items-end justify-center bg-slate-900/55 p-0 backdrop-blur-xs animate-fade-in sm:items-center sm:p-4">
+                    <div className="max-h-[88dvh] w-full max-w-xl space-y-4 overflow-y-auto rounded-t-[24px] border border-slate-200 bg-white p-4 shadow-2xl animate-fade-in-up sm:rounded-2xl sm:p-5">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div className="flex items-center gap-2.5">
                                 <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm shadow-2xs">
@@ -2003,7 +2159,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                     <h3 className="text-sm font-bold text-slate-800">
                                         Dán Danh Sách Khách Hàng Nhanh
                                     </h3>
-                                    <p className="text-[11px] text-slate-500">
+                                    <p className="hidden text-[11px] text-slate-500 sm:block">
                                         Hỗ trợ copy trực tiếp từ Zalo, Tin nhắn, hoặc Sổ tay ghi chép của TVBH
                                     </p>
                                 </div>
@@ -2022,7 +2178,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                 <span className="text-[10px] text-slate-400 font-normal">Tự nhận diện SĐT, Tên, Dòng xe, Địa chỉ...</span>
                             </label>
                             <textarea
-                                rows={8}
+                                rows={mobileMode ? 6 : 8}
                                 value={rawPasteText}
                                 onChange={e => setRawPasteText(e.target.value)}
                                 placeholder="Ví dụ:&#10;Nguyễn Văn An, 0903123456, VF 5, Trắng, Thuận An&#10;Trần Thị Mai - 0918654321 - VF 3 - Dĩ An&#10;0988112233 - Lê Văn Cường - VF 7 - Thủ Dầu Một"
@@ -2031,7 +2187,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             />
                         </div>
 
-                        <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center justify-between gap-2 pt-1">
                             <span className="text-[11px] text-slate-500 hidden sm:inline">
                                 💡 Hệ thống tự động bóc tách số điện thoại và tên để nhập vào CRM.
                             </span>

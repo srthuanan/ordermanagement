@@ -436,8 +436,8 @@
       pnum.innerText = pct + "%";
 
       try {
+        // KHÔNG TRUYỀN TRƯỜNG 'name' ĐỂ MÁY CHỦ VINFAST DMS TỰ ĐỘNG SINH MÃ SỐ CHUẨN: BK-YYYY-MM-DD-xxxxxx
         var payload = {
-          "name": item.name + " - Lái thử " + targetModelText,
           "starttime": item.startTime.toISOString(),
           "endtime": item.endTime.toISOString(),
           "duration": item.duration,

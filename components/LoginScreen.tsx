@@ -2,6 +2,7 @@ import React, { useState, FormEvent, useEffect, useRef } from 'react';
 import * as authService from '../services/authService';
 import HolidayThemeDecorator, { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
 import { MidAutumnLoginView } from './login/MidAutumnLoginView';
+import { MobileLoginView } from './login/MobileLoginView';
 // Import images
 import kepgiay from '../pictures/kepgiay.webp';
 
@@ -20,6 +21,21 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
     const [invitationDetails, setInvitationDetails] = useState<{ full_name: string, role: string } | null>(null);
     const [inviteToken, setInviteToken] = useState('');
     const [rememberMe, setRememberMe] = useState<boolean>(() => localStorage.getItem('rememberMe') !== 'false');
+
+    // Tự động nhận diện thiết bị di động hoặc khi co màn hình về kích thước điện thoại (<= 768px)
+    const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    });
+
+    useEffect(() => {
+        const handleResize = () => {
+            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            setIsMobileScreen(isMobile);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Tự động kích hoạt theo mùa:
     // Mùa Tết Trung Thu (từ 04/09 đến hết 08/10) tự động hiển thị chủ đề Hội An Đêm Rằm. Hết mùa tự động chuyển về giao diện gốc.
@@ -208,6 +224,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
             setIsSubmitting(false);
         }
     };
+
+    // Khi ở kích thước màn hình điện thoại (<= 768px hoặc thiết bị di động):
+    if (isMobileScreen) {
+        return <MobileLoginView onLoginSuccess={onLoginSuccess} showToast={showToast} />;
+    }
 
     // Khi đang trong mùa Tết Trung Thu:
     if (isMidAutumn) {
@@ -792,6 +813,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
 
             `}</style>
+
         </div >
     );
 };

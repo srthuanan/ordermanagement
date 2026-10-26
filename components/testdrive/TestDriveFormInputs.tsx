@@ -142,7 +142,7 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
         <aside className="lg:col-span-2 print-hidden h-full overflow-hidden flex flex-col">
             <div className="bg-surface-card rounded-xl flex flex-col h-full overflow-hidden shadow-sm border border-border-primary/50">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-border-primary/50 p-2.5 bg-surface-ground/30 flex-shrink-0">
+                <div className="flex flex-shrink-0 flex-col items-stretch justify-between gap-2 border-b border-border-primary/50 bg-surface-ground/30 p-2.5 sm:flex-row sm:items-center sm:gap-0">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center">
                             <i className="fas fa-steering-wheel text-accent-primary text-sm"></i>
@@ -153,12 +153,12 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                         </div>
                     </div>
 
-                    <div className="flex bg-surface-ground p-1 rounded-lg border border-border-secondary/50 shadow-sm">
+                    <div className="flex w-full rounded-lg border border-border-secondary/50 bg-surface-ground p-1 shadow-sm sm:w-auto">
                         <Button
                             onClick={onReset}
                             variant="ghost"
                             size="sm"
-                            className="text-[11px] font-medium text-text-secondary hover:bg-white hover:text-text-primary px-2.5 py-1 rounded-md h-7"
+                            className="h-7 flex-1 rounded-md px-2.5 py-1 text-[11px] font-medium text-text-secondary hover:bg-white hover:text-text-primary sm:flex-none"
                             leftIcon={<i className="fas fa-sync-alt text-[10px]"></i>}
                         >
                             Làm Mới
@@ -170,7 +170,7 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                             isLoading={isSubmitting}
                             variant="primary"
                             size="sm"
-                            className={`text-[11px] font-bold px-2.5 py-1 rounded-md h-7 shadow-sm ${!!conflictError ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`h-7 flex-1 rounded-md px-2.5 py-1 text-[11px] font-bold shadow-sm sm:flex-none ${!!conflictError ? 'opacity-50 cursor-not-allowed' : ''}`}
                             leftIcon={!isSubmitting ? <i className="fas fa-save text-[10px]"></i> : undefined}
                         >
                             Lưu & In
@@ -180,7 +180,7 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                             onClick={onSwitchToList}
                             variant="ghost"
                             size="sm"
-                            className="text-[11px] font-medium text-text-secondary hover:bg-white hover:text-text-primary px-2.5 py-1 rounded-md h-7"
+                            className="h-7 flex-1 rounded-md px-2.5 py-1 text-[11px] font-medium text-text-secondary hover:bg-white hover:text-text-primary sm:flex-none"
                             leftIcon={<i className="fas fa-list text-[10px]"></i>}
                         >
                             Danh Sách

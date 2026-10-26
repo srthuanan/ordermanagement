@@ -268,15 +268,15 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                 onClick={e => e.stopPropagation()}
                 style={bgStyle}
             >
-                <header className="flex-shrink-0 px-6 py-4 border-b border-border-primary/50 flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-t-2xl">
-                    <h2 className="text-xl font-bold text-text-primary">
+                <header className="flex-shrink-0 px-4 py-3 md:px-6 md:py-4 border-b border-border-primary/50 flex justify-between items-center bg-white/70 backdrop-blur-xl rounded-t-2xl">
+                    <h2 className="text-[15px] font-semibold text-text-primary md:text-xl md:font-bold">
                         {mode === 'view' ? 'Chi Tiết Lái Thử' : 'Cập Nhật Lái Thử'}
                     </h2>
                     <Button onClick={onClose} variant="ghost" className="text-text-secondary hover:text-text-primary !p-2"><i className="fas fa-times text-lg"></i></Button>
                 </header>
 
-                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0 bg-surface-ground/50">
-                    <div className="p-4 bg-white rounded-xl border border-border-primary/60 shadow-sm text-sm mb-6 flex flex-wrap items-center gap-3">
+                <main className="p-3 md:p-6 overflow-y-auto flex-grow min-h-0 bg-surface-ground/50">
+                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-border-primary/60 bg-white p-3 text-xs shadow-sm md:mb-6 md:gap-3 md:p-4 md:text-sm">
                         <div className="flex items-center gap-2 px-3 py-1 bg-accent-primary/10 text-accent-primary rounded-full border border-accent-primary/20">
                             <i className="fas fa-ticket-alt text-xs"></i>
                             <span className="font-bold font-mono">{booking.soPhieu}</span>
@@ -288,9 +288,9 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6">
                         {/* BEFORE SECTION */}
-                        <div className={`group relative bg-white rounded-xl p-5 border border-border-primary/60 shadow-sm hover:shadow-md transition-all duration-300 ${isViewOnly && mode !== 'update' ? 'opacity-80' : ''}`}>
+                        <div className={`group relative bg-white rounded-xl p-3.5 md:p-5 border border-border-primary/60 shadow-sm hover:shadow-md transition-all duration-300 ${isViewOnly && mode !== 'update' ? 'opacity-80' : ''}`}>
                             <div className="mb-4 flex items-center gap-3 border-b border-border-primary/50 pb-3">
                                 <i className="fas fa-car-side text-lg text-accent-primary"></i>
                                 <legend className="font-bold text-lg text-text-primary">Trước Khi Đi</legend>
@@ -334,7 +334,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                         </div>
 
                         {/* AFTER SECTION */}
-                        <div className={`group relative bg-white rounded-xl p-5 border border-border-primary/60 shadow-sm hover:shadow-md transition-all duration-300 ${isViewOnly && mode !== 'update' ? 'opacity-80' : ''}`}>
+                        <div className={`group relative bg-white rounded-xl p-3.5 md:p-5 border border-border-primary/60 shadow-sm hover:shadow-md transition-all duration-300 ${isViewOnly && mode !== 'update' ? 'opacity-80' : ''}`}>
                             <div className="mb-4 flex items-center gap-3 border-b border-border-primary/50 pb-3">
                                 <i className="fas fa-flag-checkered text-lg text-accent-secondary"></i>
                                 <legend className="font-bold text-lg text-text-primary">Sau Khi Về</legend>
@@ -379,7 +379,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
                 </main>
 
                 {mode !== 'view' && canUpdate && (
-                    <footer className="flex-shrink-0 px-6 py-4 border-t border-border-primary/50 flex justify-end gap-3 bg-white rounded-b-2xl">
+                    <footer className="flex-shrink-0 border-t border-border-primary/50 bg-white px-3 py-3 flex justify-end gap-2 rounded-b-2xl md:px-6 md:py-4 md:gap-3">
                         <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="md" className="min-w-[100px]">Hủy</Button>
                         <Button
                             onClick={handleSubmit}

@@ -222,12 +222,16 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
     }
 
     return (
-        <div className="flex h-full bg-slate-50 relative rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in">
+        <div className="relative flex h-full overflow-hidden bg-slate-50 animate-fade-in md:rounded-xl md:border md:border-border-primary md:shadow-md">
             <AnimatedBackground />
             {/* Column 1: Consultant Names (TVBH) */}
             <div className={`w-full md:w-72 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                <div className="p-4 border-b border-border-primary md:hidden flex items-center justify-between bg-white">
-                    <span className="font-bold text-lg">Tư Vấn Bán Hàng</span>
+                <div className="flex items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 py-3 md:hidden">
+                    <div>
+                        <span className="text-sm font-semibold text-slate-900">Tư vấn bán hàng</span>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Chọn nhân viên để xem lịch</p>
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{consultants.length} người</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {/* Consultant List */}
@@ -252,17 +256,17 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
             {/* Column 2: Booking List - Adjusted width to w-96 */}
             <div className={`w-full md:w-96 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
                 {/* Mobile Header */}
-                <div className="p-3 border-b border-border-primary md:hidden flex items-center gap-3 bg-white shadow-sm">
-                    <button onClick={() => setMobileView('folders')} className="w-8 h-8 rounded-full bg-surface-ground flex items-center justify-center text-text-secondary hover:bg-surface-hover">
-                        <i className="fas fa-arrow-left"></i>
+                <div className="flex items-center gap-3 border-b border-slate-200/80 bg-white/90 px-3 py-2.5 md:hidden">
+                    <button onClick={() => setMobileView('folders')} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-95">
+                        <i className="fas fa-chevron-left text-[11px]"></i>
                     </button>
-                    <span className="font-bold text-text-primary">
+                    <span className="truncate text-sm font-semibold text-slate-900">
                         {selectedConsultantName}
                     </span>
                 </div>
 
                 {/* Status Filter Tabs */}
-                <div className="flex items-center gap-1 p-2 bg-surface-ground border-b border-border-primary">
+                <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-100 p-1.5 [scrollbar-width:none]">
                     <button
                         onClick={() => setSelectedStatus('all')}
                         className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'all' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}

@@ -28,12 +28,14 @@ interface RequestInvoiceModalProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     /** When true, renders inline inside a parent container (no fixed overlay) */
     inline?: boolean;
+    /** Mobile-only: ẩn header trùng & thu gọn khoảng cách (Desktop không dùng) */
+    compact?: boolean;
 }
 
-const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean }> = ({ currentStep, hasVinClub }) => {
+const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean, compact?: boolean }> = ({ currentStep, hasVinClub, compact }) => {
     const steps = ["Thông tin", "Chứng từ", "Xác nhận"];
     return (
-        <div className="flex justify-between items-center mb-6 relative px-10 md:px-24">
+        <div className={`flex justify-between items-center ${compact ? 'mb-1 pt-1' : 'mb-6'} relative px-10 md:px-24`}>
             {/* Connection Segments Container */}
             <div className="absolute left-[calc(2.5rem+32px)] right-[calc(2.5rem+32px)] md:left-[calc(6rem+40px)] md:right-[calc(6rem+40px)] top-[12px] transform -translate-y-1/2 h-3 -z-10 flex justify-between gap-2">
                 {steps.slice(0, -1).map((_, idx) => {
@@ -113,7 +115,7 @@ const formatNumber = (value: string) => {
 
 const getRawValue = (value: string) => (value || '').replace(/\./g, '');
 
-const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false }) => {
+const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false, compact = false }) => {
     const [step, setStep] = useState(1);
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
@@ -1431,7 +1433,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     // Shared inner content (header + steps + form)
     const innerContent = (
         <>
-            <header className="flex-shrink-0">
+            <header className={compact ? 'hidden' : 'flex-shrink-0'}>
                 {inline ? (
                     <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
                         <div className="flex items-center gap-2">
@@ -1462,19 +1464,19 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 )}
             </header>
 
-                    <main className="flex-grow min-h-0 flex flex-col overflow-hidden relative z-10 p-3 md:p-5">
-                        <div className="flex flex-col mb-3 space-y-1.5 md:space-y-2">
-                            <Stepper currentStep={step} hasVinClub={vinClubConfirmed} />
-                            <div className="bg-white rounded-[10px] border-l-4 border-l-blue-500 border-y border-r border-gray-200 p-2.5 md:p-3 shadow-sm flex-shrink-0 bg-gradient-to-r from-blue-50/40 to-white">
+                    <main className={`flex-grow min-h-0 flex flex-col relative z-10 ${compact ? 'overflow-y-auto p-2.5' : 'overflow-hidden p-3 md:p-5'}`}>
+                        <div className={`flex flex-col ${compact ? 'mb-2 space-y-1.5' : 'mb-3 space-y-1.5 md:space-y-2'}`}>
+                            {!compact && <Stepper currentStep={step} hasVinClub={vinClubConfirmed} />}
+                            <div className={`bg-white rounded-[10px] border-l-4 border-l-blue-500 border-y border-r border-gray-200 ${compact ? 'p-2' : 'p-2.5 md:p-3'} shadow-sm flex-shrink-0 bg-gradient-to-r from-blue-50/40 to-white`}>
                                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 relative z-10 items-center">
-                                    <div className="flex flex-col">
+                                    <div className={`flex flex-col ${compact ? 'hidden' : ''}`}>
                                         <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Số đơn hàng</span>
                                         <div className="flex items-center gap-1.5 text-blue-700">
                                             <i className="fas fa-barcode opacity-60 text-[10px]"></i>
                                             <span className="font-bold font-mono tracking-tight text-[13px]">{order["Số đơn hàng"]}</span>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
+                                    <div className={`flex flex-col md:border-l md:border-gray-200 md:pl-3 ${compact ? 'hidden' : ''}`}>
                                         <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Khách hàng</span>
                                         <div className="flex items-center gap-1.5 text-text-primary">
                                             <i className="fas fa-user text-blue-600 opacity-60 text-[10px]"></i>
@@ -1534,16 +1536,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             })()}
                         </div>
 
-                        <div className="flex-grow overflow-hidden flex flex-col">
+                        <div className={`flex-grow flex flex-col ${compact ? '' : 'overflow-hidden'}`}>
                             {/* STEP 1 */}
-                            <div style={{ display: step === 1 ? 'flex' : 'none' }} className="flex-col h-full overflow-hidden">
-                                <div className="flex flex-col bg-white/60 p-5 md:p-8 rounded-2xl border border-gray-200/60 shadow-sm flex-grow overflow-y-auto custom-scrollbar">
-                                    <div className="flex flex-col min-h-full gap-4">
+                            <div style={{ display: step === 1 ? 'flex' : 'none' }} className={`flex-col ${compact ? '' : 'h-full overflow-hidden'}`}>
+                                <div className={`flex flex-col bg-white/60 ${compact ? 'p-3 rounded-xl' : 'p-5 md:p-8 rounded-2xl overflow-y-auto custom-scrollbar'} border border-gray-200/60 shadow-sm flex-grow`}>
+                                    <div className={`flex flex-col min-h-full ${compact ? 'gap-3' : 'gap-4'}`}>
                                         <div className="flex flex-col">
-                                            <label className="block text-sm font-bold text-text-primary mb-3 uppercase tracking-wider">
+                                            <label className={`block font-bold text-text-primary uppercase tracking-wider ${compact ? 'text-[11px] mb-1.5' : 'text-sm mb-3'}`}>
                                                 Chính sách bán hàng áp dụng <span className="text-danger">*</span>
                                             </label>
-                                            <div className="p-3 bg-surface-ground rounded-xl border border-border-primary shadow-inner max-h-[220px] overflow-y-auto custom-scrollbar">
+                                            <div className={`${compact ? 'p-2' : 'p-3'} bg-surface-ground rounded-xl border border-border-primary shadow-inner max-h-[220px] overflow-y-auto custom-scrollbar`}>
                                                 {isLoadingPolicies ? (
                                                     <div className="flex items-center justify-center py-6 text-text-secondary">
                                                         <i className="fas fa-spinner fa-spin mr-3 text-xl"></i>
@@ -1554,7 +1556,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                         Chưa có danh sách chính sách nào cho dòng xe này. Vui lòng liên hệ Admin.
                                                     </div>
                                                 ) : (
-                                                    <div className="flex flex-wrap gap-2">
+                                                    <div className={compact ? 'grid grid-cols-2 gap-1.5' : 'flex flex-wrap gap-2'}>
                                                         {filteredSalesPolicies.filter(p => p && p.trim() !== '').map(option => (
                                                             <button 
                                                                 key={option} 
@@ -1562,14 +1564,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                                 onClick={() => {
                                                                     setPolicy(prev => prev.includes(option) ? prev.filter(p => p !== option) : [...prev, option]);
                                                                 }} 
-                                                                className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border-2 transition-all duration-300 shadow-sm flex items-center gap-2 ${
+                                                                className={`${compact ? 'px-2 py-1.5 text-[10px] border w-full text-left' : 'px-3 py-1.5 text-[11px] border-2'} font-semibold rounded-lg transition-all duration-200 shadow-sm flex items-center gap-1.5 ${
                                                                     policy.includes(option) 
-                                                                        ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-[0_0_10px_rgba(59,130,246,0.15)] scale-[1.02]' 
-                                                                        : 'bg-white border-border-secondary text-text-secondary hover:border-blue-300 hover:text-blue-600'
+                                                                        ? 'bg-blue-50 border-blue-500 text-blue-700' 
+                                                                        : 'bg-white border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'
                                                                 }`}
                                                             >
-                                                                <i className={`fas ${policy.includes(option) ? 'fa-check-circle text-blue-600' : 'fa-plus-circle opacity-30'}`}></i>
-                                                                {option}
+                                                                <i className={`fas ${policy.includes(option) ? 'fa-check-circle text-blue-500' : 'fa-circle opacity-20'} text-[9px] flex-shrink-0`}></i>
+                                                                <span className="truncate">{option}</span>
                                                             </button>
                                                         ))}
                                                     </div>
@@ -1577,14 +1579,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                                        <div className={`grid ${compact ? 'grid-cols-2 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-4'} pt-2 border-t border-gray-100`}>
                                             <div className="group">
-                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center justify-between">
-                                                    <span className="flex items-center gap-2">
-                                                        <i className="fas fa-money-bill-wave text-emerald-500"></i>
-                                                        Hoa hồng ứng trước (VND)
-                                                    </span>
-                                                    <span className="text-[9px] font-normal text-slate-400 lowercase">(để trống = 0đ)</span>
+                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <i className="fas fa-money-bill-wave text-emerald-500"></i>
+                                                    {compact ? 'Hoa hồng (VNĐ)' : 'Hoa hồng ứng trước (VND)'}
+                                                    {!compact && <span className="ml-auto text-[9px] font-normal text-slate-400 lowercase">(để trống = 0đ)</span>}
                                                 </label>
                                                 <div className="relative">
                                                     <input 
@@ -1598,12 +1598,10 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                 </div>
                                             </div>
                                             <div className="group">
-                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center justify-between">
-                                                    <span className="flex items-center gap-2">
-                                                        <i className="fas fa-star text-purple-500"></i>
-                                                        Số điểm Vpoint sử dụng
-                                                    </span>
-                                                    <span className="text-[9px] font-normal text-slate-400 lowercase">(để trống = 0 điểm)</span>
+                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <i className="fas fa-star text-purple-500"></i>
+                                                    {compact ? 'Vpoint' : 'Số điểm Vpoint sử dụng'}
+                                                    {!compact && <span className="ml-auto text-[9px] font-normal text-slate-400 lowercase">(để trống = 0 điểm)</span>}
                                                 </label>
                                                 <div className="relative">
                                                     <input 
@@ -1693,9 +1691,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
 
                             {/* STEP 2 */}
-                            <div style={{ display: step === 2 ? 'flex' : 'none' }} className="flex-col h-full overflow-hidden">
-                                <div className="flex flex-col bg-white/60 p-5 md:p-8 rounded-2xl border border-gray-200/60 shadow-sm flex-grow overflow-hidden">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-grow">
+                            <div style={{ display: step === 2 ? 'flex' : 'none' }} className={`flex-col ${compact ? '' : 'h-full overflow-hidden'}`}>
+                                <div className={`flex flex-col bg-white/60 ${compact ? 'p-3 rounded-xl' : 'p-5 md:p-8 rounded-2xl overflow-hidden'} border border-gray-200/60 shadow-sm flex-grow`}>
+                                    <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-3' : 'gap-8'} flex-grow`}>
                                         <SimpleFileUpload 
                                             id="hop_dong_file_input" 
                                             label="Hợp đồng mua bán" 
@@ -1717,7 +1715,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             className="flex flex-col h-full"
                                         />
                                     </div>
-                                    <div className="mt-8 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 text-[13px] text-blue-700 shadow-sm flex-shrink-0">
+                                    <div className={`${compact ? 'hidden' : 'mt-8 p-5'} bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 text-[13px] text-blue-700 shadow-sm flex-shrink-0`}>
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                                                 <i className="fas fa-info-circle text-lg"></i>
@@ -1732,16 +1730,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
 
                             {/* STEP 3 */}
-                            <div style={{ display: step === 3 ? 'flex' : 'none' }} className="flex-col h-full overflow-hidden">
-                                <div className="flex flex-col bg-white/60 p-5 md:p-6 rounded-2xl border border-gray-200/60 shadow-sm flex-grow overflow-hidden">
-                                    <div className="flex flex-col h-full gap-5">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-grow overflow-hidden">
+                            <div style={{ display: step === 3 ? 'flex' : 'none' }} className={`flex-col ${compact ? '' : 'h-full overflow-hidden'}`}>
+                                <div className={`flex flex-col bg-white/60 ${compact ? 'p-2.5 rounded-xl' : 'p-5 md:p-6 rounded-2xl overflow-hidden'} border border-gray-200/60 shadow-sm flex-grow`}>
+                                    <div className={`flex flex-col h-full ${compact ? 'gap-2.5' : 'gap-5'}`}>
+                                        <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-5 overflow-hidden'} flex-grow`}>
                                             {/* Left Card: Documents & Financials */}
-                                            <div className="flex flex-col h-full gap-4">
-                                                <div className="bg-surface-ground p-5 rounded-2xl border border-border-primary flex-grow flex flex-col overflow-hidden">
+                                            <div className={`flex flex-col h-full ${compact ? 'gap-2' : 'gap-4'}`}>
+                                                <div className={`bg-surface-ground ${compact ? 'p-3 rounded-xl' : 'p-5 rounded-2xl overflow-hidden'} border border-border-primary flex-grow flex flex-col`}>
                                                     <p className="text-[10px] text-text-secondary mb-3 font-black uppercase tracking-[0.2em] border-b border-border-secondary pb-2">Hồ sơ & Tài chính</p>
                                                     
-                                                    <div className="space-y-3 mb-6">
+                                                    <div className={compact ? 'space-y-2 mb-3' : 'space-y-3 mb-6'}>
                                                         <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-border-secondary shadow-sm">
                                                             <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
                                                                 <i className="fas fa-file-contract text-sm"></i>
@@ -1779,7 +1777,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
                                             {/* Right Card: Policies List */}
                                             <div className="flex flex-col h-full gap-4">
-                                                <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-5 rounded-2xl border border-blue-100 flex-grow flex flex-col overflow-hidden shadow-sm">
+                                                <div className={`bg-gradient-to-br from-blue-50/50 to-indigo-50/50 ${compact ? 'p-3 rounded-xl' : 'p-5 rounded-2xl'} border border-blue-100 flex-grow flex flex-col overflow-hidden shadow-sm`}>
                                                     <p className="text-[10px] text-blue-500 mb-3 font-black uppercase tracking-[0.2em] border-b border-blue-200/30 pb-2">Danh sách chính sách áp dụng</p>
                                                     <div className="flex-grow overflow-y-auto custom-scrollbar pr-2">
                                                         <div className="space-y-2">
@@ -1822,7 +1820,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         </div>
                     </main>
 
-                    <footer className="flex-shrink-0 p-4 border-t border-gray-100 bg-white flex justify-between items-center">
+                    <footer className={`flex-shrink-0 ${compact ? 'px-3 py-2' : 'p-4'} border-t border-gray-100 bg-white flex justify-between items-center`}>
                         {step > 1 ? (
                             <Button onClick={handleBack} disabled={isSubmitting} variant="secondary" size="sm" leftIcon={<i className="fas fa-arrow-left"></i>}>Quay lại</Button>
                         ) : (

@@ -38,6 +38,22 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/_expo/(.*)",
+      "destination": "/tvbh-mobile/_expo/$1"
+    },
+    {
+      "source": "/m",
+      "destination": "/tvbh-mobile/index.html"
+    },
+    {
+      "source": "/m/(.*)",
+      "destination": "/tvbh-mobile/$1"
+    },
+    {
+      "source": "/tvbh-mobile/(.*)",
+      "destination": "/tvbh-mobile/$1"
+    },
+    {
       "source": "/ordermanagement/assets/(.*)",
       "destination": "/assets/$1"
     },
@@ -46,7 +62,7 @@
       "destination": "/$1"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|tvbh-mobile/|_expo/|m$).*)",
       "destination": "/index.html"
     }
   ]

@@ -8,7 +8,7 @@ const CustomTitleBar: React.FC = () => {
     useEffect(() => {
         if (!isElectron) return;
 
-        let hideTimeout: NodeJS.Timeout;
+        let hideTimeout: any;
 
         const showAndAutoHide = () => {
             setIsVisible(true);

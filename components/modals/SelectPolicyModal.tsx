@@ -9,9 +9,10 @@ interface SelectPolicyModalProps {
     currentPolicy?: string;
     carModel?: string;
     compact?: boolean;
+    embeddedMobile?: boolean;
 }
 
-const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, onSelect, currentPolicy, carModel, compact = false }) => {
+const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, onSelect, currentPolicy, carModel, compact = false, embeddedMobile = false }) => {
     const [policies, setPolicies] = useState<Policy[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -68,18 +69,20 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
     }
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+        <div className={`fixed inset-0 z-[10000] flex justify-center animate-fade-in ${embeddedMobile ? 'items-end p-0' : 'items-center p-4'}`} onClick={onClose}>
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
             <div 
-                className={`relative bg-white w-full rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-scale-in ${
-                    compact ? 'max-w-xl max-h-[70vh]' : 'max-w-2xl max-h-[85vh]'
+                className={`relative bg-white w-full shadow-2xl overflow-hidden flex flex-col animate-scale-in ${
+                    embeddedMobile
+                        ? 'h-[100dvh] max-w-md rounded-none'
+                        : compact ? 'max-w-xl max-h-[70vh] rounded-2xl' : 'max-w-2xl max-h-[85vh] rounded-2xl'
                 }`}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className={`px-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-cyan-50 to-white ${compact ? 'py-3' : 'py-4'}`}>
+                <div className={`${embeddedMobile ? 'px-4 py-2.5' : compact ? 'px-6 py-3' : 'px-6 py-4'} border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-cyan-50 to-white`}>
                     <div>
-                        <h2 className="text-lg font-black text-slate-800 tracking-tight">Chọn Chính Sách</h2>
+                        <h2 className={`${embeddedMobile ? 'text-base' : 'text-lg'} font-black text-slate-800 tracking-tight`}>Chọn Chính Sách</h2>
                         <p className="text-[10px] text-cyan-600 font-bold uppercase tracking-wider">
                             Dòng xe: <span className="text-slate-800">{carModel || 'Tất cả'}</span>
                         </p>
@@ -90,13 +93,13 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Filters & Search */}
-                <div className="p-4 border-b border-gray-50 bg-gray-50/30 space-y-3">
+                <div className={`${embeddedMobile ? 'space-y-2 p-3' : 'space-y-3 p-4'} border-b border-gray-50 bg-gray-50/30`}>
                     <div className="relative group">
                         <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-cyan-500 transition-colors text-xs"></i>
                         <input
                             type="text"
                             placeholder="Tìm kiếm chính sách..."
-                            className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all"
+                            className={`${embeddedMobile ? 'h-10 py-0 text-[12px]' : 'py-2 text-sm'} w-full bg-white border border-gray-200 rounded-xl pl-9 pr-4 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all`}
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -116,7 +119,7 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* List */}
-                <div className={`flex-1 overflow-y-auto p-2 custom-scrollbar ${compact ? 'min-h-[200px]' : 'min-h-[300px]'}`}>
+                <div className={`flex-1 p-2 custom-scrollbar ${embeddedMobile && filteredPolicies.length <= 6 ? 'overflow-hidden' : 'overflow-y-auto'} ${embeddedMobile ? '' : compact ? 'min-h-[200px]' : 'min-h-[300px]'}`}>
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-full py-12 space-y-4">
                             <i className="fas fa-spinner fa-spin text-cyan-500 text-2xl"></i>
@@ -140,7 +143,7 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
                                     <div
                                         key={policy.ten_chinh_sach}
                                         onClick={() => togglePolicy(policy.ten_chinh_sach)}
-                                        className={`group px-4 py-3 rounded-xl border cursor-pointer transition-all duration-300 relative overflow-hidden ${
+                                        className={`group ${embeddedMobile ? 'px-3 py-2.5' : 'px-4 py-3'} rounded-xl border cursor-pointer transition-all duration-300 relative overflow-hidden ${
                                             isSelected 
                                             ? 'bg-cyan-50 border-cyan-200 shadow-sm' 
                                             : 'bg-white border-transparent hover:bg-slate-50 hover:border-slate-100'
@@ -178,7 +181,7 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                <div className={`${embeddedMobile ? 'p-3' : 'p-4'} border-t border-gray-100 bg-gray-50 flex items-center justify-between`}>
                     <div className="text-[11px] font-bold text-slate-500">
                         Đã chọn: <span className="text-cyan-600">{selectedNames.length}</span> chính sách
                     </div>
@@ -187,7 +190,7 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
                         <button 
                             onClick={handleConfirm} 
                             disabled={selectedNames.length === 0 && !currentPolicy}
-                            className={`px-6 py-1.5 rounded-lg text-[11px] font-black transition-all shadow-md ${
+                            className={`${embeddedMobile ? 'h-9 rounded-xl px-4' : 'rounded-lg px-6 py-1.5'} text-[11px] font-black transition-all shadow-md ${
                                 selectedNames.length > 0 || currentPolicy
                                 ? 'bg-cyan-500 text-white shadow-cyan-500/20 hover:bg-cyan-600 active:scale-95'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'

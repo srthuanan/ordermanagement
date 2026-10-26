@@ -166,7 +166,7 @@ const StockView: React.FC<StockViewProps> = ({
 
     // Stock Welcome Video/Popup Tracker
     const [showStockWelcome, setShowStockWelcome] = useState(false);
-    const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const idleTimeoutRef = useRef<any>(null);
 
     const resetIdleTimer = useCallback(() => {
         if (isAdmin || localStorage.getItem('hasSeenStockWelcome_v1')) return;

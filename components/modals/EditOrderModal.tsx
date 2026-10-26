@@ -16,9 +16,11 @@ interface EditOrderModalProps {
     order: Order | null;
     existingOrderNumbers: string[];
     isAdmin?: boolean;
+    /** When true, renders inline inside a parent container (no fixed overlay / header) */
+    inline?: boolean;
 }
 
-const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSuccess, showToast, order, existingOrderNumbers, isAdmin }) => {
+const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSuccess, showToast, order, existingOrderNumbers, isAdmin, inline = false }) => {
     const [formData, setFormData] = useState<Partial<Order>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
@@ -75,8 +77,12 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
         formData['Nội thất'] !== order['Nội thất']
     );
 
-    const inputClass = "w-full bg-gray-50 border border-gray-200 text-slate-900 rounded-xl px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 font-medium text-sm";
-    const labelClass = "block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 ml-1";
+    const inputClass = inline
+        ? "w-full h-10 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-3 text-[13px] font-medium focus:outline-none focus:bg-white focus:border-slate-400 transition-all placeholder:text-slate-400"
+        : "w-full bg-gray-50 border border-gray-200 text-slate-900 rounded-xl px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400 font-medium text-sm";
+    const labelClass = inline
+        ? "block text-[11px] font-semibold text-slate-600 mb-1"
+        : "block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 ml-1";
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -170,25 +176,270 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
     const availableVersions = formData['Dòng xe'] ? (versionsMap[formData['Dòng xe']] || allPossibleVersions) : [];
 
+    if (inline) {
+        return (
+            <div className="w-full h-full flex-1 flex flex-col overflow-hidden bg-slate-50/40">
+                <form onSubmit={handleSubmit} className="w-full h-full flex-1 flex flex-col overflow-hidden">
+                    {/* Phần nội dung cuộn mượt */}
+                    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar">
+                        {/* Cảnh báo VIN */}
+                        {hasVin && !isConfigChanged && (
+                            <div className="p-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 flex items-start gap-2.5 shadow-2xs">
+                                <div className="w-5 h-5 bg-amber-100 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5">
+                                    <i className="fas fa-lock text-amber-600 text-[10px]"></i>
+                                </div>
+                                <div className="text-[12px] flex-1">
+                                    <h4 className="font-bold text-amber-900 text-xs">Đơn hàng đã ghép xe</h4>
+                                    <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
+                                        Đơn hàng đã có VIN: <b className="font-mono text-amber-950 font-bold">{order.VIN}</b>. Thông tin xe hiện đang khóa. Nếu bạn thay đổi cấu hình, VIN này sẽ được giải phóng.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {hasVin && isConfigChanged && (
+                            <div className="p-3 rounded-2xl border border-rose-200 bg-rose-50 flex items-start gap-2.5 shadow-2xs animate-pulse-subtle">
+                                <div className="w-5 h-5 bg-rose-100 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5">
+                                    <i className="fas fa-exclamation-triangle text-rose-600 text-[10px]"></i>
+                                </div>
+                                <div className="text-[12px] flex-1">
+                                    <h4 className="font-bold text-rose-900 text-xs">CẢNH BÁO GIẢI PHÓNG XE</h4>
+                                    <p className="text-rose-800 text-[11px] mt-0.5 leading-relaxed">
+                                        Bạn đang thay đổi cấu hình cho đơn hàng <b>đã ghép VIN ({order.VIN})</b>. Khi lưu, xe này sẽ được <b>nhả lại vào kho</b>.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Card 1: Thông tin khách hàng */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2.5">
+                            <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                                Thông tin khách hàng
+                            </h4>
+
+                            {isAdmin && (
+                                <div>
+                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                        Tư vấn bán hàng (Admin Only)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="Tên tư vấn bán hàng"
+                                        value={formData["Tên tư vấn bán hàng"] || ''}
+                                        onChange={handleInputChange}
+                                        required
+                                        className={inputClass}
+                                    />
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                    Tên khách hàng
+                                </label>
+                                <input
+                                    type="text"
+                                    name="Tên khách hàng"
+                                    value={formData["Tên khách hàng"] || ''}
+                                    onChange={handleInputChange}
+                                    onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
+                                    required
+                                    className={inputClass}
+                                    placeholder="VD: NGUYEN VAN A"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                    Mã HĐ Cyber
+                                </label>
+                                <input
+                                    type="text"
+                                    name="Mã HĐ Cyber"
+                                    value={formData["Mã HĐ Cyber"] || ''}
+                                    onChange={handleInputChange}
+                                    onBlur={() => setFormData(prev => ({ ...prev, "Mã HĐ Cyber": cleanCyberContractCode(prev["Mã HĐ Cyber"]) }))}
+                                    onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
+                                    className={`${inputClass} font-mono`}
+                                    placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                    Số đơn hàng
+                                </label>
+                                <input
+                                    type="text"
+                                    name="Số đơn hàng"
+                                    value={formData["Số đơn hàng"] || ''}
+                                    onChange={handleInputChange}
+                                    required
+                                    pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
+                                    title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"
+                                    className={`${inputClass} font-mono`}
+                                    placeholder="VD: N12345-VSO-24-01-0001"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Card 2: Thông tin cấu hình xe */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2.5">
+                            <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                                Thông tin xe
+                            </h4>
+
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                        Dòng xe
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            name="Dòng xe"
+                                            value={formData["Dòng xe"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            className={`${inputClass} appearance-none pr-8 cursor-pointer`}
+                                        >
+                                            <option value="" disabled>Chọn dòng xe</option>
+                                            {vehicleLines.map(car => <option key={car} value={car}>{car}</option>)}
+                                        </select>
+                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                        Phiên bản
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            name="Phiên bản"
+                                            value={formData["Phiên bản"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={!formData["Dòng xe"]}
+                                            className={`${inputClass} appearance-none pr-8 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400`}
+                                        >
+                                            <option value="" disabled>Chọn phiên bản</option>
+                                            {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                                        </select>
+                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                        Màu ngoại thất
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            name="Ngoại thất"
+                                            value={formData["Ngoại thất"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={!formData["Phiên bản"]}
+                                            className={`${inputClass} appearance-none pr-8 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400`}
+                                        >
+                                            <option value="" disabled>Chọn ngoại thất</option>
+                                            {vehicleColors.map(color => <option key={color} value={color}>{color}</option>)}
+                                        </select>
+                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                                        Màu nội thất
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            name="Nội thất"
+                                            value={formData["Nội thất"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled={!formData["Phiên bản"]}
+                                            className={`${inputClass} appearance-none pr-8 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400`}
+                                        >
+                                            <option value="" disabled>Chọn nội thất</option>
+                                            {availableInteriors.map(color => <option key={color} value={color}>{color}</option>)}
+                                        </select>
+                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 3: Thời gian đặt cọc */}
+                        <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2">
+                            <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                                Thời gian đặt cọc
+                            </h4>
+                            <input
+                                name="Ngày cọc"
+                                type="datetime-local"
+                                value={formData["Ngày cọc"] || ''}
+                                onChange={handleInputChange}
+                                required
+                                disabled={!isAdmin}
+                                className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-500`}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Footer cố định phong cách Apple iOS */}
+                    <div className="px-3.5 py-2.5 border-t border-slate-150 bg-white/95 backdrop-blur-sm flex gap-2 flex-shrink-0 z-10 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="h-9 px-4 rounded-xl bg-slate-100 active:bg-slate-200 text-slate-600 font-medium text-[12px] active:scale-[0.97] transition-all cursor-pointer"
+                        >
+                            Huỷ
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 h-9 rounded-xl bg-slate-800 active:bg-slate-900 disabled:opacity-50 text-white font-semibold text-[12px] flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer shadow-2xs"
+                        >
+                            {isSubmitting ? (
+                                <span>Đang lưu...</span>
+                            ) : (
+                                <>
+                                    <i className="fas fa-save text-[11px]"></i>
+                                    <span>Lưu Thay Đổi</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
             {/* Full-Screen Animated Background */}
+            {!inline && (
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
                 <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/20 to-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
                 <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-purple-500/20 to-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
             </div>
+            )}
 
-            <div className="relative z-10 w-full max-w-2xl mx-auto px-4 py-8 flex flex-col justify-center h-full md:h-auto pointer-events-none">
+            <div className={inline ? "w-full" : "relative z-10 w-full max-w-2xl mx-auto px-4 py-8 flex flex-col justify-center h-full md:h-auto pointer-events-none"}>
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col w-full max-h-[90vh] bg-white md:bg-white/95 md:backdrop-blur-3xl rounded-3xl overflow-hidden shadow-2xl border border-white/20 pointer-events-auto animate-fade-in-scale-up relative"
+                    className={inline ? "flex flex-col w-full bg-white rounded-2xl overflow-hidden border border-slate-200 relative" : "flex flex-col w-full max-h-[90vh] bg-white md:bg-white/95 md:backdrop-blur-3xl rounded-3xl overflow-hidden shadow-2xl border border-white/20 pointer-events-auto animate-fade-in-scale-up relative"}
                     onClick={e => e.stopPropagation()}
                 >
                     {/* Grid Background */}
+                    {!inline && (<>
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none"></div>
                     <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:128px_128px] pointer-events-none"></div>
-                    <header className="shrink-0 relative flex items-center justify-between p-4 md:p-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 via-white to-blue-50">
+                    </>)}
+                    {!inline && (<header className="shrink-0 relative flex items-center justify-between p-4 md:p-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 via-white to-blue-50">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
                                 <i className="fas fa-edit text-lg"></i>
@@ -201,9 +452,9 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                         <button type="button" onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center bg-white border border-gray-200 text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-all shadow-sm">
                             <i className="fas fa-times"></i>
                         </button>
-                    </header>
+                    </header>)}
 
-                    <main className="flex-1 overflow-y-auto p-5 md:p-6 custom-scrollbar bg-white/50">
+                    <main className={inline ? 'flex-1 p-2.5 bg-white/50' : 'flex-1 p-5 md:p-6 bg-white/50 overflow-y-auto custom-scrollbar'}>
                         {hasVin && !isConfigChanged && (
                             <div className="p-3 mb-4 rounded-xl border border-amber-200 bg-amber-50 flex items-start gap-3 shadow-sm">
                                 <div className="w-6 h-6 bg-amber-100 rounded-full flex-shrink-0 flex items-center justify-center">
@@ -234,12 +485,12 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+                        <div className={inline ? "grid grid-cols-1 gap-y-2" : "grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4"}>
                             <div className="md:col-span-2 pb-2 border-b border-gray-100">
-                                <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">Thông tin khách hàng</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <h3 className={`text-xs font-bold text-blue-600 uppercase tracking-wider ${inline ? 'mb-1.5' : 'mb-3'}`}>Thông tin khách hàng</h3>
+                                <div className={inline ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 md:grid-cols-2 gap-4"}>
                                     {isAdmin && (
-                                        <div className="md:col-span-2">
+                                        <div className={inline ? "col-span-2" : "md:col-span-2"}>
                                             <label className={labelClass} htmlFor="Tên tư vấn bán hàng">Tư vấn bán hàng (Admin Only)</label>
                                             <div className="relative">
                                                 <i className="fas fa-user-tie absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400 text-xs"></i>
@@ -247,14 +498,14 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                             </div>
                                         </div>
                                     )}
-                                    <div>
+                                    <div className={inline ? "col-span-2" : ""}>
                                         <label className={labelClass} htmlFor="Tên khách hàng">Tên khách hàng</label>
                                         <div className="relative">
                                             <i className="fas fa-user absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400 text-xs"></i>
                                             <input id="Tên khách hàng" type="text" name="Tên khách hàng" value={formData["Tên khách hàng"] || ''} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYEN VAN A" />
                                         </div>
                                     </div>
-                                    <div>
+                                    <div className={inline ? "col-span-2" : ""}>
                                         <label className={labelClass} htmlFor="Mã HĐ Cyber">Mã HĐ Cyber</label>
                                         <div className="relative">
                                             <i className="fas fa-file-signature absolute top-1/2 left-3.5 -translate-y-1/2 text-blue-500 text-xs"></i>
@@ -283,7 +534,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
                             <div className="md:col-span-2">
                                 <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3 mt-1">Thông tin xe</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className={inline ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 md:grid-cols-2 gap-4"}>
                                     <div>
                                         <label className={labelClass} htmlFor="Dòng xe">Dòng xe</label>
                                         <div className="relative">

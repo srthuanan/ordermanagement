@@ -22,6 +22,7 @@ interface RequestFormProps {
     currentUser: string;
     vehicleAnalyticsData: AnalyticsData;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
+    embeddedMobile?: boolean;
 }
 
 const InputGroup: React.FC<{ icon?: string; children: React.ReactNode; label: string; htmlFor: string; required?: boolean; badge?: React.ReactNode }> = ({ children, label, htmlFor, required, icon, badge }) => (
@@ -60,7 +61,7 @@ const isWholesaleDeposit = (policy?: string): boolean => {
     return normalizeStr(policy).includes('coc si');
 };
 
-const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
+const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview, embeddedMobile = false }) => {
     // --- State ---
     const [step, setStep] = useState<1 | 2>(1); // 1: Config, 2: Info
     const [formData, setFormData] = useState({
@@ -292,7 +293,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         }
     }, [formData.dong_xe]);
 
-    const inputClass = "w-full pl-4 pr-4 py-3.5 bg-white border border-slate-200 rounded-lg text-base font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300 shadow-sm hover:border-slate-300";
+    const inputClass = embeddedMobile
+        ? "w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors shadow-2xs"
+        : "w-full pl-4 pr-4 py-3.5 bg-white border border-slate-200 rounded-lg text-base font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300 shadow-sm hover:border-slate-300";
     const isPreFilled = !!initialVehicle;
 
     // --- Effects ---
@@ -523,10 +526,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     };
 
     return (
-        <form onSubmit={handleConfirmSubmit} className="flex flex-col lg:flex-row h-full w-full bg-transparent overflow-hidden gap-0 lg:gap-6 p-0 lg:p-4">
+        <form onSubmit={handleConfirmSubmit} className={`flex h-full w-full flex-col overflow-hidden p-0 lg:flex-row lg:gap-6 ${embeddedMobile ? 'bg-white' : 'bg-transparent lg:p-4'}`}>
 
             {/* LEFT PANEL: 3D Studio Background & Car (50%) */}
-            <div className="w-full lg:w-[50%] relative order-1 lg:order-1 flex flex-col z-20 hidden md:flex overflow-hidden rounded-l-3xl">
+            <div className={`${embeddedMobile ? 'hidden' : 'hidden md:flex'} relative z-20 order-1 w-full flex-col overflow-hidden rounded-l-3xl lg:order-1 lg:w-[50%]`}>
                 {/* 3D Studio Background: Modern Showroom Image */}
                 <div 
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-in-out"
@@ -578,30 +581,49 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 </div>
 
             {/* RIGHT PANEL: Spacious Form (50%) */}
-            <div className="flex-1 lg:w-[50%] order-2 lg:order-2 bg-white flex flex-col h-full relative z-10 overflow-y-auto rounded-3xl shadow-xl border border-slate-100/50">
+            <div className={`relative z-10 order-2 flex h-full flex-1 flex-col bg-white lg:order-2 lg:w-[50%] ${embeddedMobile ? 'overflow-hidden' : 'overflow-y-auto rounded-3xl border border-slate-100/50 shadow-xl'}`}>
                 {/* Stepper Header - Compact */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-transparent shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step >= 1 ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-400'}`}>1</div>
-                        <div className={`h-0.5 w-12 rounded-full transition-all ${step >= 2 ? 'bg-accent-primary' : 'bg-slate-100'}`}></div>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step >= 2 ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-400'}`}>2</div>
-                    </div>
-                    <div>
-                        <h3 className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.15em]">{step === 1 ? 'Cấu hình xe' : 'Thông tin HĐ'}</h3>
-                    </div>
+                <div className={`flex shrink-0 items-center justify-between border-b border-slate-100 ${embeddedMobile ? 'bg-white px-4 py-2.5' : 'bg-transparent px-6 py-4'}`}>
+                    {embeddedMobile ? (
+                        <>
+                            <div className="min-w-0">
+                                <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-slate-900">
+                                    {step === 1 ? 'Cấu hình xe' : 'Thông tin hợp đồng'}
+                                </h3>
+                                <p className="mt-0.5 truncate text-[10.5px] font-medium text-slate-500">
+                                    {formData.dong_xe} {formData.phien_ban}
+                                    {formData.vin ? ` · VIN ...${formData.vin.slice(-6)}` : ''}
+                                </p>
+                            </div>
+                            <span className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                                Bước {step}/2
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step >= 1 ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-400'}`}>1</div>
+                                <div className={`h-0.5 w-12 rounded-full transition-all ${step >= 2 ? 'bg-accent-primary' : 'bg-slate-100'}`}></div>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step >= 2 ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-400'}`}>2</div>
+                            </div>
+                            <div>
+                                <h3 className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.15em]">{step === 1 ? 'Cấu hình xe' : 'Thông tin HĐ'}</h3>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-grow flex flex-col p-6 md:p-8 overflow-y-auto">
-                    <div className="flex-grow flex flex-col justify-center w-full relative">
+                <div className={`flex flex-grow flex-col ${embeddedMobile ? 'overflow-hidden p-3' : 'overflow-y-auto p-6 md:p-8'}`}>
+                    <div className={`relative flex w-full flex-grow flex-col ${embeddedMobile ? 'justify-start' : 'justify-center'}`}>
 
                         {/* STEP 1: Premium Config Grid */}
                         {step === 1 && (
-                            <div className="space-y-4 md:space-y-5 animate-fade-in relative z-10">
-                                <div className="grid grid-cols-1 gap-5 md:gap-6">
+                            <div className={`relative z-10 animate-fade-in ${embeddedMobile ? 'space-y-3' : 'space-y-4 md:space-y-5'}`}>
+                                <div className={`grid grid-cols-1 ${embeddedMobile ? 'gap-3' : 'gap-5 md:gap-6'}`}>
                                     <div>
                                         <InputGroup label="Dòng xe (Model)" htmlFor="dong_xe" required>
-                                            <div className="flex flex-wrap gap-2 mt-2">
+                                            <div className={`flex flex-wrap ${embeddedMobile ? 'mt-1.5 justify-center gap-1.5' : 'mt-2 gap-2'}`}>
                                                 {vehicleLines.map(model => {
                                                     const isSelected = formData.dong_xe === model;
                                                     return (
@@ -610,7 +632,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                             type="button"
                                                             disabled={isPreFilled}
                                                             onClick={() => handleInputChange({ target: { name: 'dong_xe', value: model } } as any)}
-                                                            className={`px-4 py-1.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-colors duration-300 ${
+                                                            className={`${embeddedMobile ? 'h-8 w-[calc(20%-5px)] flex-none rounded-lg px-1 text-[9.5px] tracking-wide' : 'rounded-md px-4 py-1.5 text-[11px] tracking-wider'} font-bold uppercase transition-colors duration-300 ${
                                                                 isSelected
                                                                     ? 'bg-slate-900 text-white shadow-sm border border-slate-900'
                                                                     : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-900 hover:text-slate-900 hover:bg-slate-50'
@@ -650,14 +672,23 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                         </InputGroup>
                                     </div>
                                     <div>
-                                        <InputGroup label="Màu ngoại thất (Exterior Color)" htmlFor="ngoai_that" required>
-                                            <div className="mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
+                                        <InputGroup
+                                            label="Màu ngoại thất (Exterior Color)"
+                                            htmlFor="ngoai_that"
+                                            required
+                                            badge={embeddedMobile && formData.ngoai_that ? (
+                                                <span className="max-w-[52vw] truncate rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                                                    {formData.ngoai_that}
+                                                </span>
+                                            ) : undefined}
+                                        >
+                                            {!embeddedMobile && <div className="mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
                                                 <span className={`text-[13px] italic ${formData.ngoai_that ? 'text-slate-700' : 'text-slate-400'}`}>
                                                     {formData.ngoai_that || 'Vui lòng chọn vòng màu bên dưới...'}
                                                 </span>
-                                            </div>
+                                            </div>}
                                         </InputGroup>
-                                        <div className="flex flex-wrap gap-2 mt-3 pl-1 min-h-[44px]">
+                                        <div className={`${embeddedMobile ? 'mt-1.5 grid min-h-8 grid-cols-6 gap-1.5 px-1 pb-1' : 'mt-3 flex min-h-[44px] flex-wrap gap-2 pl-1'}`}>
                                              {(formData.phien_ban && availableExteriors.length > 0) ? (
                                                     Array.from(new Set(availableExteriors)).map(color => {
                                                         const lower = color.toLowerCase();
@@ -709,7 +740,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                             <div 
                                                                 key={color} 
                                                                 onClick={!isPreFilled ? () => handleInputChange({ target: { name: 'ngoai_that', value: color } } as any) : undefined} 
-                                                                className={`relative flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-all duration-300 ease-out ${isSelected ? 'ring-2 ring-accent-primary ring-offset-2 scale-110 shadow-md' : 'ring-1 ring-slate-300 hover:ring-slate-400 hover:scale-105 shadow-sm'}`} 
+                                                                className={`relative flex flex-shrink-0 items-center justify-center rounded-full cursor-pointer transition-all duration-300 ease-out ${embeddedMobile ? 'h-7 w-7 justify-self-center' : 'h-8 w-8'} ${isSelected ? 'ring-2 ring-accent-primary ring-offset-2 scale-110 shadow-md' : 'ring-1 ring-slate-300 hover:ring-slate-400 hover:scale-105 shadow-sm'}`} 
                                                                 title={color}
                                                             >
                                                                 <div className={`w-full h-full rounded-full overflow-hidden relative border ${isWhiteSingle ? 'border-slate-300 shadow-inner' : 'border-black/10'}`}>
@@ -728,19 +759,30 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                         );
                                                     })
                                                 ) : (
-                                                    <div className="text-[13px] text-slate-400 italic py-1 flex items-center h-8">Vui lòng chọn Phiên bản để xem bảng màu...</div>
+                                                    <div className={`${embeddedMobile ? 'col-span-6 w-full justify-center text-center text-[10.5px]' : 'text-[13px]'} flex h-8 items-center py-1 italic text-slate-400`}>
+                                                        Vui lòng chọn Phiên bản để xem bảng màu...
+                                                    </div>
                                                 )}
                                             </div>
                                     </div>
                                     <div>
-                                        <InputGroup label="Màu nội thất (Interior Color)" htmlFor="noi_that" required>
-                                            <div className="mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
+                                        <InputGroup
+                                            label="Màu nội thất (Interior Color)"
+                                            htmlFor="noi_that"
+                                            required
+                                            badge={embeddedMobile && formData.noi_that ? (
+                                                <span className="max-w-[52vw] truncate rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                                                    {formData.noi_that}
+                                                </span>
+                                            ) : undefined}
+                                        >
+                                            {!embeddedMobile && <div className="mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
                                                 <span className={`text-[13px] italic ${formData.noi_that ? 'text-slate-700' : 'text-slate-400'}`}>
                                                     {formData.noi_that || 'Vui lòng chọn vòng màu bên dưới...'}
                                                 </span>
-                                            </div>
+                                            </div>}
                                         </InputGroup>
-                                        <div className="flex flex-wrap gap-2 mt-3 pl-1 min-h-[44px]">
+                                        <div className={`${embeddedMobile ? 'mt-1.5 grid min-h-8 grid-cols-6 gap-1.5 px-1 pb-1' : 'mt-3 flex min-h-[44px] flex-wrap gap-2 pl-1'}`}>
                                             {(formData.ngoai_that && availableInteriors.length > 0) ? (
                                                 availableInteriors.map(color => {
                                                     const lower = color.toLowerCase();
@@ -750,7 +792,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                         <div 
                                                             key={color} 
                                                             onClick={!isPreFilled ? () => handleInputChange({ target: { name: 'noi_that', value: color } } as any) : undefined} 
-                                                            className={`relative flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-all duration-300 ease-out ${isSelected ? 'ring-2 ring-accent-primary ring-offset-2 scale-110 shadow-md' : 'ring-1 ring-slate-200 hover:ring-slate-300 hover:scale-105 shadow-sm'}`} 
+                                                            className={`relative flex flex-shrink-0 items-center justify-center rounded-full cursor-pointer transition-all duration-300 ease-out ${embeddedMobile ? 'h-7 w-7 justify-self-center' : 'h-8 w-8'} ${isSelected ? 'ring-2 ring-accent-primary ring-offset-2 scale-110 shadow-md' : 'ring-1 ring-slate-200 hover:ring-slate-300 hover:scale-105 shadow-sm'}`} 
                                                             title={color}
                                                         >
                                                             <div className="w-full h-full rounded-full overflow-hidden relative border border-black/10">
@@ -762,7 +804,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                     );
                                                 })
                                             ) : (
-                                                <div className="text-[13px] text-slate-400 italic py-1 flex items-center h-8">Vui lòng chọn Ngoại thất để xem bảng màu...</div>
+                                                <div className={`${embeddedMobile ? 'col-span-6 w-full justify-center text-center text-[10.5px]' : 'text-[13px]'} flex h-8 items-center py-1 italic text-slate-400`}>
+                                                    Vui lòng chọn Ngoại thất để xem bảng màu...
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -776,11 +820,11 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
                         {/* STEP 2: Premium Info Grid */}
                         {step === 2 && (
-                            <div className="flex flex-col gap-3 md:gap-4 animate-fade-in relative z-10">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            <div className={`relative z-10 flex flex-col animate-fade-in ${embeddedMobile ? 'gap-2' : 'gap-3 md:gap-4'}`}>
+                                <div className={`grid grid-cols-1 md:grid-cols-2 ${embeddedMobile ? 'gap-2' : 'gap-3 md:gap-4'}`}>
                                     {/* MÃ HĐ CYBER (BẮT BUỘC) */}
                                     <div className="relative">
-                                        <div className="flex items-center justify-between mb-2">
+                                        <div className={`flex items-center justify-between ${embeddedMobile ? 'mb-1' : 'mb-2'}`}>
                                             <label htmlFor="ma_hd_cyber" className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
                                                 <i className="fas fa-file-signature text-blue-500"></i>
                                                 Mã HĐ Cyber <span className="text-red-500">*</span>
@@ -1038,8 +1082,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                         </div>
                                     )}
                                 </div>
-                                <div className="p-3 md:p-4 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-inner">
-                                    <div className="flex justify-between items-center mb-3">
+                                <div className={`${embeddedMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3 shadow-inner md:p-4'} bg-slate-50/50 backdrop-blur-sm border border-slate-200/50`}>
+                                    <div className={`flex items-center justify-between ${embeddedMobile ? 'mb-2' : 'mb-3'}`}>
                                         <label className="text-xs font-bold text-slate-700 flex items-center gap-2">
                                             <div className="w-6 h-6 rounded-full bg-accent-primary/10 flex items-center justify-center">
                                                 <i className="fas fa-file-invoice-dollar text-accent-primary text-[10px]"></i>
@@ -1048,13 +1092,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                         </label>
                                         <button type="button" onClick={handleShowSample} className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-accent-primary hover:bg-accent-primary hover:text-white hover:border-accent-primary transition-all uppercase">Xem mẫu</button>
                                     </div>
-                                    <FileUpload onFileSelect={handleFileSelect} isProcessing={isProcessingOcr} ocrStatus={ocrStatus} showToast={showToast} />
-                                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500 bg-white/80 p-3 rounded-xl border border-slate-100 shadow-sm">
-                                        <span className="font-medium">Ngày cọc:</span>
-                                        <span className={`font-mono font-bold px-2 py-0.5 rounded ${formData.ngay_coc ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
-                                            {formData.ngay_coc ? new Date(formData.ngay_coc).toLocaleDateString('vi-VN') : 'CHƯA NHẬN DIỆN'}
-                                        </span>
-                                    </div>
+                                    <FileUpload onFileSelect={handleFileSelect} isProcessing={isProcessingOcr} ocrStatus={ocrStatus} showToast={showToast} compact={embeddedMobile} />
+                                    {(!embeddedMobile || formData.ngay_coc) && (
+                                        <div className={`${embeddedMobile ? 'mt-2 p-2 text-[10.5px]' : 'mt-4 p-3 text-xs'} flex items-center justify-between text-slate-500 bg-white/80 rounded-xl border border-slate-100 shadow-sm`}>
+                                            <span className="font-medium">Ngày cọc:</span>
+                                            <span className={`font-mono font-bold px-2 py-0.5 rounded ${formData.ngay_coc ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
+                                                {formData.ngay_coc ? new Date(formData.ngay_coc).toLocaleDateString('vi-VN') : 'CHƯA NHẬN DIỆN'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -1062,13 +1108,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 </div>
 
                 {/* Footer Actions */}
-                <div className="px-6 md:px-8 py-5 flex items-center justify-end shrink-0">
-                    <div className="flex items-center gap-3">
+                <div className={`flex shrink-0 items-center ${embeddedMobile ? 'border-t border-slate-100 bg-white px-4 py-3' : 'justify-end px-6 py-5 md:px-8'}`}>
+                    <div className={`flex items-center gap-2 ${embeddedMobile ? 'w-full' : 'gap-3'}`}>
                         {step === 1 ? (
                             <button
                                 type="button"
                                 onClick={handleClearForm}
-                                className="px-5 py-2.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-full font-semibold text-sm transition-all shadow-xs cursor-pointer"
+                                className={`${embeddedMobile ? 'h-10 flex-1 rounded-xl bg-slate-100 text-[12px] font-medium text-slate-600 active:bg-slate-200' : 'rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-100 active:bg-slate-200'} cursor-pointer transition-all`}
                             >
                                 Hủy bỏ
                             </button>
@@ -1076,7 +1122,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                             <button
                                 type="button"
                                 onClick={handleBackStep}
-                                className="px-5 py-2.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-full font-semibold text-sm transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                                className={`${embeddedMobile ? 'h-10 flex-1 rounded-xl bg-slate-100 text-[12px] font-medium text-slate-600 active:bg-slate-200' : 'rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-100 active:bg-slate-200'} flex cursor-pointer items-center justify-center gap-1.5 transition-all`}
                             >
                                 <i className="fas fa-arrow-left text-xs"></i>
                                 <span>Quay lại</span>
@@ -1087,7 +1133,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                             <button
                                 type="button"
                                 onClick={handleNextStep}
-                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+                                className={`${embeddedMobile ? 'h-10 flex-[1.25] rounded-xl bg-slate-800 text-[12px] shadow-xs active:bg-slate-900' : 'rounded-full bg-blue-600 px-6 py-2.5 text-sm shadow-md hover:bg-blue-700 hover:shadow-lg active:bg-blue-800'} flex cursor-pointer items-center justify-center gap-2 font-semibold text-white transition-all`}
                             >
                                 <span>Tiếp theo</span>
                                 <i className="fas fa-arrow-right text-xs"></i>
@@ -1096,7 +1142,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                className={`${embeddedMobile ? 'h-10 flex-[1.25] rounded-xl bg-slate-800 text-[12px] shadow-xs active:bg-slate-900' : 'rounded-full bg-blue-600 px-6 py-2.5 text-sm shadow-md hover:bg-blue-700 hover:shadow-lg active:bg-blue-800'} flex cursor-pointer items-center justify-center gap-2 font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                                 {isSubmitting ? (
                                     <>
@@ -1124,6 +1170,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 currentPolicy={formData.chinh_sach}
                 carModel={formData.dong_xe}
                 compact={true}
+                embeddedMobile={embeddedMobile}
             />
         </form>
     );

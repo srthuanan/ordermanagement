@@ -634,6 +634,8 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
     return getModelDefaultImage(model);
 };
 
+export const getVehicleImageUrl = getCarImage;
+
 
 /**
  * Returns the path to the default image for a given car model.

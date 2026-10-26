@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order, AdminSubView } from '../types';
 
-export type ActiveView = 'orders' | 'backlog' | 'stock' | 'sold' | 'admin' | 'laithu' | 'inquiry' | 'map' | 'crm';
+export type ActiveView = 'dashboard' | 'orders' | 'backlog' | 'stock' | 'sold' | 'admin' | 'laithu' | 'inquiry' | 'map' | 'crm';
 
 export const useAppNavigation = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [activeView, setActiveView] = useState<ActiveView>('orders');
+    const [activeView, setActiveView] = useState<ActiveView>(() => {
+        if (typeof window !== 'undefined') {
+            const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) return 'dashboard';
+        }
+        return 'orders';
+    });
     const [initialAdminState, setInitialAdminState] = useState<{ targetTab?: AdminSubView; orderToShow?: Order; inquiryId?: string } | null>(null);
 
     useEffect(() => {

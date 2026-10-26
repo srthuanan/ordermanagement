@@ -5,6 +5,7 @@ import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import moment from 'moment';
 import TabbedFilter from '../ui/TabbedFilter';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
+import { getExteriorSwatchColor } from '../../utils/styleUtils';
 
 export type BacklogProgressType = 'Chờ xe' | 'Cần xe' | 'Hoàn cọc' | 'Hủy cọc';
 
@@ -76,6 +77,38 @@ const PROGRESS_STYLES: Record<BacklogProgressType, {
     }
 };
 
+const PROGRESS_BADGE_META: Record<BacklogProgressType, {
+    bg: string;
+    text: string;
+    border: string;
+    dot: string;
+}> = {
+    'Chờ xe': {
+        bg: 'bg-sky-50',
+        text: 'text-sky-700',
+        border: 'border-sky-200/90',
+        dot: 'bg-sky-500'
+    },
+    'Cần xe': {
+        bg: 'bg-emerald-50',
+        text: 'text-emerald-700',
+        border: 'border-emerald-200/90',
+        dot: 'bg-emerald-500'
+    },
+    'Hoàn cọc': {
+        bg: 'bg-amber-50',
+        text: 'text-amber-800',
+        border: 'border-amber-200/90',
+        dot: 'bg-amber-500'
+    },
+    'Hủy cọc': {
+        bg: 'bg-rose-50',
+        text: 'text-rose-700',
+        border: 'border-rose-200/90',
+        dot: 'bg-rose-500'
+    }
+};
+
 export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
     currentUser,
     currentUserName,
@@ -91,6 +124,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
 
     // Active row index in Cyber table
     const [selectedRowIdx, setSelectedRowIdx] = useState<number>(0);
+    const [mobileDetailOrder, setMobileDetailOrder] = useState<any | null>(null);
 
     // Identify if current user is a Sales Manager (TPKD)
     const isManager = useMemo(() => {
@@ -511,194 +545,388 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                         )}
                     </div>
                 ) : (
-                    <table className="w-full min-w-[1150px] border-collapse text-xs border border-slate-200">
-                        <thead className="bg-slate-100 sticky top-0 z-20 shadow-xs border-b border-slate-300">
-                            <tr className="text-slate-700 text-center font-bold text-[11px] h-9 uppercase tracking-wider select-none">
-                                <th className="w-10 border-r border-slate-300 p-0 text-center">#</th>
-                                <th className="w-36 border-r border-slate-300 px-2 text-center">Số HĐ / Ngày</th>
-                                <th className="w-48 border-r border-slate-300 px-3 text-left">Khách Hàng / SĐT</th>
-                                <th className="w-48 border-r border-slate-300 px-3 text-left">Dòng Xe & Màu Sắc</th>
-                                <th className="w-32 border-r border-slate-300 px-2.5 text-right">Tiền Cọc</th>
-                                <th className="w-44 border-r border-slate-300 px-2 text-center">Số VIN</th>
-                                {(isCurrentUserAdmin || isManager) && (
-                                    <th className="w-40 border-r border-slate-300 px-3 text-left">Tư Vấn BH</th>
-                                )}
-                                <th className="w-44 px-2 text-center">Tiến Độ Cọc</th>
-                            </tr>
-                        </thead>
+                    <>
+                        {/* 1. GIAO DIỆN DESKTOP / LAPTOP: BẢNG CYBER ERP TRUYỀN THỐNG (BẢO TOÀN NGUYÊN VẸN 100%) */}
+                        <table className="hidden md:table w-full min-w-[1150px] border-collapse text-xs border border-slate-200">
+                            <thead className="bg-slate-100 sticky top-0 z-20 shadow-xs border-b border-slate-300">
+                                <tr className="text-slate-700 text-center font-bold text-[11px] h-9 uppercase tracking-wider select-none">
+                                    <th className="w-10 border-r border-slate-300 p-0 text-center">#</th>
+                                    <th className="w-36 border-r border-slate-300 px-2 text-center">Số HĐ / Ngày</th>
+                                    <th className="w-48 border-r border-slate-300 px-3 text-left">Khách Hàng / SĐT</th>
+                                    <th className="w-48 border-r border-slate-300 px-3 text-left">Dòng Xe & Màu Sắc</th>
+                                    <th className="w-32 border-r border-slate-300 px-2.5 text-right">Tiền Cọc</th>
+                                    <th className="w-44 border-r border-slate-300 px-2 text-center">Số VIN</th>
+                                    {(isCurrentUserAdmin || isManager) && (
+                                        <th className="w-40 border-r border-slate-300 px-3 text-left">Tư Vấn BH</th>
+                                    )}
+                                    <th className="w-44 px-2 text-center">Tiến Độ Cọc</th>
+                                </tr>
+                            </thead>
 
-                        <tbody className="divide-y divide-slate-200 text-xs">
-                            {filteredOrders.map((order, idx) => {
-                                const isSelected = selectedRowIdx === idx;
-                                const currentProgress: BacklogProgressType = (order.tien_do as BacklogProgressType) || 'Chờ xe';
-                                const isRowUpdating = updatingId === order.id;
+                            <tbody className="divide-y divide-slate-200 text-xs">
+                                {filteredOrders.map((order, idx) => {
+                                    const isSelected = selectedRowIdx === idx;
+                                    const currentProgress: BacklogProgressType = (order.tien_do as BacklogProgressType) || 'Chờ xe';
+                                    const isRowUpdating = updatingId === order.id;
 
-                                return (
-                                    <tr
-                                        key={order.id || order.so_don_hang}
-                                        onClick={() => setSelectedRowIdx(idx)}
-                                        className={`cursor-pointer border-b border-slate-200 text-xs transition-colors ${
-                                            isSelected 
-                                                ? 'bg-sky-50/90 ring-1 ring-inset ring-sky-500/30' 
-                                                : 'hover:bg-slate-50/80 text-slate-800'
-                                        }`}
-                                    >
-                                        {/* 1. STT */}
-                                        <td className="border-r border-slate-200 text-center font-mono text-slate-400 p-0 select-none py-2 text-xs">
-                                            {idx + 1}
-                                        </td>
+                                    return (
+                                        <tr
+                                            key={order.id || order.so_don_hang}
+                                            onClick={() => setSelectedRowIdx(idx)}
+                                            className={`cursor-pointer border-b border-slate-200 text-xs transition-colors ${
+                                                isSelected 
+                                                    ? 'bg-sky-50/90 ring-1 ring-inset ring-sky-500/30' 
+                                                    : 'hover:bg-slate-50/80 text-slate-800'
+                                            }`}
+                                        >
+                                            {/* 1. STT */}
+                                            <td className="border-r border-slate-200 text-center font-mono text-slate-400 p-0 select-none py-2 text-xs">
+                                                {idx + 1}
+                                            </td>
 
-                                        {/* 2. Số HĐ & Ngày ký */}
-                                        <td className="px-2 border-r border-slate-200 text-center py-2">
-                                            <div 
-                                                onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.so_hop_dong || order.so_don_hang, e); }}
-                                                title="Click copy số HĐ"
-                                                className="font-mono font-bold text-slate-800 hover:text-sky-600 cursor-pointer text-xs"
-                                            >
-                                                {order.so_hop_dong || order.so_don_hang}
-                                            </div>
-                                            <div className="text-[10.5px] font-mono text-slate-400 mt-0.5">
-                                                {moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
-                                            </div>
-                                        </td>
-
-                                        {/* 3. Tên khách hàng & SĐT */}
-                                        <td className="px-3 border-r border-slate-200 text-left py-2">
-                                            <div
-                                                onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.khach_hang, e); }}
-                                                title="Click copy tên khách hàng"
-                                                className="font-bold text-slate-900 uppercase hover:text-sky-600 cursor-pointer text-xs leading-snug"
-                                            >
-                                                {order.khach_hang || '—'}
-                                            </div>
-                                            <div className="text-[11px] font-mono mt-0.5">
-                                                {order.so_dien_thoai ? (
-                                                    <a
-                                                        href={`tel:${order.so_dien_thoai}`}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="text-sky-700 font-semibold hover:underline inline-flex items-center gap-1"
-                                                        title="Bấm gọi điện"
-                                                    >
-                                                        <i className="fas fa-phone-alt text-[8px] text-sky-500"></i>
-                                                        {order.so_dien_thoai}
-                                                    </a>
-                                                ) : (
-                                                    <span className="text-slate-400 italic">Chưa có SĐT</span>
-                                                )}
-                                            </div>
-                                        </td>
-
-                                        {/* 4. Dòng xe & Màu sắc */}
-                                        <td className="px-3 border-r border-slate-200 text-left py-2">
-                                            <div className="font-semibold text-slate-800 text-xs leading-snug" title={order.phien_ban}>
-                                                {order.phien_ban || '—'}
-                                            </div>
-                                            <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
-                                                {order.ngoai_that ? (
-                                                    <span className="uppercase">
-                                                        {order.ngoai_that}
-                                                        {order.noi_that && order.noi_that !== 'Tiêu chuẩn' && ` • ${order.noi_that}`}
-                                                    </span>
-                                                ) : (
-                                                    <span>{order.noi_that || 'Tiêu chuẩn'}</span>
-                                                )}
-                                            </div>
-                                        </td>
-
-                                        {/* 5. Tiền cọc */}
-                                        <td className="px-2.5 border-r border-slate-200 text-right py-2">
-                                            <div className="font-mono font-bold text-emerald-700 text-xs">
-                                                {formatVND(order.tien_coc)}
-                                            </div>
-                                        </td>
-
-                                        {/* 6. Số VIN & Liên Kết Đơn Hàng Đã Ghép */}
-                                        <td className="px-2 border-r border-slate-200 text-center font-mono py-2">
-                                            {order.vin && order.vin.length > 5 ? (
-                                                <div className="flex flex-col items-center justify-center gap-1">
-                                                    <span 
-                                                        onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
-                                                        title="Số VIN đã ghép xe - Bấm để copy"
-                                                        className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 cursor-pointer text-[10.5px] bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 shadow-2xs"
-                                                    >
-                                                        <i className="fas fa-car text-[8px] text-emerald-600 shrink-0"></i>
-                                                        <span>{order.vin}</span>
-                                                        <i className="far fa-copy text-[7.5px] text-emerald-500 shrink-0"></i>
-                                                    </span>
-
-                                                    {/* Link đơn hàng DMS & vị trí kho xe */}
-                                                    {order.so_don_hang && order.so_don_hang !== order.so_hop_dong ? (
-                                                        <div className="flex items-center justify-center gap-1 text-[9.5px] text-slate-500 font-mono">
-                                                            <span 
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (onSelectOrder && orders) {
-                                                                        const matched = orders.find(ord => 
-                                                                            ord['Số đơn hàng'] === order.so_don_hang || 
-                                                                            ord['Mã HĐ Cyber'] === order.so_hop_dong || 
-                                                                            ord.id === order.so_don_hang
-                                                                        );
-                                                                        if (matched) onSelectOrder(matched);
-                                                                        else copyWithFeedback(order.so_don_hang, e);
-                                                                    } else {
-                                                                        copyWithFeedback(order.so_don_hang, e);
-                                                                    }
-                                                                }}
-                                                                title={`Mã đơn hàng DMS: ${order.so_don_hang}${onSelectOrder ? ' (Bấm để xem chi tiết đơn)' : ' (Bấm để copy)'}`}
-                                                                className="text-sky-700 hover:underline cursor-pointer inline-flex items-center gap-0.5 font-semibold"
-                                                            >
-                                                                <i className="fas fa-link text-[7.5px]"></i>
-                                                                <span>{order.so_don_hang}</span>
-                                                            </span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
-                                                                }}
-                                                                title="Xem vị trí xe trong kho"
-                                                                className="text-slate-400 hover:text-sky-600 cursor-pointer p-0.5"
-                                                            >
-                                                                <i className="fas fa-location-dot text-[8.5px]"></i>
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-center gap-1 text-[9px] text-emerald-700 font-medium">
-                                                            <span>Đã ghép xe</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
-                                                                }}
-                                                                title="Xem vị trí xe trong kho"
-                                                                className="text-slate-400 hover:text-sky-600 cursor-pointer p-0.5"
-                                                            >
-                                                                <i className="fas fa-location-dot text-[8.5px]"></i>
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                            {/* 2. Số HĐ & Ngày ký */}
+                                            <td className="px-2 border-r border-slate-200 text-center py-2">
+                                                <div 
+                                                    onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.so_hop_dong || order.so_don_hang, e); }}
+                                                    title="Click copy số HĐ"
+                                                    className="font-mono font-bold text-slate-800 hover:text-sky-600 cursor-pointer text-xs"
+                                                >
+                                                    {order.so_hop_dong || order.so_don_hang}
                                                 </div>
-                                            ) : (
-                                                <span className="text-slate-400 italic text-[11px] block">
-                                                    Chưa ghép xe
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        {/* 7. Tên TVBH (Chỉ Admin & TPKD) */}
-                                        {(isCurrentUserAdmin || isManager) && (
-                                            <td className="px-3 border-r border-slate-200 text-left py-2">
-                                                <div className="font-semibold uppercase text-slate-800 text-xs" title={order.tvbh_name}>
-                                                    {order.tvbh_name || '—'}
+                                                <div className="text-[10.5px] font-mono text-slate-400 mt-0.5">
+                                                    {moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
                                                 </div>
                                             </td>
+
+                                            {/* 3. Tên khách hàng & SĐT */}
+                                            <td className="px-3 border-r border-slate-200 text-left py-2">
+                                                <div
+                                                    onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.khach_hang, e); }}
+                                                    title="Click copy tên khách hàng"
+                                                    className="font-bold text-slate-900 uppercase hover:text-sky-600 cursor-pointer text-xs leading-snug"
+                                                >
+                                                    {order.khach_hang || '—'}
+                                                </div>
+                                                <div className="text-[11px] font-mono mt-0.5">
+                                                    {order.so_dien_thoai ? (
+                                                        <a
+                                                            href={`tel:${order.so_dien_thoai}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="text-sky-700 font-semibold hover:underline inline-flex items-center gap-1"
+                                                            title="Bấm gọi điện"
+                                                        >
+                                                            <i className="fas fa-phone-alt text-[8px] text-sky-500"></i>
+                                                            {order.so_dien_thoai}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic">Chưa có SĐT</span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* 4. Dòng xe & Màu sắc */}
+                                            <td className="px-3 border-r border-slate-200 text-left py-2">
+                                                <div className="font-semibold text-slate-800 text-xs leading-snug" title={order.phien_ban}>
+                                                    {order.phien_ban || '—'}
+                                                </div>
+                                                <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
+                                                    {order.ngoai_that ? (
+                                                        <span className="uppercase">
+                                                            {order.ngoai_that}
+                                                            {order.noi_that && order.noi_that !== 'Tiêu chuẩn' && ` • ${order.noi_that}`}
+                                                        </span>
+                                                    ) : (
+                                                        <span>{order.noi_that || 'Tiêu chuẩn'}</span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            {/* 5. Tiền cọc */}
+                                            <td className="px-2.5 border-r border-slate-200 text-right py-2">
+                                                <div className="font-mono font-bold text-emerald-700 text-xs">
+                                                    {formatVND(order.tien_coc)}
+                                                </div>
+                                            </td>
+
+                                            {/* 6. Số VIN & Liên Kết Đơn Hàng Đã Ghép */}
+                                            <td className="px-2 border-r border-slate-200 text-center font-mono py-2">
+                                                {order.vin && order.vin.length > 5 ? (
+                                                    <div className="flex flex-col items-center justify-center gap-1">
+                                                        <span 
+                                                            onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
+                                                            title="Số VIN đã ghép xe - Bấm để copy"
+                                                            className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 cursor-pointer text-[10.5px] bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 shadow-2xs"
+                                                        >
+                                                            <i className="fas fa-car text-[8px] text-emerald-600 shrink-0"></i>
+                                                            <span>{order.vin}</span>
+                                                            <i className="far fa-copy text-[7.5px] text-emerald-500 shrink-0"></i>
+                                                        </span>
+
+                                                        {/* Link đơn hàng DMS & vị trí kho xe */}
+                                                        {order.so_don_hang && order.so_don_hang !== order.so_hop_dong ? (
+                                                            <div className="flex items-center justify-center gap-1 text-[9.5px] text-slate-500 font-mono">
+                                                                <span 
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (onSelectOrder && orders) {
+                                                                            const matched = orders.find(ord => 
+                                                                                ord['Số đơn hàng'] === order.so_don_hang || 
+                                                                                ord['Mã HĐ Cyber'] === order.so_hop_dong || 
+                                                                                ord.id === order.so_don_hang
+                                                                            );
+                                                                            if (matched) onSelectOrder(matched);
+                                                                            else copyWithFeedback(order.so_don_hang, e);
+                                                                        } else {
+                                                                            copyWithFeedback(order.so_don_hang, e);
+                                                                        }
+                                                                    }}
+                                                                    title={`Mã đơn hàng DMS: ${order.so_don_hang}${onSelectOrder ? ' (Bấm để xem chi tiết đơn)' : ' (Bấm để copy)'}`}
+                                                                    className="text-sky-700 hover:underline cursor-pointer inline-flex items-center gap-0.5 font-semibold"
+                                                                >
+                                                                    <i className="fas fa-link text-[7.5px]"></i>
+                                                                    <span>{order.so_don_hang}</span>
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
+                                                                    }}
+                                                                    title="Xem vị trí xe trong kho"
+                                                                    className="text-slate-400 hover:text-sky-600 cursor-pointer p-0.5"
+                                                                >
+                                                                    <i className="fas fa-location-dot text-[8.5px]"></i>
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-center gap-1 text-[9px] text-emerald-700 font-medium">
+                                                                <span>Đã ghép xe</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
+                                                                    }}
+                                                                    title="Xem vị trí xe trong kho"
+                                                                    className="text-slate-400 hover:text-sky-600 cursor-pointer p-0.5"
+                                                                >
+                                                                    <i className="fas fa-location-dot text-[8.5px]"></i>
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400 italic text-[11px] block">
+                                                        Chưa ghép xe
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            {/* 7. Tên TVBH (Chỉ Admin & TPKD) */}
+                                            {(isCurrentUserAdmin || isManager) && (
+                                                <td className="px-3 border-r border-slate-200 text-left py-2">
+                                                    <div className="font-semibold uppercase text-slate-800 text-xs" title={order.tvbh_name}>
+                                                        {order.tvbh_name || '—'}
+                                                    </div>
+                                                </td>
+                                            )}
+
+                                            {/* 8. Tiến độ cọc: 4 nút micro gọn gàng trong capsule */}
+                                            <td className="px-2 text-center py-2">
+                                                <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200 gap-0.5 select-none w-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                                    {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc'] as BacklogProgressType[]).map(status => {
+                                                        const isCurrent = currentProgress === status;
+                                                        const cfg = PROGRESS_STYLES[status];
+
+                                                        return (
+                                                            <button
+                                                                key={status}
+                                                                type="button"
+                                                                disabled={isRowUpdating}
+                                                                onClick={() => handleProgressChange(order.id, status, currentProgress)}
+                                                                className={`flex-1 px-1.5 py-1 rounded-md text-[10.5px] font-semibold transition-all flex items-center justify-center cursor-pointer shrink-0 ${
+                                                                    isCurrent
+                                                                        ? `${cfg.activeBtnCls} shadow-xs`
+                                                                        : `${cfg.idleBtnCls}`
+                                                                    } ${isRowUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                                                title={`Đổi tiến độ sang "${cfg.label}"`}
+                                                            >
+                                                                <span>{cfg.shortLabel}</span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+
+                        {/* 2. GIAO DIỆN MOBILE-FIRST: DANH SÁCH THẺ THỜI TRANG, MƯỢT MÀ, THAO TÁC CỰC NHANH */}
+                        <div className="md:hidden flex flex-col space-y-2.5 p-2 bg-slate-100/60 min-h-full pb-28">
+                            {filteredOrders.map((order, idx) => {
+                                const currentProgress: BacklogProgressType = (order.tien_do as BacklogProgressType) || 'Chờ xe';
+                                const isRowUpdating = updatingId === order.id;
+                                const badgeMeta = PROGRESS_BADGE_META[currentProgress] || PROGRESS_BADGE_META['Chờ xe'];
+                                const swatchColor = getExteriorSwatchColor(order.ngoai_that);
+
+                                return (
+                                    <div
+                                        key={order.id || order.so_don_hang || idx}
+                                        onClick={() => setMobileDetailOrder(order)}
+                                        className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.03)] space-y-2.5 relative transition-all active:scale-[0.99] cursor-pointer"
+                                    >
+                                        {/* HÀNG 1: DÒNG XE & PHIÊN BẢN (TRÁI) ── HUY HIỆU TIẾN ĐỘ (PHẢI) */}
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                                                    {idx + 1}
+                                                </span>
+                                                <span className="font-bold text-[13.5px] text-slate-900 tracking-tight truncate">
+                                                    {order.phien_ban || 'Chưa định phiên bản'}
+                                                </span>
+                                                {order.ngoai_that && (
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[9.5px] font-medium text-slate-600 flex-shrink-0">
+                                                        <span
+                                                            className="w-2 h-2 rounded-full border border-slate-300 flex-shrink-0"
+                                                            style={{ backgroundColor: swatchColor }}
+                                                        />
+                                                        <span className="uppercase">{order.ngoai_that.split('-')[0].trim()}</span>
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Huy hiệu tiến độ cọc */}
+                                            <span
+                                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight border flex-shrink-0 ${badgeMeta.bg} ${badgeMeta.text} ${badgeMeta.border} shadow-2xs`}
+                                            >
+                                                <span className={`w-1.5 h-1.5 rounded-full ${badgeMeta.dot}`} />
+                                                <span>{PROGRESS_STYLES[currentProgress]?.label || currentProgress}</span>
+                                            </span>
+                                        </div>
+
+                                        {/* HÀNG 2: TÊN KHÁCH HÀNG & TIỀN CỌC */}
+                                        <div className="flex items-start justify-between gap-3 pt-0.5">
+                                            <div className="min-w-0 flex-1 space-y-1">
+                                                <h3 className="text-[13px] font-bold text-slate-900 tracking-tight uppercase truncate">
+                                                    {order.khach_hang || '—'}
+                                                </h3>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {order.so_dien_thoai ? (
+                                                        <a
+                                                            href={`tel:${order.so_dien_thoai}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-50/90 hover:bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200/80 active:scale-95 transition-all"
+                                                            title="Bấm gọi điện cho khách hàng"
+                                                        >
+                                                            <i className="fas fa-phone-alt text-[8.5px] text-blue-500"></i>
+                                                            <span className="font-mono">{order.so_dien_thoai}</span>
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-[10.5px] text-slate-400 italic">Chưa có SĐT</span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            copyWithFeedback(order.khach_hang, e);
+                                                        }}
+                                                        className="text-[10px] text-slate-400 hover:text-slate-600 flex items-center gap-0.5"
+                                                        title="Sao chép tên khách hàng"
+                                                    >
+                                                        <i className="far fa-copy text-[8px]"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Tiền cọc */}
+                                            <div className="text-right flex-shrink-0">
+                                                <span className="text-[9.5px] font-medium text-slate-400 block uppercase tracking-wider">Tiền cọc</span>
+                                                <span className="text-[13.5px] font-mono font-bold text-emerald-700">
+                                                    {formatVND(order.tien_coc)}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* HÀNG 3: SỐ HỢP ĐỒNG & NGÀY KÝ */}
+                                        <div className="flex items-center justify-between text-[11px] font-mono bg-slate-50/90 rounded-xl px-2.5 py-1.5 border border-slate-100">
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    copyWithFeedback(order.so_hop_dong || order.so_don_hang, e);
+                                                }}
+                                                className="flex items-center gap-1.5 text-slate-700 hover:text-blue-600 font-semibold truncate cursor-pointer"
+                                                title="Bấm sao chép số hợp đồng"
+                                            >
+                                                <i className="fas fa-file-contract text-[10px] text-slate-400"></i>
+                                                <span className="truncate">{order.so_hop_dong || order.so_don_hang}</span>
+                                                <i className="far fa-copy text-[8px] text-slate-400 flex-shrink-0"></i>
+                                            </div>
+                                            <span className="text-slate-400 text-[10px] flex-shrink-0 ml-2">
+                                                {moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
+                                            </span>
+                                        </div>
+
+                                        {/* HÀNG 4: SỐ VIN & VỊ TRÍ KHO (NẾU CÓ) */}
+                                        {order.vin && order.vin.length > 5 ? (
+                                            <div className="flex items-center justify-between bg-emerald-50/80 border border-emerald-200/90 rounded-xl px-2.5 py-1.5 text-[11px]">
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        copyWithFeedback(order.vin, e);
+                                                    }}
+                                                    className="flex items-center gap-1.5 font-bold font-mono text-emerald-900 cursor-pointer"
+                                                    title="Số VIN - Bấm để sao chép"
+                                                >
+                                                    <i className="fas fa-car text-[10px] text-emerald-600"></i>
+                                                    <span>{order.vin}</span>
+                                                    <i className="far fa-copy text-[8px] text-emerald-500"></i>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
+                                                        }}
+                                                        className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[10px] font-semibold flex items-center gap-1 active:scale-95 shadow-2xs"
+                                                        title="Xem vị trí xe trong kho bãi"
+                                                    >
+                                                        <i className="fas fa-location-dot text-[8.5px]"></i>
+                                                        <span>Xem kho</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between text-[10.5px] text-slate-400 px-1">
+                                                <span className="italic flex items-center gap-1">
+                                                    <i className="far fa-clock text-[9px]"></i> Chưa ghép xe
+                                                </span>
+                                                {(isCurrentUserAdmin || isManager) && order.tvbh_name && (
+                                                    <span className="text-slate-500 font-medium">
+                                                        TVBH: <strong className="text-slate-700 uppercase">{order.tvbh_name}</strong>
+                                                    </span>
+                                                )}
+                                            </div>
                                         )}
 
-                                        {/* 8. Tiến độ cọc: 4 nút micro gọn gàng trong capsule */}
-                                        <td className="px-2 text-center py-2">
-                                            <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200 gap-0.5 select-none w-full justify-center" onClick={(e) => e.stopPropagation()}>
-                                                {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc'] as BacklogProgressType[]).map(status => {
+                                        {/* HÀNG 5: TVBH PHỤ TRÁCH (NẾU ĐÃ CÓ VIN THÌ HIỂN THỊ TVBH DÒNG NÀY CHO ADMIN/TPKD) */}
+                                        {(isCurrentUserAdmin || isManager) && order.vin && order.vin.length > 5 && (
+                                            <div className="text-[10.5px] text-slate-500 px-1 font-medium flex items-center gap-1">
+                                                <i className="fas fa-user-tie text-[9px] text-slate-400"></i>
+                                                <span>TVBH: <strong className="text-slate-700 uppercase">{order.tvbh_name || '—'}</strong></span>
+                                            </div>
+                                        )}
+
+                                        {/* HÀNG 6: THANH 4 NÚT ĐỔI TIẾN ĐỘ CỌC DÀNH CHO MOBILE */}
+                                        <div
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="pt-1 border-t border-slate-100"
+                                        >
+                                            <div className="flex items-center p-0.5 rounded-xl bg-slate-100/90 border border-slate-200/80 gap-1 w-full">
+                                                {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc'] as BacklogProgressType[]).map((status) => {
                                                     const isCurrent = currentProgress === status;
                                                     const cfg = PROGRESS_STYLES[status];
 
@@ -708,28 +936,196 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                             type="button"
                                                             disabled={isRowUpdating}
                                                             onClick={() => handleProgressChange(order.id, status, currentProgress)}
-                                                            className={`flex-1 px-1.5 py-1 rounded-md text-[10.5px] font-semibold transition-all flex items-center justify-center cursor-pointer shrink-0 ${
+                                                            className={`flex-1 h-8 rounded-lg text-[10.5px] font-bold transition-all flex items-center justify-center cursor-pointer ${
                                                                 isCurrent
                                                                     ? `${cfg.activeBtnCls} shadow-xs`
-                                                                    : `${cfg.idleBtnCls}`
-                                                                } ${isRowUpdating ? 'opacity-50 cursor-wait' : ''}`}
-                                                            title={`Đổi tiến độ sang "${cfg.label}"`}
+                                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 active:scale-95'
+                                                            } ${isRowUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                                            title={`Chuyển trạng thái sang "${cfg.label}"`}
                                                         >
-                                                            <span>{cfg.shortLabel}</span>
+                                                            {isRowUpdating && isCurrent ? (
+                                                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            ) : (
+                                                                <span>{cfg.shortLabel}</span>
+                                                            )}
                                                         </button>
                                                     );
                                                 })}
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 );
                             })}
-                        </tbody>
-                    </table>
+                        </div>
+                    </>
                 )}
                     </div>
                 </div>
             </div>
+
+            {/* 3. MODAL / BOTTOM SHEET XEM CHI TIẾT HỢP ĐỒNG CỌC TỒN MOBILE */}
+            {mobileDetailOrder && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4"
+                    onClick={() => setMobileDetailOrder(null)}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto animate-fade-in"
+                    >
+                        {/* Thanh quai kéo iOS */}
+                        <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto sm:hidden -mt-1 mb-2" />
+
+                        {/* Tiêu đề Modal */}
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div>
+                                <h2 className="text-base font-bold text-slate-900 uppercase">
+                                    {mobileDetailOrder.khach_hang || 'Chi tiết hợp đồng'}
+                                </h2>
+                                <p className="text-xs text-slate-500 font-mono mt-0.5">
+                                    HĐ: {mobileDetailOrder.so_hop_dong || mobileDetailOrder.so_don_hang}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setMobileDetailOrder(null)}
+                                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center active:scale-90"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        {/* Chi tiết nội dung */}
+                        <div className="space-y-3 text-xs">
+                            {/* Dòng xe & màu sắc */}
+                            <div className="bg-slate-50 rounded-xl p-3 space-y-1.5 border border-slate-100">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500 font-medium">Phiên bản xe:</span>
+                                    <span className="font-bold text-slate-900">{mobileDetailOrder.phien_ban || '—'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500 font-medium">Màu ngoại thất:</span>
+                                    <span className="font-semibold text-slate-800 uppercase flex items-center gap-1.5">
+                                        <span
+                                            className="w-2.5 h-2.5 rounded-full border border-slate-300"
+                                            style={{ backgroundColor: getExteriorSwatchColor(mobileDetailOrder.ngoai_that) }}
+                                        />
+                                        {mobileDetailOrder.ngoai_that || 'Tiêu chuẩn'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500 font-medium">Nội thất:</span>
+                                    <span className="text-slate-700">{mobileDetailOrder.noi_that || 'Tiêu chuẩn'}</span>
+                                </div>
+                            </div>
+
+                            {/* Tiền bạc & Ngày hợp đồng */}
+                            <div className="bg-slate-50 rounded-xl p-3 space-y-1.5 border border-slate-100">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500 font-medium">Tiền cọc:</span>
+                                    <span className="font-bold font-mono text-emerald-700 text-sm">{formatVND(mobileDetailOrder.tien_coc)}</span>
+                                </div>
+                                {Number(mobileDetailOrder.gia_tri_hd || 0) > 0 && (
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-slate-500 font-medium">Giá trị HĐ:</span>
+                                        <span className="font-mono text-slate-700">{formatVND(mobileDetailOrder.gia_tri_hd)}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500 font-medium">Ngày hợp đồng:</span>
+                                    <span className="font-mono text-slate-700">{moment(mobileDetailOrder.ngay_hop_dong || mobileDetailOrder.ngay_giao_dich).format('DD/MM/YYYY')}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500 font-medium">Tư vấn bán hàng:</span>
+                                    <span className="font-bold uppercase text-slate-800">{mobileDetailOrder.tvbh_name || '—'}</span>
+                                </div>
+                            </div>
+
+                            {/* Khách hàng & SĐT */}
+                            {mobileDetailOrder.so_dien_thoai && (
+                                <div className="flex gap-2">
+                                    <a
+                                        href={`tel:${mobileDetailOrder.so_dien_thoai}`}
+                                        className="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-xs active:scale-95"
+                                    >
+                                        <i className="fas fa-phone-alt"></i>
+                                        <span>Gọi {mobileDetailOrder.so_dien_thoai}</span>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => copyWithFeedback(mobileDetailOrder.so_dien_thoai, e)}
+                                        className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold flex items-center justify-center gap-1 active:scale-95"
+                                        title="Sao chép số điện thoại"
+                                    >
+                                        <i className="far fa-copy"></i>
+                                        <span>Chép SĐT</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Số VIN & Kho xe */}
+                            {mobileDetailOrder.vin && (
+                                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
+                                    <div>
+                                        <span className="text-[10px] uppercase font-bold text-emerald-700 block">Số VIN đã ghép:</span>
+                                        <span className="font-mono font-bold text-emerald-950 text-xs">{mobileDetailOrder.vin}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const v = mobileDetailOrder.vin;
+                                            setMobileDetailOrder(null);
+                                            window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: v } }));
+                                        }}
+                                        className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 shadow-xs"
+                                    >
+                                        <i className="fas fa-location-dot"></i>
+                                        <span>Xem kho</span>
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Đổi tiến độ cọc */}
+                            <div className="space-y-1.5 pt-1">
+                                <span className="text-slate-500 font-semibold block text-[11px]">Cập nhật tiến độ cọc:</span>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc'] as BacklogProgressType[]).map((st) => {
+                                        const isCur = (mobileDetailOrder.tien_do || 'Chờ xe') === st;
+                                        const cfg = PROGRESS_STYLES[st];
+                                        return (
+                                            <button
+                                                key={st}
+                                                type="button"
+                                                onClick={async () => {
+                                                    await handleProgressChange(mobileDetailOrder.id, st, mobileDetailOrder.tien_do || 'Chờ xe');
+                                                    setMobileDetailOrder((prev: any) => prev ? { ...prev, tien_do: st } : null);
+                                                }}
+                                                className={`py-2 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                                                    isCur
+                                                        ? `${cfg.activeBtnCls} border-transparent shadow-xs`
+                                                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <i className={`fas ${cfg.icon} text-[10px]`}></i>
+                                                <span>{cfg.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Nút đóng */}
+                        <button
+                            type="button"
+                            onClick={() => setMobileDetailOrder(null)}
+                            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold active:scale-95"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

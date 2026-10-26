@@ -514,13 +514,14 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['logoweb.png'],
       manifest: {
-        name: 'Order Management',
-        short_name: 'OrderMgmt',
-        description: 'Công cụ nội bộ dành cho tư vấn bán hàng',
-        theme_color: '#0D47A1',
-        background_color: '#F7F9FC',
+        name: 'VinFast Thuận An - TVBH Mobile',
+        short_name: 'VinFast TVBH',
+        description: 'Ứng dụng điều hành đơn hàng & kho xe VinFast Thuận An',
+        theme_color: '#090a0f',
+        background_color: '#090a0f',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '/',
         icons: [
           {
             src: 'logoweb.png',

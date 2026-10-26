@@ -250,6 +250,41 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
         prevStockDataRef.current = stockData;
     }, [stockData]);
 
+    // Lấy số lượng đơn cọc tồn thời gian thực theo đúng phân quyền (Admin / TPKD / TVBH)
+    const { data: backlogRows, mutate: mutateBacklogRows } = useSWR('donhang_ton_badge', async () => {
+        const { data, error } = await supabase
+            .from('donhang_ton')
+            .select('id, tvbh_name');
+        if (error) return [];
+        return data || [];
+    }, { revalidateOnFocus: false, refreshInterval: 120000 });
+
+    useEffect(() => {
+        const channel = supabase
+            .channel('donhang_ton_badge_sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'donhang_ton' }, () => {
+                mutateBacklogRows();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [mutateBacklogRows]);
+
+    const backlogCount = useMemo(() => {
+        if (!backlogRows || backlogRows.length === 0) return 0;
+        if (isCurrentUserAdmin) {
+            return backlogRows.length;
+        }
+        if (userRole === 'Trưởng Phòng Kinh Doanh' && usersToView) {
+            const teamNames = new Set(usersToView.map(name => normalizeName(name).toLowerCase()));
+            return backlogRows.filter((o: any) => teamNames.has(normalizeName(o.tvbh_name || '').toLowerCase())).length;
+        }
+        const normalizedCurrentUser = normalizeName(currentUser).toLowerCase();
+        return backlogRows.filter((o: any) => normalizeName(o.tvbh_name || '').toLowerCase() === normalizedCurrentUser).length;
+    }, [backlogRows, isCurrentUserAdmin, userRole, usersToView, currentUser]);
+
     // SWR takes care of automatic background polling now.
 
     return {
@@ -282,6 +317,7 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
         teamData,
         allUsers,
         fetchAdminData,
-        usersToView
+        usersToView,
+        backlogCount
     };
 };

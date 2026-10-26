@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { includesNormalized } from '../../utils/stringUtils';
-import Button from './Button';
 
 export interface DropdownFilterConfig {
   id: string;
@@ -109,7 +108,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     if (variant === 'modern') {
       const sizeClass = isCompact ? 'px-2 lg:px-1.5 h-7 lg:h-[26px] text-[10.5px] lg:text-[10px]' : 'px-3 h-8 text-xs';
       const activeState = isSelectedOrOpen
-        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+        ? 'bg-slate-700 text-white border-slate-700 shadow-xs'
         : 'bg-slate-100/75 hover:bg-white text-slate-600 hover:text-slate-900 border-slate-200/80 hover:border-slate-300';
       return `${base} rounded-xl border ${sizeClass} ${activeState} ${disabledClass} font-semibold transition-all duration-200 select-none`;
     }
@@ -126,7 +125,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   // --- RENDER: CHIPS MODE ---
   if (mode === 'chips') {
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {options.map(option => {
           const isSelected = selectedOptions.includes(option);
           return (
@@ -136,16 +135,16 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               onClick={() => !disabled && handleOptionToggle(option)}
               disabled={disabled}
               className={`
-                px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ease-out flex items-center gap-1.5
+                h-[26px] px-2.5 rounded-full text-[11px] flex items-center space-x-1 transition-all active:scale-95 border
                 ${isSelected
-                  ? 'bg-accent-primary text-white border-accent-primary shadow-md shadow-accent-primary/20 transform scale-105'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-accent-primary/50 hover:text-accent-primary hover:bg-accent-primary/5'
+                  ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                  : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                 }
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               `}
             >
-              {isSelected && <i className="fas fa-check text-[10px]"></i>}
-              {option}
+              {isSelected && <i className="fas fa-check text-[8px] mr-1"></i>}
+              <span>{option}</span>
             </button>
           );
         })}
@@ -269,9 +268,9 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           <ul className="flex-grow max-h-72 overflow-y-auto p-2 space-y-1 custom-scrollbar">
             {selectionMode === 'multiple' && filteredOptions.length > 0 && (
               <li>
-                <label className="flex items-center gap-3 w-full px-4 py-3 text-xs text-slate-600 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group">
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${areAllFilteredSelected ? 'bg-accent-primary border-accent-primary' : 'border-slate-200 group-hover:border-accent-primary'}`}>
-                    {areAllFilteredSelected && <i className="fas fa-check text-white text-[9px]"></i>}
+                <label className="flex items-center gap-3 w-full px-4 py-2.5 text-xs text-slate-600 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group">
+                  <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${areAllFilteredSelected ? 'bg-slate-700 border-slate-700' : 'border-slate-300 group-hover:border-slate-500'}`}>
+                    {areAllFilteredSelected && <i className="fas fa-check text-white text-[8px]"></i>}
                   </div>
                   <input
                     type="checkbox"
@@ -279,7 +278,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     onChange={() => areAllFilteredSelected ? handleClearFiltered() : handleSelectAll()}
                     className="hidden"
                   />
-                  <span className="font-black text-[10px] uppercase tracking-wider">{areAllFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
+                  <span className="font-bold text-[10px] uppercase tracking-wider text-slate-700">{areAllFilteredSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}</span>
                 </label>
               </li>
             )}
@@ -287,12 +286,12 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               const isSelected = selectedOptions.includes(option);
               return (
                 <li key={option}>
-                  <label className={`flex items-center gap-3 w-full ${isCompact ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm'} rounded-xl transition-all cursor-pointer group relative overflow-hidden ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-medium' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
-                    {isSelected && <div className="absolute left-0 top-0 w-1 h-full bg-accent-primary animate-in slide-in-from-left duration-300"></div>}
+                  <label className={`flex items-center gap-2.5 w-full ${isCompact ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} rounded-xl transition-all cursor-pointer group relative overflow-hidden ${isSelected ? 'bg-slate-100/90 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+                    {isSelected && <div className="absolute left-0 top-0 w-1 h-full bg-slate-700 animate-in slide-in-from-left duration-200"></div>}
                     
                     {selectionMode === 'multiple' && (
-                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-accent-primary border-accent-primary shadow-sm shadow-accent-primary/20' : 'border-slate-200 group-hover:border-accent-primary'}`}>
-                        {isSelected && <i className="fas fa-check text-white text-[9px]"></i>}
+                      <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-slate-700 border-slate-700 text-white shadow-2xs' : 'border-slate-300 group-hover:border-slate-500'}`}>
+                        {isSelected && <i className="fas fa-check text-white text-[8px]"></i>}
                       </div>
                     )}
                     
@@ -303,34 +302,31 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                       className="hidden"
                     />
                     
-                    <span className="truncate">{option}</span>
+                    <span className="truncate text-[11.5px]">{option}</span>
                     
                     {selectionMode === 'single' && isSelected && (
-                      <div className="ml-auto w-5 h-5 bg-accent-primary rounded-full flex items-center justify-center animate-in zoom-in duration-300">
-                        <i className="fas fa-check text-white text-[8px]"></i>
+                      <div className="ml-auto w-4 h-4 bg-slate-700 rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                        <i className="fas fa-check text-white text-[7px]"></i>
                       </div>
                     )}
                   </label>
                 </li>
               );
             }) : (
-              <li className={`px-4 ${isCompact ? 'py-8 text-xs' : 'py-12 text-sm'} text-slate-300 text-center flex flex-col items-center gap-3`}>
-                <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center">
-                  <i className="fas fa-search text-xl opacity-20"></i>
-                </div>
-                <span className="font-bold uppercase tracking-widest text-[10px]">Không tìm thấy</span>
+              <li className={`px-4 ${isCompact ? 'py-6 text-xs' : 'py-8 text-sm'} text-slate-400 text-center flex flex-col items-center gap-2`}>
+                <span className="font-medium text-[11px]">Không tìm thấy kết quả</span>
               </li>
             )}
           </ul>
 
           {selectionMode === 'multiple' && (
-            <div className="p-4 border-t border-slate-50 bg-slate-50/50 flex justify-between items-center">
-              <Button onClick={handleClearAll} variant="ghost" size="sm" className="text-[10px] font-black text-red-500 hover:text-red-600 hover:bg-red-50 px-3 h-9 rounded-xl uppercase tracking-wider">
-                Xóa tất cả ({selectedOptions.length})
-              </Button>
-              <Button onClick={() => setIsOpen(false)} variant="primary" size="sm" className="px-5 py-2 text-[10px] font-black rounded-xl shadow-sm uppercase tracking-widest">
+            <div className="p-3 border-t border-slate-100 bg-slate-50/80 flex justify-between items-center">
+              <button onClick={handleClearAll} className="text-[11px] font-medium text-slate-500 hover:text-slate-800 px-2 py-1 rounded-lg">
+                Xóa ({selectedOptions.length})
+              </button>
+              <button onClick={() => setIsOpen(false)} className="px-4 py-1.5 text-[11px] font-semibold bg-slate-700 hover:bg-slate-800 text-white rounded-full shadow-2xs">
                 Áp dụng
-              </Button>
+              </button>
             </div>
           )}
         </div>

@@ -7,9 +7,10 @@ interface ChangePasswordModalProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     username: string;
     isFirstLogin?: boolean;
+    embedded?: boolean;
 }
 
-const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, showToast, username, isFirstLogin }) => {
+const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, showToast, username, isFirstLogin, embedded = false }) => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -67,6 +68,85 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
     };
 
     if (!isOpen) return null;
+
+    if (embedded) {
+        return (
+            <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col bg-white">
+                <main className="min-h-0 flex-1 p-4">
+                    <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5 text-[10.5px] leading-relaxed text-blue-800">
+                        Mật khẩu mới cần ít nhất 10 ký tự, bao gồm cả chữ và số.
+                    </div>
+
+                    {localError && (
+                        <div className="mb-3 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[11px] font-medium text-rose-600 animate-shake">
+                            <i className="fas fa-exclamation-circle"></i>
+                            {localError}
+                        </div>
+                    )}
+
+                    <div className="space-y-2 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3">
+                        <label className="block">
+                            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Mật khẩu hiện tại</span>
+                            <input
+                                type="password"
+                                value={oldPassword}
+                                onChange={e => setOldPassword(e.target.value)}
+                                placeholder={isFirstLogin ? 'Mật khẩu tạm thời' : 'Nhập mật khẩu hiện tại'}
+                                required
+                                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                        </label>
+
+                        <label className="block pt-1">
+                            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Mật khẩu mới</span>
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                placeholder="Nhập mật khẩu mới"
+                                required
+                                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                        </label>
+
+                        <label className="block pt-1">
+                            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Xác nhận mật khẩu mới</span>
+                            <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                placeholder="Nhập lại mật khẩu mới"
+                                required
+                                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-800 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+                        </label>
+                    </div>
+                </main>
+
+                <footer className="flex flex-shrink-0 gap-2 border-t border-slate-100 bg-white p-4">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                        className="h-10 flex-1 rounded-xl bg-slate-100 text-[12px] font-medium text-slate-600 active:bg-slate-200 disabled:opacity-50"
+                    >
+                        Back
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex h-10 flex-[1.35] items-center justify-center gap-1.5 rounded-xl bg-slate-800 text-[12px] font-semibold text-white active:bg-slate-900 disabled:opacity-60"
+                    >
+                        {isSubmitting ? (
+                            <><i className="fas fa-spinner fa-spin"></i><span>Đang xử lý...</span></>
+                        ) : (
+                            <span>Xác nhận đổi</span>
+                        )}
+                    </button>
+                </footer>
+            </form>
+        );
+    }
 
 
     return (
