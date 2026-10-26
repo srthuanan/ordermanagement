@@ -11,7 +11,6 @@ import {
   Bell,
   X,
   CheckCheck,
-  GitMerge,
   FilePlus,
   UserRoundCog,
   KeyRound,
