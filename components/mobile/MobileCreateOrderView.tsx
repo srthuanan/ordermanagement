@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   ChevronLeft,
   Check,
@@ -142,6 +142,17 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
     if (!formData.dong_xe || !formData.phien_ban) return [];
     return getMappedInteriors(formData.dong_xe, formData.phien_ban);
   }, [formData.dong_xe, formData.phien_ban, getMappedInteriors]);
+
+  // Tự chọn những cấu hình không có lựa chọn thay thế, kể cả khi dữ liệu cấu hình tải về trễ.
+  useEffect(() => {
+    if (formData.phien_ban || availableVersions.length !== 1) return;
+    setFormData((prev) => ({ ...prev, phien_ban: availableVersions[0] }));
+  }, [availableVersions, formData.phien_ban]);
+
+  useEffect(() => {
+    if (formData.noi_that || availableInteriors.length !== 1) return;
+    setFormData((prev) => ({ ...prev, noi_that: availableInteriors[0] }));
+  }, [availableInteriors, formData.noi_that]);
 
   // Chọn dòng xe
   const handleSelectModel = (model: string) => {
