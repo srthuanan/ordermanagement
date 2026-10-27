@@ -26,7 +26,7 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
     const [rejectReason, setRejectReason] = useState<string>('');
     const [showRejectForm, setShowRejectForm] = useState(false);
     const [isDirectSwapActive, setIsDirectSwapActive] = useState(false);
-    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
+    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('list');
     const copyWithFeedback = useCopyFeedback();
 
     const loadData = useCallback(async () => {
@@ -193,7 +193,7 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
         <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
             <AnimatedBackground />
 
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className="hidden w-full flex-shrink-0 flex-col border-r border-slate-200 bg-white md:flex md:w-64 relative z-10">
                 <div className="p-3 bg-slate-100/80 text-slate-800 border-b border-slate-200 flex flex-col gap-2">
                     <button
                         onClick={() => {
@@ -245,18 +245,21 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
             </div>
 
             <div className={`w-full md:w-80 flex-shrink-0 border-r border-slate-200 flex flex-col bg-white relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => setMobileView('folders')} className="md:hidden p-1 text-slate-500 hover:text-slate-800">
-                            <i className="fas fa-arrow-left text-xs"></i>
-                        </button>
+                <div className="border-b border-slate-200 bg-[#f2f2f7] p-2 md:bg-slate-50 md:p-3">
+                    <div className="hidden items-center gap-2 md:flex">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                             {folders.find(f => f.id === selectedFolder)?.label} ({filteredRequests.length})
                         </span>
                     </div>
+                    <div className="grid grid-cols-[1fr_38px] gap-2 md:hidden">
+                        <select value={selectedFolder} onChange={event => setSelectedFolder(event.target.value)} className="h-9 min-w-0 rounded-[11px] border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-800 outline-none">
+                            {folders.map(folder => <option key={folder.id} value={folder.id}>{folder.label} ({folder.count})</option>)}
+                        </select>
+                        <button type="button" onClick={() => { setIsDirectSwapActive(true); setMobileView('detail'); }} className="flex h-9 items-center justify-center rounded-[11px] bg-blue-600 text-white shadow-2xs" title="Tráo VIN trực tiếp"><i className="fas fa-plus text-[11px]" /></button>
+                    </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                <div className="flex-1 overflow-y-auto bg-[#f2f2f7] p-2 md:divide-y md:divide-slate-100 md:bg-white md:p-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-16 text-slate-400 text-xs font-semibold gap-2">
                             <i className="fas fa-spinner fa-spin text-slate-600 text-base"></i> Đang tải dữ liệu...
@@ -270,7 +273,8 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
                         filteredRequests.map(req => {
                             const isSelected = !isDirectSwapActive && selectedRequestId === req.id;
                             return (
-                                <div
+                                <button
+                                    type="button"
                                     key={req.id}
                                     onClick={(e) => {
                                         setSelectedRequestId(req.id);
@@ -278,10 +282,10 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
                                         setMobileView('detail');
                                         copyWithFeedback(req.tvbhA || '', e);
                                     }}
-                                    className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${
+                                    className={`mb-2 w-full rounded-[15px] border p-3 text-left transition-all duration-150 md:mb-0 md:rounded-none md:border-y-0 md:border-r-0 md:border-l-4 ${
                                         isSelected
-                                            ? 'bg-slate-100/90 border-blue-600 font-semibold'
-                                            : 'border-transparent hover:bg-slate-50'
+                                            ? 'border-blue-200 bg-blue-50/80 font-semibold md:border-blue-600 md:bg-slate-100/90'
+                                            : 'border-slate-200 bg-white hover:bg-slate-50 md:border-transparent'
                                     }`}
                                 >
                                     <div className="flex items-center justify-between mb-1.5">
@@ -301,7 +305,7 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
                                         <span>VIN: {req.vinB}</span>
                                         <span className="text-slate-400">{moment(req.createdAt).format('DD/MM/YYYY HH:mm')}</span>
                                     </div>
-                                </div>
+                                </button>
                             );
                         })
                     )}

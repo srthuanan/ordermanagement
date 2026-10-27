@@ -560,21 +560,6 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                                     <button type="button" onClick={() => setActiveTab('create')} className="flex-1 rounded-lg py-1.5 text-[11px] font-medium text-slate-500 active:bg-white">Tạo lịch mới</button>
                                 )}
                             </div>
-                            <div className="flex gap-2">
-                                <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3">
-                                    <i className="fas fa-search text-[11px] text-slate-400" />
-                                    <input
-                                        value={historyFilters.keyword}
-                                        onChange={(event) => setHistoryFilters(prev => ({ ...prev, keyword: event.target.value }))}
-                                        placeholder="Tìm khách hàng, xe, số phiếu..."
-                                        className="min-w-0 flex-1 bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400"
-                                    />
-                                </label>
-                                <button type="button" onClick={() => setIsMobileFilterOpen(true)} className="relative flex h-9 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 active:bg-slate-100">
-                                    <i className="fas fa-sliders text-[11px]" />
-                                    {(historyFilters.car.length > 0 || historyFilters.dateRange.start || historyFilters.dateRange.end) && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-blue-500" />}
-                                </button>
-                            </div>
                         </div>
                     )}
                     {!mobileMode && (
@@ -713,21 +698,67 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                 )
             }
 
+            {mobileMode && activeTab === 'history' && (
+                <div className="w-full bg-white/92 backdrop-blur-2xl border-t border-black/[0.08] px-3 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgba(0,0,0,0.06)] z-30 flex-shrink-0 space-y-1">
+                    <div className="flex items-center space-x-2">
+                        <label className="relative flex-1">
+                            <i className="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400" />
+                            <input
+                                value={historyFilters.keyword}
+                                onChange={(event) => setHistoryFilters(prev => ({ ...prev, keyword: event.target.value }))}
+                                placeholder="Tìm khách hàng, xe, số phiếu..."
+                                className="w-full h-[34px] pl-[30px] pr-[28px] rounded-xl bg-slate-100/90 focus:bg-white text-[11.5px] text-slate-800 placeholder-slate-400 border border-slate-200/80 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200 shadow-2xs transition-all font-sans"
+                            />
+                            {historyFilters.keyword && <button type="button" onClick={() => setHistoryFilters(prev => ({ ...prev, keyword: '' }))} className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 active:scale-90"><i className="fas fa-times text-[10px]" /></button>}
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => setIsMobileFilterOpen(true)}
+                            className={`h-[34px] px-2.5 rounded-xl flex items-center space-x-1 font-medium text-[11px] transition-all active:scale-95 flex-shrink-0 border ${(historyFilters.car.length > 0 || historyFilters.dateRange.start || historyFilters.dateRange.end) ? 'bg-slate-700 text-white border-slate-700 shadow-xs' : 'bg-slate-100/90 text-slate-700 hover:bg-slate-200/80 border-slate-200/80 shadow-2xs'}`}
+                        >
+                            <i className="fas fa-sliders text-[11px]" />
+                            <span>Lọc</span>
+                            {(historyFilters.car.length > 0 || historyFilters.dateRange.start || historyFilters.dateRange.end) && <span className="w-3.5 h-3.5 rounded-full bg-white text-slate-700 font-bold text-[9px] flex items-center justify-center -mr-0.5">{historyFilters.car.length + (historyFilters.dateRange.start || historyFilters.dateRange.end ? 1 : 0)}</span>}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {mobileMode && isMobileFilterOpen && (
-                <div className="fixed inset-0 z-[9100] flex items-end justify-center bg-slate-950/35 backdrop-blur-xs" onClick={() => setIsMobileFilterOpen(false)}>
-                    <div className="w-full max-w-md rounded-t-[26px] bg-white px-4 pb-[max(18px,env(safe-area-inset-bottom))] pt-2 shadow-2xl" onClick={event => event.stopPropagation()}>
-                        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
-                        <div className="flex items-center justify-between"><div><h3 className="text-[15px] font-semibold text-slate-900">Lọc lịch lái thử</h3><p className="text-[10px] text-slate-400">Thu hẹp danh sách theo thời gian và dòng xe</p></div><button type="button" onClick={() => setIsMobileFilterOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i className="fas fa-times text-[11px]" /></button></div>
-
-                        <div className="mt-4 space-y-4">
-                            <div><p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Khoảng ngày</p><div className="grid grid-cols-2 gap-2"><input type="date" value={historyFilters.dateRange.start} onChange={event => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, start: event.target.value } }))} className="h-10 min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-2 text-[11px] text-slate-700 outline-none" /><input type="date" value={historyFilters.dateRange.end} onChange={event => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, end: event.target.value } }))} className="h-10 min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-2 text-[11px] text-slate-700 outline-none" /></div></div>
-
-                            <div><p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Dòng xe</p><div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto">{uniqueCars.map(car => { const selected = historyFilters.car.includes(car); return <button key={car} type="button" onClick={() => setHistoryFilters(prev => ({ ...prev, car: selected ? prev.car.filter(item => item !== car) : [...prev.car, car] }))} className={`rounded-full px-3 py-1.5 text-[10px] font-semibold ring-1 ${selected ? 'bg-slate-900 text-white ring-slate-900' : 'bg-slate-50 text-slate-600 ring-slate-200'}`}>{car}</button>; })}</div></div>
-
-                            <div><p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Sắp xếp</p><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => setHistorySortConfig({ key: 'ngayThuXe', direction: 'desc' })} className={`h-10 rounded-xl text-[11px] font-semibold ${historySortConfig?.direction === 'desc' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>Mới nhất</button><button type="button" onClick={() => setHistorySortConfig({ key: 'ngayThuXe', direction: 'asc' })} className={`h-10 rounded-xl text-[11px] font-semibold ${historySortConfig?.direction === 'asc' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>Cũ nhất</button></div></div>
+                <div className="fixed inset-0 z-[9100] flex flex-col justify-end">
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200" onClick={() => setIsMobileFilterOpen(false)} />
+                    <div className="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-[24px] shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col max-h-[55dvh] animate-in slide-in-from-bottom duration-250 overflow-hidden" onClick={event => event.stopPropagation()}>
+                        <div className="pt-2 pb-0.5 flex justify-center"><div className="w-8 h-1 rounded-full bg-slate-300" /></div>
+                        <div className="px-4 py-1.5 border-b border-black/[0.06] flex items-center justify-between">
+                            <div className="w-16 flex justify-start">
+                                {(historyFilters.car.length > 0 || historyFilters.dateRange.start || historyFilters.dateRange.end) ? (
+                                    <button type="button" onClick={() => setHistoryFilters(prev => ({ ...prev, dateRange: { start: '', end: '' }, car: [] }))} className="text-[12.5px] font-medium text-slate-500 hover:text-slate-800 active:opacity-60 transition-opacity">Đặt lại</button>
+                                ) : <span className="w-1" />}
+                            </div>
+                            <h3 className="text-[13.5px] font-bold text-slate-800 tracking-tight text-center flex-1">Bộ Lọc</h3>
+                            <div className="w-16 flex justify-end"><button type="button" onClick={() => setIsMobileFilterOpen(false)} className="text-[13.5px] font-bold text-slate-700 hover:text-slate-900 active:opacity-60 transition-opacity">Xong</button></div>
                         </div>
 
-                        <div className="mt-5 flex gap-2"><button type="button" onClick={() => setHistoryFilters(prev => ({ ...prev, dateRange: { start: '', end: '' }, car: [] }))} className="h-11 flex-1 rounded-[14px] bg-slate-100 text-xs font-semibold text-slate-600">Đặt lại</button><button type="button" onClick={() => setIsMobileFilterOpen(false)} className="h-11 flex-[2] rounded-[14px] bg-slate-900 text-xs font-semibold text-white">Áp dụng</button></div>
+                        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">Khoảng ngày</p>
+                                <div className="grid grid-cols-2 gap-2"><input type="date" value={historyFilters.dateRange.start} onChange={event => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, start: event.target.value } }))} className="h-9 min-w-0 rounded-xl border border-slate-200 bg-slate-100/90 px-2 text-[11px] text-slate-700 outline-none focus:border-slate-400 focus:bg-white" /><input type="date" value={historyFilters.dateRange.end} onChange={event => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, end: event.target.value } }))} className="h-9 min-w-0 rounded-xl border border-slate-200 bg-slate-100/90 px-2 text-[11px] text-slate-700 outline-none focus:border-slate-400 focus:bg-white" /></div>
+                            </div>
+
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">Dòng xe</p>
+                                <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto no-scrollbar">{uniqueCars.map(car => { const selected = historyFilters.car.includes(car); return <button key={car} type="button" onClick={() => setHistoryFilters(prev => ({ ...prev, car: selected ? prev.car.filter(item => item !== car) : [...prev.car, car] }))} className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${selected ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs' : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'}`}>{car}</button>; })}</div>
+                            </div>
+
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">Sắp xếp</p>
+                                <div className="flex flex-wrap gap-1.5"><button type="button" onClick={() => setHistorySortConfig({ key: 'ngayThuXe', direction: 'desc' })} className={`h-[26px] px-2.5 rounded-full text-[11px] transition-all active:scale-95 border ${historySortConfig?.direction === 'desc' ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs' : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium'}`}>Mới nhất</button><button type="button" onClick={() => setHistorySortConfig({ key: 'ngayThuXe', direction: 'asc' })} className={`h-[26px] px-2.5 rounded-full text-[11px] transition-all active:scale-95 border ${historySortConfig?.direction === 'asc' ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs' : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium'}`}>Cũ nhất</button></div>
+                            </div>
+                        </div>
+
+                        <div className="p-3 border-t border-black/[0.06] bg-white">
+                            <button type="button" onClick={() => setIsMobileFilterOpen(false)} className="w-full h-[38px] rounded-full bg-slate-700 hover:bg-slate-800 text-white font-semibold text-[13px] tracking-tight shadow-xs active:scale-[0.98] transition-all flex items-center justify-center">Xem {processedHistory.length} Lịch Lái Thử</button>
+                        </div>
                     </div>
                 </div>
             )}

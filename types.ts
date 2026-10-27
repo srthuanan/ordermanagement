@@ -168,7 +168,7 @@ export interface Notification {
   metadata?: any;
 }
 
-export type ActionType = 'approve' | 'supplement' | 'rescan' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair' | 'migrateToDrive' | 'reScan';
+export type ActionType = 'approve' | 'supplement' | 'rescan' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair' | 'migrateToDrive' | 'reScan' | 'autoMInvoice';
 
 export interface LogEntry {
   "Thời gian": string;

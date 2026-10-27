@@ -22,6 +22,7 @@ import {
 } from '../../services/api/stockService';
 import { syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
 import { executeCyberApi } from '../../services/api/cyberBridge';
+import MobileInvoiceView from './mobile/MobileInvoiceView';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -36,6 +37,8 @@ interface InvoiceInboxViewProps {
     processingId?: string | null;
     processingActionType?: ActionType | null;
     isLoading?: boolean;
+    onBackToAdminHome?: () => void;
+    onOpenActionMenu?: () => void;
 }
 
 
@@ -183,7 +186,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     onOrderSelect,
     processingId,
     processingActionType,
-    isLoading = false
+    isLoading = false,
+    onBackToAdminHome,
+    onOpenActionMenu
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -1054,10 +1059,36 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
-            {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+        <>
+            {/* Dedicated iOS Mobile Invoice View (< 768px) */}
+            <div className="flex md:hidden h-full w-full flex-col overflow-hidden bg-[#F2F2F7]">
+                <MobileInvoiceView
+                    orders={orders}
+                    onAction={onAction}
+                    showToast={showToast}
+                    onOpenFilePreview={onOpenFilePreview}
+                    onUpdateInvoiceDetails={onUpdateInvoiceDetails}
+                    selectedFolder={selectedFolder}
+                    selectedOrderId={selectedOrderId}
+                    onFolderChange={handleFolderChange}
+                    onOrderSelect={handleOrderSelect}
+                    processingId={processingId}
+                    processingActionType={processingActionType}
+                    isLoading={isLoading}
+                    onBackToAdminHome={onBackToAdminHome}
+                    onOpenActionMenu={onOpenActionMenu}
+                    onBatchFetchInvoices={handleBatchFetchMInvoice}
+                    onBatchCheckDms={() => handleBatchDmsCheckApproved(false)}
+                    isBatchFetching={isBatchFetching}
+                    isCheckingDms={isCheckingDms}
+                />
+            </div>
+
+            {/* Desktop 3-Column Cockpit (>= 768px): 100% Preserved */}
+            <div className="hidden md:flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
+                <AnimatedBackground />
+                {/* Column 1: Folders */}
+                <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {folders.map(folder => {
                         const isActive = selectedFolder === folder.id;
@@ -2456,7 +2487,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 accept=".pdf,.jpeg,.png,.jpg"
                 onChange={handleFileChange}
             />
-        </div>
+            </div>
+        </>
     );
 };
 

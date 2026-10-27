@@ -23,6 +23,8 @@ interface SoldCarsViewProps {
     showOrderInAdmin?: (order: Order, targetTab: any) => void;
     showAdminTab?: (targetTab: any) => void;
     isAdmin?: boolean;
+    mobileMode?: boolean;
+    onBack?: () => void;
 }
 
 const synchronizeTvbhName = (name?: string): string => {
@@ -49,7 +51,7 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
     return Object.entries(stats).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
 };
 
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdminTab, isAdmin }) => {
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdminTab, isAdmin, mobileMode = false, onBack }) => {
     const INITIAL_LOAD_COUNT = 20;
     const LOAD_MORE_STEP = 20;
 
@@ -71,6 +73,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
     const [visibleItemsCount, setVisibleItemsCount] = useState(INITIAL_LOAD_COUNT);
     const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+    const [mobileDraftFilters, setMobileDraftFilters] = useState({
+        carModel: [] as string[],
+        tvbh: [] as string[],
+        version: [] as string[],
+        exterior: [] as string[]
+    });
 
     const handleExportExcel = () => {
         if (!soldData || soldData.length === 0) {
@@ -231,7 +240,6 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
         setIsDetailDrawerOpen(true);
     };
 
-
     const uniqueTvbh = useMemo(() => [...new Set(soldData.map(o => synchronizeTvbhName(o['Tên tư vấn bán hàng'])).filter(Boolean))].sort(), [soldData]);
     const uniqueCarModels = useMemo(() => [...new Set(soldData.map(o => o['Dòng xe']).filter(Boolean))].sort(), [soldData]);
     const uniqueVersions = useMemo(() => [...new Set(soldData.map(o => o['Phiên bản']).filter(Boolean))].sort(), [soldData]);
@@ -254,6 +262,30 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
             <div className="skeleton-item h-3 w-20 rounded-md"></div>
         </div>
     )), []);
+
+    if (error && mobileMode) {
+        return (
+            <div className="flex h-full min-h-0 flex-col bg-[#f2f2f7]">
+                <div className="relative flex h-12 shrink-0 items-center border-b border-slate-200 bg-white px-3">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="inline-flex h-8 items-center gap-0.5 rounded-lg px-1 text-[13px] font-semibold text-slate-700 active:bg-slate-100"
+                    >
+                        <i className="fas fa-chevron-left text-[11px]" />
+                        <span>Back</span>
+                    </button>
+                    <span className="absolute left-1/2 -translate-x-1/2 text-[12px] font-bold uppercase tracking-[0.13em] text-slate-800">Lịch Sử Bán Hàng</span>
+                </div>
+                <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-8 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-rose-400 shadow-sm ring-1 ring-slate-200"><i className="fas fa-cloud-exclamation text-xl" /></div>
+                    <p className="mt-4 text-sm font-semibold text-slate-800">Không thể tải dữ liệu</p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{error}</p>
+                    <button type="button" onClick={refetch} className="mt-4 h-9 rounded-xl bg-slate-800 px-4 text-xs font-semibold text-white active:scale-95">Thử lại</button>
+                </div>
+            </div>
+        );
+    }
 
     if (error) {
         return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
@@ -279,6 +311,361 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
     };
 
     const activeDropdowns = dropdownConfigs.filter(d => d.key !== 'carModel');
+
+    if (mobileMode) {
+        const activeFilterCount = filters.carModel.length + filters.tvbh.length + filters.version.length + filters.exterior.length;
+        const yearOptions = Array.from({ length: 7 }, (_, index) => new Date().getFullYear() + 1 - index);
+
+        const openMobileFilters = () => {
+            setMobileDraftFilters({
+                carModel: [...filters.carModel],
+                tvbh: [...filters.tvbh],
+                version: [...filters.version],
+                exterior: [...filters.exterior]
+            });
+            setIsMobileFilterOpen(true);
+        };
+
+        const toggleMobileFilter = (key: 'carModel' | 'tvbh' | 'version' | 'exterior', value: string) => {
+            setMobileDraftFilters((prev) => ({
+                ...prev,
+                [key]: prev[key].includes(value)
+                    ? prev[key].filter((item) => item !== value)
+                    : [...prev[key], value]
+            }));
+        };
+
+        const applyMobileFilters = () => {
+            handleFilterChange(mobileDraftFilters);
+            setIsMobileFilterOpen(false);
+        };
+
+        const removeAppliedMobileFilter = (key: 'carModel' | 'tvbh' | 'version' | 'exterior', value: string) => {
+            handleFilterChange({ [key]: filters[key].filter((item) => item !== value) });
+        };
+
+        const mobileDraftResultCount = dateFilteredData.filter((order) => {
+            const matchesKeyword = !filters.keyword || [
+                order['Tên khách hàng'], order['Số đơn hàng'], order.VIN,
+                order['Dòng xe'], order['Phiên bản'], order['Ngoại thất'], order['Tên tư vấn bán hàng']
+            ].some((value) => includesNormalized(value, filters.keyword.toLowerCase()));
+            const matchesModel = mobileDraftFilters.carModel.length === 0 || mobileDraftFilters.carModel.includes(order['Dòng xe']);
+            const matchesTvbh = mobileDraftFilters.tvbh.length === 0 || mobileDraftFilters.tvbh.includes(synchronizeTvbhName(order['Tên tư vấn bán hàng']));
+            const matchesVersion = mobileDraftFilters.version.length === 0 || mobileDraftFilters.version.includes(order['Phiên bản']);
+            const matchesExterior = mobileDraftFilters.exterior.length === 0 || mobileDraftFilters.exterior.includes(order['Ngoại thất']);
+            return matchesKeyword && matchesModel && matchesTvbh && matchesVersion && matchesExterior;
+        }).length;
+
+        const renderFilterChips = (
+            key: 'carModel' | 'tvbh' | 'version' | 'exterior',
+            options: string[],
+            emptyText: string
+        ) => (
+            options.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                    {options.map((option) => {
+                        const selected = mobileDraftFilters[key].includes(option);
+                        return (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => toggleMobileFilter(key, option)}
+                                className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center space-x-1 transition-all active:scale-95 border ${selected
+                                    ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                                    : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
+                                }`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+            ) : <p className="text-xs text-slate-400">{emptyText}</p>
+        );
+
+        return (
+            <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[#f2f2f7] text-slate-900">
+                <div className="relative flex h-12 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3">
+                    <button
+                        type="button"
+                        onClick={onBack}
+                        className="inline-flex h-8 items-center gap-0.5 rounded-lg px-1 text-[13px] font-semibold text-slate-700 active:bg-slate-100"
+                    >
+                        <i className="fas fa-chevron-left text-[11px]" />
+                        <span>Back</span>
+                    </button>
+                    <span className="absolute left-1/2 -translate-x-1/2 text-[12px] font-bold uppercase tracking-[0.13em] text-slate-800">
+                        Lịch Sử Bán Hàng
+                    </span>
+                    <button
+                        type="button"
+                        onClick={refetch}
+                        aria-label="Làm mới"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-95"
+                    >
+                        <i className={`fas fa-rotate-right text-[11px] ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
+
+                <div className="shrink-0 space-y-2 border-b border-slate-200 bg-[#f2f2f7] px-3 pb-2.5 pt-2.5">
+                    <div className="grid grid-cols-[1fr_88px_auto] gap-1.5">
+                        <label className="relative">
+                            <select
+                                value={selectedMonth === null ? 'all' : selectedMonth}
+                                onChange={(event) => setSelectedMonth(event.target.value === 'all' ? null : Number(event.target.value))}
+                                className="h-9 w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-7 text-[12px] font-semibold text-slate-700 outline-none"
+                            >
+                                <option value="all">Cả năm</option>
+                                {MONTHS.map((month, index) => <option key={month} value={index}>{month}</option>)}
+                            </select>
+                            <i className="fas fa-chevron-down pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400" />
+                        </label>
+                        <label className="relative">
+                            <select
+                                value={selectedYear}
+                                onChange={(event) => setSelectedYear(Number(event.target.value))}
+                                className="h-9 w-full appearance-none rounded-xl border border-slate-200 bg-white px-2.5 pr-6 text-[12px] font-semibold text-slate-700 outline-none"
+                            >
+                                {yearOptions.map((year) => <option key={year} value={year}>{year}</option>)}
+                            </select>
+                            <i className="fas fa-chevron-down pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400" />
+                        </label>
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                onClick={handleExportExcel}
+                                aria-label="Xuất Excel"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 active:scale-95"
+                            >
+                                <i className="fas fa-file-excel text-[13px]" />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid h-11 grid-cols-3 overflow-hidden rounded-[10px] border border-slate-200 bg-white">
+                        <div className="flex flex-col items-center justify-center px-1.5 text-center">
+                            <p className="text-[13px] font-bold leading-none tabular-nums text-slate-900">{stats.total}</p>
+                            <p className="mt-1 text-[8px] font-medium uppercase leading-none tracking-wide text-slate-400">Xe đã bán</p>
+                        </div>
+                        <div className="flex min-w-0 flex-col items-center justify-center border-x border-slate-100 px-1.5 text-center">
+                            <p className="w-full truncate text-[10px] font-bold leading-none text-slate-800">{stats.topCars[0]?.key || '—'}</p>
+                            <p className="mt-1 text-[8px] font-medium uppercase leading-none tracking-wide text-slate-400">Top xe</p>
+                        </div>
+                        <div className="flex min-w-0 flex-col items-center justify-center px-1.5 text-center">
+                            <p className="w-full truncate text-[10px] font-bold leading-none text-slate-800">{stats.topTvbh[0]?.key || '—'}</p>
+                            <p className="mt-1 text-[8px] font-medium uppercase leading-none tracking-wide text-slate-400">Top TVBH</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto bg-[#f2f2f7] overscroll-contain px-2 py-2">
+                    {isLoading && soldData.length === 0 ? (
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white divide-y divide-slate-100">
+                            {Array.from({ length: 8 }).map((_, index) => (
+                                <div key={index} className="flex h-[58px] animate-pulse items-center gap-2 px-2.5">
+                                    <div className="h-7 w-7 rounded-full bg-slate-100" />
+                                    <div className="flex-1 space-y-2"><div className="h-3 w-2/3 rounded bg-slate-100" /><div className="h-2.5 w-1/2 rounded bg-slate-100" /></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : visibleData.length === 0 ? (
+                        <div className="flex h-full flex-col items-center justify-center px-8 text-center">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-300"><i className="fas fa-receipt text-xl" /></div>
+                            <p className="mt-3 text-sm font-semibold text-slate-700">Không tìm thấy dữ liệu</p>
+                            <p className="mt-1 text-xs text-slate-400">Hãy đổi thời gian hoặc điều kiện lọc.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs">
+                            <div className="sticky top-0 z-10 grid h-7 grid-cols-[28px_minmax(0,1fr)_74px_8px] items-center gap-2 border-b border-slate-200 bg-slate-50 px-2.5 text-[8.5px] font-bold uppercase tracking-wider text-slate-400">
+                                <span className="text-center">#</span>
+                                <span>Khách hàng / Xe</span>
+                                <span className="text-right">Ngày bán</span>
+                                <span />
+                            </div>
+                            <div className="divide-y divide-slate-100">
+                                {visibleData.map((order, index) => {
+                                    const invoiceDate = order['Ngày xuất hóa đơn'] || order['Thời gian nhập'];
+                                    const formattedDate = invoiceDate && moment(invoiceDate).isValid() ? moment(invoiceDate).format('DD/MM/YY') : '—';
+                                    return (
+                                        <button
+                                            key={order['Số đơn hàng'] || `${order.VIN}-${index}`}
+                                            type="button"
+                                            onClick={() => handleRowClick(order)}
+                                        className="grid min-h-[48px] w-full grid-cols-[28px_minmax(0,1fr)_74px_8px] items-center gap-2 px-2.5 py-1.5 text-left active:bg-slate-50"
+                                    >
+                                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[9px] font-semibold tabular-nums text-slate-500">{index + 1}</span>
+                                            <span className="min-w-0">
+                                                <span className="block truncate text-[11.5px] font-bold uppercase leading-tight text-slate-900">{order['Tên khách hàng'] || 'Chưa cập nhật'}</span>
+                                                <span className="mt-1 block truncate text-[9.5px] font-medium leading-tight text-slate-500">{order['Dòng xe']} {order['Phiên bản']}</span>
+                                            </span>
+                                            <span className="min-w-0 text-right">
+                                                <span className="block text-[9.5px] font-semibold tabular-nums text-slate-700">{formattedDate}</span>
+                                            </span>
+                                            <i className="fas fa-chevron-right text-[8px] text-slate-300" />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div ref={observerTarget} className="flex h-10 items-center justify-center text-[10px] text-slate-400">
+                                {visibleItemsCount < sortedData.length && <><i className="fas fa-spinner fa-spin mr-1.5" />Đang tải thêm...</>}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="w-full bg-white/92 backdrop-blur-2xl border-t border-black/[0.08] px-3 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-6px_20px_rgba(0,0,0,0.06)] z-30 flex-shrink-0 space-y-1">
+                    {activeFilterCount > 0 && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar">
+                            <span className="shrink-0 text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Đang lọc:</span>
+                            {([
+                                ['carModel', filters.carModel],
+                                ['tvbh', filters.tvbh],
+                                ['version', filters.version],
+                                ['exterior', filters.exterior]
+                            ] as const).flatMap(([key, values]) => values.map((value) => (
+                                <span key={`${key}-${value}`} className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200/80 flex-shrink-0">
+                                    <span>{value}</span>
+                                    <button type="button" onClick={() => removeAppliedMobileFilter(key, value)} className="hover:text-slate-900 active:scale-90 ml-0.5">
+                                        <i className="fas fa-times text-[8px]" />
+                                    </button>
+                                </span>
+                            )))}
+                            <button type="button" onClick={() => handleFilterChange({ carModel: [], tvbh: [], version: [], exterior: [] })} className="text-[10px] font-medium text-slate-500 hover:text-slate-800 active:scale-95 px-1 py-0.5 flex-shrink-0">Xóa tất cả</button>
+                        </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                        <label className="relative flex-1">
+                            <i className="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400" />
+                            <input
+                                value={filters.keyword}
+                                onChange={(event) => handleFilterChange({ keyword: event.target.value })}
+                                placeholder="Tìm tên khách, số VIN, số đơn..."
+                                className="w-full h-[34px] pl-[30px] pr-[28px] rounded-xl bg-slate-100/90 focus:bg-white text-[11.5px] text-slate-800 placeholder-slate-400 border border-slate-200/80 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-200 shadow-2xs transition-all font-sans"
+                            />
+                            {filters.keyword && (
+                                <button type="button" onClick={() => handleFilterChange({ keyword: '' })} className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 active:scale-90">
+                                    <i className="fas fa-times text-[10px]" />
+                                </button>
+                            )}
+                        </label>
+                        <button
+                            type="button"
+                            onClick={openMobileFilters}
+                            className={`h-[34px] px-2.5 rounded-xl flex items-center space-x-1 font-medium text-[11px] transition-all active:scale-95 flex-shrink-0 border ${activeFilterCount ? 'bg-slate-700 text-white border-slate-700 shadow-xs' : 'bg-slate-100/90 text-slate-700 hover:bg-slate-200/80 border-slate-200/80 shadow-2xs'}`}
+                        >
+                            <i className="fas fa-sliders text-[11px]" />
+                            <span>Lọc</span>
+                            {activeFilterCount > 0 && <span className="w-3.5 h-3.5 rounded-full bg-white text-slate-700 font-bold text-[9px] flex items-center justify-center -mr-0.5">{activeFilterCount}</span>}
+                        </button>
+                    </div>
+                </div>
+
+                {isDetailDrawerOpen && selectedDetailOrder && (
+                    <div className="fixed inset-0 z-[110] flex items-end justify-center">
+                        <button
+                            type="button"
+                            aria-label="Đóng chi tiết bán hàng"
+                            className="absolute inset-0 bg-slate-950/35 backdrop-blur-[2px] animate-in fade-in duration-200"
+                            onClick={() => setIsDetailDrawerOpen(false)}
+                        />
+                        <section
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="Chi tiết bán hàng"
+                            className="relative z-10 flex max-h-[calc(100dvh-8px)] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] bg-[#f2f2f7] shadow-[0_-16px_50px_rgba(15,23,42,0.22)] animate-in slide-in-from-bottom duration-300"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <div className="shrink-0 bg-white px-3 pb-1.5 pt-1.5">
+                                <div className="mx-auto h-1 w-9 rounded-full bg-slate-300" />
+                                <div className="relative mt-0.5 flex h-8 items-center justify-center">
+                                    <h2 className="text-[12px] font-bold uppercase tracking-[0.13em] text-slate-800">Chi Tiết Bán Hàng</h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDetailDrawerOpen(false)}
+                                        aria-label="Đóng"
+                                        className="absolute right-0 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-95 active:bg-slate-200"
+                                    >
+                                        <i className="fas fa-times text-[12px]" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="min-h-0 overflow-hidden border-t border-black/[0.06]">
+                                <SoldCarDetailPanel
+                                    order={selectedDetailOrder}
+                                    showOrderInAdmin={showOrderInAdmin}
+                                    showAdminTab={showAdminTab}
+                                    isAdmin={isAdmin}
+                                    mobileMode
+                                />
+                            </div>
+                        </section>
+                    </div>
+                )}
+
+                {isMobileFilterOpen && (
+                    <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200" onClick={() => setIsMobileFilterOpen(false)} />
+                        <div
+                            className="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-[24px] shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col max-h-[55dvh] animate-in slide-in-from-bottom duration-250 overflow-hidden"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <div className="pt-2 pb-0.5 flex justify-center">
+                                <div className="w-8 h-1 rounded-full bg-slate-300" />
+                            </div>
+
+                            <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-1.5">
+                                <div className="flex w-16 justify-start">
+                                    {(mobileDraftFilters.carModel.length + mobileDraftFilters.tvbh.length + mobileDraftFilters.version.length + mobileDraftFilters.exterior.length) > 0 ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setMobileDraftFilters({ carModel: [], tvbh: [], version: [], exterior: [] })}
+                                            className="text-[12.5px] font-medium text-slate-500 hover:text-slate-800 active:opacity-60 transition-opacity"
+                                        >
+                                            Đặt lại
+                                        </button>
+                                    ) : <span className="w-1" />}
+                                </div>
+                                <h3 className="flex-1 text-center text-[13.5px] font-bold tracking-tight text-slate-800">Bộ Lọc</h3>
+                                <div className="flex w-16 justify-end">
+                                    <button type="button" onClick={applyMobileFilters} className="text-[13.5px] font-bold text-slate-700 hover:text-slate-900 active:opacity-60 transition-opacity">Xong</button>
+                                </div>
+                            </div>
+
+                            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3 no-scrollbar">
+                                <section>
+                                    <h3 className="mb-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Dòng xe</h3>
+                                    {renderFilterChips('carModel', uniqueCarModels, 'Chưa có dữ liệu dòng xe')}
+                                </section>
+                                <section>
+                                    <h3 className="mb-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Tư vấn bán hàng</h3>
+                                    {renderFilterChips('tvbh', uniqueTvbh, 'Chưa có dữ liệu tư vấn viên')}
+                                </section>
+                                <section>
+                                    <h3 className="mb-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Phiên bản</h3>
+                                    {renderFilterChips('version', uniqueVersions, 'Chưa có dữ liệu phiên bản')}
+                                </section>
+                                <section>
+                                    <h3 className="mb-1.5 px-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Ngoại thất</h3>
+                                    {renderFilterChips('exterior', uniqueExteriors, 'Chưa có dữ liệu màu xe')}
+                                </section>
+                            </div>
+
+                            <div className="p-3 border-t border-black/[0.06] bg-white pb-[max(12px,env(safe-area-inset-bottom))]">
+                                <button
+                                    type="button"
+                                    onClick={applyMobileFilters}
+                                    className="w-full h-[38px] rounded-full bg-slate-700 hover:bg-slate-800 text-white font-semibold text-[13px] tracking-tight shadow-xs active:scale-[0.98] transition-all flex items-center justify-center space-x-1"
+                                >
+                                    <span>Xem {mobileDraftResultCount} Đơn Hàng</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full space-y-2 p-1 md:p-0">

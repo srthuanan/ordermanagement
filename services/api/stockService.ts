@@ -877,6 +877,9 @@ export interface CrossShowroomAllocationItem {
     ngay_ct_dnx?: string;
     ma_ttcp_nhan_dnx?: string;
     so_ct_transfer?: string;
+    stt_rec?: string;
+    so_so?: string;
+    ttcp_xuat?: string;
 }
 
 export interface CrossShowroomAllocationsResult {

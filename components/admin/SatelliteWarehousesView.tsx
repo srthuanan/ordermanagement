@@ -1750,10 +1750,10 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 otherAllocPendingCount: countOtherAllocPending
             });
         }
-    }, [cars.length, countTd4Approved, countAlertThuanAn, missingYardItems, k83Items.length, countK83Diff, allCombinedAlerts.length, thuanAnAllocations.length, countCrossPending, otherAllocations.length, countOtherAllocPending, onCountsChange]);
+    }, [cars.length, countTd4Approved, countAlertThuanAn, missingYardItems.length, k83Items.length, countK83Diff, allCombinedAlerts.length, thuanAnAllocations.length, countCrossPending, otherAllocations.length, countOtherAllocPending, onCountsChange]);
 
     return (
-        <div className="flex-1 flex flex-col min-h-0 w-full bg-[#ECE9D8] rounded border border-[#CCCCCC] shadow-sm overflow-hidden font-sans select-none h-full">
+        <div className="cyber-mobile-adaptive flex-1 flex flex-col min-h-0 w-full bg-[#f2f2f7] md:bg-[#ECE9D8] rounded border border-[#CCCCCC] shadow-sm overflow-hidden font-sans select-none h-full">
 
             {/* ========================================================================= */}
             {/* CHẾ ĐỘ 1: TỒN KHO 3 KHO VỆ TINH */}

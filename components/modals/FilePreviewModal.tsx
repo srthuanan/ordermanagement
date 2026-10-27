@@ -80,18 +80,25 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
     };
 
     return (
-        <div className="fixed inset-0 bg-black/95 z-[99999] flex flex-col animate-fade-in overflow-hidden">
+        <div
+            className="fixed inset-0 z-[99999] flex items-end justify-center overflow-hidden bg-black/40 backdrop-blur-[2px] animate-fade-in md:block md:bg-black/95 md:backdrop-blur-none"
+            onClick={onClose}
+        >
+          <div
+            className="relative h-[96dvh] w-full max-w-md overflow-hidden rounded-t-[26px] bg-[#202124] shadow-[0_-16px_50px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom duration-300 md:fixed md:inset-0 md:h-auto md:max-w-none md:rounded-none md:shadow-none md:animate-none"
+            onClick={(event) => event.stopPropagation()}
+          >
             {/* Main Content Area */}
             <div
-                className="absolute inset-0 flex items-center justify-center overflow-hidden p-0 md:p-8"
+                className="absolute inset-0 flex items-center justify-center overflow-hidden pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[4.25rem] md:p-8"
                 onClick={() => setShowControls(prev => !prev)}
             >
-                <div className="relative w-full h-full md:max-w-6xl md:max-h-[88vh] shadow-2xl md:rounded-2xl overflow-hidden bg-[#1e1e1e] border border-white/10 flex items-center justify-center">
+                <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#202124] md:max-h-[88vh] md:max-w-6xl md:rounded-2xl md:border md:border-white/10 md:bg-[#1e1e1e] md:shadow-2xl">
                     {isImg ? (
                         <img 
                             src={fileUrl} 
                             alt={fileLabel} 
-                            className="max-w-full max-h-full object-contain p-4 shadow-xl"
+                            className="h-full w-full object-contain p-1 shadow-xl md:max-h-full md:max-w-full md:p-4"
                         />
 
                     ) : iframeFailed ? (
@@ -129,14 +136,41 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
 
                     {/* Mask for Google Drive Pop-out Button if Google Drive */}
                     {embedUrl.includes('drive.google.com') && (
-                        <div className="absolute top-0 right-0 w-14 h-14 bg-[#1e1e1e] z-20 pointer-events-none"></div>
+                        <div className="absolute right-0 top-0 z-20 hidden h-14 w-14 bg-[#1e1e1e] pointer-events-none md:block"></div>
                     )}
+                </div>
+            </div>
+
+            {/* Mobile iOS Header */}
+            <div className="absolute inset-x-0 top-0 z-50 rounded-t-[26px] bg-white/95 pb-1 shadow-[0_1px_0_rgba(0,0,0,0.1)] backdrop-blur-xl md:hidden">
+                <div className="flex justify-center pb-0.5 pt-2"><span className="h-1 w-9 rounded-full bg-slate-300" /></div>
+                <div className="relative flex h-12 items-center justify-between px-3">
+                    <button type="button" onClick={onClose} className="inline-flex h-9 items-center gap-1 rounded-xl px-1 text-[13px] font-semibold text-slate-700 active:bg-slate-100">
+                        <i className="fas fa-chevron-left text-[11px]" />
+                        <span>Back</span>
+                    </button>
+                    <div className="pointer-events-none absolute left-1/2 w-[52%] -translate-x-1/2 text-center">
+                        <p className="truncate text-[12px] font-bold text-slate-900">{fileLabel}</p>
+                        <p className="mt-0.5 text-[8px] font-medium uppercase tracking-wider text-slate-400">Xem hồ sơ</p>
+                    </div>
+                    <button type="button" onClick={onClose} aria-label="Đóng" className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-95">
+                        <i className="fas fa-times text-[12px]" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Mobile Action Dock */}
+            <div className="absolute inset-x-0 bottom-0 z-50 border-t border-black/[0.08] bg-white/95 px-4 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
+                <div className="mx-auto grid max-w-sm grid-cols-3 gap-2">
+                    <button type="button" onClick={handleOpenNewTab} className="flex h-11 items-center justify-center gap-2 rounded-[13px] bg-slate-100 text-[11px] font-semibold text-slate-700 active:scale-[0.98]"><i className="fas fa-external-link-alt text-blue-500" /><span>Mở</span></button>
+                    <button type="button" onClick={handleDownload} className="flex h-11 items-center justify-center gap-2 rounded-[13px] bg-slate-100 text-[11px] font-semibold text-slate-700 active:scale-[0.98]"><i className="fas fa-download text-cyan-600" /><span>Tải về</span></button>
+                    <button type="button" onClick={handlePrint} className="flex h-11 items-center justify-center gap-2 rounded-[13px] bg-slate-900 text-[11px] font-semibold text-white shadow-sm active:scale-[0.98]"><i className="fas fa-print" /><span>In</span></button>
                 </div>
             </div>
 
             {/* Top Control Bar */}
             <div
-                className={`absolute top-0 left-0 right-0 h-24 z-50 flex items-start pt-6 px-6 justify-between transition-all duration-500 transform ${showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
+                className={`absolute top-0 left-0 right-0 h-24 z-50 hidden md:flex items-start pt-6 px-6 justify-between transition-all duration-500 transform ${showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
                 style={{ pointerEvents: 'none' }}
             >
                 {/* File Title Info */}
@@ -189,12 +223,12 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
 
             {/* Top Bar Background Gradient */}
             <div 
-                className={`absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/90 via-black/40 to-transparent z-40 transition-all duration-500 pointer-events-none ${showControls ? 'opacity-100' : 'opacity-0'}`}
+                className={`absolute top-0 left-0 right-0 hidden h-32 bg-gradient-to-b from-black/90 via-black/40 to-transparent z-40 transition-all duration-500 pointer-events-none md:block ${showControls ? 'opacity-100' : 'opacity-0'}`}
             ></div>
 
             {/* Print Instruction Notification */}
             {showPrintHint && (
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-[60] animate-slide-in-down pointer-events-none">
+                <div className="absolute left-1/2 top-[4.5rem] z-[60] -translate-x-1/2 animate-slide-in-down pointer-events-none md:top-24">
                     <div className="px-6 py-3 rounded-xl bg-green-500/90 backdrop-blur-md border border-green-400/50 text-white shadow-lg shadow-green-500/20">
                         <div className="flex items-center gap-3">
                             <i className="fas fa-check-circle text-xl"></i>
@@ -208,11 +242,12 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
             )}
 
             {/* Bottom Hint */}
-            <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 transition-opacity duration-500 pointer-events-none z-40 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute bottom-6 left-1/2 hidden -translate-x-1/2 transition-opacity duration-500 pointer-events-none z-40 md:block ${showControls ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="px-4 py-2 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white/60 text-xs font-medium">
                     Nhấn vào màn hình để ẩn/hiện công cụ • Nhấn Esc để đóng
                 </div>
             </div>
+          </div>
         </div>
     );
 };

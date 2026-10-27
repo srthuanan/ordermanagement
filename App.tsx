@@ -1423,6 +1423,80 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         );
     }
 
+    // Mobile-first Lịch sử bán hàng
+    if (isMobileScreen && activeView === 'sold') {
+        return (
+            <div className="h-[100dvh] w-full overflow-hidden bg-[#f2f2f7]">
+                <Suspense fallback={<LoadingFallback />}>
+                    <SoldCarsView
+                        showToast={showToast}
+                        isSidebarCollapsed={false}
+                        showOrderInAdmin={showOrderInAdmin}
+                        showAdminTab={showAdminTab}
+                        isAdmin={isCurrentUserAdmin}
+                        mobileMode
+                        onBack={() => setActiveView('dashboard')}
+                    />
+                </Suspense>
+            </div>
+        );
+    }
+
+    // Mobile-first Quản trị: tách khỏi khung desktop để tránh lặp header và thanh điều hướng dưới.
+    if (isMobileScreen && activeView === 'admin' && isCurrentUserAdmin) {
+        return (
+            <GlobalNotificationProvider>
+                <div className="h-[100dvh] w-full overflow-hidden bg-[#f2f2f7]">
+                    <Suspense fallback={<LoadingFallback />}>
+                        <AdminView
+                        showToast={showToast}
+                        hideToast={hideToast}
+                        refetchHistory={refetchHistory}
+                        refetchStock={refetchStock}
+                        allOrders={allHistoryData}
+                        xuathoadonData={xuathoadonData}
+                        refetchXuathoadon={refetchXuathoadon}
+                        stockData={stockData}
+                        isLoadingXuathoadon={isLoadingXuathoadon}
+                        isLoadingHistory={isLoadingHistory}
+                        errorXuathoadon={errorXuathoadon}
+                        onOpenImagePreview={openImagePreviewModal}
+                        onOpenFilePreview={openFilePreviewModal}
+                        teamData={teamData}
+                        allUsers={allUsers}
+                        refetchAdminData={fetchAdminData}
+                        isSidebarCollapsed={false}
+                        initialState={initialAdminState}
+                        clearInitialState={clearInitialState}
+                        isReferenceAccount={isReferenceAccount}
+                        mobileMode
+                        onBack={() => setActiveView('dashboard')}
+                        />
+                    </Suspense>
+                    <Suspense fallback={null}>
+                        {imagePreview && (
+                            <ImagePreviewModal
+                                isOpen={!!imagePreview}
+                                onClose={() => setImagePreview(null)}
+                                images={imagePreview.images || []}
+                                startIndex={imagePreview.startIndex}
+                                customerName={imagePreview.customerName}
+                            />
+                        )}
+                        {filePreview && (
+                            <FilePreviewModal
+                                isOpen={!!filePreview}
+                                onClose={() => setFilePreview(null)}
+                                fileUrl={filePreview.url}
+                                fileLabel={filePreview.label}
+                            />
+                        )}
+                    </Suspense>
+                </div>
+            </GlobalNotificationProvider>
+        );
+    }
+
     return (
         <>
             <GlobalNotificationProvider>
@@ -1708,6 +1782,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         initialState={initialAdminState}
                                         clearInitialState={clearInitialState}
                                         isReferenceAccount={isReferenceAccount}
+                                        mobileMode={isMobileScreen}
+                                        onBack={() => setActiveView('dashboard')}
                                     />
                                 </Suspense>
                             )}

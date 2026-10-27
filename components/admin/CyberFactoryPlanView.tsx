@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as xlsx from 'xlsx';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { 
@@ -28,6 +28,7 @@ import { supabase, supabaseAdmin } from '../../services/supabaseClient';
 import { formatShortWarehouseName } from '../../utils/stringUtils';
 import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 import SatelliteWarehousesView from './SatelliteWarehousesView';
+import MobileCyberPlanView from './mobile/MobileCyberPlanView';
 
 interface CyberPlanCarItem {
     vin: string;
@@ -58,6 +59,8 @@ interface CyberFactoryPlanViewProps {
     isActive?: boolean;
     allOrders?: any[];
     stockData?: any[];
+    onBackToAdminHome?: () => void;
+    onOpenActionMenu?: () => void;
 }
 
 // Tiện ích chuẩn hóa chuỗi loại bỏ dấu tiếng Việt (hỗ trợ tìm kiếm không dấu lẫn có dấu)
@@ -310,13 +313,53 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     showToast,
     isActive = true,
     allOrders = [],
-    stockData = []
+    stockData = [],
+    onBackToAdminHome,
+    onOpenActionMenu
 }) => {
     // Sub-tab switcher: 'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard' | 'reconcile_k83' | 'reconcile_cross_allocations' | 'reconcile_other_sr_allocations'
     const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard' | 'reconcile_k83' | 'reconcile_cross_allocations' | 'reconcile_other_sr_allocations'>('factory_plan');
     const [reconcileCounts, setReconcileCounts] = useState<{ carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; k83Count?: number; k83DiffCount?: number; allCount: number; thuanAnAllocationsCount?: number; crossPendingCount?: number; otherShowroomAllocationsCount?: number; otherAllocPendingCount?: number }>({ carsCount: 0, td4Count: 0, dnxCount: 0, missingYardCount: 0, k83Count: 0, k83DiffCount: 0, allCount: 0 });
+
+    const handleReconcileCountsChange = useCallback((c: any) => {
+        if (!c) return;
+        setReconcileCounts(prev => {
+            const nextAll = c.k83DiffCount ?? c.allAlertCount ?? 0;
+            if (
+                prev.carsCount === c.carsCount &&
+                prev.td4Count === c.td4Count &&
+                prev.dnxCount === c.dnxCount &&
+                prev.missingYardCount === c.missingYardCount &&
+                prev.k83Count === c.k83Count &&
+                prev.k83DiffCount === c.k83DiffCount &&
+                prev.allCount === nextAll &&
+                prev.thuanAnAllocationsCount === c.thuanAnAllocationsCount &&
+                prev.crossPendingCount === c.crossPendingCount &&
+                prev.otherShowroomAllocationsCount === c.otherShowroomAllocationsCount &&
+                prev.otherAllocPendingCount === c.otherAllocPendingCount
+            ) {
+                return prev;
+            }
+            return {
+                carsCount: c.carsCount || 0,
+                td4Count: c.td4Count || 0,
+                dnxCount: c.dnxCount || 0,
+                missingYardCount: c.missingYardCount || 0,
+                k83Count: c.k83Count || 0,
+                k83DiffCount: c.k83DiffCount || 0,
+                allCount: nextAll,
+                thuanAnAllocationsCount: c.thuanAnAllocationsCount || 0,
+                crossPendingCount: c.crossPendingCount || 0,
+                otherShowroomAllocationsCount: c.otherShowroomAllocationsCount || 0,
+                otherAllocPendingCount: c.otherAllocPendingCount || 0
+            };
+        });
+    }, []);
     const [mobileDnxView, setMobileDnxView] = useState<'form' | 'history'>('form');
     const [satelliteSearchVin, setSatelliteSearchVin] = useState('');
+    const [isMobileModuleSheetOpen, setIsMobileModuleSheetOpen] = useState(false);
+    const [isMobilePlanFilterOpen, setIsMobilePlanFilterOpen] = useState(false);
+    const [mobileCyberFilterFor, setMobileCyberFilterFor] = useState<'ton_kho' | 'xep_xe' | 'tra_cuu_phieu' | null>(null);
 
     // -------------------------------------------------------------
     // SUB-TAB 4: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX)
@@ -1777,8 +1820,115 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         <div className="flex flex-col md:flex-row h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0 font-sans">
             <AnimatedBackground />
 
-            {/* MOBILE TOP SUB-TAB NAVIGATION BAR (Only on mobile: block md:hidden) */}
-            <div className="block md:hidden shrink-0 bg-white border-b border-slate-200 shadow-2xs relative z-20">
+            {/* Dedicated Mobile View (Mobile-First Separation Protocol) */}
+            <div className="flex md:hidden flex-1 flex-col min-h-0 w-full overflow-hidden">
+                <MobileCyberPlanView
+                    activeSubTab={activeSubTab}
+                    onSubTabChange={(tab) => setActiveSubTab(tab)}
+                    onBackToAdminHome={onBackToAdminHome}
+                    onOpenActionMenu={onOpenActionMenu}
+                    handleFullSyncCyber={handleFullSyncCyber}
+                    isFullSyncing={isFullSyncing}
+                    lastSyncTime={lastSyncTime}
+                    showToast={showToast}
+                    cars={cars}
+                    displayedCars={displayedCars}
+                    planKeyword={keyword}
+                    setPlanKeyword={setKeyword}
+                    executePlanSearch={executeSearch}
+                    isLoadingPlan={isLoading}
+                    totalPlanCount={totalCount}
+                    filterOptions={filterOptions}
+                    selectedModel={selectedModel}
+                    selectedVersion={selectedVersion}
+                    selectedColor={selectedColor}
+                    selectedTtcp={selectedTtcp}
+                    onModelChange={handleModelChange}
+                    setSelectedVersion={setSelectedVersion}
+                    setSelectedColor={setSelectedColor}
+                    setSelectedTtcp={setSelectedTtcp}
+                    copiedVin={copiedVin}
+                    onCopyVin={handleCopyVin}
+                    tonKhoCars={tonKhoCars}
+                    displayedTonKhoCars={displayedTonKhoCars}
+                    tonKhoKeyword={tonKhoKeyword}
+                    setTonKhoKeyword={setTonKhoKeyword}
+                    executeTonKhoSearch={executeTonKhoSearch}
+                    isLoadingTonKho={isLoadingTonKho}
+                    tonKhoTotal={tonKhoTotal}
+                    tonKhoInvoiced={tonKhoInvoiced}
+                    tonKhoNotInvoiced={tonKhoNotInvoiced}
+                    tonKhoStatus={tonKhoStatus}
+                    setTonKhoStatus={setTonKhoStatus}
+                    tonKhoCopiedVin={tonKhoCopiedVin}
+                    onTonKhoCopyVin={handleTonKhoCopyVin}
+                    xepXeContracts={xepXeContracts}
+                    displayedXepXeContracts={displayedXepXeContracts}
+                    xepXeKeyword={xepXeKeyword}
+                    setXepXeKeyword={setXepXeKeyword}
+                    xepXeStatusFilter={xepXeStatusFilter}
+                    setXepXeStatusFilter={setXepXeStatusFilter}
+                    executeXepXeSearch={executeXepXeSearch}
+                    isLoadingXepXe={isLoadingXepXe}
+                    invoicedCount={invoicedCount}
+                    notInvoicedCount={notInvoicedCount}
+                    xepXeCopiedVin={xepXeCopiedVin}
+                    onXepXeCopyVin={handleXepXeCopyVin}
+                    dnxVinInput={dnxVinInput}
+                    setDnxVinInput={setDnxVinInput}
+                    dnxMaGd={dnxMaGd}
+                    setDnxMaGd={setDnxMaGd}
+                    dnxMaKhoXuat={dnxMaKhoXuat}
+                    setDnxMaKhoXuat={setDnxMaKhoXuat}
+                    dnxMaKhoNhan={dnxMaKhoNhan}
+                    setDnxMaKhoNhan={setDnxMaKhoNhan}
+                    dnxKhachHang={dnxKhachHang}
+                    setDnxKhachHang={setDnxKhachHang}
+                    dnxLyDo={dnxLyDo}
+                    setDnxLyDo={setDnxLyDo}
+                    extractedVins={extractedVins}
+                    isLookingUpVin={isLookingUpVin}
+                    detectedWarehouseName={detectedWarehouseName}
+                    handleCreateDnxSubmitInAdmin={handleCreateDnxSubmitInAdmin}
+                    isSubmittingDnx={isSubmittingDnx}
+                    dnxResult={dnxResult}
+                    setDnxResult={setDnxResult}
+                    dnxError={dnxError}
+                    setPrintTicketData={setPrintTicketData}
+                    pendingTransferRequests={pendingTransferRequests}
+                    isLoadingTransferRequests={isLoadingTransferRequests}
+                    loadPendingTransferRequests={loadPendingTransferRequests}
+                    handleApplyTransferRequest={handleApplyTransferRequest}
+                    handleRejectTransferRequest={handleRejectTransferRequest}
+                    handleResolveTransferRequestWithExistingTicket={handleResolveTransferRequestWithExistingTicket}
+                    recentDnxTickets={recentDnxTickets}
+                    isLoadingRecentTickets={isLoadingRecentTickets}
+                    loadRecentDnxTickets={loadRecentDnxTickets}
+                    handlePrintFromRecentList={handlePrintFromRecentList}
+                    detectedExistingTicket={detectedExistingTicket}
+                    bypassExistingTicket={bypassExistingTicket}
+                    setBypassExistingTicket={setBypassExistingTicket}
+                    voucherTickets={voucherTickets}
+                    voucherKeyword={ticketSearch}
+                    setVoucherKeyword={setTicketSearch}
+                    voucherTypeFilter={ticketMaCt}
+                    setVoucherTypeFilter={setTicketMaCt}
+                    voucherPostFilter={ticketMaPost}
+                    setVoucherPostFilter={setTicketMaPost}
+                    isLoadingTickets={isLoadingTickets}
+                    executeVoucherTicketsSearch={executeVoucherTicketsSearch}
+                    selectedTicketModal={selectedTicketModal}
+                    setSelectedTicketModal={setSelectedTicketModal}
+                    setPrintTd4Data={setPrintTd4Data}
+                    allOrders={allOrders}
+                    stockData={stockData}
+                    reconcileCounts={reconcileCounts}
+                    navigateToTab={navigateToTab}
+                />
+            </div>
+
+            {/* Legacy mobile tab bar retained for desktop logic, hidden on mobile */}
+            <div className="hidden shrink-0 bg-white border-b border-slate-200 shadow-2xs relative z-20">
                 <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1796,11 +1946,11 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         <span>{isFullSyncing ? 'Đang kéo...' : 'Đồng bộ'}</span>
                     </button>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-1.5 overflow-x-auto no-scrollbar scroll-smooth">
+                <div className="grid grid-cols-4 gap-1 px-2 py-2">
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('factory_plan')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all cursor-pointer ${
                             activeSubTab === 'factory_plan'
                                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                                 : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
@@ -1819,7 +1969,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('ton_kho')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all cursor-pointer ${
                             activeSubTab === 'ton_kho'
                                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                                 : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
@@ -1838,7 +1988,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('xep_xe')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all cursor-pointer ${
                             activeSubTab === 'xep_xe'
                                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                                 : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
@@ -1857,7 +2007,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('de_nghi_xuat')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all cursor-pointer ${
                             activeSubTab === 'de_nghi_xuat'
                                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                                 : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
@@ -1874,7 +2024,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('tra_cuu_phieu')}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all cursor-pointer ${
                             activeSubTab === 'tra_cuu_phieu'
                                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                                 : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
@@ -1895,7 +2045,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('satellite_warehouses')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all ${
                             activeSubTab === 'satellite_warehouses'
                                 ? 'bg-blue-700 text-white font-bold shadow-xs'
                                 : 'bg-blue-50 text-blue-800 font-semibold hover:bg-blue-100 border border-blue-200'
@@ -1914,7 +2064,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('reconcile_k83')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
+                        className={`flex min-w-0 items-center justify-center gap-1 rounded-[9px] px-1.5 py-1.5 text-[9px] transition-all ${
                             activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard' || activeSubTab === 'reconcile_k83' || activeSubTab === 'reconcile_cross_allocations' || activeSubTab === 'reconcile_other_sr_allocations'
                                 ? 'bg-indigo-600 text-white font-bold shadow-xs'
                                 : 'bg-indigo-50 text-indigo-800 font-semibold hover:bg-indigo-100 border border-indigo-200'
@@ -2151,7 +2301,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             </div>
 
             {/* COLUMN 2: MAIN WORKSPACE AREA */}
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-50 relative z-10 overflow-hidden">
+            <div className="flex-1 hidden md:flex flex-col min-w-0 bg-slate-50 relative z-10 overflow-hidden">
 
             {/* ============================================================= */}
             {/* SUB-TAB 1 CONTENT: KẾ HOẠCH NHÀ MÁY GIAO (K10/K15) */}
@@ -2159,7 +2309,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {activeSubTab === 'factory_plan' && (
                 <>
                     {/* Compact Filter Toolbar */}
-                    <div className="relative z-10 px-3.5 py-2.5 bg-white border-b border-slate-200 shadow-xs shrink-0">
+                    <div className="relative z-10 hidden px-3.5 py-2.5 bg-white border-b border-slate-200 shadow-xs shrink-0 md:block">
                         <div className="flex flex-wrap items-center gap-2">
                             
                             {/* 1. Keyword search / Instant Paste Filter */}
@@ -2320,7 +2470,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     </div>
 
                     {/* Results Summary Sub-header */}
-                    <div className="relative z-10 px-4 py-2 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between gap-3 shrink-0 text-xs text-slate-600 font-medium">
+                    <div className="relative z-10 flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-slate-100/70 px-3 py-1.5 text-[10px] font-medium text-slate-600 md:px-4 md:py-2 md:text-xs">
                         <div className="flex items-center gap-2 flex-wrap">
                             <span>Tìm thấy:</span>
                             <span className="font-extrabold text-slate-900 text-sm">
@@ -2341,14 +2491,14 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             )}
                         </div>
 
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                        <div className="hidden text-[11px] text-slate-400 items-center gap-1.5 sm:flex">
                             <i className="fas fa-database text-slate-400"></i>
                             <span>Dữ liệu phân bổ K10/K15 chưa XHĐ</span>
                         </div>
                     </div>
 
                     {/* Body Table Container */}
-                    <div className="relative z-10 flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 custom-scrollbar">
+                    <div className="relative z-10 flex-1 min-h-0 overflow-y-auto p-3 pb-[70px] sm:p-4 md:pb-4 custom-scrollbar">
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-500 gap-3">
                                 <div className="w-10 h-10 border-3 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
@@ -2356,17 +2506,17 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <p className="text-xs text-slate-400">Đang quét sổ cái phân bổ K10/K15 và loại bỏ triệt để xe đã xuất HĐ</p>
                             </div>
                         ) : !hasSearched && cars.length === 0 ? (
-                            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-10 flex flex-col items-center justify-center my-6 text-center max-w-xl mx-auto">
-                                <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 text-xl shadow-xs mb-4">
+                            <div className="mx-auto my-3 flex max-w-xl flex-col items-center justify-center rounded-[20px] border border-slate-200/80 bg-white p-5 text-center shadow-xs md:my-6 md:p-10">
+                                <div className="mb-2.5 flex h-11 w-11 items-center justify-center rounded-[14px] border border-slate-200 bg-slate-100 text-base text-slate-700 shadow-xs md:mb-4 md:h-14 md:w-14 md:rounded-2xl md:text-xl">
                                     <i className="fas fa-car-side"></i>
                                 </div>
-                                <h4 className="text-base font-extrabold text-slate-800 tracking-tight">
+                                <h4 className="text-[13px] font-extrabold tracking-tight text-slate-800 md:text-base">
                                     Tra Cứu Xe Kế Hoạch Chưa Xuất Hóa Đơn Bán (XHĐ)
                                 </h4>
-                                <p className="text-xs text-slate-500 mt-1.5 max-w-md leading-relaxed">
+                                <p className="mt-1 max-w-md text-[10px] leading-relaxed text-slate-500 md:mt-1.5 md:text-xs">
                                     Chọn <strong>Dòng xe</strong> ở trên hoặc dán danh sách số VIN vào ô tìm kiếm rồi nhấn <strong className="text-slate-900">Tải từ Cyber</strong>.
                                 </p>
-                                <div className="mt-3 px-3 py-1 bg-amber-50 border border-amber-200/60 rounded-lg text-[11px] text-amber-800 font-medium">
+                                <div className="mt-2 rounded-lg border border-amber-200/60 bg-amber-50 px-3 py-1 text-[9px] font-medium text-amber-800 md:mt-3 md:text-[11px]">
                                     <i className="fas fa-filter mr-1.5 text-amber-600"></i>
                                     Né 100% xe đã xuất hóa đơn bán hoặc đã ghép hợp đồng
                                 </div>
@@ -2421,7 +2571,20 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="divide-y divide-slate-100 md:hidden">
+                                    {displayedCars.map((item, idx) => (
+                                        <button key={`${item.vin}-mobile-${idx}`} type="button" onClick={() => handleCopyVin(item.vin)} className="flex w-full items-center gap-3 p-3 text-left active:bg-slate-50">
+                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-blue-50 text-blue-600"><i className="fas fa-car-side text-[12px]" /></span>
+                                            <span className="min-w-0 flex-1">
+                                                <span className="flex items-center gap-1.5"><strong className="truncate font-mono text-[11px] text-slate-900">{item.vin}</strong>{copiedVin === item.vin && <i className="fas fa-check text-[9px] text-emerald-500" />}</span>
+                                                <span className="mt-0.5 block truncate text-[10px] font-semibold text-slate-600">{item.dong_xe || item.ten_kx} · {item.phien_ban || item.ten_mau || '—'}</span>
+                                                <span className="mt-0.5 block truncate text-[8.5px] text-slate-400">{item.ten_ttcp || item.ma_ttcp || 'Chưa xác định showroom'}</span>
+                                            </span>
+                                            <span className="shrink-0 text-right"><span className={`block rounded-full px-2 py-0.5 text-[8px] font-bold ${item.current_physical_warehouse && item.current_physical_warehouse !== 'Đang vận tải' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}>{item.current_physical_warehouse || 'Đang vận tải'}</span><i className="fas fa-copy mt-2 text-[9px] text-slate-300" /></span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full min-w-[850px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="sticky top-0 z-10 bg-slate-50 text-slate-600 font-bold border-b border-slate-200 uppercase tracking-wider text-[10.5px]">
@@ -2540,6 +2703,21 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
                         )}
                     </div>
+
+                    {/* Shared mobile bottom search/filter bar */}
+                    <div className="absolute inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/92 px-2 py-2 backdrop-blur-2xl md:hidden">
+                        <div className="flex gap-2">
+                            <label className="flex h-10 min-w-0 flex-1 items-center rounded-[13px] bg-[#f2f2f7] px-3 ring-1 ring-black/[0.05] focus-within:ring-blue-400">
+                                <i className="fas fa-search mr-2 text-[11px] text-slate-400" />
+                                <input value={keyword} onChange={event => setKeyword(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && cars.length === 0) executeSearch(); }} placeholder="Tìm VIN, số máy, mã DMS…" className="min-w-0 flex-1 bg-transparent text-[11px] font-medium text-slate-800 outline-none placeholder:text-slate-400" />
+                                {keyword && <button type="button" onClick={() => setKeyword('')} className="ml-1 text-slate-400"><i className="fas fa-circle-xmark text-[11px]" /></button>}
+                            </label>
+                            <button type="button" onClick={() => setIsMobilePlanFilterOpen(true)} className="relative flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[13px] bg-[#f2f2f7] px-3 text-[11px] font-semibold text-slate-700 ring-1 ring-black/[0.05] active:bg-slate-200">
+                                <i className="fas fa-sliders text-[11px]" /><span>Lọc</span>
+                                {(selectedModel !== 'Tất cả' || selectedVersion !== 'Tất cả' || selectedColor !== 'Tất cả' || selectedTtcp) && <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[7px] font-bold text-white ring-2 ring-white">{[selectedModel !== 'Tất cả', selectedVersion !== 'Tất cả', selectedColor !== 'Tất cả', Boolean(selectedTtcp)].filter(Boolean).length}</span>}
+                            </button>
+                        </div>
+                    </div>
                 </>
             )}
 
@@ -2549,7 +2727,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {activeSubTab === 'ton_kho' && (
                 <>
                     {/* Unified Premium Filter Bar */}
-                    <div className="relative z-10 p-3 bg-white border-b border-slate-200 shadow-2xs shrink-0">
+                    <div className="relative z-10 hidden p-3 bg-white border-b border-slate-200 shadow-2xs shrink-0 md:block">
                         <div className="flex flex-wrap items-center justify-between gap-2.5">
                             
                             {/* Left Filters Group */}
@@ -3089,7 +3267,17 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="divide-y divide-slate-100 md:hidden">
+                                    {displayedTonKhoCars.map((item, idx) => {
+                                        const isDeep = Boolean((item as any).is_deep_search);
+                                        return <button key={`${item.vin}-mobile-${idx}`} type="button" onClick={() => handleTonKhoCopyVin(item.vin)} className={`flex w-full items-center gap-3 p-3 text-left active:bg-slate-50 ${isDeep ? 'bg-purple-50/60' : item.is_invoiced ? 'bg-amber-50/60' : 'bg-white'}`}>
+                                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${isDeep ? 'bg-purple-100 text-purple-600' : 'bg-slate-100 text-slate-600'}`}><i className="fas fa-warehouse text-[11px]" /></span>
+                                            <span className="min-w-0 flex-1"><strong className="block truncate text-[11.5px] text-slate-900">{item.ten_kx || item.ma_kx}</strong><span className="mt-0.5 block truncate font-mono text-[9.5px] font-semibold text-slate-600">{item.vin}</span><span className="mt-0.5 block truncate text-[8.5px] text-slate-400">{item.ten_kho || item.ma_kho || 'Chưa rõ kho'} · {item.ten_mau || item.ma_mau || '—'}</span></span>
+                                            <span className="shrink-0 text-right"><span className={`block rounded-full px-2 py-0.5 text-[8px] font-bold ${Number(item.ngay_ton || 0) >= 90 ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'}`}>{item.ngay_ton || 0} ngày</span><span className="mt-1 block text-[8px] text-slate-400">{item.is_invoiced ? 'Đã xuất HĐ' : 'Chưa xuất HĐ'}</span></span>
+                                        </button>;
+                                    })}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full min-w-[850px] text-left text-xs border-collapse font-sans">
                                         <thead>
                                             <tr className="sticky top-0 z-10 bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10.5px]">
@@ -3355,7 +3543,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {activeSubTab === 'xep_xe' && (
                 <>
                     {/* Filter Toolbar for Xếp Xe - Tối giản cho nhu cầu Tra cứu Showroom xuất HĐ */}
-                    <div className="relative z-10 px-4 py-3 bg-white border-b border-slate-200 shadow-xs shrink-0 space-y-2.5">
+                    <div className="relative z-10 hidden px-4 py-3 bg-white border-b border-slate-200 shadow-xs shrink-0 space-y-2.5 md:block">
                         <div className="flex flex-wrap items-center gap-2.5">
                             
                             {/* 1. Thanh tìm kiếm trung tâm (Hero Search) */}
@@ -3631,7 +3819,18 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
                         ) : (
                             <div className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="divide-y divide-slate-100 md:hidden">
+                                    {paginatedXepXeContracts.map((contract, idx) => {
+                                        const hasVin = Boolean(contract.so_khung && contract.so_khung.trim());
+                                        const invoiced = contract.ten_color === 'Đã xuất HĐ' || (contract.back_color || '').toLowerCase() === 'violet';
+                                        return <button key={`${contract.stt_rec}-${contract.stt_rec0}-mobile-${idx}`} type="button" onClick={() => hasVin && handleXepXeCopyVin(contract.so_khung)} className="flex w-full items-center gap-3 p-3 text-left active:bg-slate-50">
+                                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${invoiced ? 'bg-purple-50 text-purple-600' : 'bg-indigo-50 text-indigo-600'}`}><i className="fas fa-car text-[11px]" /></span>
+                                            <span className="min-w-0 flex-1"><strong className="block truncate text-[11.5px] text-slate-900">{contract.ten_kh || 'Chưa có tên khách hàng'}</strong><span className="mt-0.5 block truncate font-mono text-[9px] font-semibold text-slate-600">{hasVin ? contract.so_khung : 'Chưa ghép xe'}</span><span className="mt-0.5 block truncate text-[8.5px] text-slate-400">{contract.ten_ttcp || 'Chưa rõ showroom'} · {contract.ten_kx || contract.ma_kx || '—'}</span></span>
+                                            <span className="shrink-0 text-right"><span className={`block rounded-full px-2 py-0.5 text-[8px] font-bold ${invoiced ? 'bg-purple-50 text-purple-700 ring-1 ring-purple-200' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'}`}>{invoiced ? 'Đã xuất HĐ' : contract.ten_color || 'Đang xử lý'}</span>{hasVin && <i className="fas fa-copy mt-2 text-[9px] text-slate-300" />}</span>
+                                        </button>;
+                                    })}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full min-w-[900px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50/90 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
@@ -4670,7 +4869,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {activeSubTab === 'tra_cuu_phieu' && (
                 <div className="flex-1 flex flex-col min-h-0 bg-slate-50 relative z-10 overflow-hidden">
                     {/* Toolbar Filters */}
-                    <div className="p-3.5 bg-white border-b border-slate-200 shadow-2xs space-y-3 shrink-0">
+                    <div className="hidden p-3.5 bg-white border-b border-slate-200 shadow-2xs space-y-3 shrink-0 md:block">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
                                 {/* Search input */}
@@ -4751,7 +4950,18 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
                         ) : (
                             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
+                                <div className="divide-y divide-slate-100 md:hidden">
+                                    {displayedVoucherTickets.map((ticket, idx) => {
+                                        const approved = String(ticket.ma_post) === '9';
+                                        const cancelled = String(ticket.ma_post) === '1';
+                                        return <button key={`${ticket.stt_rec || ticket.so_ct}-mobile-${idx}`} type="button" onClick={() => setSelectedTicketModal(ticket)} className="flex w-full items-center gap-3 p-3 text-left active:bg-slate-50">
+                                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${ticket.voucher_type === 'TD4' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}><i className={`fas ${ticket.voucher_type === 'TD4' ? 'fa-car-side' : 'fa-file-export'} text-[11px]`} /></span>
+                                            <span className="min-w-0 flex-1"><span className="flex items-center gap-1.5"><strong className="truncate font-mono text-[11px] text-slate-900">{ticket.so_ct}</strong><em className="rounded bg-slate-100 px-1.5 py-0.5 text-[7px] font-bold not-italic text-slate-500">{ticket.voucher_type}</em></span><span className="mt-0.5 block truncate font-mono text-[9px] text-slate-600">{ticket.vin || 'Chưa có VIN'}</span><span className="mt-0.5 block truncate text-[8.5px] text-slate-400">{ticket.ten_kh || 'Chuyển kho nội bộ'} · {ticket.ngay_ct || '—'}</span></span>
+                                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[8px] font-bold ${approved ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : cancelled ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}>{approved ? 'Đã duyệt' : cancelled ? 'Đã hủy' : 'Chờ duyệt'}</span>
+                                        </button>;
+                                    })}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full min-w-[850px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
@@ -4954,9 +5164,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {/* MODAL: XEM CHI TIẾT PHIẾU (DNX / TD4) */}
             {/* ============================================================= */}
             {selectedTicketModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-scale-in">
-                        <div className="px-5 py-3.5 bg-gradient-to-r from-purple-700 to-indigo-800 text-white flex items-center justify-between">
+                <div className="fixed inset-0 z-[160] flex items-end justify-center bg-slate-900/60 backdrop-blur-xs animate-fade-in md:items-center md:p-3">
+                    <div className="flex h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-[28px] border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom duration-300 md:h-auto md:rounded-2xl md:animate-scale-in">
+                        <div className="flex h-5 shrink-0 items-center justify-center bg-white md:hidden"><span className="h-1 w-9 rounded-full bg-slate-300" /></div>
+                        <div className="flex items-center justify-between bg-gradient-to-r from-purple-700 to-indigo-800 px-3.5 py-2.5 text-white md:px-5 md:py-3.5">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
                                     <i className="fas fa-file-invoice text-white text-sm"></i>
@@ -4978,9 +5189,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </button>
                         </div>
 
-                        <div className="p-5 text-xs text-slate-700 space-y-4 max-h-[75vh] overflow-y-auto">
+                        <div className="flex-1 space-y-2.5 overflow-y-auto p-3 text-xs text-slate-700 no-scrollbar md:max-h-[75vh] md:space-y-4 md:p-5">
                             {/* Trạng thái duyệt Badge Banner */}
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 md:p-3">
                                 <span className="font-bold text-slate-600">Trạng thái xử lý (`Ma_Post`):</span>
                                 {String(selectedTicketModal.ma_post) === '3' && (
                                     <span className="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full font-bold text-xs flex items-center gap-1.5">
@@ -5003,7 +5214,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
 
                             {/* Thông tin chứng từ */}
-                            <div className="grid grid-cols-2 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-[10.5px] md:gap-3 md:p-3.5 md:text-xs">
                                 <div><span className="text-slate-400">Số phiếu:</span> <strong className="font-mono text-purple-700">{selectedTicketModal.so_ct}</strong></div>
                                 <div><span className="text-slate-400">Ngày chứng từ:</span> <strong className="font-mono">{selectedTicketModal.ngay_ct}</strong></div>
                                 <div><span className="text-slate-400">Số khung (VIN):</span> <strong className="font-mono text-purple-700">{selectedTicketModal.vin || '-'}</strong></div>
@@ -5041,8 +5252,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             )}
                         </div>
 
-                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                            <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-3 py-2.5 md:justify-between md:px-5 md:py-3">
+                            <div className="hidden text-[11px] text-slate-500 items-center gap-1 md:flex">
                                 <i className="fas fa-file-invoice text-blue-500"></i>
                                 <span>Mẫu in chuẩn CyberSoft ERP</span>
                             </div>
@@ -5124,7 +5335,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         initialAllocSubMode="cross_showroom_billed"
                         onNavigateToTab={navigateToTab}
                         initialSearchVin={satelliteSearchVin}
-                        onCountsChange={(c: any) => {
+                        onCountsChange={handleReconcileCountsChange}
+                        /*
                             setReconcileCounts({
                                 carsCount: c.carsCount,
                                 td4Count: c.td4Count,
@@ -5138,12 +5350,98 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 otherShowroomAllocationsCount: c.otherShowroomAllocationsCount,
                                 otherAllocPendingCount: c.otherAllocPendingCount
                             });
-                        }}
+                        */
                     />
                 </div>
             )}
 
 
+
+            {(activeSubTab === 'ton_kho' || activeSubTab === 'xep_xe' || activeSubTab === 'tra_cuu_phieu') && (
+                <div className="absolute inset-x-0 bottom-0 z-30 border-t border-black/[0.06] bg-white/92 px-2 py-2 backdrop-blur-2xl md:hidden">
+                    <div className="flex gap-2">
+                        <label className="flex h-10 min-w-0 flex-1 items-center rounded-[13px] bg-[#f2f2f7] px-3 ring-1 ring-black/[0.05] focus-within:ring-blue-400">
+                            <i className="fas fa-search mr-2 text-[11px] text-slate-400" />
+                            <input
+                                value={activeSubTab === 'ton_kho' ? tonKhoKeyword : activeSubTab === 'xep_xe' ? xepXeKeyword : ticketSearch}
+                                onChange={event => { if (activeSubTab === 'ton_kho') setTonKhoKeyword(event.target.value); else if (activeSubTab === 'xep_xe') setXepXeKeyword(event.target.value); else setTicketSearch(event.target.value); }}
+                                placeholder={activeSubTab === 'tra_cuu_phieu' ? 'Tìm VIN, số phiếu, khách hàng…' : 'Tìm VIN, số máy, hợp đồng…'}
+                                className="min-w-0 flex-1 bg-transparent text-[11px] font-medium text-slate-800 outline-none placeholder:text-slate-400"
+                            />
+                        </label>
+                        <button type="button" onClick={() => setMobileCyberFilterFor(activeSubTab)} className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[13px] bg-[#f2f2f7] px-3 text-[11px] font-semibold text-slate-700 ring-1 ring-black/[0.05] active:bg-slate-200"><i className="fas fa-sliders text-[11px]" /><span>Lọc</span></button>
+                    </div>
+                </div>
+            )}
+
+            {mobileCyberFilterFor && (
+                <div className="fixed inset-0 z-[125] flex items-end bg-black/35 backdrop-blur-[2px] md:hidden" onClick={() => setMobileCyberFilterFor(null)}>
+                    <div className="w-full rounded-t-[28px] bg-[#f2f2f7] px-3 pb-[max(14px,env(safe-area-inset-bottom))] pt-2" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-slate-300" />
+                        <div className="mb-2 flex items-center justify-between px-1"><button type="button" onClick={() => { if (mobileCyberFilterFor === 'ton_kho') handleTonKhoReset(); else if (mobileCyberFilterFor === 'xep_xe') handleXepXeReset(); else { setTicketMaCt(''); setTicketMaPost(''); setTicketSearch(''); } }} className="text-[11px] font-semibold text-slate-500">Đặt lại</button><h3 className="text-[14px] font-bold text-slate-900">Bộ lọc</h3><button type="button" onClick={() => setMobileCyberFilterFor(null)} className="text-[11px] font-semibold text-blue-600">Xong</button></div>
+                        <div className="overflow-hidden rounded-[16px] border border-black/[0.06] bg-white">
+                            {mobileCyberFilterFor === 'ton_kho' && <>
+                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Từ ngày</span><input type="date" value={tonKhoFromDate} onChange={event => setTonKhoFromDate(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none" /></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Đến ngày</span><input type="date" value={tonKhoToDate} onChange={event => setTonKhoToDate(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none" /></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Kho xe</span><select value={tonKhoWarehouse} onChange={event => setTonKhoWarehouse(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả kho</option>{tonKhoWarehouses.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Dòng xe</span><select value={tonKhoModel} onChange={event => setTonKhoModel(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả dòng xe</option>{tonKhoModels.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Hóa đơn</span><select value={tonKhoStatus} onChange={event => setTonKhoStatus(event.target.value as any)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="not_invoiced">Chưa viết HĐ</option><option value="invoiced">Đã viết HĐ</option><option value="all">Tất cả</option></select></label>
+                            </>}
+                            {mobileCyberFilterFor === 'xep_xe' && <>
+                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Showroom</span><select value={xepXeShowroom} onChange={event => setXepXeShowroom(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none">{xepXeShowrooms.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Dòng xe</span><select value={xepXeModel} onChange={event => setXepXeModel(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả dòng xe</option>{xepXeModels.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Trạng thái</span><select value={xepXeStatusFilter} onChange={event => setXepXeStatusFilter(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="all">Tất cả</option><option value="Đã xuất HĐ">Đã xuất HĐ</option><option value="Chưa xuất HĐ">Chưa xuất HĐ</option></select></label>
+                            </>}
+                            {mobileCyberFilterFor === 'tra_cuu_phieu' && <>
+                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Loại phiếu</span><select value={ticketMaCt} onChange={event => setTicketMaCt(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả DNX & TD4</option><option value="DNX">DNX</option><option value="DNX_4">DNX nội bộ</option><option value="DNX_9">DNX các điểm KD</option><option value="TD4">TD4</option></select></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Trạng thái</span><select value={ticketMaPost} onChange={event => setTicketMaPost(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả trạng thái</option><option value="3">Chờ duyệt</option><option value="9">Đã duyệt</option><option value="1">Đã hủy</option></select></label>
+                            </>}
+                        </div>
+                        <button type="button" onClick={() => { if (mobileCyberFilterFor === 'ton_kho') executeTonKhoSearch(); else if (mobileCyberFilterFor === 'xep_xe') executeXepXeSearch(); else executeVoucherTicketsSearch(); setMobileCyberFilterFor(null); }} className="mt-2 h-11 w-full rounded-[14px] bg-slate-900 text-[12px] font-bold text-white">Áp dụng</button>
+                    </div>
+                </div>
+            )}
+
+            {isMobileModuleSheetOpen && (
+                <div className="fixed inset-0 z-[120] flex items-end bg-black/35 backdrop-blur-[2px] md:hidden" onClick={() => setIsMobileModuleSheetOpen(false)}>
+                    <div className="w-full rounded-t-[28px] bg-[#f2f2f7] px-3 pb-[max(14px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_rgba(0,0,0,0.2)]" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-slate-300" />
+                        <div className="mb-2 flex items-center justify-between px-1"><span className="w-12" /><h3 className="text-[14px] font-bold text-slate-900">Chức năng Cyber</h3><button type="button" onClick={() => setIsMobileModuleSheetOpen(false)} className="w-12 text-right text-[12px] font-semibold text-blue-600">Xong</button></div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                ['factory_plan', 'fa-truck-ramp-box', 'Kế hoạch xe', totalCount],
+                                ['ton_kho', 'fa-warehouse', 'Tồn kho', tonKhoNotInvoiced || tonKhoCars.length],
+                                ['xep_xe', 'fa-car-side', 'Xếp xe', xepXeContracts.length],
+                                ['de_nghi_xuat', 'fa-truck', 'Lập phiếu DNX', pendingTransferRequests.length],
+                                ['tra_cuu_phieu', 'fa-file-invoice', 'Tiến trình phiếu', voucherTickets.length],
+                                ['satellite_warehouses', 'fa-warehouse', 'Bãi xe 3 kho', reconcileCounts.carsCount],
+                                ['reconcile_k83', 'fa-scale-balanced', 'Đối soát kho', reconcileCounts.k83DiffCount || reconcileCounts.allCount]
+                            ].map(([id, icon, label, count]) => {
+                                const selected = activeSubTab === id || (id === 'reconcile_k83' && activeSubTab.startsWith('reconcile'));
+                                return <button key={String(id)} type="button" onClick={() => { setActiveSubTab(id as any); setIsMobileModuleSheetOpen(false); }} className={`flex h-[54px] items-center gap-2.5 rounded-[15px] border px-3 text-left active:scale-[0.98] ${selected ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-black/[0.05] bg-white text-slate-700'}`}><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ${selected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}><i className={`fas ${icon} text-[11px]`} /></span><span className="min-w-0 flex-1"><span className="block truncate text-[10.5px] font-bold">{label}</span><span className="text-[8.5px] text-slate-400">{Number(count || 0).toLocaleString()} mục</span></span></button>;
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isMobilePlanFilterOpen && (
+                <div className="fixed inset-0 z-[120] flex items-end bg-black/35 backdrop-blur-[2px] md:hidden" onClick={() => setIsMobilePlanFilterOpen(false)}>
+                    <div className="w-full rounded-t-[28px] bg-[#f2f2f7] px-3 pb-[max(14px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_rgba(0,0,0,0.2)]" onClick={event => event.stopPropagation()}>
+                        <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-slate-300" />
+                        <div className="mb-2 flex items-center justify-between px-1"><button type="button" onClick={handleReset} className="text-[11px] font-semibold text-slate-500">Đặt lại</button><h3 className="text-[14px] font-bold text-slate-900">Lọc kế hoạch</h3><button type="button" onClick={() => setIsMobilePlanFilterOpen(false)} className="text-[11px] font-semibold text-blue-600">Xong</button></div>
+                        <div className="overflow-hidden rounded-[16px] border border-black/[0.06] bg-white">
+                            {[
+                                { label: 'Dòng xe', value: selectedModel, onChange: handleModelChange, options: [['Tất cả', 'Tất cả dòng xe'], ...filterOptions.models.map(value => [value, value])]},
+                                { label: 'Phiên bản', value: selectedVersion, onChange: setSelectedVersion, options: [['Tất cả', 'Tất cả phiên bản'], ...filterOptions.versions.map(value => [value, value])]},
+                                { label: 'Màu ngoại thất', value: selectedColor, onChange: setSelectedColor, options: [['Tất cả', 'Tất cả màu'], ...filterOptions.colors.map(value => [value, value])]},
+                                { label: 'Showroom', value: selectedTtcp, onChange: setSelectedTtcp, options: [['', 'Tất cả showroom'], ...filterOptions.ttcp_list.map(item => [item.code, `${item.name} (${item.count})`])]}
+                            ].map((filter, index) => <label key={filter.label} className={`flex h-12 items-center gap-3 px-3 ${index ? 'border-t border-slate-100' : ''}`}><span className="w-24 shrink-0 text-[10px] font-semibold text-slate-500">{filter.label}</span><select value={filter.value} onChange={event => filter.onChange(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold text-slate-900 outline-none">{filter.options.map(([value, label]) => <option key={String(value)} value={String(value)}>{label}</option>)}</select></label>)}
+                        </div>
+                        <button type="button" onClick={() => { setIsMobilePlanFilterOpen(false); executeSearch(); }} className="mt-2 h-11 w-full rounded-[14px] bg-slate-900 text-[12px] font-bold text-white active:scale-[0.99]">Áp dụng và tải dữ liệu</button>
+                    </div>
+                </div>
+            )}
 
             {/* MODAL IN CHỨNG TỪ CYBERSOFT ERP (PHDNX / CTDNX) */}
             <CyberDnxPrintModal 

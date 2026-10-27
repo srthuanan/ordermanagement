@@ -1298,7 +1298,7 @@ export const fetchInvoicedMissingYardReconciliationData = async (
         try {
             const { data: dhData } = await supabase
                 .from('donhang')
-                .select('vin, so_don_hang, ten_khach_hang, ten_tu_van_ban_hang, dong_xe, phien_ban, mau_ngoai_that, ngay_xuat_hoa_don, link_hoa_don_da_xuat, ma_hd_cyber, so_ct_dnx, so_ct_td4, ngay_giao_xe, trang_thai')
+                .select('vin, so_don_hang, ten_khach_hang, ten_tu_van_ban_hang, dong_xe, phien_ban, ngoai_that, ngay_xuat_hoa_don, ma_hd_cyber, ket_qua')
                 .not('vin', 'is', null)
                 .gte('ngay_xuat_hoa_don', '2026-08-01');
 
@@ -1308,7 +1308,7 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                     if (!vin) return;
 
                     // Nếu xe đã có ngày giao xe hoặc trạng thái đã hoàn tất -> Đã giao xe xong, bỏ qua 100%!
-                    if (row.ngay_giao_xe || row.trang_thai === 'Đã giao xe' || row.trang_thai === 'Đã lưu trữ') {
+                    if (row.ket_qua === 'Đã giao xe' || row.ket_qua === 'Đã lưu trữ') {
                         deliveredHistoryVins.add(vin);
                         td4VinSet.add(vin);
                         if (vin.length >= 6) {
@@ -1611,6 +1611,7 @@ export interface K83ReconciliationItem {
     vin: string;
     carModel: string;
     trim?: string;
+    version?: string;
     color: string;
 
     // Trạng thái Cyber K83
@@ -1634,6 +1635,7 @@ export interface K83ReconciliationItem {
     khoKey?: 'tada' | 'ql13' | 'q12';
     khoName?: string;
     isTonKhoYard?: boolean;
+    tenKhoYard?: string;
     ngayNhanYard?: string;
     ngayGiaoYard?: string;
     mucPin?: string;
@@ -1796,7 +1798,7 @@ export const fetchK83ReconciliationData = async (
         if (allTargetVins.length > 0) {
             try {
                 const [dhRes, ycRes, xxRes, ticketRes] = await Promise.all([
-                    supabase.from('donhang').select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, so_ct_dnx, so_ct_td4').in('vin', allTargetVins),
+                    supabase.from('donhang').select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, ma_hd_cyber').in('vin', allTargetVins),
                     supabase.from('yeucauxhd').select('vin, ten_khach_hang, tvbh, so_don_hang').in('vin', allTargetVins),
                     supabase.from('cyber_xep_xe').select('so_khung, ten_kh, ten_hs, so_ct, ma_hd').in('so_khung', allTargetVins),
                     supabase.from('cyber_voucher_tickets').select('so_ct, ngay_ct, ma_ct, ma_post, ten_kh, user_name, dien_giai, lines, raw_data').order('ngay_ct', { ascending: false }).limit(2000)

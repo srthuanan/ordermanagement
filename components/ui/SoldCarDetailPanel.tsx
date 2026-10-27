@@ -112,9 +112,10 @@ interface SoldCarDetailPanelProps {
     showOrderInAdmin?: (order: Order, targetTab: any) => void;
     showAdminTab?: (targetTab: any) => void;
     isAdmin?: boolean;
+    mobileMode?: boolean;
 }
 
-const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order }) => {
+const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, mobileMode = false }) => {
     const [copiedVin, setCopiedVin] = useState(false);
     const [previewFile, setPreviewFile] = useState<{ url: string; label: string } | null>(null);
 
@@ -180,7 +181,12 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order }) => {
 
     const totalFileCount = availableFiles.length + extraFiles.length;
 
-    const policies = order["CHÍNH SÁCH"] ? String(order["CHÍNH SÁCH"]).split('; ') : [];
+    const policies = order["CHÍNH SÁCH"]
+        ? String(order["CHÍNH SÁCH"])
+            .split(/;\s*|\r?\n+|,\s*(?=(?:chương trình|chính sách|csbh|cọc sỉ|vinclub|ưu đãi|khuyến mãi)\b)/i)
+            .map(policy => policy.trim())
+            .filter(Boolean)
+        : [];
     const statusText = order["Kết quả"] || "Đã xuất hóa đơn";
 
     const dateCoc = formatDateTime(order["Ngày cọc"]);
@@ -188,6 +194,127 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order }) => {
     const dateXHD = formatDateTime(order["Ngày xuất hóa đơn"]);
 
     const hasTransactionInfo = !!(order["SĐT"] || order["CCCD"] || order["Địa chỉ"] || dateCoc || dateGhep || dateXHD || policies.length > 0);
+
+    if (mobileMode) {
+        const compactFiles = [
+            ...availableFiles.map(file => ({ name: file.title, url: file.url, icon: file.icon, iconBgColor: file.iconBgColor, iconTextColor: file.iconTextColor })),
+            ...extraFiles.map((file, index) => ({ name: file.name || `Tệp ${index + 1}`, url: file.url, icon: 'fa-paperclip', iconBgColor: 'bg-slate-100', iconTextColor: 'text-slate-600' }))
+        ];
+        const compactValue = (value: unknown) => {
+            if (value === null || value === undefined) return null;
+            const text = String(value).trim();
+            if (!text || text === '—' || text.toLowerCase() === 'null' || text.toLowerCase() === 'n/a') return null;
+            return text;
+        };
+        const detailItem = (label: string, value: unknown, mono = false) => {
+            const text = compactValue(value);
+            if (!text) return null;
+            return (
+                <div className="min-w-0">
+                    <p className="text-[7px] font-semibold uppercase leading-none tracking-wide text-slate-400">{label}</p>
+                    <p title={text} className={`mt-1 truncate text-[9.5px] font-semibold leading-none text-slate-800 ${mono ? 'font-mono' : ''}`}>{text}</p>
+                </div>
+            );
+        };
+        const hasCompactTransactionInfo = hasTransactionInfo || !!(
+            order.so_ct_dnx || order['Số CT DNX'] || order['Ghi chú'] || order['Ghi chú hủy']
+        );
+        const transactionFacts = [
+            { label: 'Điện thoại', value: order['SĐT'], mono: true },
+            { label: 'CCCD / CMND', value: order['CCCD'], mono: true },
+            { label: 'Ngày cọc', value: dateCoc },
+            { label: 'Ngày ghép VIN', value: dateGhep },
+            { label: 'Ngày xuất HĐ', value: dateXHD },
+            { label: 'Số CT DNX', value: order.so_ct_dnx || order['Số CT DNX'], mono: true }
+        ].filter(item => compactValue(item.value));
+
+        return (
+            <div className="space-y-2 bg-[#f2f2f7] p-2 pb-[max(8px,env(safe-area-inset-bottom))] text-slate-900">
+                <section className="overflow-hidden rounded-[22px] border border-white bg-white shadow-[0_4px_18px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80">
+                    <div className="flex items-start justify-between gap-3 px-3 pb-1 pt-3">
+                        <div className="min-w-0">
+                            <p className="truncate text-[14px] font-bold uppercase tracking-tight">{order['Tên khách hàng'] || 'Chưa cập nhật'}</p>
+                            <p className="mt-0.5 truncate font-mono text-[8px] text-slate-400">#{order['Số đơn hàng'] || '—'}</p>
+                        </div>
+                        <span className="relative inline-flex h-[19px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-white via-emerald-100 to-cyan-100 px-2.5 text-[9px] font-extrabold text-emerald-950 shadow-[0_2px_8px_rgba(52,211,153,0.22)] ring-1 ring-emerald-200/80">Hóa đơn</span>
+                    </div>
+
+                    <div className="relative h-[112px] overflow-hidden bg-gradient-to-b from-white via-slate-50 to-blue-50/70">
+                        <div className="absolute inset-y-0 right-3 flex w-[58%] items-center justify-center">
+                            <CarImage model={order['Dòng xe']} exteriorColor={order['Ngoại thất']} version={order['Phiên bản']} className="h-[104px] w-full object-contain drop-shadow-lg" alt={order['Dòng xe']} />
+                        </div>
+                        <div className="absolute inset-y-0 left-3 flex w-[42%] flex-col justify-center pr-2">
+                            <p className="text-[15px] font-bold leading-tight text-slate-900">{order['Dòng xe']}</p>
+                            <p className="mt-0.5 text-[10px] font-medium text-slate-500">{order['Phiên bản']}</p>
+                            <div className="mt-3 space-y-1">
+                                <p className="truncate text-[8px] text-slate-500"><span className="mr-1 text-[7px] font-semibold uppercase text-slate-400">Ngoại thất</span>{order['Ngoại thất']}</p>
+                                <p className="truncate text-[8px] text-slate-500"><span className="mr-1 text-[7px] font-semibold uppercase text-slate-400">Nội thất</span>{order['Nội thất']}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 divide-x divide-slate-100 border-t border-slate-100 px-3 py-2">
+                        {detailItem('Số máy', order['Số máy'], true)}
+                        <div className="pl-3">{detailItem('Mã DMS', order['Mã DMS'], true)}</div>
+                    </div>
+
+                    {order.VIN && (
+                        <button type="button" onClick={handleCopyVin} className="mx-2 mb-2 flex h-10 w-[calc(100%-16px)] items-center justify-between rounded-[12px] bg-slate-900 px-3 text-left text-white shadow-sm active:scale-[0.99]">
+                            <span className="min-w-0"><span className="block text-[7px] font-semibold uppercase tracking-wider text-cyan-300">Số khung VIN</span><strong className="block truncate font-mono text-[10px] tracking-wide">{order.VIN}</strong></span>
+                            <i className={`fas ${copiedVin ? 'fa-check text-emerald-300' : 'fa-copy text-slate-300'} text-[11px]`} />
+                        </button>
+                    )}
+                    {compactValue(order['Tên tư vấn bán hàng']) && (
+                        <div className="flex items-center justify-between px-3 pb-2.5"><span className="text-[8px] font-semibold uppercase text-slate-400">Tư vấn phụ trách</span><strong className="truncate pl-3 text-[9.5px] text-slate-700">{order['Tên tư vấn bán hàng']}</strong></div>
+                    )}
+                </section>
+
+                {(hasCompactTransactionInfo || compactFiles.length > 0) && (
+                    <section className="overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-2xs">
+                        {transactionFacts.length > 0 && (
+                            <div className="px-3 py-2.5">
+                                <div className="mb-2 flex items-center gap-1.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-50 text-amber-600"><i className="fas fa-receipt text-[9px]" /></span><p className="text-[8px] font-bold uppercase tracking-[0.12em] text-slate-500">Giao dịch</p></div>
+                                <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(transactionFacts.length, 3)}, minmax(0, 1fr))` }}>
+                                    {transactionFacts.map(item => <div key={item.label}>{detailItem(item.label, item.value, item.mono)}</div>)}
+                                </div>
+                            </div>
+                        )}
+
+                        {policies.length > 0 && (
+                            <div className="mx-2 mb-2 rounded-[13px] bg-blue-50/55 px-2.5 py-2 ring-1 ring-blue-100/80">
+                                <p className="mb-1 text-[8px] font-bold uppercase tracking-wider text-blue-500">Chính sách áp dụng</p>
+                                <ul className="space-y-0.5">
+                                    {policies.map((policy, index) => (
+                                        <li key={`${policy}-${index}`} className="flex items-start gap-1.5 text-[9px] leading-[1.25] text-slate-600"><span className="mt-[4px] h-1 w-1 shrink-0 rounded-full bg-blue-500" /><span>{policy}</span></li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        {(compactValue(order['Địa chỉ']) || compactValue(order['Ghi chú hủy'] || order['Ghi chú'])) && (
+                            <div className="space-y-1 border-t border-slate-100 px-3 py-2">
+                                {compactValue(order['Địa chỉ']) && <p className="truncate text-[9px] text-slate-600"><span className="mr-2 text-[8px] font-semibold uppercase text-slate-400">Địa chỉ</span>{order['Địa chỉ']}</p>}
+                                {compactValue(order['Ghi chú hủy'] || order['Ghi chú']) && <p className="truncate text-[9px] text-slate-600"><span className="mr-2 text-[8px] font-semibold uppercase text-slate-400">Ghi chú</span>{order['Ghi chú hủy'] || order['Ghi chú']}</p>}
+                            </div>
+                        )}
+
+                        {compactFiles.length > 0 && (
+                            <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/80 px-3 py-2">
+                                <div><p className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Hồ sơ điện tử</p><p className="text-[7.5px] text-slate-400">{compactFiles.length} tài liệu</p></div>
+                                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                                    {compactFiles.map((file, index) => (
+                                        <button key={`${file.name}-${index}`} type="button" onClick={() => handleViewFile(file.url!, file.name)} title={file.name} aria-label={`Xem ${file.name}`} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${file.iconBgColor} ${file.iconTextColor} shadow-2xs ring-1 ring-black/[0.04] active:scale-90`}><i className={`fas ${file.icon} text-[12px]`} /></button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                <FilePreviewModal isOpen={!!previewFile} onClose={() => setPreviewFile(null)} fileUrl={previewFile?.url || ''} fileLabel={previewFile?.label || ''} />
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 flex flex-col h-full space-y-4 animate-fade-in overflow-y-auto custom-scrollbar relative">

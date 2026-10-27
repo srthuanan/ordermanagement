@@ -1,9 +1,9 @@
 # Agent Rules
 
-- **Quy Tắc Không Tự Động Chạy NPX Sau Khi Chỉnh Sửa**:
-  1. Sau khi chỉnh sửa code hoặc giao diện, AI Agent **KHÔNG ĐƯỢC tự động chạy bất kỳ lệnh `npx` nào**.
-  2. Chỉ được phép chạy `npx` khi Người dùng yêu cầu trực tiếp trong tác vụ hiện tại.
-  3. Quy tắc này áp dụng cả cho kiểm tra TypeScript, build, Expo, Clasp và mọi công cụ được gọi thông qua `npx`.
+- **Quy Tắc Không Tự Động Chạy NPM/NPX Sau Khi Chỉnh Sửa**:
+  1. Sau khi chỉnh sửa code hoặc giao diện, AI Agent **KHÔNG ĐƯỢC tự động chạy bất kỳ lệnh `npm` hoặc `npx` nào**.
+  2. Chỉ được phép chạy `npm` hoặc `npx` khi Người dùng yêu cầu trực tiếp trong tác vụ hiện tại.
+  3. Quy tắc này áp dụng cả cho kiểm tra TypeScript, build, Expo, Clasp và mọi công cụ được gọi thông qua `npm` hoặc `npx`.
 
 - **Quy Tắc Ghi Nhận Chỉ Đạo Quan Trọng (Important Directives & Memory Protocol)**:
   1. Kể từ hôm nay, bất cứ khi nào Người dùng (USER) đưa ra chỉ đạo quan trọng, lưu ý cốt lõi, quyết định kiến trúc hoặc quy chuẩn nghiệp vụ, AI Agent **BẮT BUỘC PHẢI CHỦ ĐỘNG GHI NHẬN VÀ LƯU NGAY** vào hệ thống quy tắc `.agents/AGENTS.md`.
@@ -146,3 +146,32 @@
   1. **Tuyệt Đối Không Điền Tay Ngày Cọc**: Trên toàn bộ hệ thống (Web Desktop, Mobile View, Mobile App), trường **Ngày Cọc (`ngay_coc`)** tuyệt đối không được phép nhập tay, sửa tay hay chọn thủ công qua date picker.
   2. **Cơ Chế Ghi Nhận Duy Nhất**: Ngày cọc **CHỈ ĐƯỢC PHÉP GHI NHẬN TỰ ĐỘNG** thông qua việc trích xuất từ ảnh chụp Ủy Nhiệm Chi (UNC) / Biên nhận cọc bằng AI OCR (Gemini Vision / Tesseract OCR).
   3. **Kỷ Luật Khóa Dữ Liệu**: Giao diện hiển thị trường Ngày Cọc ở trạng thái Khóa (Read-only / Locked Badge) kèm nhãn *"Từ UNC"*. Khi TVBH tải ảnh UNC, hệ thống quét ngầm và tự động điền; nếu xóa ảnh UNC, ngày cọc tự động bị hủy về rỗng; nếu ảnh UNC mờ không nhận diện được ngày giao dịch, hệ thống yêu cầu chụp lại ảnh nét hơn và kiên quyết chặn tạo đơn khi chưa trích xuất được ngày cọc.
+
+- **Quy Chuẩn Đồng Bộ Giao Diện Mobile Mục Hóa Đơn Theo Chuẩn Ghép Xe (Mobile Invoice & Matching Sync Protocol)**:
+  1. **Đồng Bộ Kiến Trúc & Ngôn Ngữ Thiết Kế**: Khi thiết kế và nâng cấp phân hệ **Hóa Đơn** trên Mobile (`MobileInvoiceView` / Kế toán trên Mobile), giao diện danh sách và chi tiết **BẮT BUỘC ĐỒNG BỘ 100% THEO CHUẨN MỰC CỦA MỤC GHÉP XE (`MobileMatchingView`) VÀ KHO XE (`MobileStockView`)**.
+  2. **Quy Chuẩn Danh Sách Dạng Bảng Inset Table**:
+     - Hiển thị danh sách dạng bảng Inset Table bo góc mềm mại (`rounded-2xl border border-slate-200/80 bg-white`), nền hệ điều hành Apple iOS (`#f2f2f7`), font SF Pro.
+     - **Không Dùng Ảnh Xe Cho Mục Hóa Đơn**: Phân hệ Hóa đơn tuyệt đối **không sử dụng cột ảnh xe (loại bỏ cột XE)** để tối ưu không gian cho nghiệp vụ kế toán. Phân chia đều 2 cột chính rộng rãi: **`CẤU HÌNH XE` | `KHÁCH HÀNG / TVBH`**, có đường kẻ dọc phân cách rõ ràng (`border-r`).
+     - Tên khách hàng hiển thị Title Case chuẩn mực (không in hoa toàn bộ).
+  3. **Thanh Điều Khiển & Bộ Lọc Tinh Gọn**:
+     - Đồng bộ thanh tìm kiếm và nút bấm Lọc thu nhỏ phía đáy màn hình (**Apple Floating Bottom Dock**).
+     - Đồng bộ Apple Filter Bottom Sheet (trượt từ đáy lên, lọc theo Dòng xe, TVBH, trạng thái,...).
+  4. **Bảo Toàn Tuyệt Đối Giao Diện Laptop**: Tuân thủ tuyệt đối Mobile-First Separation Protocol, không làm ảnh hưởng đến màn hình Desktop của phân hệ Kế toán / Hóa đơn.
+
+- **Quy Chuẩn Đồng Bộ Giao Diện Mobile Mục Kế Hoạch Cyber (Mobile Cyber Plan Protocol)**:
+  1. **Đồng Bộ Kiến Trúc Apple iOS Toàn Diện**: Khi nâng cấp phân hệ **Kế Hoạch Cyber** trên Mobile (`MobileCyberPlanView`), giao diện toàn bộ 7 phần nhỏ **BẮT BUỘC ĐỒNG BỘ 100% THEO CHUẨN MỰC BẢNG APPLE INSET TABLE CỦA KHO XE & GHÉP XE**:
+     - `factory_plan` (**Kế hoạch**): Bảng 2 cột `CẤU HÌNH XE` | `VỊ TRÍ / SHOWROOM`.
+     - `ton_kho` (**Tồn kho**): Bảng 2 cột `CẤU HÌNH XE` | `KHO / TUỔI TỒN` (tuổi tồn tô đỏ nếu >= 90 ngày).
+     - `xep_xe` (**Xếp xe**): Bảng 2 cột `HỢP ĐỒNG / KHÁCH` | `XE GHÉP / SHOWROOM`.
+     - `de_nghi_xuat` (**Lập DNX**): Bộ chuyển 3 tab di động `Lập Phiếu Mới` | `Y/C TVBH` | `Phiếu Gần Đây`, form tra kho tự động & tạo phiếu DNX 1-chạm.
+     - `tra_cuu_phieu` (**Tiến trình**): Bảng 2 cột `CHỨNG TỪ / KHÁCH` | `XE / TRẠNG THÁI`, tra cứu nhanh DNX/TD4 và xem/in phiếu.
+     - `satellite_warehouses` (**Bãi xe 3 kho**) & `reconcile_k83` (**Đối soát kho**): Tích hợp trực tiếp bảng điều phối vệ tinh.
+  2. **Quy Chuẩn Bảng Inset Table & Tên Khách Hàng**:
+     - Tên khách hàng hiển thị Title Case chuẩn mực, tuyệt đối không in hoa toàn bộ.
+     - Số VIN Monospace kèm nút sao chép 1-chạm hiển thị dấu tích xanh ✓ tức thì.
+     - Đường kẻ dọc phân cách (`border-r`) rõ ràng, sạch sẽ, không che khuất dữ liệu.
+  3. **Thanh Điều Khiển & Bộ Lọc Tinh Gọn**:
+     - Thanh chuyển phân hệ Pill Switcher mượt mà phía trên.
+     - Thanh tìm kiếm và nút bấm Lọc thu nhỏ phía đáy màn hình (**Apple Floating Bottom Dock**).
+     - Modal trượt từ đáy lên (Apple Bottom Sheet) xem chi tiết và lọc dòng xe, phiên bản, màu, showroom.
+  4. **Bảo Toàn Tuyệt Đối Giao Diện Laptop**: Tuân thủ triệt để Mobile-First Separation Protocol, giữ nguyên 100% cấu trúc và tính ổn định của màn hình Desktop `CyberFactoryPlanView`.

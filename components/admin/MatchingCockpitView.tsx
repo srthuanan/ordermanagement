@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import MarqueeText from '../ui/MarqueeText';
+import MobileMatchingView from './mobile/MobileMatchingView';
 
 // Helper to check if order is pending
 const isPendingOrder = (order: Order) => {
@@ -33,6 +34,8 @@ interface MatchingCockpitViewProps {
     processingActionType?: ActionType | null;
     isLoading?: boolean;
     onNavigateToTab?: (view: any, subState?: { folder?: string; id?: string }) => void;
+    onBackToAdminHome?: () => void;
+    onOpenActionMenu?: () => void;
 }
 
 export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
@@ -40,6 +43,7 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
     pairedOrders,
     stockData,
     onAction,
+    showToast,
     activeTab,
     selectedOrderId,
     onTabChange,
@@ -47,7 +51,9 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
     processingId,
     processingActionType,
     isLoading = false,
-    onNavigateToTab
+    onNavigateToTab,
+    onBackToAdminHome,
+    onOpenActionMenu
 }) => {
     const normalizeStr = (str: any) => {
         if (!str) return '';
@@ -120,7 +126,7 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
         }).map(car => ({ ...car, matchScore: 100 } as StockVehicle & { matchScore: number }));
     }, [selectedOrder, stockData]);
 
-    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
+    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('list');
 
     const handleTabSwitch = (tab: 'pending' | 'paired' | 'suggested') => {
         onTabChange(tab);
@@ -142,37 +148,63 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
         const isSelected = selectedOrderId === order['Số đơn hàng'];
 
         return (
-            <div
+            <button
+                type="button"
                 key={order['Số đơn hàng']}
-                onClick={(e) => {
+                onClick={() => {
                     handleOrderClick(order['Số đơn hàng']);
-                    copyWithFeedback(order['Tên khách hàng'], e);
                 }}
-                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${
+                className={`relative mx-2 my-1.5 w-[calc(100%-16px)] rounded-[14px] border p-2.5 text-left transition-all duration-150 md:m-0 md:w-full md:rounded-none md:border-x-0 md:border-y-0 md:border-l-4 md:p-3 ${
                     isSelected
-                        ? 'bg-slate-100/90 border-blue-600 font-bold'
-                        : 'border-transparent hover:bg-slate-50'
+                        ? 'border-blue-200 bg-blue-50/70 font-bold md:border-blue-600 md:bg-slate-100/90'
+                        : 'border-slate-200 bg-white hover:bg-slate-50 md:border-transparent'
                 }`}
             >
-                <div className="text-xs font-extrabold text-slate-900 mb-1 uppercase overflow-hidden">
-                    <MarqueeText 
-                        text={order['Tên khách hàng'] || '—'}
-                        className="text-xs font-extrabold text-slate-900 uppercase"
-                    />
+                <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <div className="mb-1 truncate text-[11.5px] font-bold uppercase text-slate-900">{order['Tên khách hàng'] || '—'}</div>
+                        <div className="truncate text-[9.5px] font-medium text-slate-600">{order['Dòng xe']} {order['Phiên bản']}</div>
+                        <div className="mt-1 truncate font-mono text-[8px] text-slate-400">{order['Số đơn hàng']}</div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                        {activeTab !== 'paired' && <span className="inline-flex h-[19px] items-center rounded-full bg-emerald-50 px-2 text-[8px] font-bold text-emerald-700 ring-1 ring-emerald-200">{getStockStatus(order)} xe</span>}
+                        {activeTab === 'paired' && <span className="inline-flex h-[19px] items-center rounded-full bg-blue-50 px-2 text-[8px] font-bold text-blue-700 ring-1 ring-blue-200">Đã ghép</span>}
+                        <i className="fas fa-chevron-right ml-2 text-[8px] text-slate-300" />
+                    </div>
                 </div>
-                <div className="text-[11px] text-slate-600 font-medium truncate">
-                    {order['Dòng xe']} {order['Phiên bản']}
-                </div>
-            </div>
+            </button>
         );
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border border-slate-200 overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <>
+            {/* Dedicated iOS Mobile Matching View (< 768px) */}
+            <div className="flex md:hidden h-full w-full flex-col overflow-hidden bg-[#F2F2F7]">
+                <MobileMatchingView
+                    pendingOrders={pendingOrders}
+                    pairedOrders={pairedOrders}
+                    stockData={stockData}
+                    onAction={onAction}
+                    showToast={showToast}
+                    activeTab={activeTab}
+                    selectedOrderId={selectedOrderId}
+                    onTabChange={onTabChange}
+                    onOrderSelect={onOrderSelect}
+                    processingId={processingId}
+                    processingActionType={processingActionType}
+                    isLoading={isLoading}
+                    onNavigateToTab={onNavigateToTab}
+                    onBackToAdminHome={onBackToAdminHome}
+                    onOpenActionMenu={onOpenActionMenu}
+                />
+            </div>
+
+            {/* Desktop 3-Column Cockpit (>= 768px): 100% Preserved */}
+            <div className="hidden md:flex h-full bg-slate-50 md:rounded-xl shadow-md border border-slate-200 overflow-hidden animate-fade-in relative z-0">
+                <AnimatedBackground />
 
             {/* Column 1: Navigation Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className="hidden w-full flex-shrink-0 flex-col border-r border-slate-200 bg-white md:flex md:w-64 relative z-10">
 
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {tabs.map(tab => {
@@ -206,18 +238,21 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
 
             {/* Column 2: Order List */}
             <div className={`w-full md:w-80 flex-shrink-0 border-r border-slate-200 flex flex-col bg-white relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => setMobileView('folders')} className="md:hidden p-1 text-slate-500 hover:text-slate-800">
-                            <i className="fas fa-arrow-left text-xs"></i>
-                        </button>
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                            {tabs.find(t => t.id === activeTab)?.label} ({filteredOrders.length})
-                        </span>
+                <div className="shrink-0 border-b border-slate-200 bg-[#f2f2f7] p-2 md:bg-slate-50 md:p-3">
+                    <div className="grid grid-cols-3 gap-1 rounded-[12px] bg-slate-200/70 p-1 md:hidden">
+                        {tabs.map(tab => (
+                            <button key={tab.id} type="button" onClick={() => handleTabSwitch(tab.id as any)} className={`h-8 rounded-[9px] px-1 text-[8.5px] font-semibold transition-all ${activeTab === tab.id ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500'}`}>
+                                <span className="block truncate">{tab.label.replace(' Xe', '')}</span>
+                                <span className="ml-1 text-[7.5px] tabular-nums">{tab.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="hidden items-center gap-2 md:flex">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700">{tabs.find(t => t.id === activeTab)?.label} ({filteredOrders.length})</span>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                <div className="flex-1 overflow-y-auto bg-[#f2f2f7] md:divide-y md:divide-slate-100 md:bg-white">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-16 text-slate-400 text-xs font-semibold gap-2">
                             <i className="fas fa-spinner fa-spin text-blue-600 text-base"></i> Đang tải dữ liệu...
@@ -238,12 +273,12 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                 {selectedOrder ? (
                     <div className="flex-1 flex flex-col h-full overflow-y-auto">
                         {/* Header Banner Phân Bố Thoáng Sạch */}
-                        <div className="p-4 bg-white border-b border-slate-200 flex items-center justify-between shadow-2xs">
-                            <div className="flex items-center gap-3.5">
-                                <button onClick={() => setMobileView('list')} className="md:hidden p-1.5 text-slate-500 hover:text-slate-800">
-                                    <i className="fas fa-arrow-left text-xs"></i>
+                        <div className="flex items-center justify-between border-b border-slate-200 bg-white p-2.5 shadow-2xs md:p-4">
+                            <div className="flex min-w-0 items-center gap-2 md:gap-3.5">
+                                <button onClick={() => setMobileView('list')} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 md:hidden">
+                                    <i className="fas fa-chevron-left text-[10px]"></i>
                                 </button>
-                                <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-2xs">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-blue-600 text-sm font-black text-white shadow-2xs md:h-11 md:w-11 md:rounded-2xl md:text-base">
                                     {selectedOrder['Tên khách hàng'].charAt(0)}
                                 </div>
                                 <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
@@ -258,12 +293,12 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                             }}
                                         />
                                     </div>
-                                    <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium">
+                                    <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[8px] font-medium text-slate-500 md:gap-2.5 md:text-xs md:text-slate-600">
                                         <span>Đơn hàng: <strong className="font-mono text-slate-900">{selectedOrder['Số đơn hàng']}</strong></span>
-                                        <span className="text-slate-300">|</span>
-                                        <span>TVBH: <strong className="text-slate-900">{selectedOrder['Tên tư vấn bán hàng']}</strong></span>
-                                        <span className="text-slate-300">|</span>
-                                        <span>Cọc: <strong className="text-slate-800">{selectedOrder['Ngày cọc'] ? moment(selectedOrder['Ngày cọc']).format('DD/MM/YYYY') : 'N/A'}</strong></span>
+                                        <span className="hidden text-slate-300 md:inline">|</span>
+                                        <span className="hidden md:inline">TVBH: <strong className="text-slate-900">{selectedOrder['Tên tư vấn bán hàng']}</strong></span>
+                                        <span className="hidden text-slate-300 md:inline">|</span>
+                                        <span className="hidden md:inline">Cọc: <strong className="text-slate-800">{selectedOrder['Ngày cọc'] ? moment(selectedOrder['Ngày cọc']).format('DD/MM/YYYY') : 'N/A'}</strong></span>
                                     </div>
                                 </div>
                             </div>
@@ -281,10 +316,10 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                         </div>
 
                         {/* Main Cockpit Content Grid */}
-                        <div className="p-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <div className="grid flex-1 grid-cols-1 gap-2 p-2 md:gap-4 md:p-4 lg:grid-cols-12">
                             {/* Left Panel: Vehicle Spec & Image (Col 7) */}
-                            <div className="lg:col-span-7 bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex flex-col justify-between space-y-4">
-                                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex flex-col justify-between space-y-2 rounded-[16px] border border-slate-200 bg-white p-2.5 shadow-2xs md:space-y-4 md:rounded-2xl md:p-4 lg:col-span-7">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2 md:pb-3">
                                     <div className="flex items-center gap-2">
                                         <span className={`w-2.5 h-2.5 rounded-full ${isPendingOrder(selectedOrder) ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></span>
                                         <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
@@ -304,7 +339,7 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                 </div>
 
                                 {/* Vehicle Visual Presentation */}
-                                <div className="h-56 relative flex items-center justify-center bg-slate-50/80 rounded-xl p-3 border border-slate-100">
+                                <div className="relative flex h-28 items-center justify-center rounded-xl border border-slate-100 bg-slate-50/80 p-2 md:h-56 md:p-3">
                                     <CarImage
                                         model={selectedOrder['Dòng xe']}
                                         exteriorColor={selectedOrder['Ngoại thất']}
@@ -347,7 +382,7 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                             </div>
 
                             {/* Right Panel: Matching Stock Vehicles (Col 5) */}
-                            <div className="lg:col-span-5 bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex flex-col justify-between space-y-3">
+                            <div className="flex flex-col justify-between space-y-2 rounded-[16px] border border-slate-200 bg-white p-2.5 shadow-2xs md:space-y-3 md:rounded-2xl md:p-4 lg:col-span-5">
                                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                                     <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                                         <i className="fa-solid fa-warehouse text-blue-600"></i> Kho Xe Phù Hợp Thực Tế
@@ -357,7 +392,7 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                     </span>
                                 </div>
 
-                                <div className="flex-1 overflow-y-auto space-y-2 max-h-80 pr-1 custom-scrollbar">
+                                <div className="max-h-52 flex-1 space-y-1.5 overflow-y-auto pr-1 custom-scrollbar md:max-h-80 md:space-y-2">
                                     {matchingSuggestions.length > 0 ? (
                                         matchingSuggestions.map(car => (
                                             <div key={car.VIN} className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all flex items-center justify-between">
@@ -392,6 +427,7 @@ export const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                 )}
             </div>
         </div>
+        </>
     );
 };
 export default MatchingCockpitView;

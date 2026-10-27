@@ -72,9 +72,11 @@ interface AdminViewProps {
     initialState: { targetTab?: AdminSubView; orderToShow?: Order; inquiryId?: string } | null;
     clearInitialState: () => void;
     isReferenceAccount?: boolean;
+    mobileMode?: boolean;
+    onBack?: () => void;
 }
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount, mobileMode = false, onBack }) => {
 
     const [showMatchingModal, setShowMatchingModal] = useState(false);
     const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
@@ -226,6 +228,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const [isMobileAdminHome, setIsMobileAdminHome] = useState(true);
     const [showCyberSyncModal, setShowCyberSyncModal] = useState(false);
     const [showCyberLocationSyncModal, setShowCyberLocationSyncModal] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
@@ -320,6 +323,49 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         super_management: 'QUẢN LÝ NÂNG CAO',
         live_users: 'VỊ TRÍ TRUY CẬP',
         satellite_warehouses: 'KHO VỆ TINH (3 KHO)'
+    };
+
+    const mobileViewIcons: Partial<Record<AdminSubView, string>> = {
+        matching: 'fa-link',
+        invoices: 'fa-file-invoice-dollar',
+        cyber_plan: 'fa-route',
+        car_swap: 'fa-exchange-alt',
+        don_ton: 'fa-archive',
+        holds: 'fa-lock',
+        policy_summary: 'fa-chart-bar',
+        incomplete_cars: 'fa-car-crash',
+        vehicle_config: 'fa-sliders-h',
+        super_edit: 'fa-edit',
+        policies: 'fa-tags',
+        live_users: 'fa-map-marker-alt',
+        ai_knowledge: 'fa-brain',
+        phongkd: 'fa-users',
+        maintenance_fee: 'fa-wallet',
+        stats: 'fa-chart-pie'
+    };
+
+    const iosAppIcons: Record<string, { icon: string; gradient: string; shadow: string }> = {
+        // ĐƠN HÀNG
+        matching: { icon: 'fa-link', gradient: 'bg-gradient-to-br from-[#007AFF] to-[#0055D6]', shadow: 'shadow-[0_2px_6px_rgba(0,122,255,0.35)]' },
+        invoices: { icon: 'fa-file-invoice-dollar', gradient: 'bg-gradient-to-br from-[#30B0C7] to-[#088395]', shadow: 'shadow-[0_2px_6px_rgba(48,176,199,0.35)]' },
+        cyber_plan: { icon: 'fa-network-wired', gradient: 'bg-gradient-to-br from-[#5E5CE6] to-[#3634A3]', shadow: 'shadow-[0_2px_6px_rgba(94,92,230,0.35)]' },
+        car_swap: { icon: 'fa-right-left', gradient: 'bg-gradient-to-br from-[#32ADE6] to-[#0077A6]', shadow: 'shadow-[0_2px_6px_rgba(50,173,230,0.35)]' },
+        don_ton: { icon: 'fa-box-archive', gradient: 'bg-gradient-to-br from-[#FF9F0A] to-[#D97706]', shadow: 'shadow-[0_2px_6px_rgba(255,159,10,0.35)]' },
+
+        // KHO XE & CS
+        holds: { icon: 'fa-lock', gradient: 'bg-gradient-to-br from-[#FF453A] to-[#C92A2A]', shadow: 'shadow-[0_2px_6px_rgba(255,69,58,0.35)]' },
+        policy_summary: { icon: 'fa-tags', gradient: 'bg-gradient-to-br from-[#34C759] to-[#248A3D]', shadow: 'shadow-[0_2px_6px_rgba(52,199,89,0.35)]' },
+        incomplete_cars: { icon: 'fa-wrench', gradient: 'bg-gradient-to-br from-[#FFD60A] to-[#D97706]', shadow: 'shadow-[0_2px_6px_rgba(255,214,10,0.35)]' },
+        vehicle_config: { icon: 'fa-sliders', gradient: 'bg-gradient-to-br from-[#64D2FF] to-[#0088CC]', shadow: 'shadow-[0_2px_6px_rgba(100,210,255,0.35)]' },
+
+        // HỆ THỐNG & BÁO CÁO
+        super_edit: { icon: 'fa-user-shield', gradient: 'bg-gradient-to-br from-[#AF52DE] to-[#7B2CBF]', shadow: 'shadow-[0_2px_6px_rgba(175,82,222,0.35)]' },
+        policies: { icon: 'fa-percent', gradient: 'bg-gradient-to-br from-[#FF2D55] to-[#D81E43]', shadow: 'shadow-[0_2px_6px_rgba(255,45,85,0.35)]' },
+        live_users: { icon: 'fa-location-dot', gradient: 'bg-gradient-to-br from-[#00C7BE] to-[#088F8A]', shadow: 'shadow-[0_2px_6px_rgba(0,199,190,0.35)]' },
+        ai_knowledge: { icon: 'fa-wand-magic-sparkles', gradient: 'bg-gradient-to-br from-[#BF5AF2] via-[#9B51E0] to-[#5E5CE6]', shadow: 'shadow-[0_2px_6px_rgba(191,90,242,0.4)]' },
+        phongkd: { icon: 'fa-users', gradient: 'bg-gradient-to-br from-[#5856D6] to-[#3B38A8]', shadow: 'shadow-[0_2px_6px_rgba(88,86,214,0.35)]' },
+        maintenance_fee: { icon: 'fa-wallet', gradient: 'bg-gradient-to-br from-[#30D158] to-[#1C8C38]', shadow: 'shadow-[0_2px_6px_rgba(48,209,88,0.35)]' },
+        stats: { icon: 'fa-chart-pie', gradient: 'bg-gradient-to-br from-[#FF9500] to-[#E05300]', shadow: 'shadow-[0_2px_6px_rgba(255,149,0,0.4)]' }
     };
 
     useEffect(() => {
@@ -496,6 +542,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         onOrderSelect={(orderId) => handleInvoiceStateChange({ orderId })}
                         processingId={actions.processingId}
                         processingActionType={actions.processingActionType}
+                        onBackToAdminHome={() => setIsMobileAdminHome(true)}
+                        onOpenActionMenu={() => setIsActionMenuOpen(true)}
                     />
                 </div>
 
@@ -506,6 +554,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         isActive={adminView === 'cyber_plan'}
                         allOrders={allOrders}
                         stockData={stockData}
+                        onBackToAdminHome={() => setIsMobileAdminHome(true)}
+                        onOpenActionMenu={() => setIsActionMenuOpen(true)}
                     />
                 </div>
 
@@ -526,6 +576,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         processingId={actions.processingId}
                         processingActionType={actions.processingActionType}
                         onNavigateToTab={navigateToTab}
+                        onBackToAdminHome={() => setIsMobileAdminHome(true)}
+                        onOpenActionMenu={() => setIsActionMenuOpen(true)}
                     />
                 </div>
 
@@ -616,7 +668,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 </div>
 
                 {/* Backlog Orders View */}
-                <div className={adminView === 'don_ton' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
+                <div className={adminView === 'don_ton' ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : 'hidden'}>
                     <DonHangTonView 
                         showToast={showToast} 
                         isActive={adminView === 'don_ton'} 
@@ -660,6 +712,176 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     return (
         <div className="flex h-full w-full overflow-hidden bg-slate-50/50">
+            {mobileMode ? (
+                <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#F2F2F7] text-[#1C1C1E] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','SF_Pro_Display','Segoe_UI',Roboto,sans-serif]">
+                    {isMobileAdminHome ? (
+                        <>
+                            {/* iOS Clean Navigation Bar */}
+                            <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-black/[0.08] bg-[#F2F2F7]/90 px-3 backdrop-blur-2xl">
+                                <button type="button" onClick={onBack} className="inline-flex h-8 items-center gap-1 text-[15px] font-normal text-[#007AFF] active:opacity-60 transition-opacity">
+                                    <i className="fas fa-chevron-left text-[13px]" />
+                                    <span>Back</span>
+                                </button>
+                                <h1 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-semibold tracking-[-0.015em] text-[#1C1C1E]">Quản Trị</h1>
+                                <button type="button" onClick={() => setIsActionMenuOpen(true)} aria-label="Công cụ quản trị" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[#007AFF] shadow-2xs active:bg-white active:scale-95 transition-all">
+                                    <i className="fas fa-ellipsis-h text-[13px]" />
+                                </button>
+                            </header>
+
+                            {/* 3 Perfectly Balanced Full-Screen Auto Flex Sections (No Scroll, 100% Height Fill) */}
+                            <div className="flex-1 min-h-0 flex flex-col justify-between px-3 pb-[calc(10px+env(safe-area-inset-bottom))] pt-2 gap-2 overflow-hidden">
+                                {[
+                                    {
+                                        key: 'orders',
+                                        label: 'ĐƠN HÀNG',
+                                        icon: 'fa-file-invoice-dollar',
+                                        flex: 'flex-[3]',
+                                        gradient: 'bg-gradient-to-br from-[#007AFF] to-[#0A60D4]',
+                                        views: ['matching', 'invoices', 'cyber_plan', 'car_swap', 'don_ton'] as AdminSubView[]
+                                    },
+                                    {
+                                        key: 'inventory',
+                                        label: 'KHO XE & CS',
+                                        icon: 'fa-car-side',
+                                        flex: 'flex-[2]',
+                                        gradient: 'bg-gradient-to-br from-[#34C759] to-[#248A3D]',
+                                        views: ['holds', 'policy_summary', 'incomplete_cars', 'vehicle_config'] as AdminSubView[]
+                                    },
+                                    {
+                                        key: 'system',
+                                        label: 'HỆ THỐNG & BÁO CÁO',
+                                        icon: 'fa-cogs',
+                                        flex: 'flex-[4]',
+                                        gradient: 'bg-gradient-to-br from-[#AF52DE] to-[#7B2CBF]',
+                                        views: ['super_edit', 'policies', 'live_users', 'ai_knowledge', 'phongkd', 'maintenance_fee', 'stats'] as AdminSubView[]
+                                    }
+                                ].map(group => {
+                                    const visibleViews = group.views.filter(view => !hiddenTabs.includes(view));
+                                    if (visibleViews.length === 0) return null;
+                                    const isOddCount = visibleViews.length % 2 !== 0;
+
+                                    return (
+                                        <section
+                                            key={group.key}
+                                            className={`${group.flex} min-h-0 overflow-hidden rounded-[16px] bg-white border border-black/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.04)] p-1.5 flex flex-col justify-between`}
+                                        >
+                                            {/* Section Header */}
+                                            <div className="flex items-center justify-between px-1.5 pb-1 shrink-0">
+                                                <span className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#8E8E93]">
+                                                    {group.label}
+                                                </span>
+                                                <span className="text-[9px] font-semibold text-[#8E8E93]">
+                                                    {visibleViews.length} mục
+                                                </span>
+                                            </div>
+
+                                            {/* Balanced Grid: Last Odd Item Spans Full Width */}
+                                            <div className="flex-1 min-h-0 grid grid-cols-2 gap-1.5">
+                                                {visibleViews.map((view, idx) => {
+                                                    const isLastOdd = isOddCount && idx === visibleViews.length - 1;
+                                                    const appMeta = iosAppIcons[view] || {
+                                                        icon: mobileViewIcons[view] || 'fa-th-large',
+                                                        gradient: group.gradient,
+                                                        shadow: 'shadow-xs'
+                                                    };
+
+                                                    return (
+                                                        <button
+                                                            key={view}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (view === 'stats') {
+                                                                    setCurrentCategory('stats');
+                                                                } else {
+                                                                    setCurrentCategory(group.key as any);
+                                                                }
+                                                                if (view === 'matching') {
+                                                                    handleMatchingStateChange({ orderId: null });
+                                                                }
+                                                                if (view === 'invoices') {
+                                                                    handleInvoiceStateChange({ orderId: null });
+                                                                }
+                                                                setAdminView(view);
+                                                                setIsMobileAdminHome(false);
+                                                            }}
+                                                            className={`group relative flex items-center gap-2.5 overflow-hidden rounded-[11px] bg-[#F2F2F7]/85 hover:bg-[#E5E5EA] px-2.5 py-1 text-left transition-all active:bg-[#D8D8DE] active:scale-[0.98] ${
+                                                                isLastOdd ? 'col-span-2' : ''
+                                                            }`}
+                                                        >
+                                                            {/* iOS App Store / SpringBoard Squircle Icon */}
+                                                            <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-white overflow-hidden ring-1 ring-white/30 ${appMeta.gradient} ${appMeta.shadow}`}>
+                                                                <span className="absolute inset-0 bg-gradient-to-b from-white/25 via-white/5 to-transparent pointer-events-none" />
+                                                                <i className={`fas ${appMeta.icon} text-[11.5px] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.35)]`} />
+                                                            </span>
+
+                                                            {/* Title */}
+                                                            <span className="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-[#1C1C1E] tracking-tight">
+                                                                {labels[view]}
+                                                            </span>
+
+                                                            {/* Badge & Chevron */}
+                                                            <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                                                                {counts[view] !== null && (
+                                                                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8E8E93]/20 px-1.5 text-[8.5px] font-bold tabular-nums text-[#3C3C43]">
+                                                                        {counts[view]}
+                                                                    </span>
+                                                                )}
+                                                                <i className="fas fa-chevron-right text-[8.5px] text-[#C7C7CC]" />
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </section>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* iOS Sub-View Navigation Bar (Matching, Invoices, and Cyber Plan manage their own native iOS stack) */}
+                            {adminView !== 'matching' && adminView !== 'invoices' && adminView !== 'cyber_plan' && (
+                                <header className="relative flex h-11 shrink-0 items-center justify-between border-b border-black/[0.08] bg-[#F2F2F7]/90 px-3 backdrop-blur-2xl">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsMobileAdminHome(true)}
+                                        className="inline-flex h-8 items-center gap-1 text-[15px] font-normal text-[#007AFF] active:opacity-60 transition-opacity"
+                                    >
+                                        <i className="fas fa-chevron-left text-[13px]" />
+                                        <span>Quản trị</span>
+                                    </button>
+                                    <h1 className="absolute left-1/2 max-w-[50%] -translate-x-1/2 truncate text-[16px] font-semibold tracking-[-0.015em] text-[#1C1C1E]">
+                                        {labels[adminView]}
+                                    </h1>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsActionMenuOpen(true)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[#007AFF] shadow-2xs active:bg-white active:scale-95 transition-all"
+                                    >
+                                        <i className="fas fa-ellipsis-h text-[13px]" />
+                                    </button>
+                                </header>
+                            )}
+                            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#F2F2F7]">{renderCurrentView()}</div>
+                        </>
+                    )}
+
+                    {isActionMenuOpen && (
+                        <div className="fixed inset-0 z-[12000] flex items-end justify-center">
+                            <button type="button" aria-label="Đóng công cụ" onClick={() => setIsActionMenuOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+                            <div className="relative z-10 flex max-h-[68dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] bg-[#f2f2f7] shadow-[0_-12px_40px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom duration-300">
+                                <div className="bg-white pb-2 pt-2"><div className="mx-auto h-1 w-9 rounded-full bg-slate-300" /><div className="mt-1 flex h-9 items-center justify-between px-4"><span className="w-12" /><h3 className="text-[13px] font-bold text-slate-800">Công cụ quản trị</h3><button type="button" onClick={() => setIsActionMenuOpen(false)} className="h-8 text-[13px] font-semibold text-blue-600">Xong</button></div></div>
+                                <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto p-3 no-scrollbar">
+                                    {adminTools.map(tool => (
+                                        <button key={tool.title} type="button" onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex min-h-[52px] items-center gap-2 rounded-[14px] bg-white px-3 py-2 text-left shadow-2xs ring-1 ring-slate-200/70 active:scale-[0.98]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-slate-100 text-slate-500"><i className={`fas ${tool.icon} text-[11px]`} /></span><span className="text-[9.5px] font-semibold leading-tight text-slate-700">{tool.title}</span></button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : (
+            <>
             {/* COMPACT LEFT SIDEBAR: Main Categories */}
             <div className="hidden md:flex w-[56px] flex-shrink-0 flex-col bg-white border-r border-slate-200 z-[60] shadow-sm">
                 <div className="flex flex-col items-center py-6 gap-4">
@@ -817,6 +1039,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     {renderCurrentView()}
                 </div>
             </div>
+            </>
+            )}
 
             {/* PORTAL: Admin Lightning Action Menu into Global Header */}
             {document.getElementById('admin-portal-target') && createPortal(

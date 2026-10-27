@@ -723,24 +723,24 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           {/* Backdrop mờ chuẩn iOS */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
             onClick={() => setIsFilterSheetOpen(false)}
           />
 
           {/* iOS Bottom Sheet Container: max-h-[58dvh], rounded-t-2xl */}
-          <div className="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col max-h-[58dvh] overflow-hidden">
+          <div className="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-[24px] shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col max-h-[55dvh] animate-in slide-in-from-bottom duration-250 overflow-hidden">
             {/* Grab handle thanh kéo chuẩn iOS nhỏ gọn */}
-            <div className="pt-1.5 pb-0.5 flex justify-center">
-              <div className="w-7 h-1 rounded-full bg-slate-300" />
+            <div className="pt-2 pb-0.5 flex justify-center">
+              <div className="w-8 h-1 rounded-full bg-slate-300" />
             </div>
 
             {/* Apple Navigation Bar nhỏ gọn */}
-            <div className="px-3.5 py-1.5 border-b border-black/[0.06] flex items-center justify-between flex-shrink-0">
-              <div className="w-14 flex justify-start">
+            <div className="px-4 py-1.5 border-b border-black/[0.06] flex items-center justify-between">
+              <div className="w-16 flex justify-start">
                 {activeFiltersCount > 0 ? (
                   <button
                     onClick={handleResetFilters}
-                    className="text-[11px] font-medium text-slate-500 hover:text-slate-800 active:opacity-60 transition-opacity"
+                    className="text-[12.5px] font-medium text-slate-500 hover:text-slate-800 active:opacity-60 transition-opacity"
                   >
                     Đặt lại
                   </button>
@@ -749,14 +749,14 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
                 )}
               </div>
 
-              <h3 className="text-[12px] font-bold text-slate-800 tracking-tight text-center flex-1">
-                Bộ Lọc Cọc Tồn
+              <h3 className="text-[13.5px] font-bold text-slate-800 tracking-tight text-center flex-1">
+                Bộ Lọc
               </h3>
 
-              <div className="w-14 flex justify-end">
+              <div className="w-16 flex justify-end">
                 <button
                   onClick={() => setIsFilterSheetOpen(false)}
-                  className="text-[12px] font-bold text-blue-600 hover:text-blue-700 active:opacity-60 transition-opacity"
+                  className="text-[13.5px] font-bold text-slate-700 hover:text-slate-900 active:opacity-60 transition-opacity"
                 >
                   Xong
                 </button>
@@ -764,19 +764,19 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
             </div>
 
             {/* Body các mục lọc tinh gọn */}
-            <div className="px-3.5 py-2.5 overflow-y-auto space-y-3 text-xs no-scrollbar flex-1">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar">
               {/* Mục 1: Dòng xe */}
-              <div className="space-y-1">
-                <label className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">
                   Dòng Xe
                 </label>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   <button
                     onClick={() => setSelectedModel('all')}
-                    className={`px-2 py-1 rounded-lg font-medium text-[10.5px] transition-all border ${
+                    className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${
                       selectedModel === 'all'
-                        ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                        ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                        : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                     }`}
                   >
                     Tất cả ({baseOrdersForUser.length})
@@ -785,10 +785,10 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
                     <button
                       key={t.id}
                       onClick={() => setSelectedModel(t.id)}
-                      className={`px-2 py-1 rounded-lg font-medium text-[10.5px] transition-all border ${
+                      className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${
                         selectedModel === t.id
-                          ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                          ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                          : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                       }`}
                     >
                       {t.label} ({t.count})
@@ -798,17 +798,17 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
               </div>
 
               {/* Mục 2: Tiến độ cọc */}
-              <div className="space-y-1">
-                <label className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">
                   Tiến Độ Cọc
                 </label>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   <button
                     onClick={() => setSelectedProgress('all')}
-                    className={`px-2.5 py-1 rounded-lg font-medium text-[10.5px] text-center transition-all border ${
+                    className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${
                       selectedProgress === 'all'
-                        ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                        ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                        : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                     }`}
                   >
                     Tất cả
@@ -817,10 +817,10 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
                     <button
                       key={status}
                       onClick={() => setSelectedProgress(status)}
-                      className={`px-2.5 py-1 rounded-lg font-medium text-[10.5px] text-center transition-all border ${
+                      className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${
                         selectedProgress === status
-                          ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                          ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                          : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                       }`}
                     >
                       {status}
@@ -830,11 +830,11 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
               </div>
 
               {/* Mục 3: Tình trạng ghép xe */}
-              <div className="space-y-1">
-                <label className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">
                   Ghép Xe
                 </label>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {[
                     { id: 'all', label: 'Tất cả' },
                     { id: 'paired', label: 'Đã ghép xe' },
@@ -843,10 +843,10 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
                     <button
                       key={p.id}
                       onClick={() => setSelectedPairing(p.id)}
-                      className={`py-1 px-1 rounded-lg font-medium text-[10.5px] text-center transition-all border ${
+                      className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${
                         selectedPairing === p.id
-                          ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                          ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                          : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                       }`}
                     >
                       {p.label}
@@ -857,17 +857,17 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
 
               {/* Mục 4: Tư vấn bán hàng (cho Admin & TPKD) */}
               {(isCurrentUserAdmin || isManager) && tvbhOptions.length > 0 && (
-                <div className="space-y-1">
-                  <label className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5 px-0.5">
                     Tư Vấn Bán Hàng
                   </label>
-                  <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto no-scrollbar">
+                  <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto no-scrollbar">
                     <button
                       onClick={() => setSelectedTvbh('all')}
-                      className={`px-2 py-0.8 rounded-lg font-medium text-[10px] transition-all border ${
+                      className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center transition-all active:scale-95 border ${
                         selectedTvbh === 'all'
-                          ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                          ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                          : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                       }`}
                     >
                       Tất cả TVBH
@@ -876,10 +876,10 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
                       <button
                         key={name}
                         onClick={() => setSelectedTvbh(name)}
-                        className={`px-2 py-0.8 rounded-lg font-medium text-[10px] uppercase transition-all border ${
+                        className={`h-[26px] px-2.5 rounded-full text-[11px] flex items-center uppercase transition-all active:scale-95 border ${
                           selectedTvbh === name
-                            ? 'bg-slate-800 text-white font-bold border-slate-800 shadow-2xs'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 border-slate-200/60'
+                            ? 'bg-slate-700 border-slate-700 text-white font-semibold shadow-2xs'
+                            : 'bg-slate-100/90 border-slate-200/80 text-slate-700 font-medium hover:bg-slate-200/70'
                         }`}
                       >
                         {name}
@@ -891,15 +891,12 @@ export const MobileBacklogOrdersView: React.FC<MobileBacklogOrdersViewProps> = (
             </div>
 
             {/* Nút Áp dụng ở chân sheet nhỏ gọn */}
-            <div className="px-3.5 py-2 border-t border-slate-100 bg-slate-50/90 flex items-center justify-between flex-shrink-0">
-              <span className="text-[10.5px] text-slate-500 font-medium">
-                Tìm thấy <strong className="text-slate-900 font-bold">{filteredOrders.length}</strong> hợp đồng
-              </span>
+            <div className="p-3 border-t border-black/[0.06] bg-white">
               <button
                 onClick={() => setIsFilterSheetOpen(false)}
-                className="px-3.5 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-[11px] shadow-2xs active:scale-95"
+                className="w-full h-[38px] rounded-full bg-slate-700 hover:bg-slate-800 text-white font-semibold text-[13px] tracking-tight shadow-xs active:scale-[0.98] transition-all flex items-center justify-center space-x-1"
               >
-                Áp Dụng
+                Xem {filteredOrders.length} Đơn Hàng
               </button>
             </div>
           </div>

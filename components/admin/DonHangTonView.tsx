@@ -5,6 +5,7 @@ import moment from 'moment';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { exportOrdersToExcel } from '../../utils/excelUtils';
+import MobileDonHangTonView from './mobile/MobileDonHangTonView';
 
 interface DonHangTonViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info') => void;
@@ -333,8 +334,23 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
         <div className="flex flex-col h-full bg-slate-50 overflow-hidden relative">
             <AnimatedBackground />
 
-            {/* TOP KPI STATS BAR */}
-            <div className="flex-shrink-0 p-3 md:p-4 pb-2 z-10">
+            {/* 1. DEDICATED MOBILE VIEW (Mobile-First Separation Protocol) */}
+            <div className="flex md:hidden flex-1 flex-col min-h-0 w-full overflow-hidden">
+                <MobileDonHangTonView
+                    backlogOrders={backlogOrders}
+                    isLoading={isLoading}
+                    isSyncingCyber={isSyncingCyber}
+                    onSyncCyber={handleSyncCyber}
+                    onRefresh={fetchBacklogOrders}
+                    onUpdateProgress={handleUpdateProgress}
+                    showToast={showToast}
+                />
+            </div>
+
+            {/* 2. DESKTOP VIEW (hidden on mobile, preserved 100%) */}
+            <div className="hidden md:flex flex-1 flex-col min-h-0 w-full overflow-hidden">
+                {/* TOP KPI STATS BAR */}
+                <div className="flex-shrink-0 p-3 md:p-4 pb-2 z-10">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
                     {/* Stat 1: Total Orders */}
                     <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
@@ -569,8 +585,38 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                             </div>
                         </div>
 
+                        {/* Mobile iOS compact list */}
+                        <div className="flex-1 overflow-y-auto bg-[#f2f2f7] p-2 md:hidden no-scrollbar">
+                            <div className="space-y-2">
+                                {filteredOrders.map(order => {
+                                    const daysAgo = moment().diff(moment(order.ngay_hop_dong || order.ngay_giao_dich), 'days');
+                                    return (
+                                        <button key={order.id} type="button" onClick={() => handleSelectOrder(order.id)} className="w-full rounded-[16px] border border-black/[0.06] bg-white p-3 text-left shadow-2xs active:bg-slate-50">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="truncate text-[12px] font-bold uppercase text-slate-900">{order.khach_hang}</h3>
+                                                    <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-600">{order.displayModel} · {order.displayVersion || 'Tiêu chuẩn'}</p>
+                                                </div>
+                                                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[8.5px] font-bold ${daysAgo >= 30 ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}>Tồn {daysAgo} ngày</span>
+                                            </div>
+                                            <div className="mt-2 grid grid-cols-[1fr_auto] items-end gap-2 border-t border-slate-100 pt-2">
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-[9px] text-slate-500">TVBH · <strong className="font-semibold text-slate-700">{order.tvbh_name || '—'}</strong></p>
+                                                    <p className="mt-0.5 truncate font-mono text-[8.5px] text-slate-400">{order.so_hop_dong || order.so_don_hang || 'Chưa có số HĐ'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-mono text-[11px] font-bold text-emerald-700">{Number(order.tien_coc || 0).toLocaleString('vi-VN')}đ</p>
+                                                    <p className="text-[8px] font-semibold text-blue-600">{order.tien_do || 'Chờ xe'} <i className="fas fa-chevron-right ml-1 text-slate-300" /></p>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         {/* DATA TABLE */}
-                        <div className="flex-1 overflow-auto">
+                        <div className="hidden flex-1 overflow-auto md:block">
                                 <table className="w-full text-left text-xs border-collapse">
                                     <thead className="bg-slate-100/80 sticky top-0 z-10 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                                         <tr>
@@ -746,10 +792,11 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                     </div>
                 )}
             </div>
+        </div>
 
             {/* SLIDE-OVER DRAWER FOR DETAILED ORDER VIEW */}
             {isDrawerOpen && selectedOrder && (
-                <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+                <div className="fixed inset-0 z-50 flex items-end justify-end overflow-hidden md:items-stretch">
                     {/* Backdrop */}
                     <div
                         className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-fade-in"
@@ -757,9 +804,10 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                     />
 
                     {/* Drawer Content */}
-                    <div className="relative w-full max-w-lg bg-white shadow-2xl h-full flex flex-col z-10 animate-slide-left border-l border-slate-200">
+                    <div className="relative z-10 flex h-[92dvh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-2xl md:h-full md:max-w-lg md:rounded-none md:border-l md:border-slate-200 md:animate-slide-left">
+                        <div className="flex h-5 shrink-0 items-center justify-center md:hidden"><span className="h-1 w-9 rounded-full bg-slate-300" /></div>
                         {/* Drawer Header */}
-                        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-3.5 py-2.5 md:px-5 md:py-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-lg font-black shadow-xs">
                                     {selectedOrder.khach_hang?.[0]?.toUpperCase()}
@@ -782,7 +830,7 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                         </div>
 
                         {/* Drawer Body */}
-                        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                        <div className="flex-1 space-y-2.5 overflow-y-auto p-3 no-scrollbar md:space-y-4 md:p-5">
                             {/* Deposit Highlight Card */}
                             <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
                                 <div className="flex items-center justify-between text-xs text-emerald-100 mb-1">

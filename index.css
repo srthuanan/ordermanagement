@@ -826,3 +826,56 @@ html, body {
 
 
 
+@media (max-width: 767px) {
+  .cyber-mobile-adaptive table {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 0 !important;
+  }
+
+  .cyber-mobile-adaptive thead {
+    display: none !important;
+  }
+
+  .cyber-mobile-adaptive tbody {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    background: #f2f2f7;
+  }
+
+  .cyber-mobile-adaptive tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px 10px;
+    width: 100%;
+    padding: 11px;
+    border: 1px solid rgba(15, 23, 42, 0.07) !important;
+    border-radius: 16px;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .cyber-mobile-adaptive tbody td {
+    display: block;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 2px 0 !important;
+    border: 0 !important;
+    overflow: hidden;
+  }
+
+  .cyber-mobile-adaptive tbody td:first-child {
+    display: none;
+  }
+
+  .cyber-mobile-adaptive tbody td:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+
+  .cyber-mobile-adaptive tbody td:last-child {
+    grid-column: 1 / -1;
+  }
+}
