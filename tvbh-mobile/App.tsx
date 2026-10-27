@@ -95,7 +95,7 @@ export default function App() {
       <View style={styles.splashContainer}>
         <StatusBar barStyle="light-content" />
         <ActivityIndicator size="large" color="#0284c7" />
-        <Text style={styles.splashText}>VinFast Thuận An TVBH Mobile...</Text>
+        <Text style={styles.splashText}>VinFast Thuận An...</Text>
       </View>
     );
   }

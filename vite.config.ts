@@ -514,8 +514,8 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['logoweb.png'],
       manifest: {
-        name: 'VinFast Thuận An - TVBH Mobile',
-        short_name: 'VinFast TVBH',
+        name: 'VinFast Thuận An',
+        short_name: 'VinFast Thuận An',
         description: 'Ứng dụng điều hành đơn hàng & kho xe VinFast Thuận An',
         theme_color: '#090a0f',
         background_color: '#090a0f',

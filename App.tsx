@@ -608,7 +608,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
         const title = baseTitles[activeView] || 'Order Management';
 
-        document.title = title;
+        document.title = 'VinFast Thuận An';
     }, [activeView]);
 
     useEffect(() => {
