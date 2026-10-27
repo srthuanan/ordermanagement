@@ -262,21 +262,23 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[9999] flex flex-col justify-end bg-slate-950/35 p-0 backdrop-blur-xs md:items-center md:justify-center md:bg-black/60 md:p-4" onClick={onClose}>
             <div
-                className="bg-surface-card w-full md:max-w-5xl h-[85vh] md:h-auto md:max-h-[90vh] rounded-t-2xl md:rounded-2xl shadow-xl animate-fade-in-up flex flex-col"
+                className="flex h-[88dvh] w-full flex-col rounded-t-[26px] bg-[#f2f2f7] shadow-2xl animate-fade-in-up md:h-auto md:max-h-[90vh] md:max-w-5xl md:rounded-2xl md:bg-surface-card md:shadow-xl"
                 onClick={e => e.stopPropagation()}
                 style={bgStyle}
             >
-                <header className="flex-shrink-0 px-4 py-3 md:px-6 md:py-4 border-b border-border-primary/50 flex justify-between items-center bg-white/70 backdrop-blur-xl rounded-t-2xl">
+                <div className="flex justify-center pb-0 pt-2 md:hidden"><span className="h-1 w-10 rounded-full bg-slate-300" /></div>
+                <header className="flex flex-shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/80 px-4 py-3 backdrop-blur-xl md:rounded-t-2xl md:border-border-primary/50 md:bg-white/50 md:px-6 md:py-4">
                     <h2 className="text-[15px] font-semibold text-text-primary md:text-xl md:font-bold">
                         {mode === 'view' ? 'Chi Tiết Lái Thử' : 'Cập Nhật Lái Thử'}
                     </h2>
-                    <Button onClick={onClose} variant="ghost" className="text-text-secondary hover:text-text-primary !p-2"><i className="fas fa-times text-lg"></i></Button>
+                    <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 md:hidden"><i className="fas fa-times text-[11px]" /></button>
+                    <Button onClick={onClose} variant="ghost" className="hidden text-text-secondary hover:text-text-primary !p-2 md:inline-flex"><i className="fas fa-times text-lg"></i></Button>
                 </header>
 
-                <main className="p-3 md:p-6 overflow-y-auto flex-grow min-h-0 bg-surface-ground/50">
-                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-border-primary/60 bg-white p-3 text-xs shadow-sm md:mb-6 md:gap-3 md:p-4 md:text-sm">
+                <main className="min-h-0 flex-grow overflow-y-auto bg-[#f2f2f7] p-3 md:bg-surface-ground/50 md:p-6">
+                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 text-xs shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] ring-1 ring-black/[0.04] md:mb-6 md:gap-3 md:rounded-xl md:border md:border-border-primary/60 md:p-4 md:text-sm md:shadow-sm md:ring-0">
                         <div className="flex items-center gap-2 px-3 py-1 bg-accent-primary/10 text-accent-primary rounded-full border border-accent-primary/20">
                             <i className="fas fa-ticket-alt text-xs"></i>
                             <span className="font-bold font-mono">{booking.soPhieu}</span>

@@ -208,53 +208,51 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
 
     if (bookings.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full bg-slate-50 rounded-2xl relative overflow-hidden">
-                <AnimatedBackground />
-                <div className="relative mb-6 z-10 w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center">
-                    <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
-                    <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
-                    <i className="fas fa-calendar-times text-gray-300 text-4xl"></i>
+            <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-[#f2f2f7] px-6 py-24 md:rounded-2xl md:bg-slate-50">
+                <div className="hidden md:block"><AnimatedBackground /></div>
+                <div className="relative z-10 mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm ring-1 ring-black/[0.04] md:mb-6 md:h-24 md:w-24 md:rounded-full md:border md:border-gray-100 md:ring-0">
+                    <i className="fas fa-calendar text-xl md:text-4xl"></i>
                 </div>
-                <h3 className="text-xl font-bold text-gray-600 mb-2 tracking-tight z-10">Trống Không!</h3>
-                <p className="text-sm text-gray-400 max-w-sm text-center z-10">Không tìm thấy lịch lái thử nào. Hãy thử theo dõi các ngày khác.</p>
+                <h3 className="z-10 mb-1 text-[15px] font-semibold tracking-tight text-[#1c1c1e] md:mb-2 md:text-xl md:font-bold md:text-gray-600">Chưa có lịch lái thử</h3>
+                <p className="z-10 max-w-sm text-center text-[11px] leading-relaxed text-[#8e8e93] md:text-sm md:text-gray-400">Tạo lịch mới hoặc điều chỉnh bộ lọc để xem dữ liệu.</p>
             </div>
         );
     }
 
     return (
-        <div className="relative flex h-full overflow-hidden bg-slate-50 animate-fade-in md:rounded-xl md:border md:border-border-primary md:shadow-md">
+        <div className="relative flex h-full overflow-hidden bg-[#f2f2f7] animate-fade-in md:rounded-xl md:border md:border-border-primary md:shadow-md">
             <AnimatedBackground />
             {/* Column 1: Consultant Names (TVBH) */}
-            <div className={`w-full md:w-72 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                <div className="flex items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 py-3 md:hidden">
+            <div className={`w-full md:w-72 flex-shrink-0 border-r border-border-primary bg-[#f2f2f7] md:bg-surface-ground/90 flex flex-col absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+                <div className="flex items-center justify-between px-4 pb-2 pt-4 md:hidden">
                     <div>
-                        <span className="text-sm font-semibold text-slate-900">Tư vấn bán hàng</span>
+                        <span className="text-[17px] font-bold tracking-[-0.02em] text-[#1c1c1e]">Tư vấn bán hàng</span>
                         <p className="mt-0.5 text-[10px] text-slate-400">Chọn nhân viên để xem lịch</p>
                     </div>
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{consultants.length} người</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-[#8e8e93] shadow-sm ring-1 ring-black/[0.04]">{consultants.length} người</span>
                 </div>
-                <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+                <nav className="mx-3 mb-3 flex-1 overflow-hidden overflow-y-auto rounded-2xl bg-white shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] ring-1 ring-black/[0.04] md:m-0 md:space-y-1 md:rounded-none md:bg-transparent md:p-2 md:shadow-none md:ring-0">
                     {/* Consultant List */}
                     {consultants.map(consultant => (
                         <button
                             key={consultant.id}
                             onClick={() => handleFolderClick(consultant.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === consultant.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            className={`group w-full flex items-center justify-between border-b border-slate-100 px-3.5 py-3 text-xs font-medium transition-colors last:border-b-0 md:rounded-lg md:border-b-0 md:px-3 md:py-2 ${selectedFolder === consultant.id ? 'bg-blue-50/70 text-blue-600 md:bg-accent-primary/10 md:text-accent-primary' : 'text-[#1c1c1e] active:bg-slate-50 md:text-text-secondary md:hover:bg-surface-hover md:hover:text-text-primary'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selectedFolder === consultant.id ? 'bg-accent-primary text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold md:h-5 md:w-5 md:text-[10px] ${selectedFolder === consultant.id ? 'bg-blue-600 text-white md:bg-accent-primary' : 'bg-slate-100 text-slate-500 md:bg-gray-200 md:text-gray-600'}`}>
                                     {(consultant.label || '?').charAt(0)}
                                 </div>
                                 <span className="truncate text-left">{consultant.label}</span>
                             </div>
-                            {consultant.count > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${selectedFolder === consultant.id ? 'bg-accent-primary text-white' : 'bg-surface-hover text-text-secondary'}`}>{consultant.count}</span>}
+                            <span className="flex items-center gap-2"><span className={`rounded-full px-2 py-0.5 text-[10px] ${selectedFolder === consultant.id ? 'bg-blue-600 text-white md:bg-accent-primary' : 'bg-slate-100 text-[#8e8e93] md:bg-surface-hover md:text-text-secondary'}`}>{consultant.count}</span><i className="fas fa-chevron-right text-[9px] text-slate-300 md:hidden" /></span>
                         </button>
                     ))}
                 </nav>
             </div>
 
             {/* Column 2: Booking List - Adjusted width to w-96 */}
-            <div className={`w-full md:w-96 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
+            <div className={`w-full md:w-96 flex-shrink-0 border-r border-border-primary flex flex-col bg-[#f2f2f7] md:bg-white/90 absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
                 {/* Mobile Header */}
                 <div className="flex items-center gap-3 border-b border-slate-200/80 bg-white/90 px-3 py-2.5 md:hidden">
                     <button onClick={() => setMobileView('folders')} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 active:scale-95">
@@ -266,34 +264,34 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                 </div>
 
                 {/* Status Filter Tabs */}
-                <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-100 p-1.5 [scrollbar-width:none]">
+                <div className="mx-3 mb-2 mt-3 flex items-center gap-0.5 overflow-x-auto rounded-[10px] bg-[#e3e3e8] p-0.5 [scrollbar-width:none] md:m-0 md:rounded-none md:border-b md:border-border-primary md:bg-surface-ground md:p-2">
                     <button
                         onClick={() => setSelectedStatus('all')}
-                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'all' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                        className={`flex-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors md:px-3 md:text-xs ${selectedStatus === 'all' ? 'bg-white text-[#1c1c1e] shadow-sm md:text-accent-primary' : 'text-[#636366] hover:bg-white/50 md:text-text-secondary'}`}
                     >
                         Tất cả
                     </button>
                     <button
                         onClick={() => setSelectedStatus('pending')}
-                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'pending' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                        className={`flex-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors md:px-3 md:text-xs ${selectedStatus === 'pending' ? 'bg-white text-[#1c1c1e] shadow-sm md:text-accent-primary' : 'text-[#636366] hover:bg-white/50 md:text-text-secondary'}`}
                     >
                         Chờ Check-in
                     </button>
                     <button
                         onClick={() => setSelectedStatus('ongoing')}
-                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'ongoing' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                        className={`flex-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors md:px-3 md:text-xs ${selectedStatus === 'ongoing' ? 'bg-white text-[#1c1c1e] shadow-sm md:text-accent-primary' : 'text-[#636366] hover:bg-white/50 md:text-text-secondary'}`}
                     >
                         Đang lái
                     </button>
                     <button
                         onClick={() => setSelectedStatus('completed')}
-                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'completed' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                        className={`flex-1 whitespace-nowrap rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors md:px-3 md:text-xs ${selectedStatus === 'completed' ? 'bg-white text-[#1c1c1e] shadow-sm md:text-accent-primary' : 'text-[#636366] hover:bg-white/50 md:text-text-secondary'}`}
                     >
                         Hoàn tất
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="mx-3 mb-3 flex-1 overflow-hidden overflow-y-auto rounded-2xl bg-white shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] ring-1 ring-black/[0.04] md:m-0 md:rounded-none md:shadow-none md:ring-0">
                     {filteredBookings.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-4 h-full">
                             <div className="relative mb-4 w-16 h-16 bg-white border border-gray-100 shadow-sm rounded-2xl flex items-center justify-center">
@@ -302,7 +300,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                             <p className="text-sm text-slate-500">Không có lịch thỏa mãn.</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-border-secondary">
+                        <div className="divide-y divide-slate-100 md:divide-border-secondary">
                             {filteredBookings.map((booking, index) => {
                                 const status = getStatus(booking);
                                 const isMyRequest = normalizeName(currentUser) === normalizeName(booking.tenTuVan);
@@ -311,7 +309,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                     <div
                                         key={`${booking.soPhieu}-${index}`}
                                         onClick={() => handleBookingClick(booking.soPhieu)}
-                                        className={`px-3 py-3 cursor-pointer hover:bg-surface-hover transition-colors ${selectedBookingId === booking.soPhieu ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
+                                        className={`cursor-pointer px-3 py-3 transition-colors active:bg-slate-50 md:hover:bg-surface-hover ${selectedBookingId === booking.soPhieu ? 'bg-blue-50/60 md:border-l-4 md:border-accent-primary md:bg-accent-primary/5' : 'md:border-l-4 md:border-transparent'}`}
                                     >
                                         <div className="flex items-center gap-3">
                                             {/* Avatar */}
@@ -344,7 +342,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
             </div>
 
             {/* Column 3: Detail Panel */}
-            <div className={`w-full flex-1 flex flex-col bg-surface-ground/90 min-w-0 absolute md:relative inset-0 z-30 md:z-10 transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+            <div className={`w-full flex-1 flex flex-col bg-[#f2f2f7] md:bg-surface-ground/90 min-w-0 absolute md:relative inset-0 z-30 md:z-10 transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 {selectedBooking ? (
                     <>
                         {/* Header */}
@@ -420,9 +418,9 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                         </div>
 
                         {/* Detail Content */}
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        <div className="flex-1 space-y-3 overflow-y-auto p-3 md:p-4">
                             {/* Compact Info Card */}
-                            <div className="bg-white rounded-lg p-3 shadow-sm border border-border-secondary">
+                            <div className="rounded-2xl bg-white p-3.5 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] ring-1 ring-black/[0.04] md:rounded-lg md:border md:border-border-secondary md:p-3 md:shadow-sm md:ring-0">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
                                     {/* Vehicle */}
                                     <div className="flex items-center gap-3">
@@ -530,7 +528,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
 
                                 if (images.length > 0) {
                                     return (
-                                        <div className="bg-white rounded-lg p-3 shadow-sm border border-border-secondary">
+                                        <div className="rounded-2xl bg-white p-3.5 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] ring-1 ring-black/[0.04] md:rounded-lg md:border md:border-border-secondary md:p-3 md:shadow-sm md:ring-0">
                                             <h3 className="text-[10px] font-bold text-text-secondary uppercase mb-2 flex items-center gap-1.5">
                                                 <i className="fas fa-images"></i>
                                                 Hình Ảnh ({images.length})

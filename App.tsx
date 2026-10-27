@@ -51,7 +51,6 @@ import { MobileDashboardView } from './components/mobile/MobileDashboardView';
 import { MobileOrdersView } from './components/mobile/MobileOrdersView';
 import { MobileBacklogOrdersView } from './components/mobile/MobileBacklogOrdersView';
 import { MobileStockView } from './components/mobile/MobileStockView';
-import { MobileCreateOrderView } from './components/mobile/MobileCreateOrderView';
 import { ChevronLeft } from 'lucide-react';
 import BottomNav from './components/layout/BottomNav';
 import RealtimeFooterClock from './components/layout/RealtimeFooterClock';
@@ -65,6 +64,12 @@ import { supabase } from './services/apiService';
 import { StockLocationGuard } from './components/security/StockLocationGuard';
 import { AnalyticsData, Order } from './types';
 import { GlobalNotificationProvider } from './components/context/GlobalNotificationContext';
+
+const MobileCreateOrderView = React.lazy(() =>
+    import('./components/mobile/MobileCreateOrderView').then((module) => ({
+        default: module.MobileCreateOrderView,
+    }))
+);
 
 
 moment.locale('vi');
@@ -1055,6 +1060,31 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     // Khi đang truy cập bằng điện thoại và ở màn hình Bàn điều khiển (Dashboard Lưới ICON)
     if (isMobileScreen && activeView === 'dashboard') {
+        if (createRequestData.isOpen) {
+            return (
+                <Suspense
+                    fallback={(
+                        <div className="fixed inset-0 z-50 flex min-h-[100dvh] items-center justify-center bg-[#f2f2f7] text-sm font-medium text-slate-500">
+                            <div className="flex items-center gap-2.5 rounded-2xl bg-white px-4 py-3 shadow-sm">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-slate-700" />
+                                Đang mở tạo đơn hàng...
+                            </div>
+                        </div>
+                    )}
+                >
+                    <MobileCreateOrderView
+                        onSuccess={handleFormSuccess}
+                        onBack={handleCreateRequestClose}
+                        showToast={showToast}
+                        currentUser={currentUser}
+                        currentUserName={currentUserName}
+                        existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                        initialVehicle={createRequestData.initialVehicle}
+                    />
+                </Suspense>
+            );
+        }
+
         return (
             <>
                 <MobileDashboardView
@@ -1110,18 +1140,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     })}
                     onMarkAllAsRead={handleMarkAllAsRead}
                 />
-
-                {createRequestData.isOpen && (
-                    <MobileCreateOrderView
-                        onSuccess={handleFormSuccess}
-                        onBack={handleCreateRequestClose}
-                        showToast={showToast}
-                        currentUser={currentUser}
-                        currentUserName={currentUserName}
-                        existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
-                        initialVehicle={createRequestData.initialVehicle}
-                    />
-                )}
 
                 <Suspense fallback={null}>
                     {imagePreview && (
@@ -1252,18 +1270,20 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     canHoldMore={canHoldMore}
                     onCreateRequestForVehicle={handleCreateRequestForVehicle}
                     renderCreateRequestForm={(vehicle, onCompleted) => (
-                        <MobileCreateOrderView
-                            onSuccess={(newOrder) => {
-                                handleFormSuccess(newOrder);
-                                onCompleted();
-                            }}
-                            onBack={onCompleted}
-                            showToast={showToast}
-                            currentUser={currentUser}
-                            currentUserName={currentUserName}
-                            existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
-                            initialVehicle={vehicle}
-                        />
+                        <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-slate-500">Đang mở tạo đơn hàng...</div>}>
+                            <MobileCreateOrderView
+                                onSuccess={(newOrder) => {
+                                    handleFormSuccess(newOrder);
+                                    onCompleted();
+                                }}
+                                onBack={onCompleted}
+                                showToast={showToast}
+                                currentUser={currentUser}
+                                currentUserName={currentUserName}
+                                existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                                initialVehicle={vehicle}
+                            />
+                        </Suspense>
                     )}
                     onHoldCar={handleHoldCar}
                     onReleaseCar={handleReleaseCar}

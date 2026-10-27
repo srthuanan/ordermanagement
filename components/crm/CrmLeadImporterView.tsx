@@ -2146,6 +2146,27 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 );
             })()}
 
+            {mobileMode && isAdmin && isManualUserSelection && (
+                <div className="fixed inset-0 z-[1245] flex items-end justify-center bg-slate-950/35 backdrop-blur-xs" onClick={() => setIsManualUserSelection(false)}>
+                    <div className="flex max-h-[78dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+                        <div className="flex-shrink-0 px-4 pb-3 pt-2">
+                            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-300" />
+                            <div className="flex items-center justify-between"><div><h3 className="text-[15px] font-semibold text-slate-900">Chọn tư vấn bán hàng</h3><p className="text-[10px] text-slate-400">Khách hàng sẽ được nhập cho tài khoản đã chọn</p></div><button type="button" onClick={() => setIsManualUserSelection(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500"><i className="fas fa-times text-[11px]" /></button></div>
+                            <label className="mt-3 flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3"><i className="fas fa-search text-[10px] text-slate-400" /><input value={userSearchQuery} onChange={event => setUserSearchQuery(event.target.value)} placeholder="Tìm tên hoặc tài khoản..." className="min-w-0 flex-1 bg-transparent text-xs outline-none" /></label>
+                        </div>
+                        <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto border-t border-slate-100">
+                            {filteredUsers.map(user => (
+                                <button key={user.userName} type="button" onClick={() => { handleSelectUser(user.userName); setIsManualUserSelection(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-left active:bg-slate-50">
+                                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${selectedUser === user.userName ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'}`}>{getInitials(user.fullName || user.userName)}</span>
+                                    <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold text-slate-800">{user.fullName}</span><span className="mt-0.5 block truncate font-mono text-[9.5px] text-slate-400">{user.userName}</span></span>
+                                    {selectedUser === user.userName && <i className="fas fa-check text-xs text-indigo-600" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal: Dán Danh Sách Nhanh Từ Zalo / Note */}
             {showPasteModal && (
                 <div className="fixed inset-0 z-[1250] flex items-end justify-center bg-slate-900/55 p-0 backdrop-blur-xs animate-fade-in sm:items-center sm:p-4">

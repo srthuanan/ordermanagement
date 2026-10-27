@@ -17,11 +17,6 @@ import * as apiService from '../../services/apiService';
 import { cleanCyberContractCode } from '../../utils/stringUtils';
 import { getExteriorSwatchColor, getCarImage } from '../../utils/styleUtils';
 import SelectPolicyModal from '../modals/SelectPolicyModal';
-import {
-  compressImage,
-  extractDateWithGemini,
-  extractDateFromImageTesseract,
-} from '../../services/ocrService';
 
 interface MobileCreateOrderViewProps {
   onSuccess: (newOrder: Order) => void;
@@ -240,25 +235,28 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
       // Xóa ngày cọc cũ và khởi động trạng thái đọc ảnh
       setFormData((prev) => ({ ...prev, ngay_coc: '' }));
       setIsProcessingOcr(true);
-      setOcrStatus('Đang nén ảnh...');
+      setOcrStatus('Đang chuẩn bị ảnh...');
 
       let processedFile: File = file;
       try {
-        const compressed = await compressImage(file, { maxWidth: 1600, quality: 0.75 });
-        processedFile = compressed;
-        setUncFile(compressed);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setUncPreview(reader.result as string);
-        };
-        reader.readAsDataURL(compressed);
-      } catch {
-        setUncFile(file);
-        setUncPreview(URL.createObjectURL(file));
-      }
+        const { compressImage, extractDateWithGemini, extractDateFromImageTesseract } =
+          await import('../../services/ocrService');
 
-      // Quét OCR trích xuất ngày cọc tự động
-      try {
+        try {
+          setOcrStatus('Đang nén ảnh...');
+          const compressed = await compressImage(file, { maxWidth: 1600, quality: 0.75 });
+          processedFile = compressed;
+          setUncFile(compressed);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setUncPreview(reader.result as string);
+          };
+          reader.readAsDataURL(compressed);
+        } catch {
+          setUncFile(file);
+          setUncPreview(URL.createObjectURL(file));
+        }
+
         setOcrStatus('AI đang quét ngày cọc...');
         let extractedDate = await extractDateWithGemini(processedFile, (status) =>
           setOcrStatus(status)
@@ -965,7 +963,7 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
       </main>
 
       {/* 🌟 3. APPLE FLOATING BOTTOM ACTION BAR (ĐỒNG BỘ VỚI CÁC SHEET KHÁC) */}
-      <footer className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-2xl border-t border-slate-150 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.06)]">
+      <footer className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-150 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 shadow-[0_-8px_25px_rgba(0,0,0,0.06)]">
         {step === 1 ? (
           <button
             type="button"
@@ -1021,7 +1019,7 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
       {/* 📋 BOTTOM SHEET CHỌN HỢP ĐỒNG CỌC TỒN CYBER */}
       {isBacklogSheetOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end justify-center"
+          className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center"
           onClick={() => setIsBacklogSheetOpen(false)}
         >
           <div
