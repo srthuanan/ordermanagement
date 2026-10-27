@@ -52,16 +52,16 @@ export const DesktopPasskeyControls: React.FC<DesktopPasskeyControlsProps> = ({
       <div className="space-y-3">
         <div className="flex items-center gap-3" aria-hidden="true">
           <span className="h-px flex-1 bg-slate-200/80" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Hoặc</span>
+          <span className="text-xs font-normal text-slate-400">Hoặc</span>
           <span className="h-px flex-1 bg-slate-200/80" />
         </div>
         <button type="button" onClick={onSignIn} disabled={busy} aria-busy={busy}
           title="Windows Hello, Touch ID, mã PIN hoặc Passkey trên điện thoại"
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] transition-all duration-200 hover:bg-slate-50/80 hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)] active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-60">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-blue-100/80 bg-blue-50/80 text-blue-600">
-            {busy ? <LoaderCircle size={16} strokeWidth={1.7} className="animate-spin" aria-hidden="true" /> : <KeyRound size={16} strokeWidth={1.7} aria-hidden="true" />}
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-200/70 bg-white/35 px-4 transition-all duration-200 hover:border-slate-300 hover:bg-white/65 active:scale-[0.985] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-60">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-blue-50/70 text-blue-500">
+            {busy ? <LoaderCircle size={14} strokeWidth={1.6} className="animate-spin" aria-hidden="true" /> : <KeyRound size={14} strokeWidth={1.6} aria-hidden="true" />}
           </span>
-          <span className="text-[13px] font-semibold tracking-tight text-slate-800">Đăng nhập bằng Passkey</span>
+          <span className="text-xs font-medium text-slate-600">Đăng nhập bằng Passkey</span>
         </button>
       </div>
       {pendingAccount && createPortal(

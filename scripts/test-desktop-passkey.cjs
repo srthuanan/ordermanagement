@@ -8,7 +8,8 @@ const { renderToStaticMarkup } = require('react-dom/server');
 const compile = path => ts.transpileModule(fs.readFileSync(path, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
-const loginCode = compile('components/LoginScreen.tsx');
+// Vite substitutes BASE_URL before browser execution; mirror that in the CommonJS harness.
+const loginCode = compile('components/LoginScreen.tsx').replaceAll('import.meta.env.BASE_URL', JSON.stringify('/ordermanagement/'));
 const panelCode = compile('components/login/DesktopPasskeyControls.tsx');
 function setup({ width = 1280, passwordResult, passkeyResult, registerResult, savedProfile = null } = {}) {
   const hooks = []; let cursor = 0; let successes = 0; let pending = false; let enrollments = 0; let passkeyCalls = 0;
@@ -124,9 +125,9 @@ test('phone viewport still uses the dedicated mobile login', () => {
 });
 test('desktop can reveal and hide the password without submitting', () => {
   const c = setup();
-  c.find(e => e.type === 'button' && e.props['aria-pressed'] === false).props.onClick();
+  c.find(e => e.props?.id === 'desktop-login-password-toggle' && e.props['aria-pressed'] === false).props.onClick();
   assert.equal(c.find(e => e.props?.id === 'desktop-login-password').props.type, 'text');
-  c.find(e => e.type === 'button' && e.props['aria-pressed'] === true).props.onClick();
+  c.find(e => e.props?.id === 'desktop-login-password-toggle' && e.props['aria-pressed'] === true).props.onClick();
   assert.equal(c.find(e => e.props?.id === 'desktop-login-password').props.type, 'password');
 });
 test('forgot password opens a recovery form and can return to login', () => {
