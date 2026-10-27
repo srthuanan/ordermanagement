@@ -8,7 +8,6 @@ import {
   loginWithPasskey,
   PasskeyProfile,
 } from '../../services/passkeyService';
-import { VinFastAnimatedLogo } from '../common/VinFastAnimatedLogo';
 
 interface MobileLoginViewProps {
   onLoginSuccess: () => void;
@@ -183,19 +182,49 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
           caret-color: #2563eb !important;
           transition: background-color 5000s ease-in-out 0s;
         }
+        .pearl-brand-sheen {
+          background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.85) 46%, transparent 60%);
+          background-size: 260% 100%;
+          animation: pearlBrandSheen 8s ease-in-out infinite;
+        }
+        @keyframes pearlBrandSheen {
+          0%, 18% { background-position: 150% 0; }
+          48%, 100% { background-position: -150% 0; }
+        }
       `}</style>
 
       {/* Subtle Pearl Aurora Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-40 right-0 w-64 h-64 bg-cyan-400/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* Top Header & Animated SVG Brand */}
-      <div className="w-full flex flex-col items-center pt-2 mb-1 z-10">
-        <VinFastAnimatedLogo size={130} />
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1 mt-1">
+      {/* Top Header & VinFast Thuận An Pearl Brand */}
+      <div className="w-full flex flex-col items-center pt-3 mb-2 z-10">
+        <div className="relative mb-3 w-[210px] max-w-[68vw]">
+          <img
+            src={`${import.meta.env.BASE_URL}assets/vinfast-thuan-an-pearl.svg`}
+            alt="VinFast Thuận An"
+            width={240}
+            height={75}
+            draggable={false}
+            className="block h-auto w-full select-none drop-shadow-[0_4px_12px_rgba(23,101,207,0.08)]"
+          />
+          <span
+            aria-hidden="true"
+            className="pearl-brand-sheen pointer-events-none absolute inset-0"
+            style={{
+              WebkitMaskImage: `url(${import.meta.env.BASE_URL}assets/vinfast-thuan-an-pearl.svg)`,
+              maskImage: `url(${import.meta.env.BASE_URL}assets/vinfast-thuan-an-pearl.svg)`,
+              WebkitMaskSize: '100% 100%',
+              maskSize: '100% 100%',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+            }}
+          />
+        </div>
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 mb-1">
           {viewMode === 'login' ? 'Đăng nhập' : 'Quên mật khẩu'}
         </h1>
-        <p className="text-xs text-slate-500 font-medium text-center">
+        <p className="text-xs text-slate-500 font-medium text-center max-w-[280px]">
           {viewMode === 'login'
             ? 'Hệ thống điều hành đơn hàng & kho xe VinFast Thuận An'
             : 'Nhập email để nhận liên kết khôi phục mật khẩu'}
