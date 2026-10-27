@@ -606,7 +606,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             'crm': 'Khách Hàng Tiềm Năng'
         };
 
-        const title = baseTitles[activeView] || 'Order Management';
+        if (baseTitles[activeView] || activeView) { /* keep title stable */ }
 
         document.title = 'VinFast Thuận An';
     }, [activeView]);
