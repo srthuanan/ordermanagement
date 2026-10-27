@@ -1,6 +1,6 @@
-﻿# Face ID / Passkey
+# Face ID / Passkey
 
-The mobile login button uses Supabase Auth passkeys. The server creates challenges,
+The mobile and desktop login buttons use Supabase Auth passkeys. The server creates challenges,
 verifies signed credentials, and issues the session. Existing device limits are
 checked through restoreSession before opening the app. Local profiles are display
 hints only; legacy client-only credentials must be enrolled again.
@@ -28,3 +28,17 @@ server passkeys and does not prevent discoverable passkey sign-in.
 
 Hardware biometric prompts require a real device; mocked unit checks cannot
 verify Face ID sensors or the hosted project's RP/origin configuration.
+
+## Desktop sign-in
+
+Both standard and seasonal desktop login screens offer Passkey sign-in. After
+password sign-in, supported browsers can enroll a passkey before entering the app.
+Users can skip enrollment. Windows Hello, Touch ID, PINs, security keys and nearby
+phones are offered by the browser according to available hardware and settings.
+A local platform authenticator is not required for cross-device authentication.
+
+Interactive desktop login holds automatic auth listeners until server/session
+verification and optional enrollment finish. This prevents SIGNED_IN events from
+opening the app before these checks complete. Password recovery remains separate.
+
+Desktop flow regression checks: node --test scripts/test-desktop-passkey.cjs

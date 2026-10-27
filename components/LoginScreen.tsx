@@ -3,6 +3,8 @@ import * as authService from '../services/authService';
 import HolidayThemeDecorator, { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
 import { MidAutumnLoginView } from './login/MidAutumnLoginView';
 import { MobileLoginView } from './login/MobileLoginView';
+import { DesktopPasskeyControls } from './login/DesktopPasskeyControls';
+import { getSavedPasskeyProfile, isWebAuthnSupported, loginWithPasskey, registerPasskey } from '../services/passkeyService';
 // Import images
 import kepgiay from '../pictures/kepgiay.webp';
 
@@ -13,6 +15,13 @@ interface LoginScreenProps {
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [passkeyBusy, setPasskeyBusy] = useState(false);
+    const [pendingPasskeyUser, setPendingPasskeyUser] = useState<Parameters<typeof registerPasskey>[0] | null>(null);
+    const loginBusyRef = useRef(false);
+
+    useEffect(() => () => {
+        if (loginBusyRef.current) authService.setInteractiveLoginPending(false);
+    }, []);
     const [viewMode, setViewMode] = useState<'login' | 'forgot' | 'reset' | 'join'>('login');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -93,6 +102,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 return;
             } 
             
+            if (authService.isInteractiveLoginPending()) return;
             // Mobile login owns verification and the post-login passkey enrollment dialog.
             if (isMobileScreen && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) return;
             if (session) {
@@ -163,23 +173,92 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
 
 
+    const finishDesktopLogin = () => {
+        loginBusyRef.current = false;
+        authService.setInteractiveLoginPending(false);
+        setPendingPasskeyUser(null);
+        setIsSubmitting(false);
+        onLoginSuccess();
+    };
+
     const handleLoginSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        if (loginBusyRef.current) return;
         if (!username || !password) {
             showToast('Thông báo', 'Vui lòng nhập đầy đủ thông tin!', 'warning');
             return;
         }
+        loginBusyRef.current = true;
+        authService.setInteractiveLoginPending(true);
         setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const result = await authService.login(username, password, rememberMe);
-        setIsSubmitting(false);
-        if (result.success) {
-            // showToast('Xuân Bính Ngọ 2026', 'Đăng nhập thành công!', 'success'); // Removed redundant toast
-            onLoginSuccess();
-        } else {
-            showToast('Lỗi', result.message || 'Sai thông tin đăng nhập.', 'error');
+        let awaitingEnrollment = false;
+        try {
+            const result = await authService.login(username, password, rememberMe);
+            if (!result.success) {
+                showToast('Lỗi', result.message || 'Sai thông tin đăng nhập.', 'error');
+                return;
+            }
+            const saved = getSavedPasskeyProfile();
+            if (isWebAuthnSupported() && result.email && saved?.email !== result.email) {
+                awaitingEnrollment = true;
+                setPendingPasskeyUser({
+                    username: result.username || result.email,
+                    consultantName: result.consultantName || result.username || result.email,
+                    role: result.role || '', email: result.email,
+                });
+            } else {
+                finishDesktopLogin();
+            }
+        } catch {
+            showToast('Lỗi', 'Không thể kết nối máy chủ. Vui lòng thử lại.', 'error');
+        } finally {
+            if (!awaitingEnrollment) {
+                loginBusyRef.current = false;
+                authService.setInteractiveLoginPending(false);
+                setIsSubmitting(false);
+            }
         }
     };
+
+    const handlePasskeyLogin = async () => {
+        if (loginBusyRef.current) return;
+        loginBusyRef.current = true;
+        authService.setInteractiveLoginPending(true);
+        setPasskeyBusy(true);
+        setIsSubmitting(true);
+        try {
+            const result = await loginWithPasskey(rememberMe);
+            if (result.success) finishDesktopLogin();
+            else showToast('Đăng nhập bằng Passkey', result.message || 'Không thể xác thực. Vui lòng thử lại.', 'warning');
+        } catch {
+            showToast('Đăng nhập bằng Passkey', 'Không thể xác thực. Vui lòng thử lại hoặc dùng mật khẩu.', 'error');
+        } finally {
+            loginBusyRef.current = false;
+            authService.setInteractiveLoginPending(false);
+            setPasskeyBusy(false);
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleRegisterDesktopPasskey = async () => {
+        if (!pendingPasskeyUser || passkeyBusy) return;
+        setPasskeyBusy(true);
+        try {
+            const result = await registerPasskey(pendingPasskeyUser);
+            showToast(result.success ? 'Đã kích hoạt Passkey' : 'Chưa kích hoạt Passkey',
+                result.success ? 'Lần sau bạn có thể chọn Đăng nhập bằng Passkey.' : result.message || 'Bạn vẫn có thể đăng nhập bằng mật khẩu.',
+                result.success ? 'success' : 'warning');
+        } finally {
+            setPasskeyBusy(false);
+            finishDesktopLogin();
+        }
+    };
+
+    const desktopPasskeyControls = (
+        <DesktopPasskeyControls busy={isSubmitting} onSignIn={handlePasskeyLogin}
+            pendingAccount={pendingPasskeyUser?.email} enrolling={passkeyBusy}
+            onEnroll={handleRegisterDesktopPasskey} onContinue={finishDesktopLogin} />
+    );
 
     const handleForgotPasswordSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -247,6 +326,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 rememberMe={rememberMe}
                 setRememberMe={setRememberMe}
                 isSubmitting={isSubmitting}
+                passkeyControls={desktopPasskeyControls}
                 isEmailSent={isEmailSent}
                 invitationDetails={invitationDetails}
                 handleLoginSubmit={handleLoginSubmit}
@@ -491,6 +571,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                                                     </label>
                                                     <div className="relative">
                                                         <input
+                                                            disabled={isSubmitting}
                                                             value={username}
                                                             onChange={e => setUsername(e.target.value)}
                                                             type="text"
@@ -507,6 +588,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                                                     </label>
                                                     <div className="relative">
                                                         <input
+                                                            disabled={isSubmitting}
                                                             value={password}
                                                             onChange={e => setPassword(e.target.value)}
                                                             type="password"
@@ -521,6 +603,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                                                     <label className="flex items-center gap-2 cursor-pointer select-none">
                                                         <input
                                                             type="checkbox"
+                                                            disabled={isSubmitting}
                                                             checked={rememberMe}
                                                             onChange={e => setRememberMe(e.target.checked)}
                                                             className="form-checkbox h-4 w-4 text-[#0284c7] border-slate-300 rounded-none cursor-pointer"
@@ -539,9 +622,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                                                     </button>
                                                 </div>
                                             </form>
+                                            {desktopPasskeyControls}
 
                                             <div className="text-center mt-6">
-                                                <button type="button" onClick={() => setViewMode('forgot')} className="text-slate-700 hover:text-[#0284c7] underline text-[12px] font-bold tracking-wider transition-colors uppercase">
+                                                <button type="button" onClick={() => setViewMode('forgot')} disabled={isSubmitting} className="text-slate-700 hover:text-[#0284c7] underline text-[12px] font-bold tracking-wider transition-colors uppercase">
                                                     Bạn quên mật khẩu?
                                                 </button>
                                             </div>

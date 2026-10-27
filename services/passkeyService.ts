@@ -1,4 +1,4 @@
-﻿import { supabase } from './supabaseClient';
+import { supabase } from './supabaseClient';
 import { restoreSession } from './authService';
 
 const PASSKEY_PROFILE_KEY = 'vf_passkey_profile';
@@ -13,9 +13,13 @@ export interface PasskeyProfile {
   version: 2;
 }
 
+// Cross-device passkeys and security keys do not require a local platform authenticator.
+export const isWebAuthnSupported = (): boolean =>
+  typeof window !== 'undefined' && window.isSecureContext &&
+  !!window.PublicKeyCredential && !!navigator.credentials;
+
 export const isPasskeySupported = async (): Promise<boolean> => {
-  if (typeof window === 'undefined' || !window.isSecureContext ||
-      !window.PublicKeyCredential || !navigator.credentials) return false;
+  if (!isWebAuthnSupported()) return false;
   try {
     return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
   } catch { return false; }
@@ -49,19 +53,19 @@ const errorMessage = (error: unknown): string => {
   if (/disabled|not enabled/i.test(description))
     return 'Hệ thống chưa bật đăng nhập Passkey. Vui lòng liên hệ quản trị viên và đăng nhập bằng mật khẩu.';
   if (/origin|rp_id|SecurityError/i.test(description))
-    return 'Tên miền này chưa được cấu hình cho Face ID. Vui lòng liên hệ quản trị viên.';
-  return 'Không thể xác thực Face ID. Vui lòng thử lại hoặc đăng nhập bằng mật khẩu.';
+    return 'Tên miền này chưa được cấu hình cho Passkey. Vui lòng liên hệ quản trị viên.';
+  return 'Không thể xác thực Passkey. Vui lòng thử lại hoặc đăng nhập bằng mật khẩu.';
 };
 
 export const registerPasskey = async (user: {
   username: string; consultantName: string; role: string; email: string; token?: string;
 }): Promise<{ success: boolean; message?: string }> => {
-  if (!await isPasskeySupported())
-    return { success: false, message: 'Thiết bị cần hỗ trợ sinh trắc học và truy cập bằng HTTPS để kích hoạt Face ID.' };
+  if (!isWebAuthnSupported())
+    return { success: false, message: 'Vui lòng dùng trình duyệt hỗ trợ Passkey và truy cập bằng HTTPS để kích hoạt.' };
   try {
     const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser();
     if (userError || !verifiedUser?.email || verifiedUser.email.toLowerCase() !== user.email.toLowerCase())
-      return { success: false, message: 'Vui lòng đăng nhập lại trước khi kích hoạt Face ID.' };
+      return { success: false, message: 'Vui lòng đăng nhập lại trước khi kích hoạt Passkey.' };
     const { data, error } = await supabase.auth.registerPasskey();
     if (error) return { success: false, message: errorMessage(error) };
     if (!data) return { success: false, message: 'Không thể tạo Passkey. Vui lòng thử lại.' };
@@ -78,8 +82,8 @@ export const registerPasskey = async (user: {
 export const loginWithPasskey = async (rememberMe = true): Promise<{
   success: boolean; message?: string; profile?: PasskeyProfile;
 }> => {
-  if (!await isPasskeySupported())
-    return { success: false, message: 'Thiết bị hoặc trình duyệt chưa hỗ trợ Face ID / Touch ID. Vui lòng đăng nhập bằng mật khẩu.' };
+  if (!isWebAuthnSupported())
+    return { success: false, message: 'Trình duyệt hoặc kết nối hiện tại chưa hỗ trợ Passkey. Vui lòng đăng nhập bằng mật khẩu.' };
   try {
     const { data, error } = await supabase.auth.signInWithPasskey();
     if (error) return { success: false, message: errorMessage(error) };

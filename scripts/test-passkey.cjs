@@ -1,4 +1,4 @@
-﻿const { test } = require('node:test');
+const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
@@ -6,7 +6,7 @@ const ts = require('typescript');
 const source = ts.transpileModule(fs.readFileSync('services/passkeyService.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
 }).outputText;
-function setup({ supported = true, restore = true, auth = {} } = {}) {
+function setup({ supported = true, platformSupported = supported, restore = true, auth = {} } = {}) {
   const values = new Map();
   const storage = { getItem: k => values.get(k) ?? null, setItem: (k,v) => values.set(k,v), removeItem: k => values.delete(k) };
   let restores = 0;
@@ -16,7 +16,7 @@ function setup({ supported = true, restore = true, auth = {} } = {}) {
       restoreSession: async () => { restores++; storage.setItem('currentUser', 'server-user'); return restore; },
     },
     window: { isSecureContext: supported, PublicKeyCredential: {} }, navigator: { credentials: {} },
-    PublicKeyCredential: { isUserVerifyingPlatformAuthenticatorAvailable: async () => supported },
+    PublicKeyCredential: { isUserVerifyingPlatformAuthenticatorAvailable: async () => platformSupported },
     localStorage: storage, sessionStorage: storage,
   });
   return { service: exports, values, get restores() { return restores; } };
@@ -56,4 +56,20 @@ test('registration binds to verified user and stores no token or role', async ()
   const saved = JSON.parse(c.values.get('vf_passkey_profile'));
   assert.equal(saved.token, undefined); assert.equal(saved.role, undefined); assert.equal(saved.version, 2);
   assert.equal((await c.service.registerPasskey({ ...user, email: 'other@example.com' })).success, false);
+});
+
+test('laptop without local biometrics can sign in using a cross-device passkey', async () => {
+  const c = setup({ platformSupported: false, auth: {
+    signInWithPasskey: async () => ({ data: { session: {}, user: { id: 'uid', email: 'user@example.com' } } }),
+  } });
+  assert.equal(await c.service.isPasskeySupported(), false);
+  assert.equal(c.service.isWebAuthnSupported(), true);
+  assert.equal((await c.service.loginWithPasskey()).success, true);
+});
+test('laptop without local biometrics can register a passkey on another authenticator', async () => {
+  const c = setup({ platformSupported: false, auth: {
+    getUser: async () => ({ data: { user: { email: 'user@example.com' } } }),
+    registerPasskey: async () => ({ data: { id: 'external-passkey' } }),
+  } });
+  assert.equal((await c.service.registerPasskey({ username: 'user', consultantName: 'User', role: 'user', email: 'user@example.com' })).success, true);
 });

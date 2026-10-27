@@ -13,6 +13,7 @@ interface MidAutumnLoginViewProps {
     rememberMe: boolean;
     setRememberMe: (val: boolean) => void;
     isSubmitting: boolean;
+    passkeyControls?: React.ReactNode;
     isEmailSent: boolean;
     invitationDetails: { full_name: string; role: string } | null;
     handleLoginSubmit: (e: FormEvent) => void;
@@ -169,6 +170,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
     rememberMe,
     setRememberMe,
     isSubmitting,
+    passkeyControls,
     isEmailSent,
     invitationDetails,
     handleLoginSubmit,
@@ -567,6 +569,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                                                 <i className="fa-regular fa-envelope"></i>
                                             </span>
                                             <input
+                                                disabled={isSubmitting}
                                                 value={username}
                                                 onChange={e => setUsername(e.target.value)}
                                                 type="email"
@@ -587,6 +590,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                                                 <i className="fa-solid fa-lock"></i>
                                             </span>
                                             <input
+                                                disabled={isSubmitting}
                                                 value={password}
                                                 onChange={e => setPassword(e.target.value)}
                                                 type={showPassword ? 'text' : 'password'}
@@ -610,6 +614,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="checkbox"
+                                                disabled={isSubmitting}
                                                 checked={rememberMe}
                                                 onChange={e => setRememberMe(e.target.checked)}
                                                 className="h-4 w-4 rounded text-amber-500 border-amber-500/40 bg-slate-900/70 focus:ring-amber-500/30 cursor-pointer"
@@ -619,6 +624,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                                         <button
                                             type="button"
                                             onClick={() => setViewMode('forgot')}
+                                            disabled={isSubmitting}
                                             className="text-amber-300 hover:text-amber-200 underline font-semibold transition-colors cursor-pointer"
                                         >
                                             Quên mật khẩu?
@@ -647,6 +653,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                                         </button>
                                     </div>
                                 </form>
+                                <div className="mt-4">{passkeyControls}</div>
                             </div>
                         )}
 

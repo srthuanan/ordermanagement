@@ -2,6 +2,13 @@ import { supabase, supabaseAdmin } from './supabaseClient';
 import { verifyAndRegisterDevice } from '../utils/deviceSecurity';
 export { supabase };
 
+// Auth listeners must wait for interactive login verification and optional enrollment.
+let interactiveLoginPending = false;
+export const isInteractiveLoginPending = (): boolean => interactiveLoginPending;
+export const setInteractiveLoginPending = (pending: boolean): void => {
+    interactiveLoginPending = pending;
+};
+
 /**
  * Normalizes a name string by trimming whitespace, collapsing multiple spaces, and ensuring consistent Unicode representation.
  */
