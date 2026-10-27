@@ -93,6 +93,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                 return;
             } 
             
+            // Mobile login owns verification and the post-login passkey enrollment dialog.
+            if (isMobileScreen && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) return;
             if (session) {
                 const restored = await authService.restoreSession();
                 if (restored) onLoginSuccess();
@@ -104,7 +106,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
             console.log("[Auth Event]", event);
             // Quan trọng: Nếu event là SIGNED_IN nhưng là từ luồng recovery, Supabase thường bắn PASSWORD_RECOVERY trước
             // Hoặc chúng ta dựa vào hash ở thời điểm này.
-            checkSession(session, event);
+            setTimeout(() => { void checkSession(session, event); }, 0);
         });
 
         // Chạy lần đầu
@@ -117,7 +119,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
         return () => {
             subscription.unsubscribe();
         };
-    }, [onLoginSuccess, showToast]);
+    }, [onLoginSuccess, showToast, isMobileScreen]);
 
     // --- LOGIC GIAO DIỆN MỚI ---
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });

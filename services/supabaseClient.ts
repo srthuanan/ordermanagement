@@ -7,6 +7,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishabl
 // Client thông thường (anon key) — dùng cho tất cả các thao tác của hệ thống
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
+        experimental: { passkey: true },
         detectSessionInUrl: true,
         persistSession: true,
         autoRefreshToken: true,

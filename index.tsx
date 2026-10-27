@@ -197,6 +197,8 @@ const Root = () => {
                     setIsAuthenticated(false);
                     setIsInitialLoading(false);
                 } else if (event === 'SIGNED_IN' && session) {
+                    // Mobile login finishes device verification and optional passkey enrollment itself.
+                    if (window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return;
                     if (!isResettingPassword && !initialFlow.isResetting) {
                         if (sessionStorage.getItem('isLoggedIn') !== 'true') {
                             const restored = await authService.restoreSession();

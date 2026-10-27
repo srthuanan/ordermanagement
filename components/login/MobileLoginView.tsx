@@ -90,10 +90,11 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
   };
 
   const handleFaceIdLogin = async () => {
-    if (!savedProfile) {
+    if (faceIdLoading || loading) return;
+    if (!passkeySupported) {
       showToast(
-        'Chưa kích hoạt Face ID',
-        'Vui lòng đăng nhập bằng Email lần đầu. Hệ thống sẽ kích hoạt Face ID để sử dụng từ lần sau.',
+        'Face ID chưa khả dụng',
+        'Vui lòng dùng thiết bị hỗ trợ Face ID / Touch ID và truy cập bằng HTTPS. Bạn vẫn có thể đăng nhập bằng mật khẩu.',
         'info',
         5000
       );
@@ -102,7 +103,7 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
 
     setFaceIdLoading(true);
     try {
-      const res = await loginWithPasskey();
+      const res = await loginWithPasskey(rememberMe);
       if (res.success) {
         showToast('Xác thực Face ID thành công', `Chào mừng ${res.profile?.consultantName || res.profile?.username}!`, 'success');
         onLoginSuccess();
@@ -117,6 +118,7 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
   };
 
   const handleActivateFaceId = async () => {
+    if (faceIdLoading) return;
     if (!pendingUser) {
       onLoginSuccess();
       return;
@@ -219,7 +221,7 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
                     onChange={(e) => setEmailOrUser(e.target.value)}
                     placeholder="tvbh@vinfast.vn"
                     className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
-                    disabled={loading}
+                    disabled={loading || faceIdLoading}
                   />
                 </div>
               </div>
@@ -238,7 +240,7 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Nhập mật khẩu"
                     className="w-full bg-transparent text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none pr-8"
-                    disabled={loading}
+                    disabled={loading || faceIdLoading}
                   />
                   <button
                     type="button"
@@ -277,7 +279,7 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
               {/* Submit Button - Luxury Automotive Edition (Sleek 44px Ergonomics) */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || faceIdLoading}
                 className="group relative w-full h-11 flex items-center justify-center px-5 rounded-xl text-white font-medium text-sm tracking-wide overflow-hidden transition-all duration-300 active:scale-[0.985] disabled:opacity-50"
                 style={{
                   background: 'linear-gradient(180deg, #1e3a8a 0%, #172554 60%, #0a0f1d 100%)',
@@ -392,17 +394,18 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
                 type="button"
                 onClick={handleFaceIdLogin}
                 disabled={faceIdLoading || loading}
-                className="w-full h-11 flex items-center justify-center px-4 rounded-xl bg-white hover:bg-slate-50/80 active:scale-[0.985] transition-all duration-200 border border-slate-200/90 shadow-[0_2px_8px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)]"
+                aria-busy={faceIdLoading}
+                className="w-full h-14 flex items-center justify-center px-4 rounded-2xl bg-white hover:bg-slate-50/80 disabled:opacity-60 active:scale-[0.985] transition-all duration-200 border border-slate-200/90 shadow-[0_2px_8px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_14px_rgba(15,23,42,0.08)]"
               >
                 {faceIdLoading ? (
-                  <span className="text-xs font-medium text-blue-600">Đang quét Face ID...</span>
+                  <span className="text-xs font-medium text-blue-600">Đang xác thực...</span>
                 ) : (
                   <div className="flex items-center">
                     <div className="w-6 h-6 rounded-lg bg-blue-50/80 border border-blue-100/80 flex items-center justify-center mr-2">
                       <ScanFace size={15} className="text-blue-600" />
                     </div>
                     <span className="text-[13px] font-semibold text-slate-800 tracking-tight">
-                      {savedProfile ? `Đăng nhập Face ID (@${savedProfile.username})` : 'Đăng nhập bằng Face ID'}
+                      Đăng nhập bằng Face ID
                     </span>
                   </div>
                 )}
@@ -421,13 +424,13 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
       {/* Modal Kích Hoạt Face ID sau khi đăng nhập lần đầu */}
       {showFaceIdModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center">
+          <div role="dialog" aria-modal="true" aria-labelledby="face-id-title" className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
               <ScanFace size={32} className="text-blue-600" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2">Kích hoạt Face ID</h3>
+            <h3 id="face-id-title" className="text-lg font-bold text-slate-900 mb-2">Kích hoạt Face ID</h3>
             <p className="text-xs text-slate-600 mb-6 leading-relaxed">
-              Bạn có muốn kích hoạt nhận diện khuôn mặt <strong>Face ID</strong> để đăng nhập nhanh cho tài khoản{' '}
+              Bạn có muốn kích hoạt <strong>Face ID / Touch ID</strong> để đăng nhập nhanh cho tài khoản{' '}
               <strong className="text-blue-600">@{pendingUser?.username}</strong> trong các lần sau mà không cần gõ mật khẩu?
             </p>
             <div className="flex space-x-3">
@@ -437,6 +440,7 @@ export const MobileLoginView: React.FC<MobileLoginViewProps> = ({
                   setShowFaceIdModal(false);
                   onLoginSuccess();
                 }}
+                disabled={faceIdLoading}
                 className="flex-1 py-3 rounded-2xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all"
               >
                 Để sau
