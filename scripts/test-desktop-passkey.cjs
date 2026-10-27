@@ -1,4 +1,4 @@
-﻿const { test } = require('node:test');
+const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
@@ -10,11 +10,11 @@ const compile = path => ts.transpileModule(fs.readFileSync(path, 'utf8'), {
 }).outputText;
 const loginCode = compile('components/LoginScreen.tsx');
 const panelCode = compile('components/login/DesktopPasskeyControls.tsx');
-function setup({ seasonal = false, passwordResult, passkeyResult, registerResult, savedProfile = null } = {}) {
+function setup({ width = 1280, passwordResult, passkeyResult, registerResult, savedProfile = null } = {}) {
   const hooks = []; let cursor = 0; let successes = 0; let pending = false; let enrollments = 0; let passkeyCalls = 0;
   const notices = [];
   const controls = () => null;
-  const seasonalView = () => null;
+  const mobileView = () => null;
   const auth = {
     isInteractiveLoginPending: () => pending,
     setInteractiveLoginPending: value => { pending = value; },
@@ -41,13 +41,13 @@ function setup({ seasonal = false, passwordResult, passkeyResult, registerResult
       if (name === 'react/jsx-runtime') return require(name);
       if (name.includes('authService')) return auth;
       if (name.includes('passkeyService')) return passkeys;
-      if (name.includes('HolidayThemeDecorator')) return { default: () => null, isMidAutumnSeason: () => seasonal };
       if (name.includes('DesktopPasskeyControls')) return { DesktopPasskeyControls: controls };
-      if (name.includes('MidAutumnLoginView')) return { MidAutumnLoginView: seasonalView };
-      if (name.includes('MobileLoginView')) return { MobileLoginView: () => null };
+      if (name.includes('MobileLoginView')) return { MobileLoginView: mobileView };
+      if (name === 'lucide-react') return require(name);
+      if (name.includes('VinFastAnimatedLogo')) return { VinFastAnimatedLogo: () => null };
       return { default: 'asset' };
     },
-    window: { innerWidth: 1280 }, navigator: { userAgent: 'Windows' },
+    window: { innerWidth: width }, navigator: { userAgent: 'Windows' },
     localStorage: { getItem: () => null },
   });
   const render = () => { cursor = 0; return exports.default({ onLoginSuccess: () => { successes++; }, showToast: (...args) => notices.push(args) }); };
@@ -59,23 +59,19 @@ function setup({ seasonal = false, passwordResult, passkeyResult, registerResult
     }
     return null;
   }
-  const panel = () => seasonal ? render().props.passkeyControls : find(render(), e => e.type === controls);
+  const panel = () => find(render(), e => e.type === controls);
   const passwordLogin = async () => {
-    if (seasonal) {
-      const props = render().props; props.setUsername('user'); props.setPassword('password');
-      return render().props.handleLoginSubmit({ preventDefault() {} });
-    }
     find(render(), e => e.type === 'input' && e.props.type === 'text').props.onChange({ target: { value: 'user' } });
     find(render(), e => e.type === 'input' && e.props.type === 'password').props.onChange({ target: { value: 'password' } });
     return find(render(), e => e.type === 'form').props.onSubmit({ preventDefault() {} });
   };
-  return { panel, passwordLogin, notices, get successes() { return successes; }, get pending() { return pending; },
+  return { panel, passwordLogin, notices, render, find: predicate => find(render(), predicate), isMobile: () => render().type === mobileView, get successes() { return successes; }, get pending() { return pending; },
     get enrollments() { return enrollments; }, get passkeyCalls() { return passkeyCalls; } };
 }
-for (const seasonal of [false, true]) {
-  const view = seasonal ? 'seasonal' : 'standard';
+for (const width of [1024, 1440]) {
+  const view = `${width}px desktop`;
   test(`${view}: password login waits for optional enrollment, then skip opens app`, async () => {
-    const c = setup({ seasonal });
+    const c = setup({ width });
     await c.passwordLogin();
     assert.equal(c.successes, 0); assert.equal(c.pending, true);
     assert.equal(c.panel().props.pendingAccount, 'user@example.com');
@@ -84,7 +80,7 @@ for (const seasonal of [false, true]) {
     assert.equal(c.successes, 1); assert.equal(c.pending, false);
   });
   test(`${view}: passkey sign-in verifies before opening app and blocks repeated clicks`, async () => {
-    const c = setup({ seasonal });
+    const c = setup({ width });
     const handler = c.panel().props.onSignIn;
     const task = handler();
     assert.equal(c.pending, true); assert.equal(c.successes, 0);
@@ -120,4 +116,24 @@ test('desktop button is a non-submit action and is disabled while busy', () => {
   }));
   assert.match(html, /type="button"/); assert.match(html, /disabled=""/); assert.match(html, /aria-busy="true"/);
   assert.match(html, /Windows Hello/); assert.match(html, /Passkey/);
+});
+
+test('phone viewport still uses the dedicated mobile login', () => {
+  const c = setup({ width: 390 });
+  assert.equal(c.isMobile(), true);
+});
+test('desktop can reveal and hide the password without submitting', () => {
+  const c = setup();
+  c.find(e => e.type === 'button' && e.props['aria-pressed'] === false).props.onClick();
+  assert.equal(c.find(e => e.props?.id === 'desktop-login-password').props.type, 'text');
+  c.find(e => e.type === 'button' && e.props['aria-pressed'] === true).props.onClick();
+  assert.equal(c.find(e => e.props?.id === 'desktop-login-password').props.type, 'password');
+});
+test('forgot password opens a recovery form and can return to login', () => {
+  const c = setup();
+  c.find(e => e.type === 'button' && e.props.className?.includes('hover:underline')).props.onClick();
+  assert.ok(c.find(e => e.props?.id === 'desktop-recovery-email'));
+  assert.equal(c.panel(), null);
+  c.find(e => e.type === 'button' && e.props.className?.includes('mx-auto')).props.onClick();
+  assert.ok(c.find(e => e.props?.id === 'desktop-login-username'));
 });

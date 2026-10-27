@@ -175,3 +175,8 @@
      - Thanh tìm kiếm và nút bấm Lọc thu nhỏ phía đáy màn hình (**Apple Floating Bottom Dock**).
      - Modal trượt từ đáy lên (Apple Bottom Sheet) xem chi tiết và lọc dòng xe, phiên bản, màu, showroom.
   4. **Bảo Toàn Tuyệt Đối Giao Diện Laptop**: Tuân thủ triệt để Mobile-First Separation Protocol, giữ nguyên 100% cấu trúc và tính ổn định của màn hình Desktop `CyberFactoryPlanView`.
+
+- **Đồng Bộ Giao Diện Đăng Nhập Laptop Và Mobile**:
+  1. Theo yêu cầu người dùng, màn hình đăng nhập laptop/desktop phải đồng bộ với phong cách mobile: nền sáng nhẹ, logo VinFast, khung đăng nhập tập trung ở giữa, bo góc mềm, cùng kiểu chữ và nút xanh đậm.
+  2. Bỏ nền ô ly, kẹp giấy, hiệu ứng nghiêng và các khối giới thiệu bên trái khỏi màn hình đăng nhập laptop. Giữ đăng nhập bằng Passkey và các luồng quên mật khẩu/kích hoạt tài khoản.
+  3. Phạm vi chỉ áp dụng màn hình đăng nhập; không thay đổi các màn hình nghiệp vụ desktop hoặc giao diện mobile.
