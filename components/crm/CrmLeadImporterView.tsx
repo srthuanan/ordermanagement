@@ -1387,7 +1387,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
             if (isPaidHandledRef.current) return;
             isPaidHandledRef.current = true;
 
-            showToast?.('Ting-Ting SePay!', `Đã nhận ${price.toLocaleString('vi-VN')}₫ thành công! Đang tự động import KHTN...`, 'success', 3500);
+            showToast?.('Xác thực thành công!', 'Hệ thống đã xác nhận. Đang tự động import KHTN...', 'success', 3500);
 
             if (orderId) {
                 supabase
@@ -1541,8 +1541,8 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             <input type="month" value={selectedMonth} onChange={event => { setSelectedMonth(event.target.value); if (leadRows.length > 0) handleApplyMonthToAll(event.target.value); }} className="h-[34px] w-[116px] rounded-xl border border-slate-200/80 bg-slate-100/90 px-2 text-[10px] font-medium text-slate-600 outline-none focus:bg-white" />
                         </div>
                         <button type="button" onClick={handleImport} disabled={counts.selected === 0 || isImporting || !selectedUser} className="flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-slate-900 text-xs font-semibold text-white shadow-sm disabled:bg-slate-200 disabled:text-slate-400">
-                            <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-arrow-up-from-bracket'}`} />
-                            {isImporting ? 'Đang xử lý...' : counts.selected > 0 ? `Nhập ${counts.selected} khách · ${calculateLeadPrice(counts.selected).toLocaleString('vi-VN')}đ` : 'Chọn khách hàng để nhập'}
+                            <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-qrcode'}`} />
+                            {isImporting ? 'Đang xử lý...' : counts.selected > 0 ? `Quét QR & Nhập ${counts.selected} khách` : 'Chọn khách hàng để nhập'}
                         </button>
                     </div>
                 </>
@@ -1744,10 +1744,10 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             onClick={handleImport}
                             disabled={counts.selected === 0 || isImporting || !selectedUser}
                             className="h-7 px-3.5 text-[11px] font-bold text-white bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 disabled:opacity-50 rounded shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all shrink-0"
-                            title="Thanh toán phí dịch vụ và import KHTN"
+                            title="Xác nhận quét mã QR và import KHTN"
                         >
                             <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-qrcode'} text-[10px]`}></i>
-                            <span>Import ({counts.selected} Khách - {calculateLeadPrice(counts.selected).toLocaleString('vi-VN')}₫)</span>
+                            <span>Import ({counts.selected} Khách)</span>
                         </button>
                     </div>
                 </div>
@@ -2082,7 +2082,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             <span>
                                 {isImporting
                                     ? 'Đang import...'
-                                    : `Thanh Toán & Import ${counts.selected} Khách (${calculateLeadPrice(counts.selected).toLocaleString('vi-VN')}₫)`}
+                                    : `Quét QR & Import ${counts.selected} Khách`}
                             </span>
                         </button>
                     </div>
@@ -2236,56 +2236,80 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
             {/* Modal: Thanh Toán & Quét Mã VietQR (Dịch Vụ Nhập Liệu Hàng Loạt) */}
             {showPaymentModal && (
-                <div className="fixed inset-0 z-[1200] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-                    <div className="w-full max-w-[460px] animate-fade-in-up relative my-auto shadow-2xl">
+                <div className="fixed inset-0 z-[1200] flex items-start justify-center p-2.5 sm:p-5 overflow-y-auto">
+                    {/* Backdrop mờ sương chuẩn iOS */}
+                    <div 
+                        className="fixed inset-0 bg-[#14273e]/25 backdrop-blur-md transition-opacity cursor-pointer"
+                        style={{ animation: 'iosBackdropIn 0.25s ease-out both' }}
+                        onClick={() => setShowPaymentModal(false)}
+                    ></div>
+                    <div 
+                        className="relative w-full max-w-[430px] bg-[#f8fafd] border border-white/90 shadow-[0_24px_70px_-15px_rgba(20,39,62,0.22)] rounded-3xl overflow-hidden z-10 flex flex-col my-1 sm:my-3"
+                        style={{ animation: 'iosTopSheetIn 0.34s cubic-bezier(0.16, 1, 0.3, 1) both' }}
+                    >
+                        <style>{`
+                            @keyframes iosTopSheetIn {
+                                from { transform: translateY(-100%); opacity: 0.4; }
+                                to { transform: translateY(0); opacity: 1; }
+                            }
+                            @keyframes iosBackdropIn {
+                                from { opacity: 0; }
+                                to { opacity: 1; }
+                            }
+                        `}</style>
+
+                        {/* Top Grip Handle */}
+                        <div className="flex justify-center pt-2.5 pb-1 shrink-0"><span className="w-10 h-1 bg-[#cdd7e5] rounded-full"></span></div>
                         {/* Top Section - Alert & Amount */}
-                        <div className="bg-white rounded-t-3xl pt-5 pb-4 px-6 relative flex flex-col">
-                            <div className="flex items-center justify-between mb-4">
+                        <div className="px-5 pt-2 pb-3 flex items-center justify-between border-b border-[#e8edf5] bg-[#fcfdff] shrink-0">
+                            
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center ring-4 ring-emerald-50/60 shadow-sm shrink-0">
-                                        <i className="fas fa-file-invoice-dollar text-xl"></i>
+                                    <div className="w-[33px] h-[33px] rounded-[10px] bg-[#eaf1fb] text-[#5782ba] flex items-center justify-center shrink-0 shadow-2xs">
+                                        <i className="fas fa-hand-holding-heart text-sm"></i>
                                     </div>
                                     <div className="text-left">
-                                        <h2 className="text-[17px] font-extrabold text-slate-800 tracking-tight leading-tight">
-                                            Thanh Toán Phí Dịch Vụ Nhập Liệu
+                                        <h2 className="text-[14.5px] font-bold text-[#304560] tracking-tight leading-tight">
+                                            Hỗ Trợ Công Cụ & Nhập Liệu Hộ
                                         </h2>
-                                        <p className="text-slate-500 text-[11px] leading-relaxed">
-                                            Hỗ trợ chuẩn hóa, kiểm tra trùng và import KHTN
+                                        <p className="text-[#7a8da7] text-[10.5px] leading-tight mt-0.5">
+                                            Duy trì công cụ & hỗ trợ chuẩn hóa nhập khách CRM
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setShowPaymentModal(false)}
-                                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                                    className="w-7 h-7 rounded-full bg-[#eaf0f7] hover:bg-[#dfe8f3] text-[#8899af] hover:text-[#4d6585] flex items-center justify-center transition-colors cursor-pointer shrink-0"
                                 >
-                                    <i className="fas fa-times text-xs"></i>
+                                    <i className="fas fa-times text-[11px]"></i>
                                 </button>
                             </div>
 
-                            <div className="w-full flex items-center justify-between bg-gradient-to-r from-slate-50 to-emerald-50/40 rounded-2xl p-3.5 border border-slate-100 mb-1">
+                        {/* Sheet Body */}
+                        <div className="p-4 flex flex-col gap-3">
+                            <div className="flex items-center justify-between bg-white rounded-2xl p-3 border border-[#e8edf5] shadow-2xs">
                                 <div>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">TVBH Thụ Hưởng Dịch Vụ</p>
-                                    <p className="text-slate-800 text-[13px] font-bold">{selectedUserInfo?.fullName || selectedUser}</p>
-                                    <p className="text-slate-500 text-[11px] font-medium">({selectedUser}) • {counts.selected} khách hàng</p>
+                                    <p className="text-[#8194ad] text-[9.5px] font-bold uppercase tracking-wider mb-0.5">TVBH Nhờ Nhập Hộ</p>
+                                    <p className="text-[#304560] text-[13px] font-bold leading-tight">{selectedUserInfo?.fullName || selectedUser}</p>
+                                    <p className="text-[#93a0b3] text-[11px] font-medium leading-tight mt-0.5 font-mono">({selectedUser})</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Cần thanh toán</p>
-                                    <p className="font-extrabold text-emerald-600 text-[22px] tracking-tight font-mono">
-                                        {calculateLeadPrice(counts.selected).toLocaleString('vi-VN')} <span className="text-[14px] text-emerald-500 font-bold">₫</span>
+                                    <p className="text-[#8194ad] text-[9.5px] font-bold uppercase tracking-wider mb-0.5">Số lượng KHTN</p>
+                                    <p className="font-extrabold text-[#3375cb] text-[20px] tracking-tight font-mono leading-none">
+                                        {counts.selected} <span className="text-[12px] text-[#7a8da7] font-semibold">khách</span>
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        {/* End of TVBH Info */}
 
-                        {/* Divider with Ticket Cutouts */}
-                        <div className="relative h-5 bg-white flex items-center justify-center overflow-hidden">
-                            <div className="absolute left-[-12px] w-6 h-6 bg-slate-900 rounded-full"></div>
-                            <div className="absolute right-[-12px] w-6 h-6 bg-slate-900 rounded-full"></div>
-                            <div className="w-full border-t-[2px] border-dashed border-slate-200 mx-5"></div>
-                        </div>
+                        {/* QR & Bank Details */}
+                        
+                            
+                            
+                            
+                        {/* Content Section */}
 
                         {/* Bottom Section - QR & Actions */}
-                        <div className="bg-white rounded-b-3xl pt-3 pb-5 px-6 flex flex-col">
+                        
                             {sePayPaidSuccess ? (
                                 <div className="py-10 flex flex-col items-center justify-center text-center space-y-3 animate-fade-in">
                                     <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl shadow-inner">
@@ -2293,7 +2317,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                     </div>
                                     <div>
                                         <h4 className="text-base font-black text-slate-800 tracking-tight">
-                                            Đã Nhận Tiền Thành Công!
+                                            Đã Xác Thực Thành Công!
                                         </h4>
                                         <p className="text-xs text-slate-500 mt-1">
                                             Đang tự động import {counts.selected} khách hàng vào CRM...
@@ -2306,13 +2330,13 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-stretch mb-4">
+                                    <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-stretch">
                                         {/* QR Code */}
-                                        <div className="p-2 bg-white rounded-2xl shadow-[0_4px_15px_rgb(0,0,0,0.06)] border border-slate-100 w-44 h-44 shrink-0 relative group flex items-center justify-center">
+                                        <div className="p-2 bg-white rounded-2xl shadow-2xs border border-[#e8edf5] w-[148px] h-[148px] shrink-0 relative group flex items-center justify-center">
                                             <img 
-                                                src={`https://img.vietqr.io/image/${(bankInfo?.bankId || 'ICB')}-${(bankInfo?.accountNo || '108874916326')}-compact2.png?amount=${calculateLeadPrice(counts.selected)}&accountName=${encodeURIComponent(bankInfo?.accountName || 'PHAM THANH NHAN')}&addInfo=${encodeURIComponent(`SEVQR NAPCRM ${selectedUser.replace(/^02\./i, '').toUpperCase()} ${counts.selected}K`)}`}
+                                                src={`https://img.vietqr.io/image/${(bankInfo?.bankId || 'ICB')}-${(bankInfo?.accountNo || '108874916326')}-qr_only.png?amount=${calculateLeadPrice(counts.selected)}&accountName=${encodeURIComponent(bankInfo?.accountName || 'PHAM THANH NHAN')}&addInfo=${encodeURIComponent(`SEVQR NAPCRM ${selectedUser.replace(/^02\./i, '').toUpperCase()} ${counts.selected}K`)}`}
                                                 alt="VietQR"
-                                                className="w-full h-full object-contain rounded-lg transition-transform duration-300 group-hover:scale-105"
+                                                className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-102"
                                                 onError={(e) => {
                                                     (e.target as HTMLImageElement).src = 'https://placehold.co/400x400/png?text=Loi+QR';
                                                 }}
@@ -2320,19 +2344,19 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                         </div>
                                         
                                         {/* Bank Details */}
-                                        <div className="flex flex-col w-full justify-between text-xs">
-                                            <div className="text-left w-full bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-1.5">
+                                        <div className="flex-1 flex flex-col justify-between text-xs w-full">
+                                            <div className="text-left w-full bg-white rounded-2xl p-3 border border-[#e8edf5] shadow-2xs space-y-1.5 h-full flex flex-col justify-between">
                                                 <div>
-                                                    <span className="text-slate-400 text-[10px] font-bold uppercase block">Số tài khoản</span>
+                                                    <span className="text-[#8194ad] text-[9.5px] font-bold uppercase block tracking-wider">Số tài khoản</span>
                                                     <div className="flex items-center justify-between">
-                                                        <span className="font-mono font-extrabold text-slate-800 text-sm tracking-wider">
+                                                        <span className="font-mono font-extrabold text-[#304560] text-[13px] tracking-wider">
                                                             {bankInfo?.accountNo || 'Chưa cài đặt STK'}
                                                         </span>
                                                         {bankInfo?.accountNo && (
                                                             <button 
                                                                 type="button" 
                                                                 onClick={() => handleCopy(bankInfo.accountNo, 'Số tài khoản')}
-                                                                className="text-[10px] text-blue-600 hover:text-blue-700 font-bold ml-1 hover:underline cursor-pointer"
+                                                                className="text-[10px] text-[#3375cb] hover:text-[#1d5fb8] font-bold ml-1 hover:underline cursor-pointer"
                                                             >
                                                                 <i className="fas fa-copy mr-0.5"></i> Chép
                                                             </button>
@@ -2341,29 +2365,29 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                                 </div>
 
                                                 <div>
-                                                    <span className="text-slate-400 text-[10px] font-bold uppercase block">Chủ tài khoản</span>
-                                                    <span className="font-bold text-slate-700 uppercase">
+                                                    <span className="text-[#8194ad] text-[9.5px] font-bold uppercase block tracking-wider">Chủ tài khoản</span>
+                                                    <span className="font-bold text-[#304560] uppercase text-[11.5px]">
                                                         {bankInfo?.accountName || 'Quản trị viên'}
                                                     </span>
                                                 </div>
 
                                                 <div>
-                                                    <span className="text-slate-400 text-[10px] font-bold uppercase block">Ngân hàng</span>
-                                                    <span className="font-semibold text-slate-600">
+                                                    <span className="text-[#8194ad] text-[9.5px] font-bold uppercase block tracking-wider">Ngân hàng</span>
+                                                    <span className="font-semibold text-[#5a6e85] text-[11.5px]">
                                                         {bankInfo?.bankId || 'VietinBank'}
                                                     </span>
                                                 </div>
 
-                                                <div className="pt-1 border-t border-slate-200/60">
-                                                    <span className="text-slate-400 text-[10px] font-bold uppercase block">Nội dung chuyển khoản (bắt buộc)</span>
+                                                <div className="pt-1 border-t border-[#edf2f8]">
+                                                    <span className="text-[#8194ad] text-[9.5px] font-bold uppercase block tracking-wider">Nội dung chuyển khoản (bắt buộc)</span>
                                                     <div className="flex items-center justify-between">
-                                                        <span className="font-mono font-bold text-indigo-700 text-xs">
+                                                        <span className="font-mono font-bold text-[#3375cb] text-[11.5px]">
                                                             {`SEVQR NAPCRM ${selectedUser.replace(/^02\./i, '').toUpperCase()} ${counts.selected}K`}
                                                         </span>
                                                         <button 
                                                             type="button" 
                                                             onClick={() => handleCopy(`SEVQR NAPCRM ${selectedUser.replace(/^02\./i, '').toUpperCase()} ${counts.selected}K`, 'Nội dung')}
-                                                            className="text-[10px] text-indigo-600 hover:text-indigo-700 font-bold ml-1 hover:underline cursor-pointer"
+                                                            className="text-[10px] text-[#3375cb] hover:text-[#1d5fb8] font-bold hover:underline cursor-pointer"
                                                         >
                                                             <i className="fas fa-copy mr-0.5"></i> Chép
                                                         </button>
@@ -2375,15 +2399,15 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
                                     {/* Action Buttons */}
                                     <div className="pt-2">
-                                        <div className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-500 font-medium mb-2">
-                                            <i className="fas fa-satellite-dish text-blue-500 animate-pulse"></i>
-                                            <span>Hệ thống tự động phát hiện chuyển khoản SePay & nạp ngay</span>
+                                        <div className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#eef4fc] border border-[#dce7f5] rounded-xl text-[10px] text-[#527299] font-medium text-center mb-2">
+                                            <i className="fas fa-hand-holding-heart text-rose-500 shrink-0"></i>
+                                            <span>Hỗ trợ duy trì công cụ & nhập khách hộ • Dữ liệu do TVBH tự quản lý</span>
                                         </div>
 
                                         <button
                                             type="button"
                                             onClick={() => setShowPaymentModal(false)}
-                                            className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                                            className="w-full py-2 bg-[#eaf0f7] hover:bg-[#dfe8f3] text-[#4d6585] font-bold rounded-xl text-xs transition-colors cursor-pointer active:scale-98"
                                         >
                                             Đóng / Để sau
                                         </button>
