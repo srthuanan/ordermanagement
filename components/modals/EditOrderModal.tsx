@@ -4,6 +4,7 @@ import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 import { cleanCyberContractCode } from '../../utils/stringUtils';
+import { Lock, AlertTriangle, ChevronDown, Save } from 'lucide-react';
 
 import Button from '../ui/Button';
 
@@ -178,121 +179,140 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
     if (inline) {
         return (
-            <div className="w-full h-full flex-1 flex flex-col overflow-hidden bg-slate-50/40">
-                <form onSubmit={handleSubmit} className="w-full h-full flex-1 flex flex-col overflow-hidden">
-                    {/* Phần nội dung cuộn mượt */}
-                    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar">
-                        {/* Cảnh báo VIN */}
+            <div className="w-full h-full flex-1 flex flex-col justify-between overflow-hidden bg-[#f2f2f7]">
+                <form onSubmit={handleSubmit} className="w-full h-full flex-1 flex flex-col justify-between overflow-hidden">
+                    {/* Phần nội dung vừa vặn màn hình — KHÔNG CẦN SCROLL */}
+                    <div className="flex-1 px-3.5 py-2 space-y-2 overflow-hidden flex flex-col justify-between">
+                        {/* Cảnh báo VIN tinh gọn dạng pill */}
                         {hasVin && !isConfigChanged && (
-                            <div className="p-3 rounded-2xl border border-amber-200/80 bg-amber-50/90 flex items-start gap-2.5 shadow-2xs">
-                                <div className="w-5 h-5 bg-amber-100 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5">
-                                    <i className="fas fa-lock text-amber-600 text-[10px]"></i>
-                                </div>
-                                <div className="text-[12px] flex-1">
-                                    <h4 className="font-bold text-amber-900 text-xs">Đơn hàng đã ghép xe</h4>
-                                    <p className="text-amber-800 text-[11px] mt-0.5 leading-relaxed">
-                                        Đơn hàng đã có VIN: <b className="font-mono text-amber-950 font-bold">{order.VIN}</b>. Thông tin xe hiện đang khóa. Nếu bạn thay đổi cấu hình, VIN này sẽ được giải phóng.
-                                    </p>
-                                </div>
+                            <div className="py-1 px-2.5 rounded-xl border border-amber-200/80 bg-amber-50/90 flex items-center gap-2 text-[11px] text-amber-900 shadow-2xs flex-shrink-0">
+                                <Lock size={12} className="text-amber-600 flex-shrink-0" />
+                                <span className="truncate">Đơn đã có VIN: <b className="font-mono text-amber-950 font-bold">{order.VIN}</b> (Khóa xe, đổi cấu hình sẽ nhả VIN)</span>
                             </div>
                         )}
 
                         {hasVin && isConfigChanged && (
-                            <div className="p-3 rounded-2xl border border-rose-200 bg-rose-50 flex items-start gap-2.5 shadow-2xs animate-pulse-subtle">
-                                <div className="w-5 h-5 bg-rose-100 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5">
-                                    <i className="fas fa-exclamation-triangle text-rose-600 text-[10px]"></i>
-                                </div>
-                                <div className="text-[12px] flex-1">
-                                    <h4 className="font-bold text-rose-900 text-xs">CẢNH BÁO GIẢI PHÓNG XE</h4>
-                                    <p className="text-rose-800 text-[11px] mt-0.5 leading-relaxed">
-                                        Bạn đang thay đổi cấu hình cho đơn hàng <b>đã ghép VIN ({order.VIN})</b>. Khi lưu, xe này sẽ được <b>nhả lại vào kho</b>.
-                                    </p>
-                                </div>
+                            <div className="py-1 px-2.5 rounded-xl border border-rose-200 bg-rose-50 flex items-center gap-2 text-[11px] text-rose-900 shadow-2xs animate-pulse-subtle flex-shrink-0">
+                                <AlertTriangle size={12} className="text-rose-600 flex-shrink-0" />
+                                <span className="truncate font-semibold text-rose-900">Đã đổi xe: Khi lưu, VIN {order.VIN} sẽ nhả về kho!</span>
                             </div>
                         )}
 
-                        {/* Card 1: Thông tin khách hàng */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2.5">
-                            <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                                Thông tin khách hàng
+                        {/* Card 1: Thông tin khách hàng & Hợp đồng */}
+                        <div className="bg-white px-3.5 py-2 rounded-2xl border border-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-1.5 flex-shrink-0">
+                            <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-normal">
+                                Thông tin khách hàng & Hợp đồng
                             </h4>
 
-                            {isAdmin && (
+                            <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                        Tư vấn bán hàng (Admin Only)
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Tên khách hàng *
                                     </label>
                                     <input
                                         type="text"
-                                        name="Tên tư vấn bán hàng"
-                                        value={formData["Tên tư vấn bán hàng"] || ''}
+                                        name="Tên khách hàng"
+                                        value={formData["Tên khách hàng"] || ''}
                                         onChange={handleInputChange}
+                                        onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
                                         required
-                                        className={inputClass}
+                                        className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all placeholder:text-slate-400"
+                                        placeholder="NGUYỄN VĂN A"
                                     />
                                 </div>
-                            )}
 
-                            <div>
-                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                    Tên khách hàng
-                                </label>
-                                <input
-                                    type="text"
-                                    name="Tên khách hàng"
-                                    value={formData["Tên khách hàng"] || ''}
-                                    onChange={handleInputChange}
-                                    onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
-                                    required
-                                    className={inputClass}
-                                    placeholder="VD: NGUYEN VAN A"
-                                />
-                            </div>
+                                <div>
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Mã HĐ Cyber
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="Mã HĐ Cyber"
+                                        value={formData["Mã HĐ Cyber"] || ''}
+                                        onChange={handleInputChange}
+                                        onBlur={() => setFormData(prev => ({ ...prev, "Mã HĐ Cyber": cleanCyberContractCode(prev["Mã HĐ Cyber"]) }))}
+                                        onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
+                                        className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all placeholder:text-slate-400 font-mono"
+                                        placeholder="02.xxxx/xx/2026/..."
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                    Mã HĐ Cyber
-                                </label>
-                                <input
-                                    type="text"
-                                    name="Mã HĐ Cyber"
-                                    value={formData["Mã HĐ Cyber"] || ''}
-                                    onChange={handleInputChange}
-                                    onBlur={() => setFormData(prev => ({ ...prev, "Mã HĐ Cyber": cleanCyberContractCode(prev["Mã HĐ Cyber"]) }))}
-                                    onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
-                                    className={`${inputClass} font-mono`}
-                                    placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
-                                />
-                            </div>
+                                <div>
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Số đơn hàng (VSO) *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="Số đơn hàng"
+                                        value={formData["Số đơn hàng"] || ''}
+                                        onChange={handleInputChange}
+                                        required
+                                        pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
+                                        title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"
+                                        className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all placeholder:text-slate-400 font-mono"
+                                        placeholder="N31913-VSO-..."
+                                    />
+                                </div>
 
-                            <div>
-                                <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                    Số đơn hàng
-                                </label>
-                                <input
-                                    type="text"
-                                    name="Số đơn hàng"
-                                    value={formData["Số đơn hàng"] || ''}
-                                    onChange={handleInputChange}
-                                    required
-                                    pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
-                                    title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"
-                                    className={`${inputClass} font-mono`}
-                                    placeholder="VD: N12345-VSO-24-01-0001"
-                                />
+                                {isAdmin ? (
+                                    <div>
+                                        <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                            TVBH (Admin) *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="Tên tư vấn bán hàng"
+                                            value={formData["Tên tư vấn bán hàng"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all placeholder:text-slate-400"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                            Thời gian đặt cọc *
+                                        </label>
+                                        <input
+                                            name="Ngày cọc"
+                                            type="datetime-local"
+                                            value={formData["Ngày cọc"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            disabled
+                                            className="w-full h-8 bg-slate-100/80 border border-slate-200/90 text-slate-500 rounded-xl px-2 text-[11px] font-normal"
+                                        />
+                                    </div>
+                                )}
+
+                                {isAdmin && (
+                                    <div className="col-span-2">
+                                        <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                            Thời gian đặt cọc *
+                                        </label>
+                                        <input
+                                            name="Ngày cọc"
+                                            type="datetime-local"
+                                            value={formData["Ngày cọc"] || ''}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[11.5px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Card 2: Thông tin cấu hình xe */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2.5">
-                            <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                        <div className="bg-white px-3.5 py-2 rounded-2xl border border-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.03)] space-y-1.5 flex-shrink-0">
+                            <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-normal">
                                 Thông tin xe
                             </h4>
 
-                            <div className="grid grid-cols-2 gap-2.5">
+                            <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                        Dòng xe
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Dòng xe *
                                     </label>
                                     <div className="relative">
                                         <select
@@ -300,18 +320,18 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                             value={formData["Dòng xe"] || ''}
                                             onChange={handleInputChange}
                                             required
-                                            className={`${inputClass} appearance-none pr-8 cursor-pointer`}
+                                            className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all appearance-none pr-7 cursor-pointer"
                                         >
                                             <option value="" disabled>Chọn dòng xe</option>
                                             {vehicleLines.map(car => <option key={car} value={car}>{car}</option>)}
                                         </select>
-                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                        <ChevronDown size={13} className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                        Phiên bản
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Phiên bản *
                                     </label>
                                     <div className="relative">
                                         <select
@@ -320,18 +340,18 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                             onChange={handleInputChange}
                                             required
                                             disabled={!formData["Dòng xe"]}
-                                            className={`${inputClass} appearance-none pr-8 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400`}
+                                            className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all appearance-none pr-7 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400"
                                         >
                                             <option value="" disabled>Chọn phiên bản</option>
                                             {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
                                         </select>
-                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                        <ChevronDown size={13} className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                        Màu ngoại thất
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Màu ngoại thất *
                                     </label>
                                     <div className="relative">
                                         <select
@@ -340,18 +360,18 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                             onChange={handleInputChange}
                                             required
                                             disabled={!formData["Phiên bản"]}
-                                            className={`${inputClass} appearance-none pr-8 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400`}
+                                            className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all appearance-none pr-7 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400"
                                         >
                                             <option value="" disabled>Chọn ngoại thất</option>
                                             {vehicleColors.map(color => <option key={color} value={color}>{color}</option>)}
                                         </select>
-                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                        <ChevronDown size={13} className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-[11px] font-semibold text-slate-600 block mb-1">
-                                        Màu nội thất
+                                    <label className="text-[10.5px] font-normal text-slate-500 block mb-0.5">
+                                        Màu nội thất *
                                     </label>
                                     <div className="relative">
                                         <select
@@ -360,53 +380,37 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                             onChange={handleInputChange}
                                             required
                                             disabled={!formData["Phiên bản"]}
-                                            className={`${inputClass} appearance-none pr-8 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400`}
+                                            className="w-full h-8 bg-slate-50 border border-slate-200/90 text-slate-900 rounded-xl px-2.5 text-[12px] font-normal focus:outline-none focus:bg-white focus:border-slate-400 transition-all appearance-none pr-7 cursor-pointer disabled:bg-slate-100 disabled:text-slate-400"
                                         >
                                             <option value="" disabled>Chọn nội thất</option>
                                             {availableInteriors.map(color => <option key={color} value={color}>{color}</option>)}
                                         </select>
-                                        <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                                        <ChevronDown size={13} className="absolute top-1/2 right-2.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Card 3: Thời gian đặt cọc */}
-                        <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2">
-                            <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                                Thời gian đặt cọc
-                            </h4>
-                            <input
-                                name="Ngày cọc"
-                                type="datetime-local"
-                                value={formData["Ngày cọc"] || ''}
-                                onChange={handleInputChange}
-                                required
-                                disabled={!isAdmin}
-                                className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-500`}
-                            />
-                        </div>
                     </div>
 
                     {/* Footer cố định phong cách Apple iOS */}
-                    <div className="px-3.5 py-2.5 border-t border-slate-150 bg-white/95 backdrop-blur-sm flex gap-2 flex-shrink-0 z-10 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+                    <div className="px-3.5 py-2 border-t border-slate-200/80 bg-white/95 backdrop-blur-md flex gap-2 flex-shrink-0 z-10 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="h-9 px-4 rounded-xl bg-slate-100 active:bg-slate-200 text-slate-600 font-medium text-[12px] active:scale-[0.97] transition-all cursor-pointer"
+                            className="h-[35px] px-4 rounded-xl bg-slate-100 active:bg-slate-200 text-slate-600 font-medium text-[12px] active:scale-[0.97] transition-all cursor-pointer"
                         >
                             Huỷ
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="flex-1 h-9 rounded-xl bg-slate-800 active:bg-slate-900 disabled:opacity-50 text-white font-semibold text-[12px] flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer shadow-2xs"
+                            className="flex-1 h-[35px] rounded-xl bg-slate-800 active:bg-slate-900 disabled:opacity-50 text-white font-medium text-[12px] flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all cursor-pointer shadow-2xs"
                         >
                             {isSubmitting ? (
                                 <span>Đang lưu...</span>
                             ) : (
                                 <>
-                                    <i className="fas fa-save text-[11px]"></i>
+                                    <Save size={13} />
                                     <span>Lưu Thay Đổi</span>
                                 </>
                             )}

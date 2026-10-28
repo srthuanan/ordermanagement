@@ -515,11 +515,23 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
     e?.stopPropagation();
     try {
       navigator.clipboard.writeText(vin);
+      showToast?.('Đã chép', `Đã chép số khung (VIN): ${vin}`, 'success');
     } catch {
       /* ignore */
     }
     setCopiedVin(vin);
     setTimeout(() => setCopiedVin((cur) => (cur === vin ? null : cur)), 1800);
+  };
+
+  const handleCopyText = (text?: string, label: string = 'thông tin', e?: React.SyntheticEvent) => {
+    e?.stopPropagation();
+    if (!text || text === '—') return;
+    try {
+      navigator.clipboard.writeText(text);
+      showToast?.('Đã chép', `Đã sao chép ${label}: ${text}`, 'success');
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleRefresh = () => {
@@ -1106,70 +1118,48 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
             />
 
             {/* iOS Sheet Content */}
-            <div className="relative z-10 w-full max-w-md mx-auto bg-white rounded-t-[28px] shadow-[0_-12px_45px_rgba(0,0,0,0.22)] border-t border-slate-200 flex flex-col max-h-[92dvh] animate-in slide-in-from-bottom duration-300 overflow-hidden">
+            <div className="relative z-10 w-full max-w-md mx-auto bg-[#f2f2f7] rounded-t-[26px] shadow-[0_-16px_50px_rgba(0,0,0,0.25)] border-t border-slate-200 flex flex-col max-h-[96dvh] animate-in slide-in-from-bottom duration-300 overflow-hidden">
               {/* Grab handle */}
-              <div className="pt-2.5 pb-1 flex justify-center">
-                <div className="w-10 h-1 rounded-full bg-slate-300" />
+              <div className="pt-1.5 pb-0.5 flex justify-center bg-white">
+                <div className="w-9 h-1 rounded-full bg-slate-300" />
               </div>
 
               {/* Sheet Header (Hỗ trợ nút Quay lại khi vào các màn hình chức năng) */}
               {sheetSubView === 'detail' ? (
-                <div className="px-4 py-2.5 border-b border-slate-150 flex items-center justify-between bg-white">
-                  <div className="min-w-0 pr-2">
-                    <div className="flex items-center space-x-2">
-                      <h2 className="text-[17px] font-bold text-slate-900 tracking-tight truncate">
-                        {activeSheetOrder['Tên khách hàng'] || 'Chi Tiết Đơn Hàng'}
-                      </h2>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <div className="flex items-center space-x-1 text-[11px] text-slate-500 font-mono">
-                        <span>Đơn:</span>
-                        <span className="font-semibold text-slate-700">{activeSheetOrder['Số đơn hàng'] || '—'}</span>
-                        {activeSheetOrder['Số đơn hàng'] && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(activeSheetOrder['Số đơn hàng'] || '');
-                              showToast?.('Đã chép', `Đã chép mã đơn hàng ${activeSheetOrder['Số đơn hàng']}`, 'success');
-                            }}
-                            className="text-slate-400 hover:text-blue-600 active:scale-90 p-0.5"
-                            title="Chép mã đơn"
-                          >
-                            <Copy size={11} />
-                          </button>
-                        )}
-                      </div>
-                      {/* Thẻ trạng thái Hologram */}
-                      <MobileStatusBadge meta={statusMeta} />
-                    </div>
+                <div className="px-3.5 py-2 border-b border-slate-200/80 flex items-center justify-between bg-white flex-shrink-0">
+                  <div className="flex items-center space-x-2 min-w-0 pr-2">
+                    <h2 className="text-[15px] font-normal text-slate-900 tracking-tight truncate">
+                      Chi tiết đơn hàng
+                    </h2>
+                    <MobileStatusBadge meta={statusMeta} />
                   </div>
 
                   <button
                     onClick={() => setActiveSheetOrder(null)}
-                    className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 cursor-pointer"
+                    className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 cursor-pointer"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 </div>
               ) : (
-                <div className="px-4 py-2.5 border-b border-slate-150 flex items-center justify-between bg-white">
-                  <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+                <div className="px-3.5 py-2 border-b border-slate-200/80 flex items-center justify-between bg-white flex-shrink-0">
+                  <div className="flex items-center space-x-2 min-w-0 pr-2">
                     <button
                       onClick={() => setSheetSubView('detail')}
-                      className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 cursor-pointer"
+                      className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 cursor-pointer"
                       title="Quay lại chi tiết"
                     >
-                      <ArrowLeft size={16} />
+                      <ArrowLeft size={14} />
                     </button>
                     <div className="min-w-0">
-                      <h2 className="text-[15px] font-bold text-slate-900 tracking-tight truncate">
+                      <h2 className="text-[14px] font-normal text-slate-900 tracking-tight truncate">
                         {sheetSubView === 'request_invoice' && 'Yêu Cầu Xuất Hóa Đơn'}
                         {sheetSubView === 'transfer' && 'Yêu Cầu Chuyển Xe Nội Bộ'}
                         {sheetSubView === 'edit' && 'Chỉnh Sửa Đơn Hàng'}
                         {sheetSubView === 'cancel' && 'Hủy Đơn Hàng'}
                         {sheetSubView === 'policy' && 'Chọn Chính Sách Bán Hàng'}
                       </h2>
-                      <p className="text-[10.5px] text-slate-500 font-mono truncate">
+                      <p className="text-[10px] text-slate-500 truncate mt-0.5">
                         {activeSheetOrder['Số đơn hàng']} • {activeSheetOrder['Tên khách hàng']}
                       </p>
                     </div>
@@ -1177,196 +1167,228 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
 
                   <button
                     onClick={() => setActiveSheetOrder(null)}
-                    className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 cursor-pointer"
+                    className="w-6 h-6 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center active:scale-90 transition-all flex-shrink-0 cursor-pointer"
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 </div>
               )}
 
-              {/* Sheet Body 'detail' — có scroll riêng */}
-              {sheetSubView === 'detail' && (
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar bg-slate-50/40">
-                <>
-                {/* 1. Thẻ xe & Hộ chiếu VIN */}
-                <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2.5">
-                  <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                    Thông tin xe
-                  </h4>
+              {/* Sheet Body 'detail' — cân đối chuẩn iOS, vừa vặn 100% không bị cuộn */}
+              {sheetSubView === 'detail' && (() => {
+                const cyberContractCode = (
+                  activeSheetOrder['Mã HĐ Cyber'] ||
+                  (activeSheetOrder as any)?.ma_hd_cyber ||
+                  activeSheetOrder['Số hợp đồng'] ||
+                  (activeSheetOrder as any)?.so_hop_dong ||
+                  ''
+                ).trim();
 
-                  {/* Chi tiết thông số xe */}
-                  <div className="space-y-1.5 text-[12.5px]">
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">Dòng xe & Bản:</span>
-                      <span className="font-bold text-slate-900">
-                        {activeSheetOrder['Dòng xe']} {activeSheetOrder['Phiên bản']}
-                      </span>
-                    </div>
+                return (
+                  <div className="flex-1 overflow-y-auto px-4 py-2.5 space-y-2.5 no-scrollbar bg-[#f2f2f7]">
+                    {/* 1. Thẻ xe & Hộ chiếu VIN (Apple Inset Grouped Card) */}
+                    <div className="bg-white px-4 py-2.5 rounded-2xl border border-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                      <h4 className="text-[10.5px] uppercase tracking-wider text-slate-400 font-normal pt-0.5 pb-1">
+                        Thông tin xe
+                      </h4>
 
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">Màu ngoại thất:</span>
-                      <div className="flex items-center space-x-1.5">
-                        <span
-                          className="w-3.5 h-3.5 rounded-full border border-white ring-1 ring-slate-200 shadow-2xs"
-                          style={{ backgroundColor: getExteriorSwatchColor(activeSheetOrder['Ngoại thất']) }}
-                        />
-                        <span className="font-semibold text-slate-800">
-                          {activeSheetOrder['Ngoại thất'] || '—'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">Màu nội thất:</span>
-                      <span className="font-semibold text-slate-800">
-                        {activeSheetOrder['Nội thất'] || '—'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">Số khung (VIN):</span>
-                      {activeSheetOrder.VIN ? (
-                        <div className="flex items-center space-x-1.5">
-                          <span className="font-mono font-bold text-blue-700 bg-blue-50/90 border border-blue-200/80 px-2.5 py-0.5 rounded-md text-[12px] tracking-tight">
-                            {activeSheetOrder.VIN}
+                      {/* Chi tiết thông số xe */}
+                      <div className="text-[13px]">
+                        <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                          <span className="text-slate-500">Dòng xe & Bản:</span>
+                          <span className="text-slate-800">
+                            {activeSheetOrder['Dòng xe']} {activeSheetOrder['Phiên bản']}
                           </span>
-                          <button
-                            onClick={(e) => handleCopyVin(activeSheetOrder.VIN!, e)}
-                            className="text-slate-400 hover:text-blue-600 active:scale-90 p-0.5"
-                            title="Sao chép VIN"
-                          >
-                            <Copy size={13} />
-                          </button>
                         </div>
-                      ) : (
-                        <span className="text-amber-600 font-semibold text-xs">Chưa ghép VIN</span>
-                      )}
-                    </div>
 
-                    {/* Vị trí kho CyberSoft */}
-                    {carWarehouseLocation && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-500">Vị trí kho thực tế:</span>
-                        <span className="font-bold text-slate-800 flex items-center gap-1">
-                          <MapPin size={12} className="text-emerald-600" />
-                          <span>{carWarehouseLocation}</span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 3. Khách hàng & Hợp đồng & Chính sách bán hàng */}
-                <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-2xs space-y-2">
-                  <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
-                    Khách hàng & Hợp đồng
-                  </h4>
-
-                  <div className="space-y-1.5 text-[12.5px]">
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">Tên khách hàng:</span>
-                      <span className="font-bold text-slate-900">{activeSheetOrder['Tên khách hàng']}</span>
-                    </div>
-
-                    {activeSheetOrder['Số điện thoại'] && (
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                        <span className="text-slate-500">Số điện thoại:</span>
-                        <a
-                          href={`tel:${activeSheetOrder['Số điện thoại']}`}
-                          className="font-bold text-emerald-600 hover:text-emerald-700 flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded-md"
-                        >
-                          <Phone size={12} />
-                          <span>{activeSheetOrder['Số điện thoại']}</span>
-                        </a>
-                      </div>
-                    )}
-
-                    {activeSheetOrder['CCCD'] && (
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                        <span className="text-slate-500">CCCD/MST:</span>
-                        <div className="flex items-center space-x-1.5">
-                          <span className="font-mono text-slate-800">{activeSheetOrder['CCCD']}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(activeSheetOrder['CCCD'] || '');
-                              showToast?.('Đã chép', 'Đã chép số CCCD/MST', 'success');
-                            }}
-                            className="text-slate-400 hover:text-blue-600 active:scale-90"
-                          >
-                            <Copy size={12} />
-                          </button>
+                        <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                          <span className="text-slate-500">Màu ngoại thất:</span>
+                          <div className="flex items-center space-x-1.5">
+                            <span
+                              className="w-3.5 h-3.5 rounded-full border border-white ring-1 ring-slate-200 shadow-2xs"
+                              style={{ backgroundColor: getExteriorSwatchColor(activeSheetOrder['Ngoại thất']) }}
+                            />
+                            <span className="text-slate-800">
+                              {activeSheetOrder['Ngoại thất'] || '—'}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )}
 
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">TVBH phụ trách:</span>
-                      <span className="font-semibold text-slate-800">
-                        {activeSheetOrder['Tên tư vấn bán hàng'] || '—'}
-                      </span>
-                    </div>
+                        <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                          <span className="text-slate-500">Màu nội thất:</span>
+                          <span className="text-slate-800">
+                            {activeSheetOrder['Nội thất'] || '—'}
+                          </span>
+                        </div>
 
-                    {/* Chính sách bán hàng kèm nút đổi nhanh */}
-                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-500">Chính sách bán hàng:</span>
-                      <div className="flex items-center space-x-1.5 max-w-[65%]">
-                        <span className="font-semibold text-blue-700 truncate" title={activeSheetOrder['CHÍNH SÁCH']}>
-                          {activeSheetOrder['CHÍNH SÁCH'] || 'Tiêu chuẩn'}
-                        </span>
-                        {canChangePolicy && (
-                          <button
-                            onClick={() => setSheetSubView('policy')}
-                            className="p-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-600 active:scale-90 transition-all flex-shrink-0"
-                            title="Đổi chính sách bán hàng"
-                          >
-                            <Tag size={12} />
-                          </button>
+                        <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                          <span className="text-slate-500">Số khung (VIN):</span>
+                          {activeSheetOrder.VIN ? (
+                            <span
+                              onClick={(e) => handleCopyText(activeSheetOrder.VIN, 'Số khung (VIN)', e)}
+                              className="text-blue-700 bg-blue-50/90 border border-blue-200/80 px-2.5 py-0.5 rounded text-[12px] tracking-tight cursor-pointer active:opacity-60 transition-opacity"
+                              title="Nhấn để sao chép"
+                            >
+                              {activeSheetOrder.VIN}
+                            </span>
+                          ) : (
+                            <span className="text-amber-600 text-[12px]">Chưa ghép VIN</span>
+                          )}
+                        </div>
+
+                        {/* Vị trí kho CyberSoft */}
+                        {carWarehouseLocation && (
+                          <div className="flex items-center justify-between py-[5px]">
+                            <span className="text-slate-500">Vị trí kho thực tế:</span>
+                            <span className="text-slate-800 flex items-center gap-1.5">
+                              <MapPin size={11.5} className="text-emerald-600" />
+                              <span>{carWarehouseLocation}</span>
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
 
-                    {activeSheetOrder['Thời gian cần xe'] && (
-                      <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                        <span className="text-slate-500">Thời gian cần xe:</span>
-                        <span className="font-semibold text-slate-800">{activeSheetOrder['Thời gian cần xe']}</span>
-                      </div>
-                    )}
+                    {/* 2. Khách hàng & Hợp đồng & Mã HĐ Cyber & Mã đơn hàng */}
+                    <div className="bg-white px-4 py-2.5 rounded-2xl border border-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                      <h4 className="text-[10.5px] uppercase tracking-wider text-slate-400 font-normal pt-0.5 pb-1">
+                        Khách hàng & Hợp đồng
+                      </h4>
 
-                    {activeSheetOrder['Ngày cọc'] && (
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-500">Ngày đặt cọc:</span>
-                        <span className="font-semibold text-slate-800">{activeSheetOrder['Ngày cọc']}</span>
+                      <div className="text-[13px]">
+                        {/* Mã đơn hàng */}
+                        <div
+                          onClick={(e) => handleCopyText(activeSheetOrder['Số đơn hàng'], 'Mã đơn hàng', e)}
+                          className="flex items-center justify-between py-[5px] border-b border-slate-100 cursor-pointer active:opacity-60 transition-opacity"
+                          title="Nhấn để sao chép"
+                        >
+                          <span className="text-slate-500">Mã đơn hàng:</span>
+                          <span className="text-slate-800">{activeSheetOrder['Số đơn hàng'] || '—'}</span>
+                        </div>
+
+                        {/* Mã HĐ Cyber */}
+                        <div
+                          onClick={(e) => cyberContractCode && handleCopyText(cyberContractCode, 'Mã HĐ Cyber', e)}
+                          className={`flex items-center justify-between py-[5px] border-b border-slate-100 ${cyberContractCode ? 'cursor-pointer active:opacity-60 transition-opacity' : ''}`}
+                          title={cyberContractCode ? 'Nhấn để sao chép' : undefined}
+                        >
+                          <span className="text-slate-500">Mã HĐ Cyber:</span>
+                          <span className={cyberContractCode ? 'text-blue-700' : 'text-slate-400'}>
+                            {cyberContractCode || '—'}
+                          </span>
+                        </div>
+
+                        {/* Tên khách hàng */}
+                        <div
+                          onClick={(e) => handleCopyText(activeSheetOrder['Tên khách hàng'], 'Tên khách hàng', e)}
+                          className="flex items-center justify-between py-[5px] border-b border-slate-100 cursor-pointer active:opacity-60 transition-opacity"
+                          title="Nhấn để sao chép"
+                        >
+                          <span className="text-slate-500">Tên khách hàng:</span>
+                          <span className="text-slate-800">{activeSheetOrder['Tên khách hàng'] || '—'}</span>
+                        </div>
+
+                        {activeSheetOrder['Số điện thoại'] && (
+                          <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                            <span className="text-slate-500">Số điện thoại:</span>
+                            <a
+                              href={`tel:${activeSheetOrder['Số điện thoại']}`}
+                              className="text-emerald-600 hover:text-emerald-700 flex items-center space-x-1 bg-emerald-50 px-1.5 py-0.5 rounded"
+                            >
+                              <Phone size={11.5} />
+                              <span>{activeSheetOrder['Số điện thoại']}</span>
+                            </a>
+                          </div>
+                        )}
+
+                        {activeSheetOrder['CCCD'] && (
+                          <div
+                            onClick={(e) => handleCopyText(activeSheetOrder['CCCD'], 'CCCD/MST', e)}
+                            className="flex items-center justify-between py-[5px] border-b border-slate-100 cursor-pointer active:opacity-60 transition-opacity"
+                            title="Nhấn để sao chép"
+                          >
+                            <span className="text-slate-500">CCCD/MST:</span>
+                            <span className="text-slate-800">{activeSheetOrder['CCCD']}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                          <span className="text-slate-500">TVBH phụ trách:</span>
+                          <span className="text-slate-800">
+                            {activeSheetOrder['Tên tư vấn bán hàng'] || '—'}
+                          </span>
+                        </div>
+
+                        {/* Chính sách bán hàng kèm nút đổi nhanh */}
+                        <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                          <span className="text-slate-500">Chính sách bán hàng:</span>
+                          <div className="flex items-center space-x-1.5 max-w-[65%]">
+                            <span className="text-blue-700 truncate" title={activeSheetOrder['CHÍNH SÁCH']}>
+                              {activeSheetOrder['CHÍNH SÁCH'] || 'Tiêu chuẩn'}
+                            </span>
+                            {canChangePolicy && (
+                              <button
+                                onClick={() => setSheetSubView('policy')}
+                                className="p-0.5 rounded bg-blue-50 hover:bg-blue-100 text-blue-600 active:scale-90 transition-all flex-shrink-0"
+                                title="Đổi chính sách bán hàng"
+                              >
+                                <Tag size={11.5} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {activeSheetOrder['Thời gian cần xe'] && (
+                          <div className="flex items-center justify-between py-[5px] border-b border-slate-100">
+                            <span className="text-slate-500">Thời gian cần xe:</span>
+                            <span className="text-slate-800">{activeSheetOrder['Thời gian cần xe']}</span>
+                          </div>
+                        )}
+
+                        {activeSheetOrder['Ngày cọc'] && (
+                          <div className="flex items-center justify-between py-[5px]">
+                            <span className="text-slate-500">Ngày đặt cọc:</span>
+                            <span className="text-slate-800">{activeSheetOrder['Ngày cọc']}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 3. Hóa đơn điện tử M-Invoice & Chứng từ kế toán */}
+                    {(activeSheetOrder.so_ct_dnx || activeSheetOrder.so_ct_td4) && (
+                      <div className="bg-white px-4 py-2.5 rounded-2xl border border-slate-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+                        <h4 className="text-[10.5px] uppercase tracking-wider text-slate-400 font-normal pt-0.5 pb-1">
+                          Chứng từ kế toán
+                        </h4>
+
+                        <div className="text-[13px]">
+                          {activeSheetOrder.so_ct_dnx && (
+                            <div
+                              onClick={(e) => handleCopyText(activeSheetOrder.so_ct_dnx, 'Số phiếu ĐNX Cyber', e)}
+                              className="flex items-center justify-between py-[5px] border-b border-slate-100 last:border-b-0 cursor-pointer active:opacity-60 transition-opacity"
+                              title="Nhấn để sao chép"
+                            >
+                              <span className="text-slate-500">Số phiếu ĐNX Cyber:</span>
+                              <span className="text-slate-800">{activeSheetOrder.so_ct_dnx}</span>
+                            </div>
+                          )}
+
+                          {activeSheetOrder.so_ct_td4 && (
+                            <div
+                              onClick={(e) => handleCopyText(activeSheetOrder.so_ct_td4, 'Số phiếu TD4', e)}
+                              className="flex items-center justify-between py-[5px] cursor-pointer active:opacity-60 transition-opacity"
+                              title="Nhấn để sao chép"
+                            >
+                              <span className="text-slate-500">Số phiếu TD4 (Ra cổng):</span>
+                              <span className="text-slate-800">{activeSheetOrder.so_ct_td4}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* 4. Hóa đơn điện tử M-Invoice & Chứng từ kế toán */}
-                {(activeSheetOrder.so_ct_dnx || activeSheetOrder.so_ct_td4) && (
-                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 shadow-2xs">
-                    <h4 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-600">
-                      Chứng từ kế toán
-                    </h4>
-
-                    {activeSheetOrder.so_ct_dnx && (
-                      <div className="flex items-center justify-between text-xs text-slate-800">
-                        <span>Số phiếu ĐNX Cyber:</span>
-                        <span className="font-mono font-bold">{activeSheetOrder.so_ct_dnx}</span>
-                      </div>
-                    )}
-
-                    {activeSheetOrder.so_ct_td4 && (
-                      <div className="flex items-center justify-between text-xs text-slate-800">
-                        <span>Số phiếu TD4 (Ra cổng):</span>
-                        <span className="font-mono font-bold">{activeSheetOrder.so_ct_td4}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                </>
-              </div>
-              )}
+                );
+              })()}
 
               {/* ===== SUB-VIEW: YÊU CẦU XUẤT HÓA ĐƠN — footer cố định ===== */}
               {sheetSubView === 'request_invoice' && (
@@ -1589,9 +1611,9 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                     <button
                       key="request-invoice"
                       onClick={() => setSheetSubView('request_invoice')}
-                      className="h-9 px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-semibold text-[12px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="h-[34px] px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-medium text-[11.5px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <FileText size={13} className="flex-shrink-0" />
+                      <FileText size={12.5} className="flex-shrink-0" />
                       <span className="truncate">Xuất Hóa Đơn</span>
                     </button>
                   ),
@@ -1603,9 +1625,9 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                         setActiveSheetOrder(null);
                         onSupplement?.(ord);
                       }}
-                      className="h-9 px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-semibold text-[12px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="h-[34px] px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-medium text-[11.5px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <Upload size={13} className="flex-shrink-0" />
+                      <Upload size={12.5} className="flex-shrink-0" />
                       <span className="truncate">Bổ Sung Hồ Sơ</span>
                     </button>
                   ),
@@ -1613,9 +1635,9 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                     <button
                       key="view-invoice"
                       onClick={handleOpenInvoiceUrl}
-                      className="h-9 px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-semibold text-[12px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="h-[34px] px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-medium text-[11.5px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <Receipt size={13} className="flex-shrink-0" />
+                      <Receipt size={12.5} className="flex-shrink-0" />
                       <span className="truncate">Xem Hóa Đơn</span>
                     </button>
                   ),
@@ -1626,23 +1648,23 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                       <button
                         key="print-dnx"
                         onClick={handleOpenPrintDnx}
-                        className="h-9 px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-semibold text-[12px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                        className="h-[34px] px-3 rounded-xl bg-slate-800 active:bg-slate-900 active:scale-[0.97] text-white font-medium text-[11.5px] tracking-tight flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                         title={`Đã lập phiếu ${transferRequest?.soCtDnx || activeSheetOrder.so_ct_dnx || 'DNX'}. Bấm để xem và in phiếu.`}
                       >
-                        <Printer size={13} className="text-white flex-shrink-0" />
+                        <Printer size={12.5} className="text-white flex-shrink-0" />
                         <span className="truncate">In Phiếu DNX</span>
                       </button>
                     ) : isCarAlreadyAtThuanAn ? null : (
                       <button
                         key="transfer"
                         onClick={() => setSheetSubView('transfer')}
-                        className={`flex-1 h-9 rounded-xl font-medium text-[12px] tracking-tight flex flex-row items-center justify-center gap-1.5 active:scale-[0.96] transition-all cursor-pointer ${transferRequest?.status === 'pending'
+                        className={`flex-1 h-[34px] rounded-xl font-medium text-[11.5px] tracking-tight flex flex-row items-center justify-center gap-1.5 active:scale-[0.96] transition-all cursor-pointer ${transferRequest?.status === 'pending'
                             ? 'bg-slate-200 text-slate-800'
                             : 'bg-slate-100 active:bg-slate-200 text-slate-600'
                           }`}
                         title="Yêu cầu Admin lập phiếu điều chuyển xe nội bộ (DNX) về showroom Thuận An"
                       >
-                        <Truck size={15} className="flex-shrink-0" />
+                        <Truck size={13.5} className="flex-shrink-0" />
                         <span className="truncate">{transferRequest?.status === 'pending' ? 'Chờ Chuyển' : 'Chuyển Xe'}</span>
                         {transferRequest?.status === 'pending' && (
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse ml-0.5 flex-shrink-0" />
@@ -1656,9 +1678,9 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                     <button
                       key="edit"
                       onClick={() => setSheetSubView('edit')}
-                      className="flex-1 h-9 rounded-xl bg-slate-100 active:bg-slate-200 active:scale-[0.96] text-slate-600 font-medium text-[12px] tracking-tight flex flex-row items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="flex-1 h-[34px] rounded-xl bg-slate-100 active:bg-slate-200 active:scale-[0.96] text-slate-600 font-medium text-[11.5px] tracking-tight flex flex-row items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <Edit3 size={15} className="flex-shrink-0" />
+                      <Edit3 size={13.5} className="flex-shrink-0" />
                       <span className="truncate">Sửa Đơn</span>
                     </button>
                   ),
@@ -1668,9 +1690,9 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                     <button
                       key="cancel"
                       onClick={() => setSheetSubView('cancel')}
-                      className="flex-1 h-9 rounded-xl bg-slate-100 active:bg-slate-200 active:scale-[0.96] text-slate-600 font-medium text-[12px] tracking-tight flex flex-row items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="flex-1 h-[34px] rounded-xl bg-slate-100 active:bg-slate-200 active:scale-[0.96] text-slate-600 font-medium text-[11.5px] tracking-tight flex flex-row items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
-                      <Trash2 size={15} className="flex-shrink-0 text-rose-500" />
+                      <Trash2 size={13.5} className="flex-shrink-0 text-rose-500" />
                       <span className="truncate">Hủy Đơn</span>
                     </button>
                   ),
@@ -1680,10 +1702,10 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                     <button
                       key="delivery"
                       onClick={handleDownloadDeliveryWord}
-                      className="flex-1 h-9 rounded-xl bg-slate-100 active:bg-slate-200 active:scale-[0.96] text-slate-600 font-medium text-[12px] tracking-tight flex flex-row items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="flex-1 h-[34px] rounded-xl bg-slate-100 active:bg-slate-200 active:scale-[0.96] text-slate-600 font-medium text-[11.5px] tracking-tight flex flex-row items-center justify-center gap-1.5 transition-all cursor-pointer"
                       title="Tải văn bản Word Thông báo sẵn sàng giao xe"
                     >
-                      <FileDown size={15} className="flex-shrink-0" />
+                      <FileDown size={13.5} className="flex-shrink-0" />
                       <span className="truncate">TB Giao Xe</span>
                     </button>
                   ),
@@ -1699,26 +1721,26 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                 }
 
                 return (
-                  <div className="px-3.5 py-2.5 border-t border-slate-150 bg-white/95 backdrop-blur-sm space-y-1.5 shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+                  <div className="px-3.5 py-1.5 border-t border-slate-200/80 bg-white/95 backdrop-blur-md space-y-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] flex-shrink-0">
                     {/* THÔNG BÁO TRẠNG THÁI TIẾN ĐỘ (NẾU ĐƠN Ở GIAI ĐOẠN CHỜ HOẶC ĐÃ HỦY) */}
                     {isCancelled ? (
-                      <div className="py-1.5 px-3 rounded-[10px] bg-slate-100 text-slate-500 text-[11px] font-medium text-center border border-slate-200 flex items-center justify-center space-x-1.5">
-                        <AlertCircle size={13} className="text-slate-400" />
+                      <div className="py-1 px-2.5 rounded-lg bg-slate-100 text-slate-500 text-[10.5px] font-medium text-center border border-slate-200 flex items-center justify-center space-x-1.5">
+                        <AlertCircle size={12} className="text-slate-400" />
                         <span>Đơn hàng đã hủy (Chỉ xem)</span>
                       </div>
                     ) : isPendingApproval ? (
-                      <div className="py-1.5 px-3 rounded-[10px] bg-amber-50 text-amber-800 border border-amber-200/70 text-[11px] font-medium text-center flex items-center justify-center space-x-1.5">
-                        <Clock size={13} className="text-amber-600 animate-pulse" />
+                      <div className="py-1 px-2.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200/70 text-[10.5px] font-medium text-center flex items-center justify-center space-x-1.5">
+                        <Clock size={12} className="text-amber-600 animate-pulse" />
                         <span>Hồ sơ đang chờ Kế toán kiểm tra & phê duyệt</span>
                       </div>
                     ) : isPendingSigning ? (
-                      <div className="py-1.5 px-3 rounded-[10px] bg-purple-50 text-purple-800 border border-purple-200/70 text-[11px] font-medium text-center flex items-center justify-center space-x-1.5">
-                        <FileCheck size={13} className="text-purple-600 animate-pulse" />
+                      <div className="py-1 px-2.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200/70 text-[10.5px] font-medium text-center flex items-center justify-center space-x-1.5">
+                        <FileCheck size={12} className="text-purple-600 animate-pulse" />
                         <span>Hóa đơn đã lập, đang chờ Ban Giám Đốc ký điện tử</span>
                       </div>
                     ) : isInvoiceIssued && !canDownloadInvoice ? (
-                      <div className="py-1.5 px-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/70 text-[11px] font-medium text-center flex items-center justify-center space-x-1.5">
-                        <Receipt size={13} className="text-emerald-600" />
+                      <div className="py-1 px-2.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/70 text-[10.5px] font-medium text-center flex items-center justify-center space-x-1.5">
+                        <Receipt size={12} className="text-emerald-600" />
                         <span>Đã xuất hóa đơn thành công</span>
                       </div>
                     ) : null}
@@ -1729,14 +1751,14 @@ export const MobileOrdersView: React.FC<MobileOrdersViewProps> = ({
                       const primaryBtns = allActionButtons.filter((b: any) => PRIMARY_KEYS.includes(String(b?.key)));
                       const secondaryBtns = allActionButtons.filter((b: any) => !PRIMARY_KEYS.includes(String(b?.key)));
                       return (
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {primaryBtns.length > 0 && (
-                            <div className={`grid gap-2 ${primaryBtns.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            <div className={`grid gap-1.5 ${primaryBtns.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                               {primaryBtns}
                             </div>
                           )}
                           {secondaryBtns.length > 0 && (
-                            <div className="flex gap-2">
+                            <div className="flex gap-1.5">
                               {secondaryBtns}
                             </div>
                           )}
