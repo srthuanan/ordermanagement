@@ -1161,7 +1161,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         return (
             <>
                 <MobileOrdersView
-                    orders={allHistoryData}
+                    orders={historyData}
                     currentUser={currentUser}
                     currentUserName={currentUserName}
                     userRole={userRole}
