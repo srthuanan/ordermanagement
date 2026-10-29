@@ -358,8 +358,8 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         // 1. Kiểm tra tài khoản đã lưu trước đó trong trình duyệt cho user này
         const storageKey = `cyber_crm_account_${currentUserName || currentUser || 'default'}`;
         const savedAccount = localStorage.getItem(storageKey);
-        if (savedAccount && users.some(u => u.userName === savedAccount)) {
-            setSelectedUser(savedAccount);
+        if (savedAccount) {
+            setSelectedUser(savedAccount.trim().toUpperCase());
             return;
         }
 
@@ -416,12 +416,24 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     };
 
     const handleSelectUser = (userName: string) => {
-        setSelectedUser(userName);
+        const clean = (userName || '').trim().toUpperCase();
+        setSelectedUser(clean);
         const storageKey = `cyber_crm_account_${currentUserName || currentUser || 'default'}`;
-        localStorage.setItem(storageKey, userName);
+        if (clean) {
+            localStorage.setItem(storageKey, clean);
+        }
         setIsManualUserSelection(false);
         setUserSearchQuery('');
-        showToast?.('Đã lưu tài khoản CRM', `Khách hàng sẽ được nhập trực tiếp cho TVBH: ${userName}`, 'success');
+        showToast?.('Đã lưu tài khoản CRM', `Khách hàng sẽ được nhập trực tiếp cho TVBH: ${clean}`, 'success');
+    };
+
+    const handleDirectUserCodeChange = (newCode: string) => {
+        const val = (newCode || '').trim().toUpperCase();
+        setSelectedUser(val);
+        const storageKey = `cyber_crm_account_${currentUserName || currentUser || 'default'}`;
+        if (val) {
+            localStorage.setItem(storageKey, val);
+        }
     };
 
     // Close user dropdown on outside click
@@ -448,7 +460,12 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
     // Active selected TVBH info
     const selectedUserInfo = useMemo(() => {
-        return metadata?.users.find(u => u.userName === selectedUser);
+        if (!selectedUser) return null;
+        const clean = selectedUser.replace(/^02\./i, '').toUpperCase().trim();
+        return metadata?.users.find(u => {
+            const uClean = u.userName.replace(/^02\./i, '').toUpperCase().trim();
+            return u.userName.toUpperCase() === selectedUser.toUpperCase() || uClean === clean;
+        });
     }, [metadata?.users, selectedUser]);
 
     // Helper: Định dạng thời gian tương đối tiếng Việt
@@ -1610,14 +1627,43 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
                     {/* TVBH badge & Action controls */}
                     <div className="flex items-center gap-2 ml-auto">
-                        <div className="flex items-center gap-1.5 bg-blue-50/80 border border-blue-200 px-2 py-0.5 rounded text-xs">
-                            <span className="text-slate-500 text-[11px]">TVBH:</span>
-                            <strong className="text-blue-700 font-bold">
-                                {selectedUserInfo?.fullName || currentUser || currentUserName || selectedUser}
-                            </strong>
-                            <span className="font-mono text-[10px] text-blue-800 bg-blue-100/80 px-1 rounded">
-                                {selectedUserInfo?.userName || selectedUser}
+                        <div 
+                            className="flex items-center gap-1.5 bg-blue-50/90 border border-blue-300 hover:border-blue-400 focus-within:border-blue-500 rounded-lg px-2.5 py-1 text-xs shadow-2xs transition-all"
+                            title="Bấm để chọn hoặc nhập trực tiếp mã TVBH Cyber"
+                        >
+                            <span className="text-slate-600 text-[11px] font-bold shrink-0 flex items-center gap-1">
+                                <i className="fas fa-user-tie text-blue-600 text-[11px]"></i>
+                                TVBH:
                             </span>
+
+                            {/* Họ tên TVBH (Bấm để chọn từ danh mục Cyber) */}
+                            <button
+                                type="button"
+                                onClick={() => setIsManualUserSelection(prev => !prev)}
+                                className="font-bold text-blue-800 hover:text-blue-950 max-w-[120px] sm:max-w-[150px] truncate text-left cursor-pointer flex items-center gap-1 text-xs"
+                                title="Bấm để mở danh sách chọn TVBH từ Cyber"
+                            >
+                                <span className="truncate">{selectedUserInfo?.fullName || currentUser || currentUserName || 'Tư vấn bán hàng'}</span>
+                                <i className={`fas fa-chevron-down text-[8px] text-blue-500 transition-transform ${isManualUserSelection ? 'rotate-180' : ''}`}></i>
+                            </button>
+
+                            {/* Ô nhập trực tiếp Mã TVBH Cyber */}
+                            <div className="flex items-center bg-white border border-blue-300 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 rounded px-1.5 py-0.5 shadow-inner transition-all">
+                                <span className="text-[10px] text-slate-400 font-mono select-none mr-1 font-semibold">Mã:</span>
+                                <input
+                                    type="text"
+                                    value={selectedUser}
+                                    onChange={e => handleDirectUserCodeChange(e.target.value)}
+                                    placeholder="02.xxxx"
+                                    className="w-24 sm:w-28 font-mono text-[11px] font-bold text-blue-800 uppercase bg-transparent outline-none tracking-tight placeholder:text-slate-400 placeholder:font-normal placeholder:normal-case"
+                                    title="Nhập chính xác mã TVBH Cyber (Ví dụ: 02.TUONGTB)"
+                                />
+                                {selectedUserInfo ? (
+                                    <i className="fas fa-circle-check text-emerald-600 text-[11px] ml-1" title={`Khớp danh mục Cyber: ${selectedUserInfo.fullName} (${selectedUserInfo.userName})`}></i>
+                                ) : selectedUser ? (
+                                    <i className="fas fa-pen text-amber-500 text-[10px] ml-1" title="Mã TVBH Cyber tự nhập"></i>
+                                ) : null}
+                            </div>
                         </div>
 
                         {isAdmin && (
@@ -1752,33 +1798,78 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                     </div>
                 </div>
 
-                {/* Floating Admin TVBH Switcher Overlay */}
-                {isManualUserSelection && isAdmin && (
-                    <div className="absolute top-10 right-2 z-50 w-80 bg-white border-2 border-amber-300 rounded-xl p-3 shadow-2xl space-y-2 animate-fade-in" ref={userDropdownRef}>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-amber-900">Chọn TVBH nhận dữ liệu (Admin):</span>
-                            <button onClick={() => setIsManualUserSelection(false)} className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer">✕</button>
+                {/* Floating TVBH Switcher Overlay (Mở cho tất cả TVBH & Admin) */}
+                {isManualUserSelection && (
+                    <div className="absolute top-11 right-2 z-50 w-88 max-w-[95vw] bg-white border-2 border-blue-400 rounded-xl p-3 shadow-2xl space-y-2.5 animate-fade-in" ref={userDropdownRef}>
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                            <div className="flex items-center gap-1.5">
+                                <i className="fas fa-id-badge text-blue-600 text-xs"></i>
+                                <span className="text-xs font-bold text-slate-800">Chọn hoặc nhập mã TVBH Cyber:</span>
+                            </div>
+                            <button onClick={() => setIsManualUserSelection(false)} className="text-slate-400 hover:text-slate-600 text-xs p-1 cursor-pointer">✕</button>
                         </div>
-                        <input
-                            type="text"
-                            placeholder="Tìm TVBH..."
-                            value={userSearchQuery}
-                            onChange={e => setUserSearchQuery(e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-slate-300 rounded outline-none"
-                            autoFocus
-                        />
-                        <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded">
-                            {filteredUsers.map(u => (
+
+                        {/* Ô nhập nhanh mã TVBH */}
+                        <div className="p-2 bg-blue-50/80 border border-blue-200 rounded-lg space-y-1">
+                            <span className="text-[10px] font-bold text-blue-900 block">Nhập mã TVBH Cyber trực tiếp:</span>
+                            <div className="flex items-center gap-1.5">
+                                <input
+                                    type="text"
+                                    placeholder="VD: 02.TUONGTB"
+                                    value={selectedUser}
+                                    onChange={e => handleDirectUserCodeChange(e.target.value)}
+                                    className="flex-1 px-2.5 py-1 text-xs font-mono font-bold uppercase bg-white border border-blue-300 rounded outline-none focus:border-blue-600 text-blue-900 shadow-inner"
+                                />
                                 <button
-                                    key={u.userName}
                                     type="button"
-                                    onClick={() => handleSelectUser(u.userName)}
-                                    className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center justify-between hover:bg-blue-50 cursor-pointer ${selectedUser === u.userName ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700'}`}
+                                    onClick={() => handleSelectUser(selectedUser)}
+                                    className="px-3 py-1 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded cursor-pointer shrink-0 transition-colors"
                                 >
-                                    <span>{u.fullName} <span className="text-[10px] text-slate-400 font-mono">({u.userName})</span></span>
-                                    {selectedUser === u.userName && <i className="fas fa-check text-emerald-600 text-xs"></i>}
+                                    Lưu mã
                                 </button>
-                            ))}
+                            </div>
+                            {selectedUserInfo && (
+                                <p className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
+                                    <i className="fas fa-circle-check text-[9px]"></i>
+                                    Đang gán cho: <strong>{selectedUserInfo.fullName}</strong>
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Tìm kiếm danh mục Cyber */}
+                        <div>
+                            <span className="text-[10px] font-semibold text-slate-500 block mb-1">
+                                Hoặc chọn từ danh mục Cyber ({metadata?.users?.length || 0} TVBH):
+                            </span>
+                            <div className="relative">
+                                <i className="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Tìm theo tên hoặc mã TVBH..."
+                                    value={userSearchQuery}
+                                    onChange={e => setUserSearchQuery(e.target.value)}
+                                    className="w-full pl-8 pr-2 py-1 text-xs border border-slate-300 rounded outline-none focus:border-blue-500"
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+
+                        <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded">
+                            {filteredUsers.length === 0 ? (
+                                <div className="p-3 text-center text-xs text-slate-400">Không tìm thấy TVBH phù hợp</div>
+                            ) : (
+                                filteredUsers.map(u => (
+                                    <button
+                                        key={u.userName}
+                                        type="button"
+                                        onClick={() => handleSelectUser(u.userName)}
+                                        className={`w-full px-2.5 py-1.5 text-left text-xs flex items-center justify-between hover:bg-blue-50 cursor-pointer ${selectedUser === u.userName ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-700'}`}
+                                    >
+                                        <span>{u.fullName} <span className="text-[10px] text-slate-500 font-mono font-semibold">({u.userName})</span></span>
+                                        {selectedUser === u.userName && <i className="fas fa-check text-emerald-600 text-xs"></i>}
+                                    </button>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}
@@ -2027,7 +2118,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                                     <span className="text-slate-400 italic font-normal">Chờ cấp mã...</span>
                                                 )}
                                             </td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap">{selectedUserInfo?.fullName || 'Phạm Thành Nhân'}</td>
+                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap">{selectedUserInfo?.fullName || currentUser || currentUserName || selectedUser || 'TVBH'}</td>
                                             <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-semibold">{row.fullName}</td>
                                             <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-semibold">{row.fullName}</td>
                                             <td className="px-1.5 border-r border-[#F8B4BD] truncate max-w-[220px]" title={row.address}>{row.address}</td>
@@ -2109,7 +2200,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                 { label: 'Xuất Excel', icon: 'fa-file-excel', color: 'text-emerald-600', action: handleExportResultExcel },
                                 { label: 'Làm mới', icon: 'fa-arrows-rotate', color: 'text-slate-600', action: () => { setIsLoadingMeta(true); fetchCrmMetadata(true).then(result => { setIsLoadingMeta(false); if (result.success && result.data) setMetadata(result.data); }); } },
                                 { label: 'Xóa hết', icon: 'fa-trash-can', color: 'text-rose-600', action: handleClearAll },
-                                ...(isAdmin ? [{ label: 'Đổi TVBH', icon: 'fa-user-gear', color: 'text-indigo-600', action: () => setIsManualUserSelection(true) }] : []),
+                                { label: 'Đổi TVBH', icon: 'fa-user-gear', color: 'text-indigo-600', action: () => setIsManualUserSelection(true) },
                                 ...(isAdmin ? [{ label: 'Lịch sử', icon: 'fa-clock-rotate-left', color: 'text-slate-600', action: () => setShowAdminTvbhModal(true) }] : []),
                                 ...(isAdmin && onToggleCrmGlobal ? [{ label: isCrmEnabled ? 'Tắt KHTN' : 'Mở KHTN', icon: isCrmEnabled ? 'fa-toggle-on' : 'fa-toggle-off', color: isCrmEnabled ? 'text-emerald-600' : 'text-amber-600', action: onToggleCrmGlobal }] : []),
                             ].map(tool => (
@@ -2146,7 +2237,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 );
             })()}
 
-            {mobileMode && isAdmin && isManualUserSelection && (
+            {mobileMode && isManualUserSelection && (
                 <div className="fixed inset-0 z-[1245] flex items-end justify-center bg-slate-950/35 backdrop-blur-xs" onClick={() => setIsManualUserSelection(false)}>
                     <div className="flex max-h-[78dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
                         <div className="flex-shrink-0 px-4 pb-3 pt-2">
