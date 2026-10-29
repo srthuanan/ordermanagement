@@ -702,8 +702,7 @@ export const verifyDmsVso = async (
                             supabaseAdmin
                                 .from('donhanghienhuu')
                                 .upsert([dmsRecord], { onConflict: 'so_don_hang_ban' })
-                                .then(() => {})
-                                .catch(() => {});
+                                .then(() => {}, () => {});
                         }
                     } else if (liveData && liveData.success && liveData.found === false) {
                         return {
@@ -772,8 +771,7 @@ export const verifyDmsVso = async (
                             supabaseAdmin
                                 .from('donhanghienhuu')
                                 .upsert([dmsRecord], { onConflict: 'so_don_hang_ban' })
-                                .then(() => {})
-                                .catch(() => {});
+                                .then(() => {}, () => {});
                         }
                     } else if (liveData && liveData.success && liveData.found === false) {
                         return {
