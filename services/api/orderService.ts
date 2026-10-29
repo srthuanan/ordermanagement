@@ -250,9 +250,12 @@ export const getExteriorColorCode = (str: string): string => {
     const matchParen = clean.match(/\(([A-Z0-9]{4,6})\)/);
     if (matchParen) return matchParen[1];
 
-    // 2. Chuỗi dạng CE... hoặc mã phối 4 ký tự (ví dụ 1118, 1833)
+    // 2. Chuỗi dạng CE... hoặc mã phối 4 ký tự (ví dụ 1118, 1833, 181Y, 182G, 2418)
     const matchCE = clean.match(/\b(CE[0-9A-Z]{2,3})\b/);
     if (matchCE) return matchCE[1];
+
+    const matchTwoTone = clean.match(/\b((?:11|18|24)[0-9A-Z]{2})\b/);
+    if (matchTwoTone) return matchTwoTone[1];
 
     if (/^[0-9][0-9A-Z]{3}$/.test(clean)) return clean;
     if (/^CE[0-9A-Z]{2,3}$/.test(clean)) return clean;
@@ -462,16 +465,45 @@ export const resolveMaterialVersionCode = (dongXe?: string, phienBan?: string, r
     const isSliding = normVer.includes('TRUOT') || normVer.includes('SLIDING');
 
     // 1. Nếu rawMaPhienBan đã có sẵn và hợp lệ
-    const cleanRaw = (rawMaPhienBan || '').trim().toUpperCase();
+    let cleanRaw = (rawMaPhienBan || '').trim().toUpperCase();
+    const modelCodeForHeal = getModelCode(dongXe || '');
+    const LEGACY_CODE_HEAL: Record<string, string> = {
+        'JB11V': 'JB12V',
+        'HC1AV': 'GC12V',
+        'EF10V': 'ND31V',
+        'EF11V': 'ND32V',
+        'TG13V': 'NE3MV',
+        'TB11V': 'TH13V',
+        'VL1PV': 'TG11V',
+        'VL1SV': 'TG12V'
+    };
+    if (LEGACY_CODE_HEAL[cleanRaw]) {
+        cleanRaw = LEGACY_CODE_HEAL[cleanRaw];
+    } else if (cleanRaw === 'TG12V' && modelCodeForHeal === 'VF9') {
+        cleanRaw = 'NE3LV';
+    }
     if (cleanRaw && DMS_VERSION_CODE_MAP[cleanRaw]) {
         if (isSliding && cleanRaw === 'TG11V') return 'TG12V';
         return cleanRaw;
+    }
+    const matchRawParen = cleanRaw.match(/\(([A-Z0-9]{4,6})\)/);
+    if (matchRawParen && DMS_VERSION_CODE_MAP[matchRawParen[1]]) {
+        return matchRawParen[1];
     }
     const matchDmsPart = cleanRaw.match(/(?:^|_)([A-Z0-9]{4,6})(?:_|$)/);
     if (matchDmsPart && DMS_VERSION_CODE_MAP[matchDmsPart[1]]) {
         return matchDmsPart[1];
     }
-    if (cleanRaw && cleanRaw.length >= 4 && cleanRaw.length <= 6 && /^[A-Z0-9]+$/.test(cleanRaw)) {
+    const NON_MATERIAL_WORDS = new Set(['PLUS', 'BASE', 'ECO', 'LIMO', 'MINIO', 'MPV7', 'BCO2', 'BCO3', 'HIGH', 'STD']);
+    if (
+        cleanRaw &&
+        cleanRaw.length >= 4 &&
+        cleanRaw.length <= 6 &&
+        /^[A-Z0-9]+$/.test(cleanRaw) &&
+        /[A-Z]/.test(cleanRaw) &&
+        /[0-9]/.test(cleanRaw) &&
+        !NON_MATERIAL_WORDS.has(cleanRaw)
+    ) {
         if (isSliding && cleanRaw === 'TG11V') return 'TG12V';
         return cleanRaw;
     }
@@ -666,6 +698,19 @@ export const verifyDmsVso = async (
                             };
                         }
                         dmsRecord = liveData.order;
+                        if (dmsRecord && dmsRecord.so_don_hang_ban) {
+                            supabaseAdmin
+                                .from('donhanghienhuu')
+                                .upsert([dmsRecord], { onConflict: 'so_don_hang_ban' })
+                                .then(() => {})
+                                .catch(() => {});
+                        }
+                    } else if (liveData && liveData.success && liveData.found === false) {
+                        return {
+                            isValid: false,
+                            errorType: 'not_found',
+                            reason: `Không tìm thấy VSO ${cleanNo} trên DMS.`
+                        };
                     }
                 }
             } catch (liveErr) {
@@ -723,6 +768,19 @@ export const verifyDmsVso = async (
                             };
                         }
                         dmsRecord = liveData.order;
+                        if (dmsRecord && dmsRecord.so_don_hang_ban) {
+                            supabaseAdmin
+                                .from('donhanghienhuu')
+                                .upsert([dmsRecord], { onConflict: 'so_don_hang_ban' })
+                                .then(() => {})
+                                .catch(() => {});
+                        }
+                    } else if (liveData && liveData.success && liveData.found === false) {
+                        return {
+                            isValid: false,
+                            errorType: 'not_found',
+                            reason: `Không tìm thấy VSO ${cleanNo} trên DMS.`
+                        };
                     }
                 }
             } catch (liveErr) {
@@ -830,40 +888,41 @@ export const verifyDmsVso = async (
                 }
             }
 
-            // 3.2 Phiên bản (Version) - Bắt buộc so sánh bằng mã phiên bản vật tư DMS trực tiếp
+            // 3.2 Phiên bản (Version) - So sánh bằng mã phiên bản DMS 5 ký tự (nếu VIN xe đã có mã phiên bản 5 ký tự) hoặc nhóm phiên bản
             if ((expected.phien_ban || expected.ma_phien_ban) && (dmsVersion || dmsRecord.ma_phien_ban)) {
+                const rawExpMaPb = (expected.ma_phien_ban || '').trim().toUpperCase();
+                const hasExplicitExpMatCode = Boolean(
+                    rawExpMaPb &&
+                    rawExpMaPb.length >= 4 &&
+                    rawExpMaPb.length <= 6 &&
+                    /[A-Z]/.test(rawExpMaPb) &&
+                    /[0-9]/.test(rawExpMaPb) &&
+                    !['MPV7', 'BCO2', 'BCO3'].includes(rawExpMaPb)
+                );
                 const rawExpVerCode = (expected.ma_phien_ban || expected.phien_ban || '').trim().toUpperCase();
                 const expVerCode = resolveMaterialVersionCode(expected.dong_xe, expected.phien_ban, rawExpVerCode);
                 const rawDmsVerCode = (dmsVersion || dmsRecord.ma_phien_ban || '').trim().toUpperCase();
                 const dmsVerCode = resolveMaterialVersionCode(dmsModel, dmsVersion, rawDmsVerCode);
 
-                if (expVerCode && dmsVerCode && expVerCode !== dmsVerCode) {
-                    const dispExpVer = DMS_VERSION_CODE_MAP[expVerCode]?.name || expected.phien_ban || expVerCode;
-                    const dispDmsVer = formatDispVersion(dmsVersion) || dmsVerCode;
+                const expVerGroup = getVersionCode(expected.phien_ban || expVerCode || '');
+                const dmsVerGroup = getVersionCode(dmsVersion || dmsVerCode || '');
+
+                const isVersionMismatch = hasExplicitExpMatCode
+                    ? Boolean(expVerCode && dmsVerCode && expVerCode !== dmsVerCode)
+                    : Boolean(expVerGroup && dmsVerGroup && expVerGroup !== dmsVerGroup);
+
+                if (isVersionMismatch) {
+                    const targetCode = expVerCode || expected.phien_ban || expVerGroup;
+                    const currentDmsCode = dmsVerCode || dmsVersion || dmsVerGroup;
                     return {
                         isValid: false,
-                        reason: `Lệch Phiên bản: Xe là [${dispExpVer} (${expVerCode})] ⇄ DMS là [${dispDmsVer} (${dmsVerCode})].`,
+                        reason: `Đổi mã phiên bản thành ${targetCode}`,
                         errorType: 'version',
-                        expectedVal: `${dispExpVer} (${expVerCode})`,
-                        dmsVal: `${dispDmsVer} (${dmsVerCode})`,
+                        expectedVal: targetCode,
+                        dmsVal: currentDmsCode,
                         dmsRecord,
                         details
                     };
-                } else if (!expVerCode || !dmsVerCode) {
-                    const expVerGroup = getVersionCode(expected.phien_ban || '');
-                    const dmsVerGroup = getVersionCode(dmsVersion);
-                    if (expVerGroup && dmsVerGroup && expVerGroup !== dmsVerGroup) {
-                        const dispDmsVer = formatDispVersion(dmsVersion);
-                        return {
-                            isValid: false,
-                            reason: `Lệch Phiên bản: Xe là [${expected.phien_ban}] ⇄ DMS là [${dispDmsVer}].`,
-                            errorType: 'version',
-                            expectedVal: expected.phien_ban,
-                            dmsVal: dispDmsVer,
-                            dmsRecord,
-                            details
-                        };
-                    }
                 }
             }
 

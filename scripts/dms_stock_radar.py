@@ -75,32 +75,48 @@ SITE_MAP = {
 # Bảng mã chuẩn DMS cho từng dòng xe
 DMS_VERSION_MAP = {
     ("VF 3", "PLUS"): "TI1BV",
+    ("VF 3", "ECO"): "TI1CV",
+    ("VF 3", "BASE"): "GI10V",
     ("VF 5", "PLUS"): "GA1RV",
+    ("VF 5", "ECO"): "GA1KV",
     ("VF 6", "ECO"): "JB10V",
-    ("VF 6", "PLUS"): "JB11V",
-    ("VF 7", "ECO"): "HC1CV",
-    ("VF 7", "PLUS"): "HC1AV",
-    ("VF 8", "ECO"): "EF10V",
-    ("VF 8", "PLUS"): "EF11V",
-    ("VF 9", "ECO"): "TG12V",
-    ("VF 9", "PLUS"): "TG13V",
-    ("LIMO", "LIMO"): "SL1WV",
-    ("VF LIMO", "LIMO"): "SL1WV",
-    ("MINIO", "MINIO"): "TB11V",
-    ("VF MINIO", "MINIO"): "TB11V",
-    ("EC VAN", "PLUS"): "VL1PV",
-    ("EC VAN", "SLIDING"): "VL1SV",
-    ("VF EC VAN", "PLUS"): "VL1PV",
-    ("VF EC VAN", "SLIDING"): "VL1SV"
+    ("VF 6", "PLUS"): "JB12V",
+    ("VF 7", "ECO"): "HC1BV",
+    ("VF 7", "PLUS"): "GC12V",
+    ("VF 8", "ECO"): "ND31V",
+    ("VF 8", "PLUS"): "ND32V",
+    ("VF 9", "ECO"): "NE3LV",
+    ("VF 9", "PLUS"): "NE3MV",
+    ("LIMO", "LIMO"): "SL1VV",
+    ("LIMO", "MPV7"): "SL1WV",
+    ("VF LIMO", "LIMO"): "SL1VV",
+    ("VF LIMO", "MPV7"): "SL1WV",
+    ("MINIO", "MINIO"): "TH13V",
+    ("VF MINIO", "MINIO"): "TH13V",
+    ("EC VAN", "BASE"): "TG10V",
+    ("EC VAN", "PLUS"): "TG11V",
+    ("EC VAN", "SLIDING"): "TG12V",
+    ("VF EC VAN", "BASE"): "TG10V",
+    ("VF EC VAN", "PLUS"): "TG11V",
+    ("VF EC VAN", "SLIDING"): "TG12V"
 }
 
-def extract_dms_package_code(raw, dong_xe="", phien_ban=""):
-    """Trích xuất mã phiên bản DMS chuẩn."""
+def extract_dms_package_code(raw, dong_xe="", phien_ban="", config_code=""):
+    """Trích xuất mã phiên bản DMS chuẩn (ưu tiên mã _xts_configurationid_value trực tiếp từ DMS)."""
+    import re
+    if config_code:
+        c_clean = str(config_code).strip().upper()
+        if re.match(r'^[A-Z]{2}[0-9][A-Z0-9]{2}$', c_clean):
+            return c_clean
+        m_cfg = re.search(r'\b([A-Z]{2}[0-9][A-Z0-9]{2})\b', c_clean)
+        if m_cfg:
+            return m_cfg.group(1)
+
     if raw:
-        r_upper = raw.upper()
-        for code in ["TI1BV", "GA1RV", "JB10V", "JB11V", "HC1CV", "HC1AV", "EF10V", "EF11V", "TG12V", "TG13V", "SL1WV", "TB11V", "VL1PV", "VL1SV"]:
-            if code in r_upper:
-                return code
+        r_upper = str(raw).upper()
+        m_raw = re.search(r'\b([A-Z]{2}[0-9][A-Z0-9]{2})\b', r_upper)
+        if m_raw:
+            return m_raw.group(1)
 
     dx = remove_diacritics(dong_xe)
     pb = remove_diacritics(phien_ban)
@@ -467,7 +483,8 @@ def run_dms_stock_radar_sync(include_orders=False, force=False):
             site_guid = (best.get("_xts_siteid_value") or "").strip().lower()
             dms_val = SITE_MAP.get(site_guid, "")
             prod_desc = best.get("xts_productdescription") or ""
-            pkg_val = extract_dms_package_code(prod_desc, dong_xe, phien_ban)
+            cfg_code = get_lookup_name(best, "_xts_configurationid_value")
+            pkg_val = extract_dms_package_code(prod_desc, dong_xe, phien_ban, config_code=cfg_code)
 
             if eng_val or dms_val or pkg_val:
                 has_coords = bool(best.get("itv_lastlatitude") and best.get("itv_lastlongitude"))

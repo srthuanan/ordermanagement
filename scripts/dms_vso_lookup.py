@@ -11,6 +11,19 @@ import requests
 from urllib.parse import quote
 
 def get_dealers_list():
+    sb_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
+    sb_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
+    try:
+        supa_url = f"{sb_url}/storage/v1/object/authenticated/yeucauxhd-files/config/dms_dealers_config.json"
+        headers = {"apikey": sb_key, "Authorization": f"Bearer {sb_key}"}
+        r = requests.get(supa_url, headers=headers, timeout=3)
+        if r.status_code == 200 and r.text.strip():
+            data = r.json()
+            if isinstance(data, list) and data:
+                return data
+    except Exception:
+        pass
+
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dms_dealers_config.json")
     if os.path.exists(config_path):
         try:

@@ -226,147 +226,68 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
         // TÌM XE THỰC TẾ TRONG KHO THEO SỐ VIN ĐÃ GHÉP (ƯU TIÊN KHOXE -> THONGTINXE)
         let car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
-        if (!car && order.VIN) {
+        const hasValidMatCode = (val?: string) => {
+            const code = String(val || '').trim().toUpperCase();
+            return code.length >= 4 && code.length <= 6 && /[A-Z]/.test(code) && /[0-9]/.test(code) && !['MPV7', 'BCO2', 'BCO3'].includes(code);
+        };
+        if (order.VIN && (!car || !hasValidMatCode(car.ma_phien_ban || car['Mã phiên bản']))) {
             try {
                 const { data: dbCar } = await supabase.from('khoxe').select('*').ilike('vin', order.VIN.trim()).maybeSingle();
-                if (dbCar) {
-                    car = {
-                        VIN: dbCar.vin,
-                        'Dòng xe': dbCar.dong_xe,
-                        'Phiên bản': dbCar.phien_ban,
-                        'Ngoại thất': dbCar.ngoai_that,
-                        'Nội thất': dbCar.noi_that,
-                        'Mã phiên bản': dbCar.ma_phien_ban,
-                        ma_phien_ban: dbCar.ma_phien_ban,
-                        so_may: dbCar.so_may
-                    };
-                    setMatchedCar(car);
-                } else {
+                let resolvedMaPb = (dbCar?.ma_phien_ban || '').trim();
+                if (!hasValidMatCode(resolvedMaPb)) {
                     const { data: ttCar } = await supabase.from('thongtinxe').select('*').ilike('vin', order.VIN.trim()).maybeSingle();
                     if (ttCar) {
-                        car = {
-                            VIN: ttCar.vin,
-                            'Dòng xe': ttCar.mo_ta,
-                            'Phiên bản': ttCar.phien_ban,
-                            'Ngoại thất': ttCar.ngoai_that,
-                            'Nội thất': ttCar.noi_that,
-                            'Mã phiên bản': ttCar.phien_ban,
-                            ma_phien_ban: ttCar.phien_ban,
-                            so_may: ttCar.so_may
-                        };
-                        setMatchedCar(car);
+                        const ttPb = (ttCar.ma_phien_ban || ttCar.phien_ban || '').trim();
+                        if (hasValidMatCode(ttPb)) {
+                            resolvedMaPb = ttPb;
+                        }
+                        if (!car && !dbCar) {
+                            car = {
+                                VIN: ttCar.vin,
+                                'Dòng xe': ttCar.mo_ta,
+                                'Phiên bản': ttCar.phien_ban,
+                                'Ngoại thất': ttCar.ngoai_that,
+                                'Nội thất': ttCar.noi_that,
+                                'Mã phiên bản': resolvedMaPb || ttCar.phien_ban,
+                                ma_phien_ban: resolvedMaPb || ttCar.phien_ban,
+                                so_may: ttCar.so_may
+                            };
+                        }
                     }
                 }
+                if (dbCar) {
+                    car = {
+                        ...(car || {}),
+                        VIN: dbCar.vin,
+                        'Dòng xe': dbCar.dong_xe || car?.['Dòng xe'],
+                        'Phiên bản': dbCar.phien_ban || car?.['Phiên bản'],
+                        'Ngoại thất': dbCar.ngoai_that || car?.['Ngoại thất'],
+                        'Nội thất': dbCar.noi_that || car?.['Nội thất'],
+                        'Mã phiên bản': resolvedMaPb || dbCar.ma_phien_ban || car?.['Mã phiên bản'],
+                        ma_phien_ban: resolvedMaPb || dbCar.ma_phien_ban || car?.ma_phien_ban,
+                        so_may: dbCar.so_may || car?.so_may
+                    };
+                } else if (car && resolvedMaPb) {
+                    car = {
+                        ...car,
+                        'Mã phiên bản': resolvedMaPb,
+                        ma_phien_ban: resolvedMaPb
+                    };
+                }
+                if (car) setMatchedCar(car);
             } catch (carErr) {
                 console.warn('[RequestInvoiceModal] Lỗi tìm xe khoxe/thongtinxe:', carErr);
             }
         }
 
-        // BƯỚC 1: ĐỐI SOÁT CẤU HÌNH XE GHÉP (VIN) VỚI ĐƠN HÀNG KHÁCH ĐẶT (SO SÁNH BẰNG MÃ)
-        if (car && order.VIN) {
-            const carModel = car['Dòng xe'] || '';
-            const carVersion = car['Phiên bản'] || '';
-            const carExterior = car['Ngoại thất'] || car['Màu ngoại thất'] || '';
-            const carInterior = car['Nội thất'] || car['Màu nội thất'] || '';
-
-            const ordModel = order['Dòng xe'] || (order as any).dong_xe || '';
-            const ordVersion = order['Phiên bản'] || (order as any).phien_ban || '';
-            const ordExterior = order['Ngoại thất'] || (order as any).ngoai_that || '';
-            const ordInterior = order['Nội thất'] || (order as any).noi_that || '';
-
-            // 1.1 Kiểm tra Dòng xe bằng mã
-            const carModelCode = apiService.getModelCode(carModel);
-            const ordModelCode = apiService.getModelCode(ordModel);
-            if (carModelCode && ordModelCode && carModelCode !== ordModelCode) {
-                setDmsVerification({
-                    status: 'invalid',
-                    errorType: 'model',
-                    expectedVal: carModel || carModelCode,
-                    dmsVal: ordModel || ordModelCode,
-                    message: `Lệch Dòng xe: Xe ghép là [${carModel || carModelCode}] nhưng Đơn hàng yêu cầu [${ordModel || ordModelCode}].`
-                });
-                return;
-            }
-
-            // 1.2 Kiểm tra Phiên bản bằng mã
-            const carVerCode = apiService.getVersionCode(carVersion);
-            const ordVerCode = apiService.getVersionCode(ordVersion);
-            if (carVerCode && ordVerCode && carVerCode !== ordVerCode) {
-                setDmsVerification({
-                    status: 'invalid',
-                    errorType: 'version',
-                    expectedVal: carVersion || carVerCode,
-                    dmsVal: ordVersion || ordVerCode,
-                    message: `Lệch Phiên bản: Xe ghép là [${carVersion || carVerCode}] nhưng Đơn hàng yêu cầu [${ordVersion || ordVerCode}].`
-                });
-                return;
-            }
-
-            // 1.3 Kiểm tra Màu ngoại thất bằng MÃ (nếu không phải ghép linh hoạt)
-            const isFlex = order.is_flex_match || order.matched_via_flex;
-            if (ordExterior && carExterior && !isFlex) {
-                const carExtCode = apiService.getExteriorColorCode(carExterior);
-                const ordExtCode = apiService.getExteriorColorCode(ordExterior);
-                if (carExtCode && ordExtCode) {
-                    if (!apiService.compareExteriorColorCodes(carExtCode, ordExtCode)) {
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'exterior',
-                            expectedVal: `${carExterior} (${carExtCode})`,
-                            dmsVal: `${ordExterior} (${ordExtCode})`,
-                            message: `Lệch Ngoại thất: Xe ghép là [${carExterior} (${carExtCode})] nhưng Đơn hàng yêu cầu [${ordExterior} (${ordExtCode})].`
-                        });
-                        return;
-                    }
-                } else if (!apiService.checkColorMatch(ordExterior, carExterior, undefined, false)) {
-                    setDmsVerification({
-                        status: 'invalid',
-                        errorType: 'exterior',
-                        expectedVal: carExterior,
-                        dmsVal: ordExterior,
-                        message: `Lệch Ngoại thất: Xe ghép là [${carExterior}] nhưng Đơn hàng yêu cầu [${ordExterior}].`
-                    });
-                    return;
-                }
-            }
-
-            // 1.4 Kiểm tra Màu nội thất bằng MÃ (nếu không phải ghép linh hoạt)
-            if (ordInterior && carInterior && !isFlex) {
-                const carIntCode = apiService.getInteriorColorCode(carInterior);
-                const ordIntCode = apiService.getInteriorColorCode(ordInterior);
-                if (carIntCode && ordIntCode) {
-                    if (!apiService.compareInteriorColorCodes(carIntCode, ordIntCode)) {
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'interior',
-                            expectedVal: `${carInterior} (${carIntCode})`,
-                            dmsVal: `${ordInterior} (${ordIntCode})`,
-                            message: `Lệch Nội thất: Xe ghép là [${carInterior} (${carIntCode})] nhưng Đơn hàng yêu cầu [${ordInterior} (${ordIntCode})].`
-                        });
-                        return;
-                    }
-                } else if (!apiService.checkColorMatch(ordInterior, carInterior, undefined, true)) {
-                    setDmsVerification({
-                        status: 'invalid',
-                        errorType: 'interior',
-                        expectedVal: carInterior,
-                        dmsVal: ordInterior,
-                        message: `Lệch Nội thất: Xe ghép là [${carInterior}] nhưng Đơn hàng yêu cầu [${ordInterior}].`
-                    });
-                    return;
-                }
-            }
-        }
-
-        // BƯỚC 2: ĐỐI SOÁT CẤU HÌNH TRỰC TIẾP GIỮA VIN XE VÀ VSO TRÊN VINFAST DMS
+        // ĐỐI SOÁT TRỰC TIẾP GIỮA XE GHÉP (VIN) & TÊN KHÁCH HÀNG VỚI VSO TRÊN VINFAST DMS
         setIsCheckingDms(true);
-        setDmsVerification({ status: 'checking', message: 'Đang đối soát cấu hình giữa VIN xe và VSO trên VinFast DMS...' });
+        setDmsVerification(prev => prev.status === 'invalid' ? prev : { status: 'checking', message: 'Đang đối soát cấu hình giữa VIN xe và VSO trên VinFast DMS...' });
         try {
-            // Lấy cấu hình kiểm tra: Ưu tiên trực tiếp từ xe mang số VIN ghép
             const targetConfig = car ? {
                 dong_xe: car['Dòng xe'] || car.dong_xe,
                 phien_ban: car['Phiên bản'] || car.phien_ban,
-                ma_phien_ban: car.ma_phien_ban || car['Mã phiên bản'] || car['Phiên bản'],
+                ma_phien_ban: car.ma_phien_ban || car['Mã phiên bản'] || '',
                 ngoai_that: car['Ngoại thất'] || car['Màu ngoại thất'] || car.ngoai_that,
                 noi_that: car['Nội thất'] || car['Màu nội thất'] || car.noi_that,
                 ten_khach_hang: order["Tên khách hàng"]
@@ -377,145 +298,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
             const res = await apiService.verifyDmsVso(orderNo, targetConfig, true);
             if (res.isValid) {
-                // Nếu có VIN, kiểm tra đối soát trực tiếp giữa VIN xe và DMS bằng mã
-                if (car && order.VIN) {
-                    const carModel = car['Dòng xe'] || '';
-                    const carVersion = car['Phiên bản'] || '';
-                    const carExterior = car['Ngoại thất'] || car['Màu ngoại thất'] || '';
-                    const carInterior = car['Nội thất'] || car['Màu nội thất'] || '';
-
-                    const dmsModel = res.dmsRecord?.mo_ta_san_pham || '';
-                    const dmsVersion = res.dmsRecord?.ten_phien_ban || '';
-                    const dmsExtCode = res.dmsRecord?.ma_mau_ngoai_that || apiService.getExteriorColorCode(res.dmsRecord?.mau_ngoai_that);
-                    const dmsIntCode = res.dmsRecord?.ma_mau_noi_that || apiService.getInteriorColorCode(res.dmsRecord?.mau_noi_that);
-
-                    const carModelCode = apiService.getModelCode(carModel);
-                    const dmsModelCode = apiService.getModelCode(dmsModel) || apiService.getModelCode(dmsVersion);
-                    if (carModelCode && dmsModelCode && carModelCode !== dmsModelCode) {
-                        const expShow = carModel || carModelCode;
-                        const dmsShow = dmsModel || dmsVersion || dmsModelCode;
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'model',
-                            expectedVal: expShow,
-                            dmsVal: dmsShow,
-                            message: `Lệch Dòng xe: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
-                            details: res.details
-                        });
-                        return;
-                    }
-
-                    const rawCarVerCode = (car.ma_phien_ban || car['Mã phiên bản'] || car['Phiên bản'] || '').trim().toUpperCase();
-                    const carVerCode = apiService.resolveMaterialVersionCode(carModel, carVersion, rawCarVerCode);
-                    const rawDmsVerCode = (res.dmsRecord?.ten_phien_ban || res.dmsRecord?.ma_phien_ban || '').trim().toUpperCase();
-                    const dmsVerCode = apiService.resolveMaterialVersionCode(dmsModel, dmsVersion, rawDmsVerCode);
-
-                    // BẮT BUỘC SO SÁNH CHÍNH XÁC MÃ PHIÊN BẢN CỦA VIN XE VÀ DMS (VÍ DỤ GA1RV === GA1RV, TI1DV === TI1DV)
-                    if (carVerCode && dmsVerCode) {
-                        const isDirectMatch = carVerCode === dmsVerCode;
-                        if (!isDirectMatch) {
-                            const dispCarVer = apiService.DMS_VERSION_CODE_MAP[carVerCode]?.name || carVersion || carVerCode;
-                            const dispDmsVer = res.details?.version || dmsVersion || dmsVerCode;
-                            setDmsVerification({
-                                status: 'invalid',
-                                errorType: 'version',
-                                expectedVal: `${dispCarVer} (${carVerCode})`,
-                                dmsVal: `${dispDmsVer} (${dmsVerCode})`,
-                                message: `Lệch Phiên bản: Xe là [${dispCarVer} (${carVerCode})] ⇄ DMS là [${dispDmsVer} (${dmsVerCode})].`,
-                                details: res.details
-                            });
-                            return;
-                        }
-                    } else {
-                        const carVerGroup = apiService.getVersionCode(carVersion);
-                        const dmsVerGroup = apiService.getVersionCode(dmsVersion);
-                        if (carVerGroup && dmsVerGroup && carVerGroup !== dmsVerGroup) {
-                            const dispDmsVer = res.details?.version || dmsVersion;
-                            setDmsVerification({
-                                status: 'invalid',
-                                errorType: 'version',
-                                expectedVal: carVersion,
-                                dmsVal: dispDmsVer,
-                                message: `Lệch Phiên bản: Xe là [${carVersion}] ⇄ DMS là [${dispDmsVer}].`,
-                                details: res.details
-                            });
-                            return;
-                        }
-                    }
-
-                    const carExtCode = apiService.getExteriorColorCode(carExterior);
-                    if (carExtCode && dmsExtCode && !apiService.compareExteriorColorCodes(carExtCode, dmsExtCode)) {
-                        const dispDmsExt = res.details?.exterior || dmsExtCode;
-                        const expShow = carExtCode ? `${carExterior} (${carExtCode})` : carExterior;
-                        const dmsShow = dmsExtCode ? `${dispDmsExt} (${dmsExtCode})` : dispDmsExt;
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'exterior',
-                            expectedVal: expShow,
-                            dmsVal: dmsShow,
-                            message: `Lệch Ngoại thất: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
-                            details: res.details
-                        });
-                        return;
-                    }
-
-                    const carIntCode = apiService.getInteriorColorCode(carInterior);
-                    if (carIntCode && dmsIntCode && !apiService.compareInteriorColorCodes(carIntCode, dmsIntCode)) {
-                        const dispDmsInt = res.details?.interior || dmsIntCode;
-                        const expShow = carIntCode ? `${carInterior} (${carIntCode})` : carInterior;
-                        const dmsShow = dmsIntCode ? `${dispDmsInt} (${dmsIntCode})` : dispDmsInt;
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'interior',
-                            expectedVal: expShow,
-                            dmsVal: dmsShow,
-                            message: `Lệch Nội thất: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
-                            details: res.details
-                        });
-                        return;
-                    }
-
-                    // Kiểm tra Tên khách hàng giữa Đơn hàng và DMS
-                    const dmsCustomer = res.details?.customer || res.dmsRecord?.khach_hang_tiem_nang || '';
-                    const ordCustomer = (order["Tên khách hàng"] || '').trim();
-                    if (ordCustomer && dmsCustomer && !checkCustomerNameMatch(ordCustomer, dmsCustomer)) {
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'customer',
-                            expectedVal: ordCustomer,
-                            dmsVal: dmsCustomer,
-                            message: `Lệch Tên khách hàng: Đơn là [${ordCustomer}] ⇄ DMS là [${dmsCustomer}].`,
-                            details: res.details
-                        });
-                        return;
-                    }
-
-                    setDmsVerification({
-                        status: 'valid',
-                        message: `Khớp 100% cấu hình & Tên khách hàng (${ordCustomer}) giữa VIN xe (${order.VIN}) và VSO (${orderNo}) trên DMS!`,
-                        details: res.details
-                    });
-                } else {
-                    const dmsCustomer = res.details?.customer || res.dmsRecord?.khach_hang_tiem_nang || '';
-                    const ordCustomer = (order["Tên khách hàng"] || '').trim();
-                    if (ordCustomer && dmsCustomer && !checkCustomerNameMatch(ordCustomer, dmsCustomer)) {
-                        setDmsVerification({
-                            status: 'invalid',
-                            errorType: 'customer',
-                            expectedVal: ordCustomer,
-                            dmsVal: dmsCustomer,
-                            message: `Lệch Tên khách hàng: Đơn là [${ordCustomer}] ⇄ DMS là [${dmsCustomer}].`,
-                            details: res.details
-                        });
-                        return;
-                    }
-
-                    setDmsVerification({
-                        status: 'valid',
-                        message: 'Khớp 100% giữa Đơn hàng và VSO trên DMS',
-                        details: res.details
-                    });
-                }
+                const ordCustomer = (order["Tên khách hàng"] || '').trim();
+                setDmsVerification({
+                    status: 'valid',
+                    message: order.VIN
+                        ? `Khớp 100% cấu hình & Tên khách hàng (${ordCustomer}) giữa VIN xe (${order.VIN}) và VSO (${orderNo}) trên DMS!`
+                        : 'Khớp 100% giữa Đơn hàng và VSO trên DMS',
+                    details: res.details
+                });
                 if (isManualClick) {
                     showToast('Khớp 100% DMS', 'Cấu hình xe khớp hoàn toàn với VSO trên VinFast DMS.', 'success', 3000);
                 }
