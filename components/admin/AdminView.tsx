@@ -76,9 +76,12 @@ interface AdminViewProps {
     mobileMode?: boolean;
     onBack?: () => void;
     onEnsureAdminView?: () => void;
+    isDmsCompareXhdEnabled?: boolean;
+    isTogglingDmsCompareXhd?: boolean;
+    handleToggleDmsCompareXhdGlobal?: () => void;
 }
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount, mobileMode = false, onBack, onEnsureAdminView }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount, mobileMode = false, onBack, onEnsureAdminView, isDmsCompareXhdEnabled = true, isTogglingDmsCompareXhd = false, handleToggleDmsCompareXhdGlobal }) => {
 
     const [showMatchingModal, setShowMatchingModal] = useState(false);
     const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
@@ -579,6 +582,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         processingActionType={actions.processingActionType}
                         onBackToAdminHome={() => setIsMobileAdminHome(true)}
                         onOpenActionMenu={() => setIsActionMenuOpen(true)}
+                        isDmsCompareXhdEnabled={isDmsCompareXhdEnabled}
+                        isTogglingDmsCompareXhd={isTogglingDmsCompareXhd}
+                        handleToggleDmsCompareXhdGlobal={handleToggleDmsCompareXhdGlobal}
                     />
                 </div>
 

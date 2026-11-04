@@ -30,6 +30,8 @@ interface RequestInvoiceModalProps {
     inline?: boolean;
     /** Mobile-only: ẩn header trùng & thu gọn khoảng cách (Desktop không dùng) */
     compact?: boolean;
+    /** Bật/tắt kiểm soát đối soát với VinFast DMS */
+    isDmsCompareEnabled?: boolean;
 }
 
 const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean, compact?: boolean }> = ({ currentStep, hasVinClub }) => {
@@ -63,7 +65,7 @@ const formatNumber = (value: string) => {
 
 const getRawValue = (value: string) => (value || '').replace(/\./g, '');
 
-const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false, compact = false }) => {
+const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false, compact = false, isDmsCompareEnabled }) => {
     const [step, setStep] = useState(1);
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
@@ -117,6 +119,30 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const prevDmsStatusRef = useRef<string>('');
     const prevCyberApprovedRef = useRef<boolean>(false);
 
+    // Trạng thái Bật/Tắt kiểm soát đối soát DMS từ Admin
+    const [isDmsEnabled, setIsDmsEnabled] = useState<boolean>(() => {
+        if (typeof isDmsCompareEnabled === 'boolean') return isDmsCompareEnabled;
+        const saved = localStorage.getItem('dms_compare_xhd_enabled');
+        return saved !== 'false';
+    });
+
+    useEffect(() => {
+        if (typeof isDmsCompareEnabled === 'boolean') {
+            setIsDmsEnabled(isDmsCompareEnabled);
+        }
+    }, [isDmsCompareEnabled]);
+
+    useEffect(() => {
+        if (typeof isDmsCompareEnabled === 'boolean') return;
+        apiService.getAppSetting('dms_compare_xhd_visibility').then((res: any) => {
+            if (res && res.status === 'SUCCESS' && res.data) {
+                const enabled = res.data.isEnabled !== false;
+                setIsDmsEnabled(enabled);
+                localStorage.setItem('dms_compare_xhd_enabled', String(enabled));
+            }
+        }).catch(() => {});
+    }, [isDmsCompareEnabled]);
+
     const [matchedCar, setMatchedCar] = useState<any>(() => {
         return stockData?.find((v: any) => v.VIN === order?.VIN) || null;
     });
@@ -144,6 +170,19 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     const recheckDmsVerification = async (isManualClick = false) => {
+        // Nếu Admin đã tắt kiểm soát đối soát DMS khi gửi XHĐ
+        if (!isDmsEnabled) {
+            setDmsVerification({
+                status: 'valid',
+                message: 'Admin đã tắt kiểm soát DMS: Miễn đối soát cấu hình DMS khi gửi XHĐ.'
+            });
+            setIsCheckingDms(false);
+            if (isManualClick) {
+                showToast('Kiểm soát DMS đang tắt', 'Admin đã tạm tắt kiểm soát so sánh DMS. TVBH có thể gửi XHĐ bình thường.', 'info', 3000);
+            }
+            return;
+        }
+
         const orderNo = order["Số đơn hàng"] || (order as any).so_don_hang;
         if (!orderNo) {
             setDmsVerification({ status: 'invalid', message: 'Đơn hàng chưa có Số đơn hàng (VSO).' });
@@ -618,7 +657,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         (carIntCode && cyberIntCode && !apiService.compareInteriorColorCodes(carIntCode, cyberIntCode))
     ));
 
-    const isDmsValid = dmsVerification.status !== 'invalid';
+    const isDmsValid = !isDmsEnabled || dmsVerification.status !== 'invalid';
     const isVerificationBlocked = !isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved);
 
     const isStep1InfoValid = policy.length > 0 &&
@@ -1060,6 +1099,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     const renderDmsVerificationCard = () => {
+        if (!isDmsEnabled) {
+            return (
+                <div className="invoice-diag-card bg-slate-50 border border-slate-200 text-slate-700 py-2.5 px-3 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="w-7 h-7 rounded-lg bg-slate-200/80 text-slate-600 flex items-center justify-center flex-shrink-0 text-xs">
+                            <i className="fas fa-shield-halved" />
+                        </span>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold text-slate-800 uppercase tracking-tight">Đối Soát DMS: Đang Tắt</span>
+                                <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-semibold">Admin Miễn Kiểm Soát</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 truncate mt-0.5">Admin đã tạm tắt kiểm soát đối soát cấu hình với VinFast DMS. TVBH có thể gửi yêu cầu xuất hóa đơn bình thường.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         if (dmsVerification.status === 'valid' || (dmsVerification.status === 'idle' && !isCheckingDms)) {
             return null;
         }

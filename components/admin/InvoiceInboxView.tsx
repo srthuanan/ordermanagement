@@ -39,6 +39,9 @@ interface InvoiceInboxViewProps {
     isLoading?: boolean;
     onBackToAdminHome?: () => void;
     onOpenActionMenu?: () => void;
+    isDmsCompareXhdEnabled?: boolean;
+    isTogglingDmsCompareXhd?: boolean;
+    handleToggleDmsCompareXhdGlobal?: () => void;
 }
 
 
@@ -188,7 +191,10 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     processingActionType,
     isLoading = false,
     onBackToAdminHome,
-    onOpenActionMenu
+    onOpenActionMenu,
+    isDmsCompareXhdEnabled = true,
+    isTogglingDmsCompareXhd = false,
+    handleToggleDmsCompareXhdGlobal
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -1117,6 +1123,37 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                         );
                     })}
                 </nav>
+
+                {/* Bật/Tắt kiểm soát so sánh DMS khi TVBH gửi XHĐ */}
+                <div className="p-2.5 border-t border-slate-200 bg-slate-50/70">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1.5">
+                        <span className="flex items-center gap-1.5 truncate">
+                            <i className={`fas ${isDmsCompareXhdEnabled ? 'fa-shield-halved text-emerald-600' : 'fa-shield text-slate-400'}`} />
+                            <span>So sánh DMS (gửi XHĐ)</span>
+                        </span>
+                        <span className={`text-[9.5px] px-1.5 py-0.5 rounded font-bold ${
+                            isDmsCompareXhdEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                            {isDmsCompareXhdEnabled ? 'BẬT' : 'TẮT'}
+                        </span>
+                    </div>
+                    {handleToggleDmsCompareXhdGlobal && (
+                        <button
+                            type="button"
+                            onClick={handleToggleDmsCompareXhdGlobal}
+                            disabled={isTogglingDmsCompareXhd}
+                            className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all shadow-2xs border cursor-pointer ${
+                                isDmsCompareXhdEnabled
+                                    ? 'bg-white hover:bg-rose-50 text-rose-700 border-rose-200 hover:border-rose-300'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                            }`}
+                            title="Bật/Tắt kiểm soát bắt buộc khớp cấu hình với VinFast DMS khi TVBH gửi yêu cầu xuất hóa đơn"
+                        >
+                            <i className={`fas ${isTogglingDmsCompareXhd ? 'fa-spinner fa-spin' : isDmsCompareXhdEnabled ? 'fa-power-off' : 'fa-check'}`} />
+                            <span>{isDmsCompareXhdEnabled ? 'Tắt kiểm soát DMS' : 'Bật kiểm soát DMS'}</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Column 2: List */}

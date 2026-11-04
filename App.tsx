@@ -341,13 +341,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isTogglingChat, setIsTogglingChat] = useState(false);
     const [isCrmEnabled, setIsCrmEnabled] = useState(true);
     const [isTogglingCrm, setIsTogglingCrm] = useState(false);
+    const [isDmsCompareXhdEnabled, setIsDmsCompareXhdEnabled] = useState(true);
+    const [isTogglingDmsCompareXhd, setIsTogglingDmsCompareXhd] = useState(false);
 
     const fetchAppConfig = useCallback(async () => {
         try {
-            const [stockRes, chatRes, crmRes] = await Promise.all([
+            const [stockRes, chatRes, crmRes, dmsXhdRes] = await Promise.all([
                 apiService.getAppSetting('stock_visibility'),
                 apiService.getAppSetting('chat_visibility'),
-                apiService.getAppSetting('crm_visibility')
+                apiService.getAppSetting('crm_visibility'),
+                apiService.getAppSetting('dms_compare_xhd_visibility')
             ]);
 
             if (stockRes && stockRes.status === 'SUCCESS' && stockRes.data) {
@@ -358,6 +361,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             }
             if (crmRes && crmRes.status === 'SUCCESS' && crmRes.data) {
                 setIsCrmEnabled(!crmRes.data.isCrmHidden);
+            }
+            if (dmsXhdRes && dmsXhdRes.status === 'SUCCESS' && dmsXhdRes.data) {
+                setIsDmsCompareXhdEnabled(dmsXhdRes.data.isEnabled !== false);
             }
         } catch (e) {
             console.error("Failed to fetch app config from Supabase:", e);
@@ -399,6 +405,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             const isHidden = !!newData.value?.isCrmHidden;
                             console.log("CRM visibility changed! Hidden:", isHidden);
                             setIsCrmEnabled(!isHidden);
+                        }
+                        if (newData.key === 'dms_compare_xhd_visibility') {
+                            const isEnabled = newData.value?.isEnabled !== false;
+                            console.log("DMS compare XHD setting changed! Enabled:", isEnabled);
+                            setIsDmsCompareXhdEnabled(isEnabled);
                         }
                     }
                 }
@@ -589,6 +600,27 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật cài đặt KHTN.', 'error');
         } finally {
             setIsTogglingCrm(false);
+        }
+    };
+
+    const handleToggleDmsCompareXhdGlobal = async () => {
+        if (!isCurrentUserAdmin) return;
+        setIsTogglingDmsCompareXhd(true);
+        try {
+            const newIsEnabled = !isDmsCompareXhdEnabled;
+            const res = await apiService.updateAppSetting('dms_compare_xhd_visibility', { isEnabled: newIsEnabled });
+
+            if (res && res.status === 'SUCCESS') {
+                setIsDmsCompareXhdEnabled(newIsEnabled);
+                showToast('Thành công', `Đã ${newIsEnabled ? 'BẬT' : 'TẮT'} kiểm soát so sánh DMS khi TVBH gửi XHĐ.`, 'success');
+            } else {
+                showToast('Lỗi', res.message || "Không thể thay đổi cài đặt kiểm soát DMS", 'error');
+            }
+        } catch (e) {
+            console.error("Lỗi khi thay đổi kiểm soát DMS XHĐ:", e);
+            showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật cài đặt kiểm soát DMS.', 'error');
+        } finally {
+            setIsTogglingDmsCompareXhd(false);
         }
     };
 
@@ -1242,7 +1274,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
                 <Suspense fallback={null}>
                     {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
-                    {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
+                    {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} isDmsCompareEnabled={isDmsCompareXhdEnabled} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
                     {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
                     {orderToEdit && (
                         <EditOrderModal
@@ -1639,6 +1671,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         isCrmEnabled={isCrmEnabled}
                         isTogglingCrm={isTogglingCrm}
                         handleToggleCrmGlobal={handleToggleCrmGlobal}
+                        isDmsCompareXhdEnabled={isDmsCompareXhdEnabled}
+                        isTogglingDmsCompareXhd={isTogglingDmsCompareXhd}
+                        handleToggleDmsCompareXhdGlobal={handleToggleDmsCompareXhdGlobal}
                         onOpenBacklogReport={() => setIsBacklogModalOpen(true)}
                         isReferenceAccount={isReferenceAccount}
                     />
@@ -1851,6 +1886,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         mobileMode={isMobileScreen}
                                         onBack={() => setActiveView('dashboard')}
                                         onEnsureAdminView={() => setActiveView('admin')}
+                                        isDmsCompareXhdEnabled={isDmsCompareXhdEnabled}
+                                        isTogglingDmsCompareXhd={isTogglingDmsCompareXhd}
+                                        handleToggleDmsCompareXhdGlobal={handleToggleDmsCompareXhdGlobal}
                                     />
                                 </Suspense>
                             )}
@@ -1923,7 +1961,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         />
                     )}
                     {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
-                    {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
+                    {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} isDmsCompareEnabled={isDmsCompareXhdEnabled} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
                     {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
                     {orderToRequestVC && (
                         <RequestVcModal

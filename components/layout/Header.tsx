@@ -44,6 +44,9 @@ interface HeaderProps {
     isCrmEnabled?: boolean;
     isTogglingCrm?: boolean;
     handleToggleCrmGlobal?: () => void;
+    isDmsCompareXhdEnabled?: boolean;
+    isTogglingDmsCompareXhd?: boolean;
+    handleToggleDmsCompareXhdGlobal?: () => void;
     isChatEnabled: boolean;
     isTogglingChat: boolean;
     handleToggleChatGlobal: () => void;
@@ -92,6 +95,9 @@ const Header: React.FC<HeaderProps> = ({
     isCrmEnabled = true,
     isTogglingCrm = false,
     handleToggleCrmGlobal,
+    isDmsCompareXhdEnabled = true,
+    isTogglingDmsCompareXhd = false,
+    handleToggleDmsCompareXhdGlobal,
     isChatEnabled,
     isTogglingChat: _isTogglingChat,
     handleToggleChatGlobal: _handleToggleChatGlobal,
@@ -399,6 +405,26 @@ const Header: React.FC<HeaderProps> = ({
                                                             disabled={isTogglingCrm}
                                                             className={`sidebar-switch ${isCrmEnabled ? 'is-on' : ''}`}
                                                             aria-pressed={isCrmEnabled}
+                                                        >
+                                                            <span className="sidebar-switch-thumb" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Kiểm soát đối soát DMS khi TVBH gửi XHĐ */}
+                                                    <div className="sidebar-toggle-row">
+                                                        <div className="sidebar-toggle-copy">
+                                                            <span className="sidebar-toggle-label">So sánh DMS khi gửi XHĐ</span>
+                                                            <span className="sidebar-toggle-sub">
+                                                                {isDmsCompareXhdEnabled ? 'Đang bật đối soát' : 'Đang tắt (miễn đối soát)'}
+                                                            </span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleToggleDmsCompareXhdGlobal}
+                                                            disabled={isTogglingDmsCompareXhd}
+                                                            className={`sidebar-switch ${isDmsCompareXhdEnabled ? 'is-on' : ''}`}
+                                                            aria-pressed={isDmsCompareXhdEnabled}
+                                                            title="Bật/Tắt kiểm soát so sánh cấu hình xe với VinFast DMS khi TVBH gửi yêu cầu xuất hóa đơn"
                                                         >
                                                             <span className="sidebar-switch-thumb" />
                                                         </button>
