@@ -428,7 +428,7 @@ export const FacetedStockCard: React.FC<FacetedStockCardProps> = ({
                     lat={telemetry.lat}
                     lng={telemetry.lng}
                     vin={vehicle.VIN}
-                    model={vehicle["Dòng xe"]}
+                    vehicleName={vehicle["Dòng xe"]}
                 />
             )}
         </article>

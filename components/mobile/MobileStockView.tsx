@@ -53,6 +53,7 @@ interface MobileStockViewProps {
   processingVin?: string | null;
   allOrders?: Order[];
   forcedSearch?: string;
+  onClearForcedSearch?: () => void;
   isReferenceAccount?: boolean;
   onBack: () => void;
 }
@@ -205,6 +206,7 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
   onOpenExtensionModal,
   allOrders = [],
   forcedSearch = '',
+  onClearForcedSearch,
   isReferenceAccount = false,
   onBack,
 }) => {
@@ -514,7 +516,8 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
     setSelectedStatus('all');
     setSelectedWarehouse('all');
     setSearchTerm('');
-  }, []);
+    onClearForcedSearch?.();
+  }, [onClearForcedSearch]);
 
   return (
     <div
@@ -765,7 +768,10 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
             />
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm('')}
+                onClick={() => {
+                  setSearchTerm('');
+                  onClearForcedSearch?.();
+                }}
                 className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 active:scale-90"
               >
                 <X size={12} />

@@ -1,12 +1,12 @@
 import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { StockVehicle, StockSortConfig, Order, AdminSubView } from '../types';
+import { StockVehicle, Order, AdminSubView } from '../types';
 import CarImage from './ui/CarImage';
 import { includesNormalized } from '../utils/stringUtils';
 import AdminCarEditModal from './modals/AdminCarEditModal';
 import { SwapCarModal } from './modals/SwapCarModal';
 import { autoSyncCyberLocationsIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
 import DmsRadarResultModal, { DmsRadarScanResult } from './modals/DmsRadarResultModal';
-import { getExteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
+import { getExteriorSwatchColor } from '../utils/styleUtils';
 import './stock/faceted-stock.css';
 import { preloadRequestForm } from './modals/CreateRequestModal';
 
@@ -74,13 +74,13 @@ const StockView: React.FC<StockViewProps> = ({
     onOpenExtensionModal,
     processingVin,
     allOrders,
-    showOrderInAdmin,
-    showAdminTab,
+    showOrderInAdmin: _showOrderInAdmin,
+    showAdminTab: _showAdminTab,
     forcedSearch,
     onClearForcedSearch,
     queuedVins,
     canHoldMore,
-    onNavigateToInquiry,
+    onNavigateToInquiry: _onNavigateToInquiry,
     onViewCarOnMap: _onViewCarOnMap,
     isReferenceAccount
 }) => {

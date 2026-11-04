@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
-import InlinePolicyPicker from '../ui/InlinePolicyPicker';
-import Button from '../ui/Button';
 import './create-request-sheet.css';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
@@ -964,8 +962,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         let configGuide = '';
         if (car && cyberContractStatus.found) {
             if (carModelCode && cyberModelCode && carModelCode !== cyberModelCode) {
-                const expShow = carModelCode || car['Dòng xe'];
-                const cybShow = cyberModelCode || cyberContractStatus.ten_kx;
+                const expShow = carModelCode || car['Dòng xe'] || '';
+                const cybShow = cyberModelCode || cyberContractStatus.ten_kx || '';
                 configLabel = 'Lệch Dòng xe';
                 wrongVal = cybShow;
                 rightVal = expShow;
