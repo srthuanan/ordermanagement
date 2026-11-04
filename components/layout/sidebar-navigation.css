@@ -1,4 +1,5 @@
-.app-desktop-sidebar-shell {
+/* Keep the desktop layout above Tailwind utilities regardless of stylesheet order. */
+.app-desktop-sidebar-shell.app-desktop-sidebar-shell {
     display: grid;
     grid-template-columns: 64px minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) auto;
@@ -13,7 +14,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .app-desktop-sidebar-shell > .app-announcement-banner { grid-area: announcement; }
-.app-sidebar-navigation {
+.app-sidebar-navigation.app-sidebar-navigation {
     grid-area: sidebar;
     position: relative;
     top: auto;
@@ -247,5 +248,5 @@
 }
 .app-sidebar-navigation button:focus-visible { outline: 2px solid #8cb9fa; outline-offset: 2px; }
 .app-sidebar-navigation #admin-portal-target:empty, .app-sidebar-navigation .app-navigation-admin:empty { display: none; }
-@media (max-height: 800px) { .app-sidebar-navigation { padding-top: 14px; } .app-sidebar-navigation .app-navigation-brand { margin-bottom: 14px; } .app-sidebar-navigation .app-main-navigation { gap: 4px; } .app-sidebar-navigation .app-main-navigation > button { height: 38px; min-height: 38px; } .app-sidebar-navigation .app-navigation-utilities { gap: 5px; padding-top: 9px; margin-top: 9px; } .app-sidebar-navigation .app-navigation-controls, .app-sidebar-navigation .app-navigation-admin { gap: 4px; } }
+@media (max-height: 800px) { .app-sidebar-navigation.app-sidebar-navigation { padding-top: 14px; } .app-sidebar-navigation .app-navigation-brand { margin-bottom: 14px; } .app-sidebar-navigation .app-main-navigation { gap: 4px; } .app-sidebar-navigation .app-main-navigation > button { height: 38px; min-height: 38px; } .app-sidebar-navigation .app-navigation-utilities { gap: 5px; padding-top: 9px; margin-top: 9px; } .app-sidebar-navigation .app-navigation-controls, .app-sidebar-navigation .app-navigation-admin { gap: 4px; } }
 @media (prefers-reduced-motion: reduce) { .app-sidebar-navigation * { transition: none !important; } }
