@@ -219,7 +219,7 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                                         label="Hợp đồng mua bán (Mới)" 
                                         onFileSelect={handleContractFileSelect} 
                                         accept=".pdf,image/*" 
-                                        disableCompression={true} 
+                                        disableCompression={false} 
                                         showPreview={false} 
                                         className="flex flex-col h-full"
                                     />
@@ -228,7 +228,7 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                                         label="Đề nghị XHD (Mới)" 
                                         onFileSelect={handleProposalFileSelect} 
                                         accept=".pdf,image/*" 
-                                        disableCompression={true} 
+                                        disableCompression={false} 
                                         showPreview={false} 
                                         className="flex flex-col h-full"
                                     />
@@ -252,4 +252,4 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
 };
 
 export default SupplementaryFileModal;
-
+

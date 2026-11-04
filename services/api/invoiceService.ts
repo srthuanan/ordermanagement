@@ -40,9 +40,41 @@ export const requestInvoice = async (
     const custSafe = orderData?.ten_khach_hang ? sanitize(orderData.ten_khach_hang) : 'KH';
     const cPath = `${orderNumber}/HDMB_${custSafe}_${timestamp}.${contractFile.name.split('.').pop()}`;
     const pPath = `${orderNumber}/DNXHD_${custSafe}_${timestamp}.${proposalFile.name.split('.').pop()}`;
-    const [cUp, pUp] = await Promise.all([supabase.storage.from('yeucauxhd-files').upload(cPath, contractFile, { upsert: true }), supabase.storage.from('yeucauxhd-files').upload(pPath, proposalFile, { upsert: true })]);
-    if (cUp.error) throw new Error(`Lỗi upload Hợp đồng: ${cUp.error.message}`);
-    if (pUp.error) throw new Error(`Lỗi upload Đề nghị XHĐ: ${pUp.error.message}`);
+    let uploadContract = contractFile;
+    let uploadProposal = proposalFile;
+    if (contractFile && contractFile.size > 4 * 1024 * 1024) {
+        try {
+            const { compressFileIfNeeded } = await import('../ocrService');
+            uploadContract = await compressFileIfNeeded(contractFile);
+        } catch (e) {
+            console.warn('[requestInvoice] Nén hợp đồng fallback lỗi:', e);
+        }
+    }
+    if (proposalFile && proposalFile.size > 4 * 1024 * 1024) {
+        try {
+            const { compressFileIfNeeded } = await import('../ocrService');
+            uploadProposal = await compressFileIfNeeded(proposalFile);
+        } catch (e) {
+            console.warn('[requestInvoice] Nén đề nghị XHĐ fallback lỗi:', e);
+        }
+    }
+
+    const [cUp, pUp] = await Promise.all([
+        supabase.storage.from('yeucauxhd-files').upload(cPath, uploadContract, { upsert: true }),
+        supabase.storage.from('yeucauxhd-files').upload(pPath, uploadProposal, { upsert: true })
+    ]);
+    if (cUp.error) {
+        const isExceeded = cUp.error.message?.includes('exceeded the maximum allowed size');
+        throw new Error(isExceeded
+            ? `File Hợp đồng (${(uploadContract.size / (1024 * 1024)).toFixed(1)}MB) quá lớn so với giới hạn máy chủ. Vui lòng nén file PDF xuống dưới 5MB rồi thử lại.`
+            : `Lỗi upload Hợp đồng: ${cUp.error.message}`);
+    }
+    if (pUp.error) {
+        const isExceeded = pUp.error.message?.includes('exceeded the maximum allowed size');
+        throw new Error(isExceeded
+            ? `File Đề nghị XHĐ (${(uploadProposal.size / (1024 * 1024)).toFixed(1)}MB) quá lớn so với giới hạn máy chủ. Vui lòng nén file PDF xuống dưới 5MB rồi thử lại.`
+            : `Lỗi upload Đề nghị XHĐ: ${pUp.error.message}`);
+    }
     const { data: cUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(cPath);
     const { data: pUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(pPath);
     

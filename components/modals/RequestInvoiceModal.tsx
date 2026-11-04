@@ -140,7 +140,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 setIsDmsEnabled(enabled);
                 localStorage.setItem('dms_compare_xhd_enabled', String(enabled));
             }
-        }).catch(() => {});
+        }).catch(() => { });
     }, [isDmsCompareEnabled]);
 
     const [matchedCar, setMatchedCar] = useState<any>(() => {
@@ -1509,7 +1509,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     onFileSelect={handleContractFileSelect}
                                     required
                                     accept=".pdf,application/pdf"
-                                    disableCompression={true}
+                                    disableCompression={false}
                                     showPreview={false}
                                     variant="slot"
                                 />
@@ -1519,7 +1519,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     onFileSelect={handleProposalFileSelect}
                                     required
                                     accept=".pdf,application/pdf"
-                                    disableCompression={true}
+                                    disableCompression={false}
                                     showPreview={false}
                                     variant="slot"
                                 />
@@ -1833,8 +1833,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         <div className="flex justify-between items-center pt-0.5">
                             <span className="text-slate-500 font-medium">Trạng thái hợp đồng:</span>
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${contractWarning.found
-                                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                    : 'bg-rose-100 text-rose-900 border border-rose-300'
+                                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                : 'bg-rose-100 text-rose-900 border border-rose-300'
                                 }`}>
                                 <i className={`fas ${contractWarning.found ? 'fa-clock' : 'fa-circle-xmark'} text-[10px]`}></i>
                                 {contractWarning.ten_post || (contractWarning.found ? 'Hợp đồng chờ duyệt' : 'Chưa có hợp đồng')}
