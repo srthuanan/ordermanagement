@@ -11,6 +11,15 @@ electron
 logs
 scratch
 scratch_archive.zip
+output
+output/**
+docs
+docs/**
+pictures
+pictures/**
+backend-gas
+gas-showroom
+vf-kim-son-trang-dai
 *.xlsx
 *.zip
 *.bat

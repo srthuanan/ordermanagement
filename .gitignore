@@ -45,6 +45,7 @@ scratch/
 mobile_ui_test_results/
 *.part
 vite.config.ts.timestamp-*
+output/
 
 # Temp data files
 *.xlsx
