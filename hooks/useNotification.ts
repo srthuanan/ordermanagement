@@ -154,12 +154,12 @@ export const useNotification = (showToast: (title: string, message: string, type
         }
     }, [unreadCount, notifications, showToast]);
 
-    const toggleNotificationPanel = () => {
+    const toggleNotificationPanel = (open?: boolean) => {
         setIsNotificationPanelOpen(prev => {
-            const next = !prev;
+            const next = open ?? !prev;
             if (next === true && unreadCount > 0) {
                 // Tự động đánh dấu đã đọc khi mở bảng thông báo
-                markAllAsReadInternal();
+                // Giữ nguyên trạng thái chưa đọc để phân biệt trực quan; chỉ đánh dấu đã đọc khi bấm vào từng thông báo hoặc bấm "Đọc tất cả"
             }
             return next;
         });

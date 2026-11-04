@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { X, AlertCircle } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 
 interface DataRecoveryModalProps {
@@ -31,8 +32,18 @@ const tableOptions = [
 const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, showToast }) => {
     const [selectedTable, setSelectedTable] = useState<string>('donhang');
     const [fileUrl, setFileUrl] = useState<string>('');
+    const [fileName, setFileName] = useState<string>('');
     const [isRestoring, setIsRestoring] = useState(false);
     const [stats, setStats] = useState<{ total: number; success: number }>({ total: 0, success: 0 });
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !isRestoring) onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, isRestoring, onClose]);
 
     if (!isOpen) return null;
 
@@ -40,6 +51,7 @@ const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, 
         const file = e.target.files?.[0];
         if (!file) return;
 
+        setFileName(file.name);
         const reader = new FileReader();
         reader.onload = (event) => {
             const content = event.target?.result as string;
@@ -48,7 +60,8 @@ const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, 
         reader.readAsText(file);
     };
 
-    const handleRestore = async () => {
+    const handleRestore = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!fileUrl) {
             showToast('Lỗi', 'Vui lòng chọn file JSON để khôi phục.', 'error');
             return;
@@ -61,7 +74,7 @@ const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, 
                 showToast('Lỗi', 'File JSON trống hoặc không hợp lệ.', 'error');
                 return;
             }
-        } catch (e) {
+        } catch (err) {
             showToast('Lỗi', 'Định dạng file không phải JSON chuẩn.', 'error');
             return;
         }
@@ -77,7 +90,7 @@ const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, 
             for (let i = 0; i < parsedData.length; i += chunkSize) {
                 const chunk = parsedData.slice(i, i + chunkSize);
                 const { error } = await supabase.from(selectedTable).upsert(chunk);
-                
+
                 if (error) {
                     console.error("Restore Error Chunk:", error);
                     throw new Error(error.message);
@@ -87,8 +100,7 @@ const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, 
             }
 
             showToast('Hoàn tất!', `Đã khôi phục thành công ${successCount} dòng vào bảng ${selectedTable}`, 'success', 5000);
-            setTimeout(() => onClose(), 2000);
-
+            setTimeout(() => onClose(), 1200);
         } catch (error: any) {
             showToast('Lỗi Khôi Phục', error.message || 'Có lỗi xảy ra khi nạp dữ liệu.', 'error', 5000);
         } finally {
@@ -97,89 +109,279 @@ const DataRecoveryModal: React.FC<DataRecoveryModalProps> = ({ isOpen, onClose, 
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-                <div className="bg-red-50 p-4 border-b border-red-100 flex justify-between items-center">
-                    <div className="flex items-center gap-3 text-red-600">
-                        <i className="fas fa-database text-xl"></i>
-                        <h3 className="font-bold text-lg">Khôi Phục Dữ Liệu (Restore)</h3>
+        <div
+            className="dr-sheet"
+            onClick={(e) => {
+                if (e.target === e.currentTarget && !isRestoring) { window.dispatchEvent(new CustomEvent('close-all-sheets')); onClose(); }
+            }}
+        >
+            <style>{`
+                .dr-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .dr-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .dr-sheet-panel {
+                    width: clamp(320px, 28vw, 420px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: drSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes drSlideInLeft {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+                .dr-header {
+                    padding: 22px 20px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .dr-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .dr-subtitle {
+                    margin: 4px 0 0;
+                    font-size: 11.5px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .dr-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+                .dr-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+                .dr-body {
+                    flex: 1;
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding: 18px 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+                .dr-warn {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 8px;
+                    padding: 10px 12px;
+                    border: 1px solid #fecaca;
+                    border-radius: 8px;
+                    background: #fef2f2;
+                    color: #b91c1c;
+                    font-size: 11.5px;
+                    font-weight: 500;
+                    line-height: 1.45;
+                }
+                .dr-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                .dr-label {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #475569;
+                }
+                .dr-select {
+                    width: 100%;
+                    height: 36px;
+                    padding: 0 11px;
+                    border: 1px solid #dbe2ea;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    font-size: 12.5px;
+                    font-weight: 500;
+                    color: #17263b;
+                    outline: none;
+                }
+                .dr-select:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+                }
+                .dr-dropzone {
+                    border: 1px dashed #cbd5e1;
+                    border-radius: 8px;
+                    padding: 16px 12px;
+                    text-align: center;
+                    background: #f8fafc;
+                    cursor: pointer;
+                    transition: border-color 140ms ease, background-color 140ms ease;
+                }
+                .dr-dropzone:hover {
+                    border-color: #94a3b8;
+                    background: #f1f5f9;
+                }
+                .dr-progress-box {
+                    padding: 11px 12px;
+                    border: 1px solid #e9edf2;
+                    border-radius: 8px;
+                    background: #f8fafc;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .dr-footer {
+                    padding: 12px 20px;
+                    border-top: 1px solid #eef2f6;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 8px;
+                }
+                .dr-btn-cancel {
+                    height: 34px;
+                    padding: 0 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                .dr-btn-cancel:hover:not(:disabled) {
+                    background: #f8fafc;
+                    color: #17263b;
+                }
+                .dr-btn-submit {
+                    height: 34px;
+                    padding: 0 16px;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #dc2626;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .dr-btn-submit:hover:not(:disabled) {
+                    background: #b91c1c;
+                }
+                .dr-btn-submit:disabled, .dr-btn-cancel:disabled {
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+            `}</style>
+
+            <form onSubmit={handleRestore} className="dr-sheet-panel" onClick={e => e.stopPropagation()}>
+                <header className="dr-header">
+                    <div>
+                        <h3 className="dr-title">Khôi phục CSDL lõi</h3>
+                        <p className="dr-subtitle">Nạp dữ liệu từ tệp sao lưu JSON</p>
                     </div>
-                    <button onClick={onClose} disabled={isRestoring} className="p-2 hover:bg-red-100 rounded-xl transition-colors text-red-400 hover:text-red-600">
-                        <i className="fas fa-times"></i>
+                    <button type="button" onClick={onClose} disabled={isRestoring} className="dr-close-btn" aria-label="Đóng">
+                        <X size={16} strokeWidth={2} />
                     </button>
-                </div>
-                
-                <div className="p-5 space-y-4">
-                    <div className="bg-amber-50 text-amber-700 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 border border-amber-200/50">
-                        <i className="fas fa-exclamation-triangle mt-0.5 text-base"></i>
-                        Cảnh báo: Tính năng này sẽ GHI ĐÈ dữ liệu đang có trên hệ thống bằng danh sách từ file Backup cũ.
+                </header>
+
+                <main className="dr-body">
+                    <div className="dr-warn">
+                        <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                        <span>Tính năng này sẽ ghi đè dữ liệu hiện tại của bảng được chọn bằng danh sách từ tệp sao lưu.</span>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                            1. Bảng cần khôi phục
-                        </label>
-                        <div className="relative">
-                            <select 
-                                value={selectedTable}
-                                onChange={e => setSelectedTable(e.target.value)}
-                                disabled={isRestoring}
-                                className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
-                            >
-                                {tableOptions.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                            <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                        </div>
+                    <div className="dr-field">
+                        <label className="dr-label">Bảng dữ liệu cần khôi phục</label>
+                        <select
+                            value={selectedTable}
+                            onChange={e => setSelectedTable(e.target.value)}
+                            disabled={isRestoring}
+                            className="dr-select"
+                        >
+                            {tableOptions.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                            2. Tải File Backup Lên (File .JSON)
-                        </label>
-                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors">
-                            <input 
-                                type="file" 
+                    <div className="dr-field">
+                        <label className="dr-label">Tệp sao lưu (.json)</label>
+                        <label className="dr-dropzone">
+                            <input
+                                type="file"
                                 accept=".json"
                                 onChange={handleFileChange}
                                 disabled={isRestoring}
-                                className="text-sm font-medium text-slate-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer" 
+                                className="hidden"
                             />
-                        </div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: '#17263b' }}>
+                                {fileName || 'Bấm để chọn tệp sao lưu .json'}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#7b879a', marginTop: 3 }}>
+                                Định dạng mảng JSON chuẩn từ hệ thống Backup
+                            </div>
+                        </label>
                     </div>
 
                     {isRestoring && (
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col gap-2">
-                            <div className="flex justify-between text-xs font-bold text-slate-600">
-                                <span>Tiến độ nạp:</span>
-                                <span>{stats.success} / {stats.total} dòng</span>
+                        <div className="dr-progress-box">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 600, color: '#475569' }}>
+                                <span>Tiến độ nạp</span>
+                                <span>{stats.success} / {stats.total} bản ghi</span>
                             </div>
-                            <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                                <div className="bg-red-500 h-full transition-all duration-300" style={{ width: `${stats.total > 0 ? (stats.success / stats.total) * 100 : 0}%` }}></div>
+                            <div style={{ width: '100%', height: 6, background: '#e2e8f0', borderRadius: 999, overflow: 'hidden' }}>
+                                <div
+                                    style={{
+                                        height: '100%',
+                                        background: '#dc2626',
+                                        width: `${stats.total > 0 ? (stats.success / stats.total) * 100 : 0}%`,
+                                        transition: 'width 200ms ease'
+                                    }}
+                                />
                             </div>
                         </div>
                     )}
-                </div>
+                </main>
 
-                <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
-                    <button 
-                        onClick={onClose}
-                        disabled={isRestoring}
-                        className="px-5 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
-                    >
-                        Hủy
+                <footer className="dr-footer">
+                    <button type="button" onClick={onClose} disabled={isRestoring} className="dr-btn-cancel">
+                        Hủy bỏ
                     </button>
-                    <button 
-                        onClick={handleRestore}
-                        disabled={isRestoring}
-                        className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all shadow-md shadow-red-500/20 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 min-w-[130px]"
-                    >
-                        {isRestoring ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-hammer"></i>}
-                        {isRestoring ? `Đang bơm (${Math.round((stats.success/stats.total||0)*100)}%)` : 'Bắt đầu nạp đè'}
+                    <button type="submit" disabled={isRestoring || !fileUrl} className="dr-btn-submit">
+                        {isRestoring ? `Đang nạp (${Math.round((stats.success / (stats.total || 1)) * 100)}%)` : 'Bắt đầu khôi phục'}
                     </button>
-                </div>
-            </div>
+                </footer>
+            </form>
         </div>
     );
 };

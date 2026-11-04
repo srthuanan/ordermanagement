@@ -27,14 +27,14 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
     const isNight = useNightMode();
     const isSelected = selectedOrderId === order["Số đơn hàng"];
 
-    // Status color mapping
+    // Status color mapping for left accent bar
     const getStatusAccent = () => {
         const s = statusText.toLowerCase();
-        if (s.includes('đã xuất') || s.includes('hoàn thành')) return { dot: 'bg-emerald-400', ring: 'ring-emerald-400/30', glow: 'shadow-emerald-100' };
-        if (s.includes('đã ghép') || s.includes('đã phê duyệt')) return { dot: 'bg-sky-400', ring: 'ring-sky-400/30', glow: 'shadow-sky-100' };
-        if (s.includes('chờ') || s.includes('pending')) return { dot: 'bg-amber-400', ring: 'ring-amber-400/30', glow: 'shadow-amber-100' };
-        if (s.includes('hủy') || s.includes('từ chối')) return { dot: 'bg-rose-400', ring: 'ring-rose-400/30', glow: 'shadow-rose-100' };
-        return { dot: 'bg-slate-300', ring: 'ring-slate-300/30', glow: 'shadow-slate-100' };
+        if (s.includes('đã xuất') || s.includes('hoàn thành')) return { bar: 'bg-[#28805f]' };
+        if (s.includes('đã ghép') || s.includes('đã phê duyệt')) return { bar: 'bg-[#3375cb]' };
+        if (s.includes('chờ') || s.includes('pending')) return { bar: 'bg-[#e59b2b]' };
+        if (s.includes('hủy') || s.includes('từ chối')) return { bar: 'bg-[#d58e95]' };
+        return { bar: 'bg-[#cdd7e5]' };
     };
 
     const accent = getStatusAccent();
@@ -60,8 +60,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
             vcStatus.includes('đã cấp') || vcStatus.includes('đã có vc')
         );
 
-        const btnCls = `w-6 h-6 flex items-center justify-center rounded-md transition-all ${
-            isNight ? 'bg-slate-700 text-slate-300 hover:bg-sky-600 hover:text-white' : 'bg-slate-100 hover:bg-sky-500 hover:text-white text-slate-500'
+        const btnCls = `w-6 h-6 flex items-center justify-center rounded-lg transition-all border ${
+            isNight
+                ? 'bg-slate-700/80 border-slate-600 text-slate-300 hover:bg-[#3375cb] hover:text-white hover:border-[#3375cb]'
+                : 'bg-[#f1f5fa] border-[#e6edf6] text-[#7a8da7] hover:bg-[#eaf1fb] hover:text-[#3375cb] hover:border-[#c8dcf9]'
         }`;
 
         if (!hasInvoiceData && !!order.VIN) {
@@ -91,19 +93,22 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
     return (
         <div
             onClick={() => onViewDetails(order)}
-            className={`group relative flex items-stretch gap-0 rounded-2xl border cursor-pointer transition-all duration-300 active:scale-[0.99] overflow-hidden select-none ${
+            data-selected={isSelected}
+            className={`ios-order-card group relative flex items-stretch rounded-[12px] border cursor-pointer transition-all duration-200 active:scale-[0.99] overflow-hidden select-none ${
                 isSelected
                     ? (isNight
-                        ? 'bg-sky-950/80 border-sky-400 shadow-[0_10px_25px_-5px_rgba(14,165,233,0.3),inset_0_1px_1px_rgba(255,255,255,0.15)] ring-2 ring-sky-400/50 -translate-y-0.5'
-                        : 'bg-gradient-to-r from-sky-50 via-white to-sky-50/70 border-sky-400 shadow-[0_10px_25px_-4px_rgba(14,165,233,0.22),inset_0_1px_2px_rgba(255,255,255,1)] ring-2 ring-sky-400/40 -translate-y-0.5')
+                        ? 'bg-blue-950/40 border-blue-500/80 shadow-[0_2px_12px_-2px_rgba(51,117,203,0.3)] ring-1 ring-blue-500/40'
+                        : 'bg-[#eaf2ff] border-[#c8dcf9] shadow-[0_2px_10px_-2px_rgba(40,115,214,0.18),inset_0_0_0_0.5px_#c8dcf9]')
                     : (isNight
-                        ? 'bg-slate-800/90 border-slate-700/80 hover:border-slate-500 hover:bg-slate-800 hover:-translate-y-0.5 hover:shadow-lg'
-                        : 'bg-white/95 backdrop-blur-xl border-slate-200/90 shadow-[0_3px_10px_-2px_rgba(15,23,42,0.05),inset_0_1px_1px_rgba(255,255,255,1)] hover:border-sky-300/80 hover:bg-white hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50')
+                        ? 'bg-slate-800/80 border-slate-700/60 hover:bg-slate-800 hover:border-slate-600 shadow-[0_1px_3px_rgba(0,0,0,0.2)]'
+                        : 'bg-[#ffffff] border-[#e9eef5] hover:bg-[#f7fafe] hover:border-[#c6d9f3] shadow-[0_1px_3px_rgba(25,50,79,0.03)]')
             }`}
         >
-            {/* Left accent bar with status color */}
-            <div className={`w-[4px] flex-shrink-0 self-stretch rounded-l-2xl transition-all duration-300 ${
-                isSelected ? 'bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.8)]' : `${accent.dot} opacity-70 group-hover:opacity-100`
+            {/* Left accent bar matching the sheet palette */}
+            <div className={`w-[3.5px] flex-shrink-0 self-stretch rounded-l-[12px] transition-all duration-200 ${
+                isSelected
+                    ? 'bg-[#3375cb] shadow-[0_0_6px_rgba(51,117,203,0.6)]'
+                    : `${accent.bar} opacity-60 group-hover:opacity-100`
             }`} />
 
             {/* Main content */}
@@ -115,33 +120,39 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                     {/* Customer name */}
                     <MarqueeText
                         text={copiedLabel === 'customer' ? '✓ Đã sao chép' : (order["Tên khách hàng"] || '—')}
-                        className={`text-[13px] font-extrabold leading-tight cursor-pointer transition-colors mb-1 uppercase tracking-tight ${
+                        className={`text-[13px] leading-snug cursor-pointer transition-colors mb-0.5 truncate uppercase ${
                             copiedLabel === 'customer'
-                                ? 'text-emerald-500'
-                                : (isNight ? 'text-slate-100 hover:text-cyan-300' : 'text-slate-800 hover:text-sky-600')
+                                ? 'text-emerald-500 font-semibold'
+                                : isSelected
+                                    ? (isNight ? 'text-blue-300 font-bold' : 'text-[#3375cb] font-bold')
+                                    : (isNight ? 'text-slate-100 font-semibold group-hover:text-cyan-300' : 'text-[#304560] font-semibold group-hover:text-[#3375cb]')
                         }`}
                         onClick={(e) => handleCopy(e, order["Tên khách hàng"], 'customer')}
                         title={order["Tên khách hàng"]}
                     />
 
                     {/* Vehicle + color row */}
-                    <div className="flex items-center gap-1.5">
-                        <span className={`text-[10.5px] font-semibold truncate ${isNight ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                        <span className={`truncate ${
+                            isSelected
+                                ? (isNight ? 'text-blue-300/80 font-medium' : 'text-[#527fb7] font-medium')
+                                : (isNight ? 'text-slate-400 font-normal' : 'text-[#7a8da7] font-normal')
+                        }`}>
                             {order["Dòng xe"]}{order["Phiên bản"] ? ` · ${order["Phiên bản"]}` : ''}
                         </span>
                         {order["Ngoại thất"] && (
                             <>
-                                <span className={`w-1 h-1 rounded-full flex-shrink-0 ${isNight ? 'bg-slate-600' : 'bg-slate-300'}`} />
+                                <span className={`w-1 h-1 rounded-full flex-shrink-0 ${isNight ? 'bg-slate-600' : 'bg-[#cdd7e5]'}`} />
                                 <span
-                                    className="w-2.5 h-2.5 rounded-full border border-black/15 flex-shrink-0 shadow-xs"
+                                    className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0 shadow-2xs"
                                     style={getBackgroundColorStyle(order['Ngoại thất'])}
                                     title={order["Ngoại thất"]}
                                 />
                             </>
                         )}
                         {order.is_flex_match && (
-                            <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-indigo-600 bg-indigo-50 border border-indigo-200/60 px-1.5 py-0.5 rounded-md" title={`Màu ngoại thất phụ: ${(order.ngoai_that_flex || []).join(', ') || 'Tất cả'}`}>
-                                <i className="fas fa-random text-[8px]"></i> Flex
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-[#3375cb] bg-[#eaf2ff] border border-[#c8dcf9] px-1.5 py-0.2 rounded-md" title={`Màu ngoại thất phụ: ${(order.ngoai_that_flex || []).join(', ') || 'Tất cả'}`}>
+                                <i className="fas fa-random text-[7.5px]"></i> Flex
                             </span>
                         )}
                         {(() => {
@@ -149,8 +160,8 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                             const hasCoc = Boolean(coc || (order['Ghi chú Admin'] || order.ghi_chu_admin || '').toString().includes('COC về'));
                             if (!hasCoc) return null;
                             return (
-                                <span className="inline-flex items-center gap-1 text-[8.5px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md shadow-2xs" title={coc ? `Hồ sơ COC về ngày ${coc}` : 'Đã về COC'}>
-                                    <i className="fas fa-certificate text-[7.5px] text-emerald-600"></i> COC
+                                <span className="inline-flex items-center gap-0.5 text-[8.5px] font-semibold text-[#28805f] bg-[#edf7f2] border border-[#cce8dc] px-1.5 py-0.2 rounded-md" title={coc ? `Hồ sơ COC về ngày ${coc}` : 'Đã về COC'}>
+                                    <i className="fas fa-certificate text-[7px] text-[#28805f]"></i> COC
                                 </span>
                             );
                         })()}
@@ -160,7 +171,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                 {/* Right section: status + admin buttons */}
                 <div className="flex flex-col items-end justify-between gap-1.5 flex-shrink-0 self-stretch py-0.5">
                     {isProcessing ? (
-                        <div className={`flex items-center gap-1 text-[10px] font-semibold ${isNight ? 'text-sky-400' : 'text-sky-500'}`}>
+                        <div className={`flex items-center gap-1 text-[10px] font-medium ${isNight ? 'text-sky-400' : 'text-[#3375cb]'}`}>
                             <i className="fas fa-spinner fa-spin text-[9px]"></i>
                             <span>Đang xử lý</span>
                         </div>

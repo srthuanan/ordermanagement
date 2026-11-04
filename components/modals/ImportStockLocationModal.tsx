@@ -1,4 +1,5 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { X } from 'lucide-react';
 import * as xlsx from 'xlsx';
 import { StockVehicle } from '../../types';
 import { bulkUpdateVehicleLocations, saveDeliveryPlanToStorage, DeliveryPlanItem } from '../../services/api/stockService';
@@ -45,7 +46,6 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
     const [totalExcelVinsCount, setTotalExcelVinsCount] = useState<number>(0);
     const [dragActive, setDragActive] = useState<boolean>(false);
 
-    // Map of current stock by uppercase VIN
     const stockMap = useMemo(() => {
         const map = new Map<string, StockVehicle>();
         stockVehicles.forEach(v => {
@@ -54,6 +54,15 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
         });
         return map;
     }, [stockVehicles]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !isUpdating) onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, isUpdating, onClose]);
 
     if (!isOpen) return null;
 
@@ -65,7 +74,6 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
             const sheet = wb.Sheets[sheetName];
             const rawRows: any[][] = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-            // Find header row containing VIN or "Số khung"
             let headerIdx = -1;
             let vinCol = -1;
             let khoCol = -1;
@@ -88,15 +96,11 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
                 });
 
                 if (headerIdx !== -1) {
-                    // Identify other columns in this row
                     row.forEach((cell, cIdx) => {
                         const str = String(cell || '').trim().toLowerCase();
-                        
-                        // Ignore date columns for location
                         if (str.includes('ngày') || str.includes('ngay') || str.includes('thời gian') || str.includes('thoi gian')) {
                             return;
                         }
-
                         if (str.includes('số máy') || str.includes('so may') || str.includes('số động cơ') || str.includes('so dong co') || str === 'động cơ') {
                             soMayCol = cIdx;
                         } else if (str.includes('mã xhđ') || str.includes('ma xhd') || str.includes('mã dms') || str.includes('ma dms') || str.includes('mã xuất')) {
@@ -139,10 +143,7 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
                 const rawDongXe = modelCol !== -1 && r[modelCol] ? String(r[modelCol]).trim() : '';
                 const rawPhienBan = verCol !== -1 && r[verCol] ? String(r[verCol]).trim() : '';
                 const rawMau = colorCol !== -1 && r[colorCol] ? String(r[colorCol]).trim() : '';
-                
-                // Quy tắc: Không dùng cột O (Tên SR phụ trách).
-                // Nếu cột N có giá trị -> formatShortWarehouseName(rawKho).
-                // Nếu cột N trống -> Đang vận tải.
+
                 const targetLoc = rawKho ? formatShortWarehouseName(rawKho) : 'Đang vận tải';
 
                 allPlanItems.push({
@@ -162,8 +163,6 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
                     const currDms = (stockCar['Mã DMS'] || (stockCar as any).ma_dms || '').trim();
                     const currSoMay = (stockCar['Số máy'] || (stockCar as any).so_may || '').trim();
 
-                    // Ưu tiên bảo vệ: Nếu xe trong kho đã có Mã DMS hoặc Số máy (từ DMS live),
-                    // ta giữ nguyên dữ liệu thực tế đó, chỉ bổ sung nếu trong kho đang trống.
                     const newDmsVal = currDms || rawDms;
                     const newSoMayVal = currSoMay || rawSoMay;
 
@@ -252,11 +251,7 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
         setMatchedRows(prev => prev.map(item => {
             if (item.vin === vin) {
                 const isChanged = val.trim() !== item.currentLocation || item.newDms.trim() !== item.currentDms || item.newSoMay.trim() !== item.currentSoMay;
-                return {
-                    ...item,
-                    newLocation: val,
-                    isChanged
-                };
+                return { ...item, newLocation: val, isChanged };
             }
             return item;
         }));
@@ -267,11 +262,7 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
         setMatchedRows(prev => prev.map(item => {
             if (item.vin === vin) {
                 const isChanged = val.trim() !== item.currentDms || item.newLocation.trim() !== item.currentLocation || item.newSoMay.trim() !== item.currentSoMay;
-                return {
-                    ...item,
-                    newDms: val,
-                    isChanged
-                };
+                return { ...item, newDms: val, isChanged };
             }
             return item;
         }));
@@ -282,11 +273,7 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
         setMatchedRows(prev => prev.map(item => {
             if (item.vin === vin) {
                 const isChanged = val.trim() !== item.currentSoMay || item.newLocation.trim() !== item.currentLocation || item.newDms.trim() !== item.currentDms;
-                return {
-                    ...item,
-                    newSoMay: val,
-                    isChanged
-                };
+                return { ...item, newSoMay: val, isChanged };
             }
             return item;
         }));
@@ -313,7 +300,6 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
 
         setIsUpdating(true);
         try {
-            // 1. Lưu vĩnh viễn toàn bộ file Kế hoạch giao xe vào Supabase (kehoach_giaoxe)
             let savedPlanCount = 0;
             if (planItems.length > 0) {
                 const planRes = await saveDeliveryPlanToStorage(planItems);
@@ -322,7 +308,6 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
                 }
             }
 
-            // 2. Cập nhật các xe đang có trong kho xe
             let updatedStockCount = 0;
             if (validUpdates.length > 0) {
                 const res = await bulkUpdateVehicleLocations(validUpdates);
@@ -331,7 +316,7 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
                 }
             }
 
-            const successMsg = `Đã lưu kế hoạch ${savedPlanCount} xe (và cập nhật ${updatedStockCount} xe trong kho). Khi có xe mới nhập kho, hệ thống sẽ tự động gán vị trí và số máy từ kế hoạch này!`;
+            const successMsg = `Đã lưu kế hoạch ${savedPlanCount} xe (và cập nhật ${updatedStockCount} xe trong kho).`;
             showToast('Lưu kế hoạch & Cập nhật kho thành công', successMsg, 'success');
             onSuccess();
             onClose();
@@ -346,45 +331,238 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
     const changedCount = matchedRows.filter(r => r.isChanged).length;
 
     return (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-emerald-50 via-teal-50 to-white">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200">
-                            <i className="fas fa-file-excel text-lg"></i>
-                        </div>
-                        <div>
-                            <h2 className="text-base font-bold text-slate-800">
-                                Nhập Vị Trí Kho, Mã DMS & Số Máy Từ Excel
-                            </h2>
-                            <p className="text-xs text-slate-500">
-                                Tự động quét VIN trong kho để gán Vị trí kho, Mã DMS (Mã XHĐ) và Số máy từ Kế hoạch nhà máy giao
-                            </p>
-                        </div>
+        <div
+            className="isl-sheet"
+            onClick={(e) => {
+                if (e.target === e.currentTarget && !isUpdating) { window.dispatchEvent(new CustomEvent('close-all-sheets')); onClose(); }
+            }}
+        >
+            <style>{`
+                .isl-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .isl-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .isl-sheet-panel {
+                    width: clamp(540px, 60vw, 860px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: islSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes islSlideInLeft {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+                .isl-header {
+                    padding: 22px 24px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .isl-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .isl-subtitle {
+                    margin: 4px 0 0;
+                    font-size: 11.5px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .isl-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+                .isl-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+                .isl-body {
+                    flex: 1;
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding: 18px 24px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .isl-dropzone {
+                    border: 1px dashed #cbd5e1;
+                    border-radius: 8px;
+                    padding: 20px 16px;
+                    text-align: center;
+                    background: #f8fafc;
+                    cursor: pointer;
+                    transition: border-color 140ms ease, background-color 140ms ease;
+                }
+                .isl-dropzone:hover, .isl-dropzone.is-drag {
+                    border-color: #3b82f6;
+                    background: #eff6ff;
+                }
+                .isl-stats-bar {
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 10px 12px;
+                    border: 1px solid #e9edf2;
+                    border-radius: 8px;
+                    background: #f8fafc;
+                    font-size: 11.5px;
+                    color: #475569;
+                }
+                .isl-table-wrap {
+                    border: 1px solid #e9edf2;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background: #ffffff;
+                }
+                .isl-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12px;
+                    text-align: left;
+                }
+                .isl-table th {
+                    padding: 9px 10px;
+                    background: #f8fafc;
+                    border-bottom: 1px solid #e9edf2;
+                    border-right: 1px solid #eef2f6;
+                    font-size: 10.5px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                    color: #64748b;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                }
+                .isl-table th:last-child {
+                    border-right: 0;
+                }
+                .isl-table td {
+                    padding: 8px 10px;
+                    border-bottom: 1px solid #eef2f6;
+                    border-right: 1px solid #f1f5f9;
+                    color: #17263b;
+                    vertical-align: middle;
+                }
+                .isl-table td:last-child {
+                    border-right: 0;
+                }
+                .isl-table tr:last-child td {
+                    border-bottom: 0;
+                }
+                .isl-cell-input {
+                    width: 100%;
+                    height: 28px;
+                    padding: 0 8px;
+                    border: 1px solid #dbe2ea;
+                    border-radius: 6px;
+                    background: #ffffff;
+                    font-size: 11.5px;
+                    color: #17263b;
+                    outline: none;
+                }
+                .isl-cell-input:focus {
+                    border-color: #3b82f6;
+                }
+                .isl-footer {
+                    padding: 12px 24px;
+                    border-top: 1px solid #eef2f6;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .isl-btn-cancel {
+                    height: 34px;
+                    padding: 0 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                .isl-btn-submit {
+                    height: 34px;
+                    padding: 0 16px;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #17263b;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .isl-btn-submit:disabled, .isl-btn-cancel:disabled {
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+            `}</style>
+
+            <div className="isl-sheet-panel" onClick={e => e.stopPropagation()}>
+                <header className="isl-header">
+                    <div>
+                        <h2 className="isl-title">Nhập vị trí kho từ Excel</h2>
+                        <p className="isl-subtitle">Quét số VIN để gán Vị trí kho, Mã DMS và Số máy từ Kế hoạch nhà máy</p>
                     </div>
                     <button
+                        type="button"
                         onClick={onClose}
                         disabled={isUpdating}
-                        className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                        className="isl-close-btn"
+                        aria-label="Đóng"
                     >
-                        <i className="fas fa-times text-sm"></i>
+                        <X size={16} strokeWidth={2} />
                     </button>
-                </div>
+                </header>
 
-                {/* Body */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                    {/* Upload Drag & Drop Area */}
+                <main className="isl-body">
                     <div
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                            dragActive
-                                ? 'border-emerald-500 bg-emerald-50/50 scale-[0.99]'
-                                : 'border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/20'
-                        }`}
+                        className={`isl-dropzone ${dragActive ? 'is-drag' : ''}`}
                     >
                         <input
                             ref={fileInputRef}
@@ -393,198 +571,130 @@ const ImportStockLocationModal: React.FC<ImportStockLocationModalProps> = ({
                             className="hidden"
                             onChange={handleFileChange}
                         />
-                        <div className="flex flex-col items-center justify-center gap-2">
-                            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
-                                <i className="fas fa-cloud-arrow-up"></i>
-                            </div>
-                            <div className="text-sm font-semibold text-slate-700">
-                                {fileName ? (
-                                    <span className="text-emerald-700 font-bold">📄 {fileName}</span>
-                                ) : (
-                                    <span>Kéo thả file Excel vào đây hoặc <span className="text-emerald-600 underline">bấm để chọn file</span></span>
-                                )}
-                            </div>
-                            <p className="text-xs text-slate-400">
-                                Tự động lấy: <strong>Vị trí kho</strong>, <strong>Mã DMS (Mã XHĐ)</strong> và <strong>Số máy</strong> theo số VIN
-                            </p>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#17263b' }}>
+                            {fileName ? `Tệp đã chọn: ${fileName}` : 'Kéo thả tệp Excel (.xlsx, .xls) vào đây hoặc bấm để chọn tệp'}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#7b879a', marginTop: 4 }}>
+                            Tự động lấy Vị trí kho, Mã DMS (Mã XHĐ) và Số máy theo cột Số khung / VIN
                         </div>
                     </div>
 
-                    {/* Options & Stats */}
                     {matchedRows.length > 0 && (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs">
-                            <div className="flex items-center gap-4 flex-wrap">
-                                <span className="text-slate-600">
-                                    Tổng xe trong file: <strong className="text-slate-800">{totalExcelVinsCount}</strong>
-                                </span>
-                                <span className="text-slate-600">
-                                    Khớp với kho: <strong className="text-emerald-600">{matchedRows.length} xe</strong>
-                                </span>
-                                <span className="text-slate-600">
-                                    Có dữ liệu mới: <strong className="text-blue-600">{changedCount} xe</strong>
-                                </span>
+                        <div className="isl-stats-bar">
+                            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                <span>Tổng xe trong tệp: <strong style={{ color: '#17263b' }}>{totalExcelVinsCount}</strong></span>
+                                <span>Khớp với kho: <strong style={{ color: '#16a34a' }}>{matchedRows.length} xe</strong></span>
+                                <span>Thay đổi mới: <strong style={{ color: '#2563eb' }}>{changedCount} xe</strong></span>
                                 {unmatchedVinsInExcelCount > 0 && (
-                                    <span className="text-slate-400">
-                                        (Xe ngoài kho: {unmatchedVinsInExcelCount})
-                                    </span>
+                                    <span style={{ color: '#94a3b8' }}>Ngoài kho: {unmatchedVinsInExcelCount}</span>
                                 )}
-                            </div>
-
-                            <div className="flex items-center gap-2 text-slate-600 bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-xl">
-                                <i className="fas fa-truck text-amber-600 text-xs"></i>
-                                <span className="text-[11px]">Xe trống cột N sẽ được gán là <strong className="text-amber-700">"Đang vận tải"</strong> (không dùng cột O)</span>
                             </div>
                         </div>
                     )}
 
-                    {/* Preview Table */}
                     {isParsing ? (
-                        <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
-                            <i className="fas fa-spinner fa-spin text-2xl text-emerald-600"></i>
-                            <span className="text-xs">Đang đọc dữ liệu file Excel và đối chiếu số VIN...</span>
+                        <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 12, color: '#7b879a' }}>
+                            Đang đọc dữ liệu tệp Excel và đối chiếu số VIN...
                         </div>
                     ) : matchedRows.length > 0 ? (
-                        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                            <div className="max-h-[340px] overflow-y-auto">
-                                <table className="w-full text-left text-xs text-slate-600">
-                                    <thead className="bg-slate-100 text-slate-700 font-semibold sticky top-0 z-10">
-                                        <tr>
-                                            <th className="px-3 py-2.5 w-10 text-center">STT</th>
-                                            <th className="px-3 py-2.5">Số VIN</th>
-                                            <th className="px-3 py-2.5">Dòng xe / Bản</th>
-                                            <th className="px-3 py-2.5">Mã DMS (XHĐ)</th>
-                                            <th className="px-3 py-2.5">Số Máy</th>
-                                            <th className="px-3 py-2.5">Vị Trí Kho</th>
-                                            <th className="px-3 py-2.5 text-center w-24">Trạng thái</th>
+                        <div className="isl-table-wrap">
+                            <table className="isl-table">
+                                <thead>
+                                    <tr>
+                                        <th style={{ width: 42, textAlign: 'center' }}>#</th>
+                                        <th>Số VIN</th>
+                                        <th>Dòng xe / Bản</th>
+                                        <th>Mã DMS</th>
+                                        <th>Số máy</th>
+                                        <th>Vị trí kho</th>
+                                        <th style={{ width: 90, textAlign: 'center' }}>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {matchedRows.map((row, idx) => (
+                                        <tr key={row.vin}>
+                                            <td style={{ textAlign: 'center', color: '#94a3b8', fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
+                                                {idx + 1}
+                                            </td>
+                                            <td style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', fontWeight: 600 }}>
+                                                {row.vin}
+                                            </td>
+                                            <td>
+                                                <div style={{ fontWeight: 600 }}>{row.model}</div>
+                                                <div style={{ fontSize: 11, color: '#7b879a' }}>{row.version} · {row.color}</div>
+                                            </td>
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    value={row.newDms}
+                                                    onChange={(e) => handleDmsEdit(row.vin, e.target.value)}
+                                                    placeholder="Mã DMS..."
+                                                    className="isl-cell-input font-mono"
+                                                />
+                                            </td>
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    value={row.newSoMay}
+                                                    onChange={(e) => handleSoMayEdit(row.vin, e.target.value)}
+                                                    placeholder="Số máy..."
+                                                    className="isl-cell-input font-mono"
+                                                />
+                                            </td>
+                                            <td>
+                                                <input
+                                                    type="text"
+                                                    value={row.newLocation}
+                                                    onChange={(e) => handleLocationEdit(row.vin, e.target.value)}
+                                                    placeholder="Tên kho..."
+                                                    className="isl-cell-input"
+                                                />
+                                            </td>
+                                            <td style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: row.isChanged ? '#16a34a' : '#94a3b8' }}>
+                                                {row.isChanged ? 'Cập nhật' : 'Giữ nguyên'}
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {matchedRows.map((row, idx) => (
-                                            <tr key={row.vin} className="hover:bg-slate-50/80 transition-colors">
-                                                <td className="px-3 py-2 text-center font-mono text-slate-400">
-                                                    {idx + 1}
-                                                </td>
-                                                <td className="px-3 py-2 font-mono font-bold text-slate-800">
-                                                    {row.vin}
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <div className="font-medium text-slate-700">{row.model}</div>
-                                                    <div className="text-[11px] text-slate-400">{row.version} - {row.color}</div>
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <input
-                                                        type="text"
-                                                        value={row.newDms}
-                                                        onChange={(e) => handleDmsEdit(row.vin, e.target.value)}
-                                                        placeholder="Mã DMS..."
-                                                        className={`w-24 px-2 py-1 text-xs font-mono font-semibold rounded-lg border focus:outline-none focus:ring-1 ${
-                                                            row.newDms !== row.currentDms
-                                                                ? 'border-blue-400 bg-blue-50/40 text-blue-800'
-                                                                : 'border-slate-200 bg-white text-slate-700'
-                                                        }`}
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <input
-                                                        type="text"
-                                                        value={row.newSoMay}
-                                                        onChange={(e) => handleSoMayEdit(row.vin, e.target.value)}
-                                                        placeholder="Số máy..."
-                                                        className={`w-32 px-2 py-1 text-xs font-mono rounded-lg border focus:outline-none focus:ring-1 ${
-                                                            row.newSoMay !== row.currentSoMay
-                                                                ? 'border-indigo-400 bg-indigo-50/40 text-indigo-800'
-                                                                : 'border-slate-200 bg-white text-slate-700'
-                                                        }`}
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-2">
-                                                    <input
-                                                        type="text"
-                                                        value={row.newLocation}
-                                                        onChange={(e) => handleLocationEdit(row.vin, e.target.value)}
-                                                        placeholder="Tên kho..."
-                                                        className={`w-32 px-2 py-1 text-xs font-medium rounded-lg border focus:outline-none focus:ring-1 ${
-                                                            row.newLocation === 'Đang vận tải'
-                                                                ? 'border-amber-400 bg-amber-50/80 text-amber-800 font-semibold'
-                                                                : row.newLocation !== row.currentLocation
-                                                                ? 'border-emerald-400 bg-emerald-50/40 text-emerald-800'
-                                                                : 'border-slate-200 bg-white text-slate-700'
-                                                        }`}
-                                                    />
-                                                </td>
-                                                <td className="px-3 py-2 text-center">
-                                                    {row.isChanged ? (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                                            Cập nhật
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">
-                                                            Giữ nguyên
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : (
                         !fileName && (
-                            <div className="py-8 text-center text-slate-400 text-xs">
-                                Vui lòng tải file Excel lên để xem trước các xe sẽ được cập nhật.
+                            <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 12, color: '#94a3b8' }}>
+                                Chọn tệp Excel để xem trước danh sách xe khớp trong kho.
                             </div>
                         )
                     )}
-                </div>
+                </main>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100 bg-slate-50">
-                    <div className="text-xs text-slate-500">
+                <footer className="isl-footer">
+                    <div style={{ fontSize: 11.5, color: '#64748b' }}>
                         {planItems.length > 0 && (
                             <span>
-                                Sẽ lưu <strong className="text-emerald-700 font-bold">{planItems.length} xe</strong> vào Kế hoạch giao xe
-                                {matchedRows.length > 0 ? (
-                                    <> (và cập nhật ngay <strong className="text-slate-800 font-bold">{matchedRows.length} xe</strong> khớp trong kho)</>
-                                ) : (
-                                    <> (sẵn sàng tự động nhận diện khi xe nhập kho)</>
-                                )}
+                                Lưu kế hoạch <strong style={{ color: '#17263b' }}>{planItems.length} xe</strong>
+                                {matchedRows.length > 0 ? ` • Cập nhật kho ${matchedRows.length} xe` : ''}
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button
                             type="button"
                             onClick={onClose}
                             disabled={isUpdating}
-                            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-200/60 rounded-xl transition-colors"
+                            className="isl-btn-cancel"
                         >
-                            Đóng
+                            Hủy bỏ
                         </button>
                         <button
                             type="button"
                             onClick={handleConfirmUpdate}
                             disabled={isUpdating || (matchedRows.length === 0 && planItems.length === 0)}
-                            className={`px-5 py-2 text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm transition-all ${
-                                isUpdating || (matchedRows.length === 0 && planItems.length === 0)
-                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200 active:scale-[0.98]'
-                            }`}
+                            className="isl-btn-submit"
                         >
-                            {isUpdating ? (
-                                <>
-                                    <i className="fas fa-spinner fa-spin"></i>
-                                    <span>Đang cập nhật...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <i className="fas fa-check"></i>
-                                    <span>Xác nhận lưu Kế hoạch & Cập nhật</span>
-                                </>
-                            )}
+                            {isUpdating ? 'Đang lưu...' : 'Lưu kế hoạch & Cập nhật'}
                         </button>
                     </div>
-                </div>
+                </footer>
             </div>
         </div>
     );

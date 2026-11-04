@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useModalBackground } from '../../utils/styleUtils';
+import { X } from 'lucide-react';
 import { GlobalNotification } from '../context/GlobalNotificationContext';
-import speakerAnim from '../../pictures/speaker_anim.gif';
 
 interface AnnouncementModalProps {
     isOpen: boolean;
@@ -15,7 +14,6 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({ isOpen, onClose, 
     const [isActive, setIsActive] = useState(false);
     const [type, setType] = useState<GlobalNotification['type']>('info');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (isOpen) {
@@ -24,15 +22,24 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({ isOpen, onClose, 
                 setIsActive(currentNotification.isActive);
                 setType(currentNotification.type);
             } else {
-                // Defaults if no existing notification
                 setContent('');
                 setIsActive(true);
                 setType('info');
             }
         }
-    }, [isOpen]); // Only run when modal opens, ignore currentNotification updates while open
+    }, [isOpen]);
 
-    const handleSave = async () => {
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !isSubmitting) onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, isSubmitting, onClose]);
+
+    const handleSave = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!content.trim()) {
             alert('Vui lòng nhập nội dung thông báo.');
             return;
@@ -51,108 +58,285 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full max-w-lg rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <header className="p-4 border-b border-border-primary flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-text-primary">Cài Đặt Thông Báo</h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
-                        <i className="fas fa-times text-xl"></i>
+        <div
+            className="ann-sheet"
+            onClick={(e) => {
+                if (e.target === e.currentTarget && !isSubmitting) { window.dispatchEvent(new CustomEvent('close-all-sheets')); onClose(); }
+            }}
+        >
+            <style>{`
+                .ann-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .ann-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .ann-sheet-panel {
+                    width: clamp(320px, 28vw, 420px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: annSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes annSlideInLeft {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+                .ann-header {
+                    padding: 22px 20px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .ann-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .ann-subtitle {
+                    margin: 4px 0 0;
+                    font-size: 11.5px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .ann-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    transition: background-color 140ms ease, color 140ms ease;
+                }
+                .ann-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+                .ann-body {
+                    flex: 1;
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding: 18px 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+                .ann-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                .ann-label {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #475569;
+                }
+                .ann-textarea, .ann-select {
+                    width: 100%;
+                    border: 1px solid #dbe2ea;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    font-size: 12.5px;
+                    font-weight: 500;
+                    color: #17263b;
+                    outline: none;
+                    transition: border-color 140ms ease, box-shadow 140ms ease;
+                }
+                .ann-textarea {
+                    padding: 9px 11px;
+                    line-height: 1.5;
+                    resize: vertical;
+                    min-height: 92px;
+                }
+                .ann-select {
+                    height: 36px;
+                    padding: 0 11px;
+                }
+                .ann-textarea:focus, .ann-select:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+                }
+                .ann-toggle-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 10px 12px;
+                    border: 1px solid #e9edf2;
+                    border-radius: 8px;
+                    background: #ffffff;
+                }
+                .ann-preview-card {
+                    padding: 11px 12px;
+                    border: 1px solid #e9edf2;
+                    border-radius: 8px;
+                    background: #f8fafc;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .ann-preview-dot {
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 50%;
+                    flex-shrink: 0;
+                    background: #2563eb;
+                }
+                .ann-preview-dot[data-type="warning"] { background: #d97706; }
+                .ann-preview-dot[data-type="danger"] { background: #dc2626; }
+                .ann-preview-dot[data-type="success"] { background: #16a34a; }
+                .ann-preview-dot[data-type="tet"] { background: #e11d48; }
+                .ann-preview-text {
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: #17263b;
+                    line-height: 1.45;
+                    overflow-wrap: anywhere;
+                }
+                .ann-footer {
+                    padding: 12px 20px;
+                    border-top: 1px solid #eef2f6;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 8px;
+                }
+                .ann-btn-cancel {
+                    height: 34px;
+                    padding: 0 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                .ann-btn-cancel:hover:not(:disabled) {
+                    background: #f8fafc;
+                    color: #17263b;
+                }
+                .ann-btn-submit {
+                    height: 34px;
+                    padding: 0 16px;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #17263b;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .ann-btn-submit:hover:not(:disabled) {
+                    background: #0f172a;
+                }
+                .ann-btn-submit:disabled, .ann-btn-cancel:disabled {
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+            `}</style>
+
+            <form onSubmit={handleSave} className="ann-sheet-panel" onClick={e => e.stopPropagation()}>
+                <header className="ann-header">
+                    <div>
+                        <h2 className="ann-title">Cài đặt thông báo</h2>
+                        <p className="ann-subtitle">Phát thông báo chạy chữ toàn hệ thống</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="ann-close-btn" aria-label="Đóng">
+                        <X size={16} strokeWidth={2} />
                     </button>
                 </header>
 
-                <main className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">Nội dung thông báo</label>
+                <main className="ann-body">
+                    <div className="ann-field">
+                        <label className="ann-label">Nội dung thông báo</label>
                         <textarea
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             rows={3}
-                            placeholder="Nhập nội dung thông báo chạy chữ..."
-                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-3 futuristic-input focus:ring-2 focus:ring-accent-primary outline-none text-text-primary"
+                            autoFocus
+                            placeholder="Nhập nội dung thông báo toàn hệ thống..."
+                            className="ann-textarea"
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-text-primary mb-2">Loại thông báo</label>
-                            <select
-                                value={type}
-                                onChange={(e) => setType(e.target.value as any)}
-                                className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input text-text-primary outline-none"
-                            >
-                                <option value="info">Thông tin (Xanh dương)</option>
-                                <option value="warning">Cảnh báo (Vàng)</option>
-                                <option value="danger">Khẩn cấp (Đỏ)</option>
-                                <option value="success">Thành công (Xanh lá)</option>
-                                <option value="tet">Chúc Mừng Năm Mới (Vàng/Đỏ)</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-text-primary mb-2">Trạng thái</label>
-                            <div className="flex items-center gap-3 h-[42px]">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="sr-only peer" />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-primary"></div>
-                                    <span className="ml-3 text-sm font-medium text-text-primary">{isActive ? 'Đang Hiển Thị' : 'Đã Tắt'}</span>
-                                </label>
-                            </div>
-                        </div>
+                    <div className="ann-field">
+                        <label className="ann-label">Phân loại thông báo</label>
+                        <select
+                            value={type}
+                            onChange={(e) => setType(e.target.value as any)}
+                            className="ann-select"
+                        >
+                            <option value="info">Thông tin chung</option>
+                            <option value="warning">Cảnh báo nghiệp vụ</option>
+                            <option value="danger">Khẩn cấp / Quan trọng</option>
+                            <option value="success">Hoàn tất / Thành công</option>
+                            <option value="tet">Sự kiện / Lễ Tết</option>
+                        </select>
                     </div>
 
-                    {/* Preview */}
-                    <div className="mt-4 pt-4 border-t border-border-primary">
-                        <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Xem trước</label>
-                        <div className="relative z-40 w-full overflow-hidden border border-white/10 bg-[#0f172a] shadow-lg h-10 flex items-center rounded-lg mt-2">
-                            {/* Premium Background Effects */}
-                            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E')] opacity-20 mix-blend-soft-light"></div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-30"></div>
-
-                            {/* Type-Specific Overlays (All Festive Now) */}
-                            {type === 'tet' && <div className="absolute inset-0 bg-gradient-to-r from-red-900/90 via-[#450a0a] to-red-900/90 mix-blend-multiply"></div>}
-                            {type === 'info' && <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-slate-900 to-blue-900/90 mix-blend-multiply"></div>}
-                            {type === 'warning' && <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 via-yellow-900/80 to-amber-700/80"></div>}
-                            {type === 'success' && <div className="absolute inset-0 bg-gradient-to-r from-emerald-900/90 via-green-900 to-emerald-900/90"></div>}
-                            {type === 'danger' && <div className="absolute inset-0 bg-gradient-to-r from-red-900/90 via-rose-950 to-red-900/90"></div>}
-
-                            {/* Universal Festive Overlay */}
-                            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E')] opacity-20 mix-blend-soft-light"></div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/5 to-transparent opacity-30"></div>
-
-                            {/* Static Badge/Label (Left Side) - All Gold/Red Style */}
-                            <div className="absolute left-0 z-20 h-full flex items-center pl-3 pr-4 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent">
-                                <div className={`
-                                flex items-center gap-1.5 px-2 py-0.5 rounded-full border backdrop-blur-md shadow-sm
-                                border-yellow-500/40 bg-red-950/40
-                            `}>
-                                    <img src={speakerAnim} alt="Speaker" className="w-5 h-5 object-contain drop-shadow-sm" />
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-yellow-200/90">
-                                        Thông Báo
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Scrolling Content Preview (Static here for better preview) */}
-                            <div className="flex items-center whitespace-nowrap pl-28 relative z-10 w-full">
-                                <span className="text-xs font-medium tracking-wide flex items-center gap-3 text-yellow-50/90">
-                                    <i className="fas fa-star text-[8px] text-yellow-500/60 animate-pulse"></i>
-                                    {content || "Nội dung sẽ hiển thị ở đây..."}
-                                    <i className="fas fa-star text-[8px] text-yellow-500/60 animate-pulse"></i>
-                                </span>
-                            </div>
+                    <div className="ann-toggle-row">
+                        <div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: '#17263b' }}>Hiển thị thông báo</div>
+                            <div style={{ fontSize: 11, color: '#7b879a' }}>{isActive ? 'Đang bật trên toàn hệ thống' : 'Đang tạm ẩn'}</div>
                         </div>
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isActive}
+                            onClick={() => setIsActive(v => !v)}
+                            className={`sidebar-switch ${isActive ? 'is-on' : ''}`}
+                        />
                     </div>
 
+                    <div className="ann-field">
+                        <label className="ann-label">Xem trước nội dung</label>
+                        <div className="ann-preview-card">
+                            <span className="ann-preview-dot" data-type={type} />
+                            <span className="ann-preview-text">
+                                {content.trim() || 'Nội dung thông báo sẽ hiển thị tại đây...'}
+                            </span>
+                        </div>
+                    </div>
                 </main>
 
-                <footer className="p-4 border-t border-border-primary flex justify-end gap-3 bg-surface-ground rounded-b-2xl">
-                    <button onClick={onClose} disabled={isSubmitting} className="btn-secondary px-4 py-2 rounded-lg">Hủy</button>
-                    <button onClick={handleSave} disabled={isSubmitting} className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2">
-                        {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
-                        <span>Lưu Cài Đặt</span>
+                <footer className="ann-footer">
+                    <button type="button" onClick={onClose} disabled={isSubmitting} className="ann-btn-cancel">
+                        Hủy bỏ
+                    </button>
+                    <button type="submit" disabled={isSubmitting} className="ann-btn-submit">
+                        {isSubmitting ? 'Đang lưu...' : 'Lưu cài đặt'}
                     </button>
                 </footer>
-            </div>
+            </form>
         </div>
     );
 };

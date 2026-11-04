@@ -150,6 +150,10 @@ const Root = () => {
     useEffect(() => {
         console.log("Checking URL params...", window.location.search, window.location.hash);
         let authSubscription: any = null;
+        let authRestoreTimer: ReturnType<typeof setTimeout> | null = null;
+        let authRestoreRunning = false;
+        let authEventVersion = 0;
+        let disposed = false;
         
         // Check standard search params
         let params = new URLSearchParams(window.location.search);
@@ -184,13 +188,22 @@ const Root = () => {
             }
 
             // Lắng nghe sự kiện Auth để bắt luồng Recovery/Invite
-            const { data: { subscription } } = authService.supabase.auth.onAuthStateChange(async (event, session) => {
+            const { data: { subscription } } = authService.supabase.auth.onAuthStateChange((event, session) => {
                 console.log("[Root Auth Event]", event);
+                if (event === 'SIGNED_OUT') {
+                    authEventVersion += 1;
+                    if (authRestoreTimer) clearTimeout(authRestoreTimer);
+                    authRestoreTimer = null;
+                    return;
+                }
                 const currentHash = window.location.hash;
                 const isInvite = currentHash.includes('type=invite') || currentHash.includes('invite') || initialFlow.context === 'invite';
                 const isRecovery = event === 'PASSWORD_RECOVERY' || currentHash.includes('type=recovery') || currentHash.includes('recovery');
 
                 if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && (isInvite || isRecovery))) {
+                    authEventVersion += 1;
+                    if (authRestoreTimer) clearTimeout(authRestoreTimer);
+                    authRestoreTimer = null;
                     console.log("[Root] Detected Password Recovery / Invite Flow in onAuthStateChange");
                     setResetContext(isInvite ? 'invite' : 'recovery');
                     setIsResettingPassword(true);
@@ -201,9 +214,19 @@ const Root = () => {
                     // Mobile login finishes device verification and optional passkey enrollment itself.
                     if (window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return;
                     if (!isResettingPassword && !initialFlow.isResetting) {
-                        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
-                            const restored = await authService.restoreSession();
-                            if (restored) setIsAuthenticated(true);
+                        if (sessionStorage.getItem('isLoggedIn') !== 'true' && !authRestoreTimer && !authRestoreRunning) {
+                            const eventVersion = authEventVersion;
+                            // Auth listeners must return before another Supabase call acquires the auth lock.
+                            authRestoreTimer = setTimeout(() => {
+                                authRestoreTimer = null;
+                                if (disposed || eventVersion !== authEventVersion) return;
+                                authRestoreRunning = true;
+                                void authService.restoreSession().then(restored => {
+                                    if (!disposed && eventVersion === authEventVersion && restored) setIsAuthenticated(true);
+                                }).catch(error => {
+                                    console.error('Deferred session restore failed:', error);
+                                }).finally(() => { authRestoreRunning = false; });
+                            }, 0);
                         }
                     }
                 }
@@ -246,6 +269,8 @@ const Root = () => {
         }
 
         return () => {
+            disposed = true;
+            if (authRestoreTimer) clearTimeout(authRestoreTimer);
             if (authSubscription) authSubscription.unsubscribe();
         };
     }, []);

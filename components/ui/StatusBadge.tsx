@@ -173,7 +173,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-l-md rounded-r-xl overflow-hidden border shadow-[0_2px_8px_-1px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:shadow-md hover:scale-[1.03] select-none ${sizeStyles[size]} ${theme.textColor} ${theme.accentBorder} ${className}`}
+      className={`order-status-badge relative inline-flex items-center justify-center rounded-l-md rounded-r-xl overflow-hidden border shadow-[0_2px_8px_-1px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:shadow-md hover:scale-[1.03] select-none ${sizeStyles[size]} ${theme.textColor} ${theme.accentBorder} ${className}`}
+      data-tone={/emerald|teal/.test(theme.textColor) ? 'green' : /blue|sky|indigo/.test(theme.textColor) ? 'blue' : /amber|orange/.test(theme.textColor) ? 'amber' : /rose|red/.test(theme.textColor) ? 'red' : 'neutral'}
       title={status}
     >
       {/* Animated Modern Aerodynamic Tag Background */}

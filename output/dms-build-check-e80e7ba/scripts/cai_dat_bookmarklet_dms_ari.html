@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Cài đặt nút Bookmarklet: ⚡ Tra DMS ➔ Chờ Ký HĐ (VSO + ARI)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      max-width: 680px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    h1 {
+      font-size: 22px;
+      color: #38bdf8;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    p {
+      line-height: 1.6;
+      color: #cbd5e1;
+      font-size: 15px;
+    }
+    .drag-box {
+      background: #090d16;
+      border: 2px dashed #059669;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      margin: 25px 0;
+    }
+    .bookmark-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      color: #ffffff !important;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 28px;
+      border-radius: 50px;
+      text-decoration: none !important;
+      box-shadow: 0 10px 20px rgba(5, 150, 105, 0.4);
+      cursor: grab;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .bookmark-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(5, 150, 105, 0.5);
+    }
+    .steps {
+      margin-top: 25px;
+    }
+    .step-item {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      background: #0284c7;
+      color: white;
+      font-weight: 700;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .step-text {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    .highlight {
+      color: #f8fafc;
+      font-weight: 600;
+    }
+    .code-box {
+      margin-top: 20px;
+      background: #090d16;
+      border: 1px solid #1e293b;
+      padding: 12px;
+      border-radius: 8px;
+    }
+    textarea {
+      width: 100%;
+      height: 70px;
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 11px;
+      resize: none;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .btn-copy {
+      background: #334155;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .btn-copy:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>⚡ TỰ ĐỘNG ĐỐI SOÁT DMS VSO ➔ ARI</h1>
+    <p>
+      Bookmarklet giúp Admin tự động đối soát tất cả các đơn hàng <b>"Đã phê duyệt"</b> trên hệ thống VinFast DMS. Khi phát hiện đơn hàng VSO đã có trạng thái Hóa đơn và đã sinh mã <b>ARI phát hành</b>, hệ thống sẽ tự động chuyển đơn sang <b>"Chờ ký hóa đơn"</b> ngay tức thì!
+    </p>
+
+    <div class="drag-box">
+      <a class="bookmark-btn" id="dms-ari-link" href="#">⚡ Tra DMS ➔ Chờ Ký HĐ</a>
+      <div style="font-size: 13px; color: #64748b; margin-top: 12px;">
+        👆 <b>Nhấp giữ chuột</b> vào nút xanh này và <b>Kéo thả</b> lên thanh Dấu trang (Bookmarks Bar)
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-text">Bật thanh dấu trang trên trình duyệt (Nhấn tổ hợp phím <span class="highlight">Ctrl + Shift + B</span> nếu chưa thấy).</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-text">Kéo nút <span class="highlight">⚡ Tra DMS ➔ Chờ Ký HĐ</span> ở trên thả lên thanh dấu trang.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-text">Mở tab <span class="highlight">VinFast DMS (Dynamics 365)</span> và bấm nút này để bắt đầu đối soát tự động trong 1 giây!</div>
+      </div>
+    </div>
+
+    <div class="code-box">
+      <div style="font-size: 12px; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">Hoặc sao chép mã code dưới đây để tạo dấu trang thủ công:</div>
+      <textarea id="bookmark-code" readonly></textarea>
+      <button class="btn-copy" onclick="copyCode()">📋 Sao Chép Mã Bookmarklet</button>
+    </div>
+  </div>
+
+  <script>
+    const code = 'javascript:!function(){var e=window.Xrm||window.parent&&window.parent.Xrm||window.top&&window.top.Xrm;if(!e||!e.WebApi)try{for(var t=0;t<window.frames.length;t++)if(window.frames[t].Xrm&&window.frames[t].Xrm.WebApi){e=window.frames[t].Xrm;break}}catch(e){}if(e&&e.WebApi){var i="https://jwvgxqrkjlbewvpkvucj.supabase.co",n="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU",o={apikey:n,Authorization:"Bearer "+n,"Content-Type":"application/json"},r=document.getElementById("dms-ari-checker-box");r&&r.remove();var a=document.createElement("div");a.id="dms-ari-checker-box",a.style.cssText="position:fixed;bottom:24px;right:24px;z-index:2147483647;width:460px;background:#0f172a;color:#f8fafc;padding:20px;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5;border:1px solid rgba(56,189,248,0.3);",a.innerHTML=\'\n    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #334155;padding-bottom:10px;">\n      <strong style="font-size:14px;color:#38bdf8;display:flex;align-items:center;gap:6px;">\n        ⚡ ĐỐI SOÁT DMS VSO ➔ ARI (CHỜ KÝ HÓA ĐƠN)\n      </strong>\n      <button id="btn-close-ari-box" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;">✕</button>\n    </div>\n    <div id="ari-main-status" style="margin-bottom:12px;">\n      <div style="color:#fbbf24;">⏳ Đang tải danh sách đơn \\'Đã phê duyệt\\' từ Web...</div>\n      <div style="width:100%;height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:8px;">\n        <div id="ari-pbar" style="width:15%;height:100%;background:#38bdf8;transition:width 0.3s;"></div>\n      </div>\n    </div>\n    <div id="ari-sub-log" style="font-size:12px;color:#94a3b8;max-height:200px;overflow-y:auto;background:#090d16;padding:12px;border-radius:10px;border:1px solid #1e293b;display:none;display:flex;flex-direction:column;gap:6px;">\n    </div>\n  \',document.body.appendChild(a);var d=document.getElementById("btn-close-ari-box");d&&(d.onclick=function(){a.remove()});var s=document.getElementById("ari-main-status"),c=document.getElementById("ari-pbar"),l=document.getElementById("ari-sub-log");!async function(){try{var t=await fetch(i+"/rest/v1/donhang?select=so_don_hang,ten_khach_hang,vin,ket_qua,ngay_xuat_hoa_don&ket_qua=eq.Đã phê duyệt",{headers:o});if(!t.ok)throw new Error("Không thể đọc dữ liệu Supabase: "+await t.text());var n=await t.json();if(!n||0===n.length)return c.style.width="100%",c.style.background="#10b981",void(s.innerHTML=\'<div style="color:#10b981;font-weight:bold;">✅ Hiện không có đơn hàng nào ở trạng thái "Đã phê duyệt".</div><div style="color:#94a3b8;font-size:12px;margin-top:4px;">Tất cả đơn đều đã được xử lý hoặc chưa tới bước này.</div>\');var r=n.length;c.style.width="30%",s.innerHTML=\'<div style="color:#38bdf8;">🔍 Đang tra cứu \'+r+\' đơn hàng trên DMS...</div><div style="width:100%;height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:8px;"><div id="ari-pbar" style="width:30%;height:100%;background:#38bdf8;transition:width 0.3s;"></div></div>\',l.style.display="flex";for(var a=0,d=0;d<n.length;d++){var p=n[d],h=(p.so_don_hang||"").trim(),v=(p.ten_khach_hang||"N/A").trim(),b=Math.round(30+(d+1)/r*60),g=document.getElementById("ari-pbar");g&&(g.style.width=b+"%"),l.innerHTML+="<div>⏳ ["+(d+1)+"/"+r+"] <b>"+h+"</b> ("+v+")</div>",l.scrollTop=l.scrollHeight;try{var u=await e.WebApi.retrieveMultipleRecords("xts_newvehiclesalesorder","?$filter=xts_newvehiclesalesordernumber eq \'"+h+"\'&$select=xts_newvehiclesalesorderid,xts_status,xvf_sapinvoicenumber,xvf_sapinvoicedate,xts_salesdate");if(!u||!u.entities||0===u.entities.length){l.innerHTML+=\'<div style="color:#64748b;padding-left:12px;">↳ Chưa có trên DMS</div>\';continue}var x=u.entities[0],f=x.xts_newvehiclesalesorderid,m=x.xts_status,y=x.xvf_sapinvoicenumber||"",w=x.xvf_sapinvoicedate||x.xts_salesdate||"";if(!(7===m||10===m||!!y||!!w)){l.innerHTML+=\'<div style="color:#f59e0b;padding-left:12px;">↳ VSO chưa xuất HĐ (Status: \'+m+")</div>";continue}var _=await e.WebApi.retrieveMultipleRecords("xts_accountreceivableinvoice","?$filter=_xts_newvehiclesalesorderid_value eq "+f+"&$select=xts_accountreceivableinvoice,xts_status,statecode,createdon&$orderby=createdon desc&$top=1");if(!_||!_.entities||0===_.entities.length){l.innerHTML+=\'<div style="color:#f59e0b;padding-left:12px;">↳ VSO có HĐ nhưng chưa sinh mã ARI</div>\';continue}var I=_.entities[0],M=(I.xts_accountreceivableinvoice||"").trim(),k=I.xts_status,H=I.statecode;if(!(2===k||!!M&&0===H)||!M){l.innerHTML+=\'<div style="color:#f59e0b;padding-left:12px;">↳ ARI chưa phát hành (\'+(M||"Chưa mã")+")</div>";continue}var T=w?w.substring(0,10):I.createdon?I.createdon.substring(0,10):(new Date).toISOString().substring(0,10),S=await fetch(i+"/rest/v1/rpc/rpc_mark_as_pending_signature",{method:"POST",headers:o,body:JSON.stringify({p_order_numbers:[h],p_ngay_xuat_hoa_don:T,p_actor_email:"dms_live@vinfast.vn",p_actor_name:"DMS Live Scanner"})});S.ok?(a++,fetch(i+"/rest/v1/yeucauxhd?so_don_hang=eq."+encodeURIComponent(h),{method:"PATCH",headers:o,body:JSON.stringify({ghi_chu_admin:"[DMS Auto] VSO Hóa đơn, ARI: "+M})}).catch(function(){}),l.innerHTML+=\'<div style="color:#10b981;padding-left:12px;font-weight:bold;">🎉 ĐÃ CHUYỂN CHỜ KÝ! (ARI: \'+M+")</div>"):l.innerHTML+=\'<div style="color:#ef4444;padding-left:12px;">❌ Lỗi cập nhật: \'+await S.text()+"</div>"}catch(e){l.innerHTML+=\'<div style="color:#ef4444;padding-left:12px;">❌ Lỗi đọc DMS: \'+e.message+"</div>"}}var L=document.getElementById("ari-pbar");L&&(L.style.width="100%",L.style.background="#10b981"),s.innerHTML=`\n        <div style="color:#10b981;font-weight:bold;font-size:14px;">\n          🎉 Hoàn tất đối soát: Đã chuyển ${a}/${r} đơn sang Chờ ký!\n        </div>\n        <div style="color:#94a3b8;font-size:12px;margin-top:4px;">\n          Các đơn đã sinh ARI phát hành đều đã tự động cập nhật lên Web.\n        </div>\n      `}catch(e){s.innerHTML=\'<div style="color:#ef4444;font-weight:bold;">❌ Lỗi: \'+e.message+"</div>"}}()}else alert("⚠️ Vui lòng mở trang VinFast DMS (CRM Dynamics 365) trước khi bấm Bookmarklet này!")}();';if(!_X||!_X.WebApi){try{for(var i=0;i<window.frames.length;i++){if(window.frames[i].Xrm&&window.frames[i].Xrm.WebApi){_X=window.frames[i].Xrm;break;}}}catch(e){}}if(!_X||!_X.WebApi){alert('⚠️ Vui lòng mở trang VinFast DMS trước khi bấm Bookmarklet này!');return;}var sbU='https://jwvgxqrkjlbewvpkvucj.supabase.co';var sbK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU';var sbH={'apikey':sbK,'Authorization':'Bearer '+sbK,'Content-Type':'application/json'};var oB=document.getElementById('dms-ari-checker-box');if(oB)oB.remove();var bx=document.createElement('div');bx.id='dms-ari-checker-box';bx.style.cssText='position:fixed;bottom:24px;right:24px;z-index:2147483647;width:460px;background:#0f172a;color:#f8fafc;padding:20px;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5;border:1px solid rgba(56,189,248,0.3);';bx.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #334155;padding-bottom:10px;"><strong style="font-size:14px;color:#38bdf8;">⚡ ĐỐI SOÁT DMS VSO ➔ ARI (CHỜ KÝ HĐ)</strong><button onclick="document.getElementById(\\'dms-ari-checker-box\\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button></div><div id="ari-main-status"><div style="color:#fbbf24;">⏳ Đang tải danh sách đơn Đã phê duyệt...</div><div style="width:100%;height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:8px;"><div id="ari-pbar" style="width:15%;height:100%;background:#38bdf8;transition:width 0.3s;"></div></div></div><div id="ari-sub-log" style="font-size:12px;color:#94a3b8;max-height:180px;overflow-y:auto;background:#090d16;padding:10px;border-radius:8px;border:1px solid #1e293b;margin-top:10px;display:none;flex-direction:column;gap:5px;"></div>';document.body.appendChild(bx);var mSt=document.getElementById('ari-main-status'),pb=document.getElementById('ari-pbar'),sLg=document.getElementById('ari-sub-log');(async function(){try{var r=await fetch(sbU+'/rest/v1/donhang?select=so_don_hang,ten_khach_hang,vin,ket_qua,ngay_xuat_hoa_don&ket_qua=eq.Đã phê duyệt',{headers:sbH});if(!r.ok)throw new Error(await r.text());var orders=await r.json();if(!orders||orders.length===0){pb.style.width='100%';pb.style.background='#10b981';mSt.innerHTML='<div style="color:#10b981;font-weight:bold;">✅ Không có đơn nào ở trạng thái "Đã phê duyệt".</div>';return;}var tot=orders.length;pb.style.width='30%';mSt.innerHTML='<div style="color:#38bdf8;">🔍 Đang tra cứu '+tot+' đơn trên DMS...</div><div style="width:100%;height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:8px;"><div style="width:30%;height:100%;background:#38bdf8;"></div></div>';sLg.style.display='flex';var count=0;for(var i=0;i<tot;i++){var o=orders[i],sNo=(o.so_don_hang||'').trim(),cName=(o.ten_khach_hang||'N/A').trim();sLg.innerHTML+='<div>⏳ ['+(i+1)+'/'+tot+'] <b>'+sNo+'</b> ('+cName+')</div>';sLg.scrollTop=sLg.scrollHeight;try{var vR=await _X.WebApi.retrieveMultipleRecords('xts_newvehiclesalesorder',"?$filter=xts_newvehiclesalesordernumber eq '"+sNo+"'&$select=xts_newvehiclesalesorderid,xts_status,xvf_sapinvoicenumber,xvf_sapinvoicedate,xts_salesdate");if(!vR||!vR.entities||vR.entities.length===0){sLg.innerHTML+='<div style="color:#64748b;padding-left:10px;">↳ Chưa có trên DMS</div>';continue;}var vso=vR.entities[0],vId=vso.xts_newvehiclesalesorderid,vSt=vso.xts_status,sInv=vso.xvf_sapinvoicenumber||'',sDt=vso.xvf_sapinvoicedate||vso.xts_salesdate||'';if(vSt!==7&&vSt!==10&&!sInv&&!sDt){sLg.innerHTML+='<div style="color:#f59e0b;padding-left:10px;">↳ VSO chưa xuất HĐ (Status: '+vSt+')</div>';continue;}var aR=await _X.WebApi.retrieveMultipleRecords('xts_accountreceivableinvoice',"?$filter=_xts_newvehiclesalesorderid_value eq "+vId+"&$select=xts_accountreceivableinvoice,xts_status,statecode,createdon&$orderby=createdon desc&$top=1");if(!aR||!aR.entities||aR.entities.length===0){sLg.innerHTML+='<div style="color:#f59e0b;padding-left:10px;">↳ Chưa sinh ARI</div>';continue;}var ari=aR.entities[0],aNo=(ari.xts_accountreceivableinvoice||'').trim(),aSt=ari.xts_status,stCd=ari.statecode;if(aSt!==2&&(!aNo||stCd!==0)){sLg.innerHTML+='<div style="color:#f59e0b;padding-left:10px;">↳ ARI chưa phát hành ('+(aNo||'N/A')+')</div>';continue;}var dt=sDt?sDt.substring(0,10):(ari.createdon?ari.createdon.substring(0,10):new Date().toISOString().substring(0,10));var up=await fetch(sbU+'/rest/v1/rpc/rpc_mark_as_pending_signature',{method:'POST',headers:sbH,body:JSON.stringify({p_order_numbers:[sNo],p_ngay_xuat_hoa_don:dt,p_actor_email:'dms_live@vinfast.vn',p_actor_name:'DMS Live Scanner'})});if(up.ok){count++;fetch(sbU+'/rest/v1/yeucauxhd?so_don_hang=eq.'+encodeURIComponent(sNo),{method:'PATCH',headers:sbH,body:JSON.stringify({ghi_chu_admin:'[DMS Auto] VSO Hóa đơn, ARI: '+aNo})}).catch(function(){});sLg.innerHTML+='<div style="color:#10b981;padding-left:10px;font-weight:bold;">🎉 ĐÃ CHUYỂN CHỜ KÝ! (ARI: '+aNo+')</div>';}else{sLg.innerHTML+='<div style="color:#ef4444;padding-left:10px;">❌ Lỗi: '+(await up.text())+'</div>';}}catch(errL){sLg.innerHTML+='<div style="color:#ef4444;padding-left:10px;">❌ Lỗi đọc DMS: '+errL.message+'</div>';}}pb.style.width='100%';pb.style.background='#10b981';mSt.innerHTML='<div style="color:#10b981;font-weight:bold;font-size:14px;">🎉 Hoàn tất: Đã chuyển '+count+'/'+tot+' đơn sang Chờ ký!</div>';}catch(eM){mSt.innerHTML='<div style="color:#ef4444;font-weight:bold;">❌ Lỗi: '+eM.message+'</div>';}})();})();`;
+
+    document.getElementById('dms-ari-link').setAttribute('href', code);
+    document.getElementById('bookmark-code').value = code;
+
+    function copyCode() {
+      const textarea = document.getElementById('bookmark-code');
+      textarea.select();
+      document.execCommand('copy');
+      alert('🎉 Đã sao chép mã Bookmarklet! Bạn có thể dán vào URL của Bookmark trên trình duyệt.');
+    }
+  </script>
+</body>
+</html>

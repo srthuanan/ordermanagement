@@ -1,0 +1,361 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { Order } from '../../types';
+import SimpleFileUpload from '../ui/SimpleFileUpload';
+// import { compressImage } from '../../services/ocrService';
+import { useModalBackground } from '../../utils/styleUtils';
+
+// --- Modal 1: Request with Reason and Optional Image Paste ---
+
+interface RequestWithImageModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (reason: string, images: string[]) => Promise<boolean>;
+    title: string;
+    orderNumber: string;
+    reasonLabel: string;
+    icon: string;
+    theme: 'primary' | 'danger' | 'warning';
+    showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+}
+
+export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ isOpen, onClose, onSubmit, title, orderNumber, reasonLabel, icon, theme, showToast }) => {
+    const [reason, setReason] = useState('');
+    const [images, setImages] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
+
+    useEffect(() => {
+        if (isOpen) setIsSubmitting(false);
+    }, [isOpen]);
+
+    const handleImagePaste = useCallback(async (event: React.ClipboardEvent<HTMLDivElement>) => {
+        const items = event.clipboardData.items;
+        for (const item of items) {
+            if (item.type.indexOf("image") !== -1) {
+                event.preventDefault();
+                const blob = item.getAsFile();
+                if (blob) {
+                    const file = new File([blob], "pasted_image.jpg", { type: blob.type });
+                    try {
+                        // ADMIN REQUEST: Disable compression for pasted images
+                        // const compressedFile = await compressImage(file);
+                        const reader = new FileReader();
+                        reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
+                        reader.readAsDataURL(file);
+                    } catch (err) {
+                        console.error("Paste handling failed", err);
+                        // Fallback
+                        const reader = new FileReader();
+                        reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
+                        reader.readAsDataURL(blob);
+                    }
+                }
+            }
+        }
+    }, []);
+
+    const handleRemoveImage = (index: number) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async () => {
+        if (!reason.trim() && reasonLabel.includes('bắt buộc')) {
+            if (showToast) {
+                showToast('Thông tin không hợp lệ', 'Vui lòng nhập nội dung yêu cầu.', 'warning');
+            } else {
+                alert('Vui lòng nhập nội dung yêu cầu.');
+            }
+            return;
+        }
+        setIsSubmitting(true);
+        const success = await onSubmit(reason, images);
+        if (!success) {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    const themeClasses = {
+        primary: { iconBg: 'bg-blue-100', iconText: 'text-accent-primary', btn: 'btn-primary', barBg: 'bg-accent-primary' },
+        danger: { iconBg: 'bg-danger-bg', iconText: 'text-danger', btn: 'btn-danger', barBg: 'bg-danger' },
+        warning: { iconBg: 'bg-warning-bg', iconText: 'text-warning', btn: 'btn-primary', barBg: 'bg-warning' }, // Primary button for warning action
+    };
+    const currentTheme = themeClasses[theme] || themeClasses.primary;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className={`h-1.5 rounded-t-none md:rounded-t-2xl ${currentTheme.barBg} flex-shrink-0`}></div>
+                <header className="flex items-start justify-between p-3">
+                    <div className="flex items-start gap-2">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${currentTheme.iconBg}`}>
+                            <i className={`fas ${icon} text-2xl ${currentTheme.iconText}`}></i>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">{title}</h2>
+                            <p className="text-sm text-text-secondary mt-1">Đang thực hiện cho: <strong className="font-mono text-text-primary">{orderNumber}</strong></p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
+                </header>
+                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
+                    <div>
+                        <label htmlFor="modal-reason-input" className="block text-sm font-medium text-text-primary mb-1.5">{reasonLabel}</label>
+                        <textarea id="modal-reason-input" value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1.5">Dán ảnh minh họa (Tùy chọn)</label>
+                        <div onPaste={handleImagePaste} contentEditable suppressContentEditableWarning className="p-2 border-2 border-dashed border-border-primary rounded-lg min-h-[60px] text-center text-text-placeholder focus:outline-none focus:border-accent-primary">Click và nhấn Ctrl+V để dán</div>
+                        {images.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {images.map((src, i) => (
+                                    <div key={i} className="relative group"><img src={src} className="h-20 w-20 object-cover rounded-md" alt={`Pasted ${i}`} /><button onClick={() => handleRemoveImage(i)} className="absolute top-0 right-0 w-5 h-5 bg-danger text-white rounded-full text-xs hidden group-hover:flex items-center justify-center">&times;</button></div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </main>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 ${currentTheme.barBg} hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG GỬI...</span>
+                            </div>
+                        ) : (
+                            "GỬI YÊU CẦU"
+                        )}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
+};
+
+
+// --- Modal 2: Upload Issued Invoice ---
+
+interface UploadInvoiceModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (file: File) => Promise<boolean>;
+    order: Order;
+    showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+}
+
+export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, onClose, onSubmit, order, showToast }) => {
+    const [file, setFile] = useState<File | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
+
+    const handleSubmit = async () => {
+        if (!file) {
+            if (showToast) {
+                showToast('Chưa chọn tệp', 'Vui lòng chọn một tệp hóa đơn.', 'warning');
+            } else {
+                alert('Vui lòng chọn một tệp hóa đơn.');
+            }
+            return;
+        }
+        setIsSubmitting(true);
+        const success = await onSubmit(file);
+        if (success) {
+            setFile(null); // Reset file state
+            onClose();
+        } else {
+            setIsSubmitting(false); // Re-enable button on failure
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-success flex-shrink-0"></div>
+                <header className="flex items-start justify-between p-3">
+                    <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-success-bg">
+                            <i className="fas fa-upload text-2xl text-success"></i>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">Tải Lên Hóa Đơn Đã Xuất</h2>
+                            <p className="text-sm text-text-secondary mt-1">Tải file hóa đơn (PDF, ảnh...) cho ĐH: <strong className="font-mono text-text-primary">{order['Số đơn hàng']}</strong>.</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
+                </header>
+                <main className="px-3 pb-3 space-y-2">
+                    <SimpleFileUpload
+                        id="issued-invoice-upload"
+                        label="File Hóa Đơn"
+                        onFileSelect={setFile}
+                        required
+                        accept=".pdf,.jpeg,.png,.jpg"
+                        disableCompression={true}
+                    />
+                </main>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !file}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 bg-success hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG TẢI LÊN...</span>
+                            </div>
+                        ) : (
+                            "TẢI LÊN & HOÀN TẤT"
+                        )}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
+};
+
+
+// --- Modal 3: Edit Specific Invoice Details (No/Policy/PO) ---
+
+interface EditInvoiceDetailsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    order: Order;
+    onSubmit: (data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => Promise<boolean>;
+}
+
+export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = ({ isOpen, onClose, order, onSubmit }) => {
+    const [engineNumber, setEngineNumber] = useState('');
+    const [policy, setPolicy] = useState('');
+    const [commission, setCommission] = useState('');
+    const [vpoint, setVpoint] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const bgStyle = useModalBackground();
+
+    useEffect(() => {
+        if (isOpen && order) {
+            setEngineNumber(order["Số máy"] || '');
+            setPolicy(order["CHÍNH SÁCH"] || '');
+            setCommission(order["Hoa hồng ứng"] || '');
+            setVpoint(order["Điểm Vpoint sử dụng"] || '');
+        }
+    }, [isOpen, order]);
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        const success = await onSubmit({ engineNumber, policy, commission, vpoint });
+        if (success) {
+            onClose();
+        } else {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+            <div className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-accent-secondary flex-shrink-0"></div>
+                <header className="flex items-start justify-between p-3">
+                    <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
+                            <i className="fas fa-edit text-2xl text-accent-secondary"></i>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-text-primary">Cập Nhật Thông Tin Hóa Đơn</h2>
+                            <p className="text-sm text-text-secondary mt-1">SĐH: <strong className="font-mono">{order['Số đơn hàng']}</strong></p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
+                </header>
+                <main className="px-3 pb-3 space-y-3">
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Số Máy</label>
+                        <input
+                            type="text"
+                            value={engineNumber}
+                            onChange={e => setEngineNumber(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập số máy..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Chính Sách</label>
+                        <input
+                            type="text"
+                            value={policy}
+                            onChange={e => setPolicy(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập chính sách..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Hoa Hồng Ứng</label>
+                        <input
+                            type="text"
+                            value={commission}
+                            onChange={e => setCommission(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập số tiền hoa hồng..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Điểm Vpoint Sử Dụng</label>
+                        <input
+                            type="text"
+                            value={vpoint}
+                            onChange={e => setVpoint(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập điểm Vpoint..."
+                        />
+                    </div>
+                </main>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 bg-accent-primary hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG LƯU...</span>
+                            </div>
+                        ) : (
+                            "LƯU THAY ĐỔI"
+                        )}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    );
+};

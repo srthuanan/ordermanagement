@@ -1,17 +1,14 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { StockVehicle, StockSortConfig, Order, AdminSubView } from '../types';
-import Button from './ui/Button';
-import StockGridView from './StockGridView';
-import { DropdownFilterConfig } from './ui/Filters';
-import TabbedFilter from './ui/TabbedFilter';
-import MultiSelectDropdown from './ui/MultiSelectDropdown';
+import CarImage from './ui/CarImage';
 import { includesNormalized } from '../utils/stringUtils';
 import AdminCarEditModal from './modals/AdminCarEditModal';
 import { SwapCarModal } from './modals/SwapCarModal';
 import { autoSyncCyberLocationsIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
 import DmsRadarResultModal, { DmsRadarScanResult } from './modals/DmsRadarResultModal';
-
-
+import { getExteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
+import './stock/faceted-stock.css';
+import { preloadRequestForm } from './modals/CreateRequestModal';
 
 interface StockViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -34,12 +31,31 @@ interface StockViewProps {
     showOrderInAdmin?: (order: Order, targetTab: AdminSubView) => void;
     showAdminTab?: (targetTab: AdminSubView) => void;
     forcedSearch?: string;
+    onClearForcedSearch?: () => void;
     queuedVins: string[];
     canHoldMore: boolean;
     onNavigateToInquiry: () => void;
     onViewCarOnMap?: (vin: string) => void;
     isReferenceAccount?: boolean;
 }
+
+const tone = (status?: string) => {
+    if (status === 'Chưa ghép') return '#22a774';
+    if (status === 'Đang giữ') return '#edae27';
+    return '#3978d5';
+};
+
+export const isHoldInFinalTwentyMinutes = (vehicle: StockVehicle, now = Date.now()): boolean => {
+    if (vehicle['Trạng thái'] !== 'Đang giữ') return false;
+    const raw = String(vehicle['Thời Gian Hết Hạn Giữ'] || vehicle.thoi_gian_het_han_giu || '').trim();
+    // Legacy timestamps are showroom local time; ISO timestamps retain their offset.
+    const local = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+    const expiry = Date.parse(local
+        ? `${local[3]}-${local[2]}-${local[1]}T${local[4]}:${local[5]}:${local[6] || '00'}+07:00`
+        : raw);
+    const remaining = expiry - now;
+    return Number.isFinite(expiry) && remaining > 0 && remaining <= 20 * 60 * 1000;
+};
 
 const StockView: React.FC<StockViewProps> = ({
     showToast,
@@ -50,7 +66,7 @@ const StockView: React.FC<StockViewProps> = ({
     isLoading,
     error,
     refetchStock,
-    highlightedVins,
+    highlightedVins: _highlightedVins,
     onHoldCar,
     onReleaseCar,
     onJoinQueue,
@@ -61,65 +77,69 @@ const StockView: React.FC<StockViewProps> = ({
     showOrderInAdmin,
     showAdminTab,
     forcedSearch,
+    onClearForcedSearch,
     queuedVins,
     canHoldMore,
     onNavigateToInquiry,
     onViewCarOnMap: _onViewCarOnMap,
     isReferenceAccount
 }) => {
-    const [selectedSwapVehicle, setSelectedSwapVehicle] = useState<StockVehicle | null>(null);
-
-    const userOrders = useMemo(() => {
-        return (allOrders || []).filter(o => {
-            // allOrders dùng "Tên tư vấn bán hàng" (từ orderService mapping), currentUser = full_name (currentConsultant)
-            const tvbhName = (
-                o["Tên tư vấn bán hàng"] ||
-                o["Tên TVBH"] ||
-                o.ten_tu_van_ban_hang ||
-                ''
-            ).toString().trim().toLowerCase();
-            return tvbhName === (currentUser || '').trim().toLowerCase();
-        });
-    }, [allOrders, currentUser]);
-
-    const [filters, setFilters] = useState({
-        keyword: '',
-        carModel: [] as string[],
-        location: [] as string[],
-        version: [] as string[],
-        dmsCode: [] as string[],
-        status: [] as string[],
-        exterior: [] as string[],
-    });
-
-    // Listen for external search commands (e.g. from notifications)
     useEffect(() => {
-        if (forcedSearch) {
-            setFilters({
-                keyword: forcedSearch,
-                carModel: [],
-                location: [],
-                version: [],
-                dmsCode: [],
-                status: [],
-                exterior: [],
-            });
-            setVisibleCount(20);
-            if (containerRef.current) {
-                const scrollContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');
-                if (scrollContainer) scrollContainer.scrollTop = 0;
-            }
+        void preloadRequestForm().catch(error => console.warn('[Stock] Form preload failed:', error));
+    }, []);
+    // Selected vehicle for Mẫu 36 Slide-In Drawer
+    const [selectedDrawerVehicle, setSelectedDrawerVehicle] = useState<StockVehicle | null>(null);
+    const [selectedSwapVehicle, setSelectedSwapVehicle] = useState<StockVehicle | null>(null);
+    const [copiedValue, setCopiedValue] = useState<string | null>(null);
+    const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [holdClock, setHoldClock] = useState(Date.now());
+    useEffect(() => {
+        const timer = setInterval(() => setHoldClock(Date.now()), 10000);
+        return () => clearInterval(timer);
+    }, []);
+    useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+    const copyStockValue = async (label: string, value: string, key: string) => {
+        if (!value || value === '—') return;
+        try {
+            await navigator.clipboard.writeText(value);
+            if (copyTimer.current) clearTimeout(copyTimer.current);
+            setCopiedValue(key);
+            copyTimer.current = setTimeout(() => setCopiedValue(null), 2000);
+        } catch {
+            showToast('Không thể sao chép', `Vui lòng thử lại để sao chép ${label.toLowerCase()}.`, 'error', 3000);
         }
-    }, [forcedSearch]);
-    const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'Ngày nhập', direction: 'desc' });
+    };
 
-    // Admin Edit Modal
+    // Mẫu 36 Faceted Filters
+    const [fModel, setFModel] = useState<string>('');
+    const [fStatus, setFStatus] = useState<string>('');
+    const [fLoc, setFLoc] = useState<string>('');
+    const [keyword, setKeyword] = useState<string>('');
+    const lastForcedSearchRef = useRef<string | null>(null);
+
+    // Handle external forced search (notifications, global search) - consume once
+    useEffect(() => {
+        if (forcedSearch && forcedSearch !== lastForcedSearchRef.current) {
+            lastForcedSearchRef.current = forcedSearch;
+            setKeyword(forcedSearch);
+            setFModel('');
+            setFStatus('');
+            setFLoc('');
+            setVisibleCount(30);
+            onClearForcedSearch?.();
+        }
+    }, [forcedSearch, onClearForcedSearch]);
+
+    // Admin Modals State
     const [adminEditVehicle, setAdminEditVehicle] = useState<StockVehicle | null>(null);
-
-    // VinFast DMS Radar On-Demand Sync
     const [isSyncingRadar, setIsSyncingRadar] = useState(false);
     const [dmsRadarResult, setDmsRadarResult] = useState<DmsRadarScanResult | null>(null);
     const [isRadarModalOpen, setIsRadarModalOpen] = useState(false);
+
+    const handleOpenAdminEdit = (vehicle: StockVehicle) => {
+        setAdminEditVehicle(vehicle);
+        setSelectedDrawerVehicle(null);
+    };
 
     const handleTriggerDmsRadar = async () => {
         if (isSyncingRadar) return;
@@ -146,7 +166,8 @@ const StockView: React.FC<StockViewProps> = ({
             setIsSyncingRadar(false);
         }
     };
-    // Tự động kiểm tra và đồng bộ vị trí kho ngầm (Cách 2: Cooldown 2 giờ, tiết kiệm 100% tài nguyên Render)
+
+    // Auto sync CyberSoft location ngầm
     useEffect(() => {
         let isMounted = true;
         autoSyncCyberLocationsIfNeeded(false).then(res => {
@@ -161,303 +182,127 @@ const StockView: React.FC<StockViewProps> = ({
             }
         });
         return () => { isMounted = false; };
+    }, [showToast]);
+
+    // Unique filter options
+    const models = useMemo(() => {
+        return ['', ...new Set(stockData.map(c => c["Dòng xe"]).filter((v): v is string => !!v))].sort();
+    }, [stockData]);
+
+    const statuses = useMemo(() => {
+        return ['', 'Chưa ghép', 'Đang giữ', 'Đã ghép'];
     }, []);
 
+    const locations = useMemo(() => {
+        return ['', ...new Set(stockData.map(c => c["Vị trí"]).filter((v): v is string => !!(v && v.trim() !== '')))].sort();
+    }, [stockData]);
 
-    // Stock Welcome Video/Popup Tracker
-    const [showStockWelcome, setShowStockWelcome] = useState(false);
-    const idleTimeoutRef = useRef<any>(null);
+    const stockStreamRef = useRef<HTMLElement | null>(null);
+    const stockOrderRef = useRef(new Map<string, number>());
+    const pinnedVehiclesRef = useRef({ filterKey: '', vins: new Set<string>() });
+    const stockPositionRef = useRef<{ vin: string; filterKey: string; offset: number } | null>(null);
+    const stockFilterKey = JSON.stringify([fModel, fStatus, fLoc, keyword.trim().toLowerCase()]);
 
-    const resetIdleTimer = useCallback(() => {
-        if (isAdmin || localStorage.getItem('hasSeenStockWelcome_v1')) return;
-        if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
-        
-        idleTimeoutRef.current = setTimeout(() => {
-            setShowStockWelcome(true);
-        }, 15000); // 15 seconds of inactivity
-    }, [isAdmin]);
-
-    useEffect(() => {
-        if (isAdmin || localStorage.getItem('hasSeenStockWelcome_v1') || showStockWelcome) return;
-
-        resetIdleTimer(); // Start timer on mount
-        
-        let throttleTimer = false;
-        const handleActivity = () => {
-            if (!throttleTimer) {
-                resetIdleTimer();
-                throttleTimer = true;
-                setTimeout(() => { throttleTimer = false; }, 1000);
+    const orderedStock = useMemo(() => {
+        for (const car of stockData) {
+            if (!stockOrderRef.current.has(car.VIN)) {
+                stockOrderRef.current.set(car.VIN, stockOrderRef.current.size);
             }
-        };
+        }
+        return [...stockData].sort((a, b) => stockOrderRef.current.get(a.VIN)! - stockOrderRef.current.get(b.VIN)!);
+    }, [stockData]);
 
-        window.addEventListener('mousemove', handleActivity);
-        window.addEventListener('mousedown', handleActivity);
-        window.addEventListener('keydown', handleActivity);
-        window.addEventListener('touchstart', handleActivity);
-        window.addEventListener('scroll', handleActivity, true);
-
-        return () => {
-            if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
-            window.removeEventListener('mousemove', handleActivity);
-            window.removeEventListener('mousedown', handleActivity);
-            window.removeEventListener('keydown', handleActivity);
-            window.removeEventListener('touchstart', handleActivity);
-            window.removeEventListener('scroll', handleActivity, true);
-        };
-    }, [isAdmin, showStockWelcome, resetIdleTimer]);
-
-    const handleAcknowledgeAndNavigate = () => {
-        localStorage.setItem('hasSeenStockWelcome_v1', 'true');
-        setShowStockWelcome(false);
-        onNavigateToInquiry();
+    const rememberStockPosition = (vin: string) => {
+        if (pinnedVehiclesRef.current.filterKey !== stockFilterKey) {
+            pinnedVehiclesRef.current = { filterKey: stockFilterKey, vins: new Set() };
+        }
+        pinnedVehiclesRef.current.vins.add(vin);
+        const stream = stockStreamRef.current;
+        const card = stream && Array.from(stream.querySelectorAll<HTMLElement>('[data-stock-vin]'))
+            .find(element => element.dataset.stockVin === vin);
+        if (stream && card) {
+            stockPositionRef.current = { vin, filterKey: stockFilterKey, offset: card.getBoundingClientRect().top - stream.getBoundingClientRect().top };
+        }
     };
 
-    const handleAcknowledgeAndClose = () => {
-        localStorage.setItem('hasSeenStockWelcome_v1', 'true');
-        setShowStockWelcome(false);
+    const rememberStockScroll = () => {
+        const position = stockPositionRef.current;
+        const stream = stockStreamRef.current;
+        if (!position || !stream || position.filterKey !== stockFilterKey) return;
+        const card = Array.from(stream.querySelectorAll<HTMLElement>('[data-stock-vin]'))
+            .find(element => element.dataset.stockVin === position.vin);
+        if (card) position.offset = card.getBoundingClientRect().top - stream.getBoundingClientRect().top;
     };
 
-    // Infinite Scroll State
-    const [visibleCount, setVisibleCount] = useState(20); // Initial count
-    const [batchSize, setBatchSize] = useState(20); // Items to add on scroll
-    const containerRef = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => {
+        const position = stockPositionRef.current;
+        if (!position || position.filterKey !== stockFilterKey) {
+            stockPositionRef.current = null;
+            if (pinnedVehiclesRef.current.filterKey !== stockFilterKey) {
+                pinnedVehiclesRef.current = { filterKey: stockFilterKey, vins: new Set() };
+            }
+            return;
+        }
+        const stream = stockStreamRef.current;
+        const card = stream && Array.from(stream.querySelectorAll<HTMLElement>('[data-stock-vin]'))
+            .find(element => element.dataset.stockVin === position.vin);
+        if (stream && card) {
+            stream.scrollTop += card.getBoundingClientRect().top - stream.getBoundingClientRect().top - position.offset;
+        }
+    });
+
+    // Keep acted-on vehicles visible until the user changes the filters.
+    const baseVehicles = useMemo(() => {
+        return orderedStock.filter(c => {
+            if (pinnedVehiclesRef.current.filterKey === stockFilterKey && pinnedVehiclesRef.current.vins.has(c.VIN)) return true;
+            const matchM = !fModel || c["Dòng xe"] === fModel;
+            const matchS = !fStatus || (
+                fStatus === 'Đã ghép'
+                    ? (c["Trạng thái"] === 'Đã ghép' || (!['Chưa ghép', 'Đang giữ'].includes(c["Trạng thái"])))
+                    : c["Trạng thái"] === fStatus
+            );
+            const matchL = !fLoc || c["Vị trí"] === fLoc;
+
+            let matchKw = true;
+            if (keyword.trim()) {
+                const q = keyword.toLowerCase().trim();
+                matchKw = (
+                    includesNormalized(c.VIN, q) ||
+                    includesNormalized(c["Dòng xe"], q) ||
+                    includesNormalized(c["Phiên bản"], q) ||
+                    includesNormalized(c["Ngoại thất"], q) ||
+                    includesNormalized(c["Nội thất"], q) ||
+                    includesNormalized(c["Vị trí"], q) ||
+                    includesNormalized(c["Người Giữ Xe"], q) ||
+                    includesNormalized(c["Mã DMS"], q) ||
+                    includesNormalized((c as any).ma_dms, q) ||
+                    includesNormalized(c["Số máy"], q) ||
+                    includesNormalized((c as any).so_may, q) ||
+                    includesNormalized(c["Số COC"], q) ||
+                    includesNormalized((c as any).so_coc, q)
+                );
+            }
+
+            return matchM && matchS && matchL && matchKw;
+        });
+    }, [orderedStock, stockFilterKey, fModel, fStatus, fLoc, keyword]);
+
+    // Batch infinite scroll
+    const [visibleCount, setVisibleCount] = useState(30);
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
+    const visibleVehicles = useMemo(() => {
+        return baseVehicles.slice(0, visibleCount);
+    }, [baseVehicles, visibleCount]);
 
-    // Dynamic Batch Size Calculation
-    const calculateBatchSize = useCallback(() => {
-        if (!containerRef.current) return;
-
-        // Find the grid container (the one with overflow-y-auto)
-        const gridContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');
-        const gridElement = gridContainer?.querySelector('.grid');
-
-        if (!gridContainer || !gridElement) {
-            // Fallback
-            setBatchSize(20);
-            return;
-        }
-
-        const containerWidth = containerRef.current.clientWidth;
-        const containerHeight = containerRef.current.clientHeight;
-
-        if (containerHeight === 0 || containerWidth === 0) {
-            setBatchSize(20);
-            return;
-        }
-
-        const minCardWidth = 190;
-        const gap = 8;
-        let cardHeight = 230;
-
-        // Measure actual columns and card height if grid exists
-        let columns = Math.floor((containerWidth - 8 + gap) / (minCardWidth + gap));
-
-        if (gridElement) {
-            const gridStyle = window.getComputedStyle(gridElement);
-            const gridCols = gridStyle.gridTemplateColumns;
-            if (gridCols && gridCols !== 'none') {
-                columns = gridCols.split(' ').length;
-            }
-            const firstCard = gridElement.querySelector('.relative.flex.flex-col');
-            if (firstCard) {
-                const measuredHeight = firstCard.getBoundingClientRect().height;
-                if (measuredHeight > 0) {
-                    cardHeight = measuredHeight;
-                }
-            }
-        }
-
-        const availableHeight = containerHeight - 50;
-        const rows = availableHeight >= cardHeight
-            ? Math.ceil((availableHeight - cardHeight / 2) / (cardHeight + gap))
-            : 0;
-
-        const optimalRows = Math.max(2, rows);
-        const optimalColumns = Math.max(1, columns);
-
-        // Load roughly 2 screens worth of data at a time
-        const newBatchSize = Math.max(12, optimalRows * optimalColumns * 2);
-        setBatchSize(newBatchSize);
-
-        // If visible count is very low (e.g. initial load), set it to at least one batch
-        setVisibleCount(prev => Math.max(prev, newBatchSize));
-
-    }, []);
-
-
-    useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const observer = new ResizeObserver(() => {
-            calculateBatchSize();
-        });
-
-        observer.observe(container);
-        calculateBatchSize(); // Initial calculation
-
-        return () => observer.disconnect();
-    }, [calculateBatchSize]);
-
-
-    const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
-        setVisibleCount(batchSize); // Reset to first batch
-        setFilters(prev => ({ ...prev, ...newFilters }));
-    }, [batchSize]);
-
-    const handleResetFilters = useCallback(() => {
-        setVisibleCount(batchSize);
-        setFilters({
-            keyword: '',
-            carModel: [],
-            location: [],
-            version: [],
-            dmsCode: [],
-            status: [],
-            exterior: [],
-        });
-    }, [batchSize]);
-
-    const handleSort = (key: keyof StockVehicle) => {
-        setVisibleCount(batchSize);
-        let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') { direction = 'desc'; }
-        setSortConfig({ key, direction });
-    };
-
-    const handleShowDetails = (vehicle: StockVehicle) => {
-        const status = vehicle['Trạng thái'];
-
-        if (isAdmin && status !== 'Chưa ghép') {
-            if (status === 'Đã ghép') {
-                const order = allOrders.find(o => o.VIN === vehicle.VIN);
-                if (order) {
-                    showOrderInAdmin?.(order, 'matching');
-                } else {
-                    showToast('Không Tìm Thấy', `Không tìm thấy đơn hàng đã ghép với xe VIN ${vehicle.VIN}.`, 'warning', 4000);
-                }
-            } else if (status === 'Đang giữ') {
-                showAdminTab?.('pending');
-            }
-        }
-    };
-
-    const processedData = useMemo(() => {
-        let filteredVehicles = [...stockData];
-        if (filters.keyword) {
-            const keyword = filters.keyword.toLowerCase();
-            filteredVehicles = filteredVehicles.filter(vehicle =>
-                includesNormalized(vehicle.VIN, keyword) ||
-                includesNormalized(vehicle["Dòng xe"], keyword) ||
-                includesNormalized(vehicle["Phiên bản"], keyword) ||
-                includesNormalized(vehicle["Ngoại thất"], keyword) ||
-                includesNormalized(vehicle["Nội thất"], keyword) ||
-                includesNormalized(vehicle["Vị trí"], keyword) ||
-                includesNormalized(vehicle["Người Giữ Xe"], keyword) ||
-                includesNormalized(vehicle["Mã DMS"], keyword) ||
-                includesNormalized((vehicle as any).ma_dms, keyword) ||
-                includesNormalized(vehicle["Số COC"], keyword) ||
-                includesNormalized((vehicle as any).so_coc, keyword)
-            );
-        }
-        if (filters.carModel.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.carModel.includes(vehicle["Dòng xe"]));
-        }
-        if (filters.location.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => !!vehicle["Vị trí"] && filters.location.includes(vehicle["Vị trí"]));
-        }
-        if (filters.version.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.version.includes(vehicle["Phiên bản"]));
-        }
-        if (filters.dmsCode.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => {
-                const code = (vehicle["Mã DMS"] || (vehicle as any).ma_dms || '').trim();
-                const matchesEmpty = filters.dmsCode.includes('Chưa có mã DMS') && !code;
-                const matchesCode = !!code && filters.dmsCode.includes(code);
-                return matchesEmpty || matchesCode;
-            });
-        }
-        if (filters.status.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.status.includes(vehicle["Trạng thái"]));
-        }
-        if (filters.exterior.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.exterior.includes(vehicle["Ngoại thất"]));
-        }
-
-
-        // Sort: "Đang giữ" on top, then by Model Priority list, then by user-selected column
-        filteredVehicles.sort((a, b) => {
-            const aIsHeld = a['Trạng thái'] === 'Đang giữ';
-            const bIsHeld = b['Trạng thái'] === 'Đang giữ';
-
-            if (aIsHeld && !bIsHeld) return -1;
-            if (!aIsHeld && bIsHeld) return 1;
-
-            // Priority 2: Missing Version (User wants to find these to fill them)
-            const aNoVersion = !a['Phiên bản'] || a['Phiên bản'].trim() === '';
-            const bNoVersion = !b['Phiên bản'] || b['Phiên bản'].trim() === '';
-            if (aNoVersion && !bNoVersion) return -1;
-            if (!aNoVersion && bNoVersion) return 1;
-
-            // Model Priority Definition
-            const getModelPriority = (vehicle: StockVehicle) => {
-                const model = (vehicle['Dòng xe'] || '').toUpperCase();
-                // Priority Order: Ec van, herio, minio, limo, vf3, vf5, vf6, vf7, vf8, vf9
-                if (includesNormalized(model, 'EC VAN')) return 1;
-                if (includesNormalized(model, 'HERIO')) return 2;
-                if (includesNormalized(model, 'MINIO')) return 3;
-                if (includesNormalized(model, 'LIMO')) return 4;
-                if (includesNormalized(model, 'VF 3') || model.includes('VF3')) return 5;
-                if (includesNormalized(model, 'VF 5') || model.includes('VF5')) return 6;
-                if (includesNormalized(model, 'VF 6') || model.includes('VF6')) return 7;
-                if (includesNormalized(model, 'VF 7') || model.includes('VF7')) return 8;
-                if (includesNormalized(model, 'VF 8') || model.includes('VF8')) return 9;
-                if (includesNormalized(model, 'VF 9') || model.includes('VF9')) return 10;
-                return 999;
-            };
-
-            const aPriority = getModelPriority(a);
-            const bPriority = getModelPriority(b);
-
-            if (aPriority !== bPriority) {
-                return aPriority - bPriority;
-            }
-
-            if (sortConfig) {
-                const aValue = a[sortConfig.key];
-                const bValue = b[sortConfig.key];
-
-                if (aValue === null || aValue === undefined || aValue === '') return 1;
-                if (bValue === null || bValue === undefined || bValue === '') return -1;
-
-                if (aValue < bValue) { return sortConfig.direction === 'asc' ? -1 : 1; }
-                if (aValue > bValue) { return sortConfig.direction === 'asc' ? 1 : -1; }
-            }
-
-            return 0; // if no sortConfig or values are equal
-        });
-
-        return filteredVehicles;
-    }, [stockData, filters, sortConfig]);
-
-
-    const visibleData = useMemo(() => {
-        return processedData.slice(0, visibleCount);
-    }, [processedData, visibleCount]);
-
-    // Intersection Observer for Infinite Scroll
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting) {
-                    if (visibleCount < processedData.length) {
-                        setVisibleCount((prev) => Math.min(prev + batchSize, processedData.length));
-                    }
+                if (entries[0].isIntersecting && visibleCount < baseVehicles.length) {
+                    setVisibleCount(prev => Math.min(prev + 30, baseVehicles.length));
                 }
             },
-            { threshold: 0.1, rootMargin: '100px' } // Load more before reaching the very bottom
+            { threshold: 0.1, rootMargin: '150px' }
         );
 
         if (loadMoreRef.current) {
@@ -465,193 +310,609 @@ const StockView: React.FC<StockViewProps> = ({
         }
 
         return () => {
-            if (loadMoreRef.current) {
-                observer.unobserve(loadMoreRef.current);
-            }
+            if (loadMoreRef.current) observer.unobserve(loadMoreRef.current);
         };
-    }, [visibleCount, processedData.length, batchSize]);
+    }, [visibleCount, baseVehicles.length]);
 
+    const handleClearAllFacets = () => {
+        setFModel('');
+        setFStatus('');
+        setFLoc('');
+        setKeyword('');
+        lastForcedSearchRef.current = '';
+        setVisibleCount(30);
+        onClearForcedSearch?.();
+    };
 
-    // Recalculate batch size when data changes (after render)
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            calculateBatchSize();
-        }, 200);
-        return () => clearTimeout(timer);
-    }, [visibleData.length, calculateBatchSize]);
+    const hasActiveFacets = Boolean(fModel || fStatus || fLoc || keyword);
 
-    const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter((v): v is string => !!v))].sort(), [stockData]);
-    const uniqueLocations = useMemo(() => [...new Set(stockData.map(v => v["Vị trí"]).filter((v): v is string => !!(v && v.trim() !== '')))].sort(), [stockData]);
-    const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter((v): v is string => !!v))].sort(), [stockData]);
-    const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter((v): v is string => !!v))].sort(), [stockData]);
-    const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter((v): v is string => !!v))].sort(), [stockData]);
-    const uniqueDmsCodes = useMemo(() => {
-        const rawCodes = stockData
-            .map(v => (v["Mã DMS"] || (v as any).ma_dms || '').trim())
-            .filter((v): v is string => !!v);
-        const set = [...new Set(rawCodes)].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
-        const hasEmptyDms = stockData.some(v => !(v["Mã DMS"] || (v as any).ma_dms || '').trim());
-        if (hasEmptyDms && set.length > 0) {
-            return ['Chưa có mã DMS', ...set];
+    // Swap car check
+    const userOrders = useMemo(() => {
+        return (allOrders || []).filter(o => {
+            const tvbhName = (
+                o["Tên tư vấn bán hàng"] ||
+                o["Tên TVBH"] ||
+                o.ten_tu_van_ban_hang ||
+                ''
+            ).toString().trim().toLowerCase();
+            return tvbhName === (currentUser || '').trim().toLowerCase();
+        });
+    }, [allOrders, currentUser]);
+
+    const canSwapCar = useCallback((c: StockVehicle) => {
+        if (!userOrders || userOrders.length === 0) return false;
+        const holder = (c["Người Giữ Xe"] || (c as any).nguoi_giu_xe || '').toString().trim();
+        if (!holder || holder.toLowerCase() === (currentUser || '').toLowerCase()) return false;
+        if (c["Trạng thái"] !== 'Đã ghép' && c["Trạng thái"] !== 'Đang giữ') return false;
+
+        const tModel = (c["Dòng xe"] || '').trim().toLowerCase();
+        const tVer = (c["Phiên bản"] || '').trim().toLowerCase();
+        const tExt = (c["Ngoại thất"] || '').trim().toLowerCase();
+        const tInt = (c["Nội thất"] || '').trim().toLowerCase();
+
+        return userOrders.some((o: any) => {
+            const oStatus = (o["Kết quả"] || '').toLowerCase();
+            if (oStatus.includes('đã xuất hóa đơn') || oStatus.includes('hủy')) return false;
+            return (
+                (o["Dòng xe"] || '').trim().toLowerCase() === tModel &&
+                (o["Phiên bản"] || '').trim().toLowerCase() === tVer &&
+                (o["Ngoại thất"] || '').trim().toLowerCase() === tExt &&
+                (o["Nội thất"] || '').trim().toLowerCase() === tInt
+            );
+        });
+    }, [userOrders, currentUser]);
+
+    const renderActionButtons = (c: StockVehicle) => {
+        if (isReferenceAccount) {
+            return <span style={{ fontSize: '10px', color: '#8aa0bc' }}>Chỉ xem</span>;
         }
-        return set;
-    }, [stockData]);
 
-    const dropdownConfigs: DropdownFilterConfig[] = [
-        { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
-        { id: 'stock-filter-location', key: 'location', label: 'Kho', options: uniqueLocations, icon: 'fa-warehouse' },
-        { id: 'stock-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
-        { id: 'stock-filter-dms', key: 'dmsCode', label: 'Mã DMS', options: uniqueDmsCodes, icon: 'fa-qrcode' },
-        { id: 'stock-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' },
-        { id: 'stock-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
-    ].filter(d => d.options.length > 0);
+        if (processingVin === c.VIN) {
+            return <button type="button" className="cmd-btn" disabled aria-busy="true">Đang xử lý…</button>;
+        }
 
-    const renderContent = () => {
-        const animationClass = 'animate-fade-in-up';
+        const isMine = (c["Người Giữ Xe"] || '').trim().toLowerCase() === (currentUser || '').trim().toLowerCase();
+        const isQueued = queuedVins?.some(v => v?.toUpperCase() === c.VIN?.toUpperCase());
 
-        // --- TABS LOGIC ---
-        const carModelTabs = uniqueCarModels.map(model => ({
-            id: model,
-            label: model,
-            count: stockData.filter(v => v['Dòng xe'] === model).length
-        }));
+        const adminActions = isAdmin ? (
+            <button
+                type="button"
+                className="cmd-btn"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenAdminEdit(c);
+                }}
+                title="Quản trị xe (Sửa / Xóa xe)"
+            >
+                Sửa
+            </button>
+        ) : null;
 
-        const totalCount = stockData.length;
-        const tabs = [
-            { id: 'all', label: 'Tất cả', count: totalCount },
-            ...carModelTabs
-        ];
+        if (c["Trạng thái"] === 'Chưa ghép') {
+            return (
+                <>
+                    <button
+                        type="button"
+                        className="cmd-btn primary"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onHoldCar(c.VIN);
+                        }}
+                        disabled={!canHoldMore}
+                        title={canHoldMore ? 'Giữ xe trong 24 giờ' : 'Bạn đã hết lượt giữ xe'}
+                    >
+                        {canHoldMore ? 'Giữ' : 'Hết lượt'}
+                    </button>
+                    {adminActions}
+                </>
+            );
+        }
 
-        const activeTab = (filters.carModel && filters.carModel.length === 1) ? filters.carModel[0] : 'all';
+        if (c["Trạng thái"] === 'Đang giữ' && isMine) {
+            return (
+                <>
+                    {isHoldInFinalTwentyMinutes(c, holdClock) && <button
+                        type="button"
+                        className="cmd-btn warning"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isHoldInFinalTwentyMinutes(c)) return;
+                            onOpenExtensionModal(c);
+                        }}
+                        title="Xin gia hạn giữ xe thêm 24 giờ"
+                    >
+                        Gia hạn
+                    </button>}
+                    <button
+                        type="button"
+                        className="cmd-btn danger"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onReleaseCar(c.VIN);
+                        }}
+                        title="Hủy giữ xe (nhả xe về kho)"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        type="button"
+                        className="cmd-btn primary"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onCreateRequestForVehicle(c);
+                        }}
+                        title="Tạo đơn hàng ghép xe này"
+                    >
+                        Ghép
+                    </button>
+                    {adminActions}
+                </>
+            );
+        }
 
-        const handeTabChange = (tabId: string) => {
-            handleFilterChange({ carModel: tabId === 'all' ? [] : [tabId] });
-        };
+        if (c["Trạng thái"] === 'Đang giữ' && !isMine) {
+            return (
+                <>
+                    {isQueued ? (
+                        <button
+                            type="button"
+                            className="cmd-btn danger"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onLeaveQueue(c.VIN);
+                            }}
+                            title="Hủy đăng ký chờ xe"
+                        >
+                            Hủy chờ
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            className="cmd-btn warning"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onJoinQueue(c.VIN);
+                            }}
+                            title="Đăng ký chờ khi xe được nhả"
+                        >
+                            Chờ
+                        </button>
+                    )}
+                    {canSwapCar(c) && (
+                        <button
+                            type="button"
+                            className="cmd-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSwapVehicle(c);
+                            }}
+                            title="Đổi xe cùng cấu hình"
+                        >
+                            Đổi xe
+                        </button>
+                    )}
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            className="cmd-btn danger"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onReleaseCar(c.VIN);
+                            }}
+                            title="Admin hủy giữ xe"
+                        >
+                            Hủy
+                        </button>
+                    )}
+                    {adminActions}
+                </>
+            );
+        }
 
-        // Filter out carModel from dropdowns as it is now in tabs
-        const activeDropdowns = dropdownConfigs.filter(d => d.key !== 'carModel');
+        if (c["Trạng thái"] === 'Đã ghép') {
+            return adminActions;
+        }
 
-        const skeletons = Array.from({ length: 12 }, (_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-3 shadow-xs min-h-[305px] flex flex-col justify-between">
-                <div>
-                    <div className="skeleton-item h-32 w-full rounded-lg mb-4"></div>
-                    <div className="space-y-2">
-                        <div className="skeleton-item h-4 w-3/4"></div>
-                        <div className="skeleton-item h-3 w-1/2"></div>
+        return adminActions;
+    };
+
+    const renderCompactActions = (vehicle: StockVehicle) => {
+        const flatten = (nodes: React.ReactNode): React.ReactNode[] => React.Children.toArray(nodes).flatMap(node =>
+            React.isValidElement<{ children?: React.ReactNode }>(node) && node.type === React.Fragment
+                ? flatten(node.props.children) : [node]
+        );
+        const actions = flatten(renderActionButtons(vehicle));
+        if (actions.length <= 2) return actions;
+        const mainIndex = actions.findIndex(action => React.isValidElement<{ children?: React.ReactNode }>(action) && action.props.children === 'Ghép');
+        const primary = mainIndex >= 0 ? mainIndex : 0;
+        return <>
+            {actions[primary]}
+            <details className="cmd-action-menu" onClick={event => {
+                event.stopPropagation();
+                if ((event.target as HTMLElement).closest('button')) event.currentTarget.open = false;
+            }}>
+                <summary aria-label="Thao tác khác" title="Thao tác khác">⋯</summary>
+                <div className="cmd-action-menu-items">{actions.filter((_, index) => index !== primary)}</div>
+            </details>
+        </>;
+    };
+
+    if (error) {
+        return (
+            <div className="cmd-root" style={{ alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+                <p style={{ color: '#b44f62', fontWeight: 600 }}>Không thể tải dữ liệu kho xe: {error}</p>
+                <button type="button" className="cmd-btn primary" onClick={() => refetchStock()}>
+                    Thử lại
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="cmd-root">
+            {/* Left Sidebar: 100% Đồng bộ kiến trúc với Tab Đơn Hàng */}
+            <aside className="cmd-sidebar" id="cmd-sidebar">
+                {/* Header trong Sidebar */}
+                <div className="cmd-sidebar-head">
+                    <h1>Kho xe <span>{stockData.length}</span></h1>
+                    <div className="cmd-sidebar-actions">
+                        {isAdmin && (
+                            <button
+                                type="button"
+                                onClick={handleTriggerDmsRadar}
+                                disabled={isSyncingRadar}
+                                title="Quét DMS Radar"
+                                className="cmd-icon-btn"
+                            >
+                                <i className={`fa-solid ${isSyncingRadar ? 'fa-circle-notch fa-spin' : 'fa-radar'}`}></i>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => refetchStock(true)}
+                            disabled={isLoading}
+                            title="Làm mới kho xe"
+                            className="cmd-icon-btn"
+                        >
+                            <i className={`fa-solid ${isLoading ? 'fa-circle-notch fa-spin' : 'fa-rotate'}`}></i>
+                        </button>
                     </div>
                 </div>
-                <div className="flex justify-between items-center pt-3 border-t border-gray-50">
-                    <div className="skeleton-item h-4 w-1/4"></div>
-                    <div className="skeleton-item h-8 w-20 rounded-full"></div>
+
+                {/* Ô tìm kiếm chuẩn Tab Đơn Hàng */}
+                <div className="cmd-search-wrap">
+                    <label className="cmd-search-label">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 21l-5-5 M18 10a8 8 0 1 0-16 0 8 8 0 0 0 16 0" />
+                        </svg>
+                        <input
+                            value={keyword}
+                            onChange={(e) => {
+                                setKeyword(e.target.value);
+                                setVisibleCount(30);
+                            }}
+                            placeholder="Tìm VIN, dòng xe, số máy, DMS…"
+                        />
+                        {keyword && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setKeyword('');
+                                    lastForcedSearchRef.current = '';
+                                    onClearForcedSearch?.();
+                                }}
+                                className="cmd-clear-btn"
+                                title="Xóa tìm kiếm"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </label>
                 </div>
-            </div>
-        ));
 
-        if (error) {
-            return (<div className={`flex items-center justify-center h-96 ${animationClass}`}><div className="text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu kho</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><Button onClick={() => refetchStock()} variant="primary" className="mt-6">Thử lại</Button></div></div>);
-        }
+                {/* Tổng kết bộ lọc & Xóa bộ lọc chuẩn Tab Đơn Hàng */}
+                {hasActiveFacets && (
+                    <div className="cmd-filter-summary">
+                        <span>{baseVehicles.length} xe phù hợp</span>
+                        <button type="button" onClick={handleClearAllFacets}>Xóa bộ lọc</button>
+                    </div>
+                )}
 
-        const commonProps = {
-            sortConfig,
-            onSort: handleSort,
-            startIndex: 0, // Infinite scroll always starts from 0
-            onHoldCar: onHoldCar,
-            onReleaseCar: onReleaseCar,
-            onJoinQueue: onJoinQueue,
-            onLeaveQueue: onLeaveQueue,
-            onOpenExtensionModal: onOpenExtensionModal,
-            onCreateRequestForVehicle,
-            onShowDetails: handleShowDetails,
-            currentUser,
-            isAdmin,
-            showToast,
-            highlightedVins: highlightedVins,
-            processingVin: processingVin,
-            queuedVins: queuedVins,
-            canHoldMore: canHoldMore,
-            isReferenceAccount: isReferenceAccount,
-            onOpenSwapModal: (vehicle: StockVehicle) => setSelectedSwapVehicle(vehicle),
-            userOrders: userOrders,
-            onRefetchStock: () => refetchStock(true),
-            ...(isAdmin ? { onAdminEdit: (vehicle: StockVehicle) => setAdminEditVehicle(vehicle) } : {})
-        };
+                {/* Cuộn danh sách Facets */}
+                <div className="cmd-facets-scroll">
+                    {/* Facet Group 1: Trạng thái ghép xe */}
+                    <div className="facet-group">
+                        <strong>Trạng thái ghép xe</strong>
+                        <div className="facet-btn-list">
+                            {statuses.map(s => {
+                                const count = s
+                                    ? stockData.filter(c => s === 'Đã ghép' ? (c["Trạng thái"] === 'Đã ghép' || (!['Chưa ghép', 'Đang giữ'].includes(c["Trạng thái"]))) : c["Trạng thái"] === s).length
+                                    : stockData.length;
+                                return (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        className={`facet-item ${fStatus === s ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setFStatus(fStatus === s ? '' : s);
+                                            setVisibleCount(30);
+                                        }}
+                                    >
+                                        <span>{s || 'Tất cả trạng thái'}</span>
+                                        <small>{count}</small>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-        return (
-            <div className={`flex flex-col h-full`}>
-                <div className="flex-shrink-0 relative z-20">
-                    <TabbedFilter
-                        tabs={tabs}
-                        activeTab={activeTab}
-                        onTabChange={handeTabChange}
-                        searchValue={filters.keyword || ''}
-                        onSearchChange={(val) => handleFilterChange({ keyword: val })}
-                        onReset={handleResetFilters}
-                        canReset={true}
-                        extraActions={
-                            isAdmin ? (
-                                <button
-                                    onClick={handleTriggerDmsRadar}
-                                    disabled={isSyncingRadar}
-                                    className={`h-7 lg:h-[26px] px-2.5 flex items-center justify-center rounded-xl border text-[11px] lg:text-[10px] font-black transition-all duration-200 active:scale-95 gap-1.5 shadow-xs ${
-                                        isSyncingRadar
-                                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white border-blue-500/40 shadow-blue-500/20'
-                                    }`}
-                                    title="Quét trực tiếp VinFast DMS OData: Số máy, Mã DMS, Mã phiên bản chuẩn & GPS Live"
-                                >
-                                    <i className={`fas ${isSyncingRadar ? 'fa-spinner fa-spin' : 'fa-satellite-dish'} text-[10px]`}></i>
-                                    <span className="whitespace-nowrap">{isSyncingRadar ? 'Đang quét...' : 'Quét DMS Radar'}</span>
-                                </button>
-                            ) : undefined
-                        }
-                    >
-                        {/* Render Secondary Filters */}
-                        {activeDropdowns.map(dropdown => (
-                            <div key={dropdown.id} className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
-                                <MultiSelectDropdown
-                                    id={dropdown.id}
-                                    label={dropdown.label}
-                                    options={dropdown.options}
-                                    selectedOptions={(filters[dropdown.key as keyof typeof filters] || []) as string[]}
-                                    onChange={(selected) => handleFilterChange({ [dropdown.key]: selected })}
-                                    icon={dropdown.icon}
-                                    align="right"
-                                    displayMode="selection"
-                                    size="compact"
-                                    variant="modern"
-                                    searchable={true}
-                                />
-                            </div>
-                        ))}
-                    </TabbedFilter>
-                </div>
-                <div ref={containerRef} className="flex-1 flex flex-col min-h-0 mt-1">
-                    <div className="bg-slate-50 relative rounded-2xl shadow-sm border border-slate-200/70 flex flex-col h-full overflow-hidden transition-all duration-300">
-                        <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1.5 z-10">
-                            {isLoading && stockData.length === 0 ? (
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(215px,1fr))] gap-2.5 sm:gap-3 p-1">
-                                    {skeletons}
-                                </div>
-                            ) : (
-                                <StockGridView vehicles={visibleData} {...commonProps} />
-                            )}
+                    {/* Facet Group 2: Dòng xe VinFast */}
+                    <div className="facet-group">
+                        <strong>Dòng xe VinFast</strong>
+                        <div className="facet-btn-list">
+                            {models.map(m => {
+                                const count = m
+                                    ? stockData.filter(c => c["Dòng xe"] === m).length
+                                    : stockData.length;
+                                return (
+                                    <button
+                                        key={m}
+                                        type="button"
+                                        className={`facet-item ${fModel === m ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setFModel(fModel === m ? '' : m);
+                                            setVisibleCount(30);
+                                        }}
+                                    >
+                                        <span>{m || 'Tất cả dòng xe'}</span>
+                                        <small>{count}</small>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
 
-                            {/* Load More Trigger */}
-                            {visibleCount < processedData.length && (
-                                <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-4">
-                                    <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
-                                </div>
-                            )}
+                    {/* Facet Group 3: Vị trí kho bãi */}
+                    <div className="facet-group">
+                        <strong>Vị trí kho bãi</strong>
+                        <div className="facet-btn-list">
+                            {locations.map(l => {
+                                const count = l
+                                    ? stockData.filter(c => c["Vị trí"] === l).length
+                                    : stockData.length;
+                                return (
+                                    <button
+                                        key={l}
+                                        type="button"
+                                        className={`facet-item ${fLoc === l ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setFLoc(fLoc === l ? '' : l);
+                                            setVisibleCount(30);
+                                        }}
+                                    >
+                                        <span>📍 {l || 'Tất cả kho'}</span>
+                                        <small>{count}</small>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
-            </div>
-        );
-    };
 
-    return (
-        <>
-            {renderContent()}
+            </aside>
+
+            {/* Right Stream: 100% Đồng bộ kiến trúc với Tab Đơn Hàng */}
+            <div className="cmd-content-col">
+                <div className="cmd-stream-fixed-spacer" aria-hidden="true" />
+                <main className="cmd-stream" id="cmd-stream" ref={stockStreamRef} onScroll={rememberStockScroll}>
+                    {visibleVehicles.map(c => {
+                        const paint = getExteriorSwatchColor(c["Ngoại thất"]);
+                        const holder = (c["Người Giữ Xe"] || '').trim();
+
+                        return (
+                            <article
+                                key={c.VIN}
+                                className="cmd-card"
+                                data-stock-vin={c.VIN}
+                                onClick={(event) => {
+                                    if ((event.target as HTMLElement).closest('button')) return;
+                                    setSelectedDrawerVehicle(c);
+                                }}
+                                onClickCapture={(event) => {
+                                    if ((event.target as HTMLElement).closest('button')) rememberStockPosition(c.VIN);
+                                }}
+                            >
+                                <div className="cmd-card-header">
+                                    <div className="cmd-card-model">
+                                        <strong>{c["Dòng xe"]}</strong>
+                                        <span className="cmd-card-version" title={c["Phiên bản"] || 'Tiêu chuẩn'}>
+                                            {c["Phiên bản"] || 'Tiêu chuẩn'}
+                                        </span>
+                                    </div>
+                                    <div className="cmd-card-state">
+                                        <span className="cmd-status" style={{ '--tone': tone(c["Trạng thái"]) } as React.CSSProperties}>
+                                            {c["Trạng thái"]}
+                                        </span>
+                                        {holder && <span className="cmd-card-holder-name" title={`Người giữ: ${holder}`}>{holder}</span>}
+                                    </div>
+                                </div>
+                                <div className="cmd-card-thumb">
+                                    <CarImage
+                                        model={c["Dòng xe"]}
+                                        exteriorColor={c["Ngoại thất"]}
+                                        version={c["Phiên bản"]}
+                                        alt={c["Dòng xe"]}
+                                    />
+                                </div>
+                                <div className="cmd-card-content">
+                                    <div className="cmd-card-identity">
+                                        <button
+                                            type="button"
+                                            className="cmd-card-vin"
+                                            onClick={() => void copyStockValue('Số VIN', c.VIN, `${c.VIN}:vin`)}
+                                            title="Bấm để sao chép số VIN"
+                                            aria-label={`Sao chép số VIN ${c.VIN}`}
+                                            data-copied={copiedValue === `${c.VIN}:vin`}
+                                        >
+                                            {c.VIN}
+                                            <span className="cmd-copy-indicator" aria-live="polite">{copiedValue === `${c.VIN}:vin` ? '✓' : '⧉'}</span>
+                                        </button>
+                                    </div>
+                                    <div className="cmd-card-meta">
+                                        <span className="cmd-card-color" title={`${c["Ngoại thất"] || '—'} / ${c["Nội thất"] || '—'}`}>
+                                            <i className="cmd-swatch" style={{ background: paint }} aria-hidden="true"></i>
+                                            <span className="cmd-card-meta-text"><span className="cmd-card-label">Màu sắc</span><span>
+                                                {c["Ngoại thất"] || '—'}
+                                                {c["Nội thất"] && <span className="cmd-card-interior"> / {c["Nội thất"]}</span>}
+                                            </span></span>
+                                        </span>
+                                        <span className="cmd-card-location" title={c["Vị trí"] || 'Chưa có vị trí'}>
+                                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                                                <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />
+                                                <circle cx="12" cy="10" r="2.5" />
+                                            </svg>
+                                            <span className="cmd-card-meta-text"><span className="cmd-card-label">Địa điểm</span><span>{c["Vị trí"] || '—'}</span></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="cmd-card-footer">
+                                    <div className="cmd-card-specs">
+                                        <div><span className="cmd-card-label">DMS</span><span>{c["Mã DMS"] || (c as any).ma_dms || '—'}</span></div>
+                                        <div><span className="cmd-card-label">Số máy</span><button
+                                            type="button"
+                                            className="cmd-card-engine"
+                                            disabled={!(c["Số máy"] || (c as any).so_may)}
+                                            onClick={() => void copyStockValue('Số máy', c["Số máy"] || (c as any).so_may, `${c.VIN}:engine`)}
+                                            title="Bấm để sao chép số máy"
+                                            aria-label={`Sao chép số máy ${c["Số máy"] || (c as any).so_may || ''}`}
+                                            data-copied={copiedValue === `${c.VIN}:engine`}
+                                        >{c["Số máy"] || (c as any).so_may || '—'}<span className="cmd-copy-indicator" aria-live="polite">{copiedValue === `${c.VIN}:engine` ? '✓' : '⧉'}</span></button></div>
+                                    </div>
+                                    <div className="cmd-actions">
+                                        {renderCompactActions(c)}
+                                    </div>
+                                </div>
+                            </article>
+                        );
+                    })}
+
+                    {visibleVehicles.length === 0 && (
+                        <div style={{ padding: '35px', color: '#879bb5', fontSize: '12px', gridColumn: '1 / -1', textAlign: 'center' }}>
+                            Không tìm thấy xe phù hợp tổ hợp bộ lọc đã chọn.
+                        </div>
+                    )}
+
+                    {/* Infinite Scroll Trigger */}
+                    {visibleCount < baseVehicles.length && (
+                        <div ref={loadMoreRef} style={{ height: '30px', gridColumn: '1 / -1', textAlign: 'center', padding: '10px' }}>
+                            <span style={{ fontSize: '11px', color: '#8aa0bc' }}>Đang tải thêm xe...</span>
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            {/* Slide-In Detail Drawer: 100% Mẫu 36 */}
+            {selectedDrawerVehicle && (
+                <div className="cmd-drawer-overlay" onClick={() => setSelectedDrawerVehicle(null)}>
+                    <section
+                        className="cmd-drawer"
+                        role="dialog"
+                        aria-modal="true"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <header className="cmd-drawer-head">
+                            <div>
+                                <h2>{selectedDrawerVehicle["Dòng xe"]} · Chi tiết VIN</h2>
+                                <p>{selectedDrawerVehicle.VIN} · {selectedDrawerVehicle["Vị trí"] || 'Kho Thuận An'}</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="cmd-drawer-close"
+                                onClick={() => setSelectedDrawerVehicle(null)}
+                                aria-label="Đóng"
+                            >
+                                ×
+                            </button>
+                        </header>
+
+                        {/* Drawer Hero */}
+                        <div className="cmd-drawer-hero">
+                            <CarImage
+                                model={selectedDrawerVehicle["Dòng xe"]}
+                                exteriorColor={selectedDrawerVehicle["Ngoại thất"]}
+                                version={selectedDrawerVehicle["Phiên bản"]}
+                                alt={selectedDrawerVehicle["Dòng xe"]}
+                            />
+                            <div className="cmd-drawer-hero-info">
+                                <h3>
+                                    {selectedDrawerVehicle["Dòng xe"]}
+                                    <small>{selectedDrawerVehicle["Phiên bản"] || 'Tiêu chuẩn'}</small>
+                                </h3>
+                                <p style={{ display: 'flex', alignItems: 'center' }}>
+                                    <i
+                                        className="cmd-swatch"
+                                        style={{ background: getExteriorSwatchColor(selectedDrawerVehicle["Ngoại thất"]) }}
+                                    ></i>
+                                    {selectedDrawerVehicle["Ngoại thất"] || '—'} / {selectedDrawerVehicle["Nội thất"] || 'Black'}
+                                </p>
+                                <p style={{ marginTop: '7px', color: tone(selectedDrawerVehicle["Trạng thái"]), fontWeight: 600 }}>
+                                    ● {selectedDrawerVehicle["Trạng thái"]}
+                                    {selectedDrawerVehicle["Người Giữ Xe"] ? ` · Giữ bởi ${selectedDrawerVehicle["Người Giữ Xe"]}` : ''}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Action buttons inside drawer */}
+                        <div className="cmd-drawer-actions" onClickCapture={() => rememberStockPosition(selectedDrawerVehicle.VIN)}>
+                            {renderActionButtons(selectedDrawerVehicle)}
+                        </div>
+
+                        {/* Drawer Body Detail Grid: 100% Mẫu 36 fields */}
+                        <div className="cmd-drawer-body">
+                            <div className="cmd-detail-grid">
+                                {[
+                                    ['Dòng xe', `${selectedDrawerVehicle["Dòng xe"]} - ${selectedDrawerVehicle["Phiên bản"] || 'Tiêu chuẩn'}`],
+                                    ['Màu sắc', `${selectedDrawerVehicle["Ngoại thất"] || '—'} / ${selectedDrawerVehicle["Nội thất"] || 'Black'}`],
+                                    ['Số VIN', selectedDrawerVehicle.VIN, true],
+                                    ['Số máy', selectedDrawerVehicle["Số máy"] || (selectedDrawerVehicle as any).so_may || '—', true],
+                                    ['Mã DMS', selectedDrawerVehicle["Mã DMS"] || (selectedDrawerVehicle as any).ma_dms || '—', true],
+                                    ['Số COC', selectedDrawerVehicle["Số COC"] || (selectedDrawerVehicle as any).so_coc || '—', true],
+                                    ['Kho xe', selectedDrawerVehicle["Vị trí"] || 'Kho Thuận An'],
+                                    ['Vị trí bãi', selectedDrawerVehicle["Vị trí"] || 'Kho Thuận An'],
+                                    ['Trạng thái', selectedDrawerVehicle["Trạng thái"] || '—'],
+                                    ['Người giữ', selectedDrawerVehicle["Người Giữ Xe"] || '—'],
+                                    ['Thời hạn giữ', selectedDrawerVehicle["Thời Gian Hết Hạn Giữ"] || '—'],
+                                    ['Ngày nhập kho', selectedDrawerVehicle["Ngày nhập"] || '—'],
+                                    ['Ghi chú DMS', (selectedDrawerVehicle as any)["Ghi chú dms"] || '—'],
+                                ].map(([label, value, copyable]) => (
+                                    <div key={label as string} className="cmd-field-row">
+                                        <span className="cmd-field-label">{label}</span>
+                                        {copyable && value && value !== '—' ? (
+                                            <button
+                                                type="button"
+                                                className="cmd-copy-value"
+                                                onClick={() => void copyStockValue(String(label), String(value), `${selectedDrawerVehicle.VIN}:${label}`)}
+                                                title={`Sao chép ${label}`}
+                                            >
+                                                {value}
+                                            </button>
+                                        ) : (
+                                            <span className="cmd-field-value">{value}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <footer className="cmd-drawer-foot">
+                            <span>Toàn bộ trường thông tin từ hệ thống VinFast DMS & CyberSoft</span>
+                            <span>MẪU 36 · SMART FACETED COMMAND CENTER</span>
+                        </footer>
+                    </section>
+                </div>
+            )}
+
+            {/* Admin Modals */}
             {isAdmin && (
                 <AdminCarEditModal
                     isOpen={!!adminEditVehicle}
@@ -661,6 +922,7 @@ const StockView: React.FC<StockViewProps> = ({
                     onSuccess={() => refetchStock(true)}
                 />
             )}
+
             {isAdmin && (
                 <DmsRadarResultModal
                     isOpen={isRadarModalOpen}
@@ -669,6 +931,7 @@ const StockView: React.FC<StockViewProps> = ({
                     onRefreshStock={() => refetchStock(true)}
                 />
             )}
+
             {selectedSwapVehicle && (
                 <SwapCarModal
                     targetVehicle={selectedSwapVehicle}
@@ -678,58 +941,8 @@ const StockView: React.FC<StockViewProps> = ({
                     onSuccess={() => refetchStock(true)}
                 />
             )}
-            {showStockWelcome && (
-                <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] z-[100] flex items-start justify-center pt-24 sm:pt-32 p-4 animate-fade-in transition-all duration-500">
-                    <div className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] max-w-sm w-full overflow-hidden border border-white/60 relative p-5 ring-1 ring-slate-900/5 transform transition-all hover:-translate-y-1 animate-[bounce_3s_infinite]">
-                        {/* Decorative Top Gradient Line */}
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
-
-                        <button 
-                            onClick={handleAcknowledgeAndClose}
-                            className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-200/50 text-slate-400 transition-colors z-10"
-                        >
-                            <i className="fas fa-times text-[10px]"></i>
-                        </button>
-
-                        <div className="flex items-start gap-4 mb-4">
-                            {/* Small Icon */}
-                            <div className="flex-shrink-0 relative w-10 h-10">
-                                <div className="absolute inset-0 bg-blue-400 blur-md opacity-30 rounded-full animate-pulse"></div>
-                                <div className="relative w-full h-full bg-gradient-to-tr from-blue-50 to-indigo-50 rounded-full flex items-center justify-center border border-white shadow-inner">
-                                    <i className="fas fa-car-side text-blue-600 text-[10px] transform -scale-x-100 absolute bottom-3"></i>
-                                    <i className="fas fa-search text-amber-500 text-xs absolute top-2 right-2"></i>
-                                </div>
-                            </div>
-                            
-                            <div className="pr-2">
-                                <h3 className="text-sm font-black text-slate-800 tracking-tight mb-1">Chưa Tìm Thấy Xe Cần?</h3>
-                                <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                    Đừng cố tìm! Hãy để <span className="text-blue-600 font-bold">Admin hệ thống</span> rà soát toàn nguồn xe giúp bạn.
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={handleAcknowledgeAndNavigate} 
-                                className="flex-1 group relative flex justify-center py-2 px-3 border border-transparent text-xs font-black rounded-xl text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-500/20 overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] items-center gap-1.5"
-                            >
-                                <i className="fas fa-bolt text-amber-300 text-[10px]"></i>
-                                Gửi Yêu Cầu Tìm
-                            </button>
-                            
-                            <button 
-                                onClick={handleAcknowledgeAndClose} 
-                                className="px-4 py-2 text-[11px] font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-xl transition-colors border border-transparent hover:border-slate-200"
-                            >
-                                Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
+        </div>
     );
-}
+};
 
 export default React.memo(StockView);

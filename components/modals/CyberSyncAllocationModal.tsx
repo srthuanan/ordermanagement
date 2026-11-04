@@ -871,11 +871,87 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
 
     return (
         <div 
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[9999] flex items-center justify-center p-2 sm:p-4 animate-fade-in font-sans"
-            onClick={() => {
-                if (!isLoading && !isUndoing) onClose();
+            className="k10-sheet font-sans"
+            onClick={(e) => {
+                if (e.target === e.currentTarget && !isUndoing) { window.dispatchEvent(new CustomEvent('close-all-sheets')); onClose(); }
             }}
         >
+            <style>{`
+                .k10-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .k10-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .k10-sheet-panel {
+                    width: clamp(720px, 76vw, 1180px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: k10SlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes k10SlideInLeft {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+                .k10-header {
+                    padding: 22px 24px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .k10-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .k10-subtitle {
+                    margin: 4px 0 0;
+                    font-size: 11.5px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .k10-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+                .k10-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+            `}</style>
             {/* Datalist hỗ trợ gợi ý */}
             <datalist id="cyber_dong_xe_options">
                 <option value="VF 3" />
@@ -911,59 +987,32 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
             </datalist>
 
             <div 
-                className="bg-white w-full max-w-[1380px] max-h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200/80 transition-all"
+                className="k10-sheet-panel"
                 onClick={(e) => e.stopPropagation()}
             >
-                
-                {/* Header hiện đại phong cách VinFast Cobalt */}
-                <div className="px-6 py-4 bg-gradient-to-r from-blue-900 via-indigo-900 to-sky-900 text-white flex items-center justify-between shadow-lg relative overflow-hidden">
-                    {/* Background glow effects */}
-                    <div className="absolute -top-16 -right-16 w-48 h-48 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
-
-                    <div className="flex items-center gap-3.5 relative z-10">
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-400/30 to-white/10 flex items-center justify-center backdrop-blur-md border border-white/25 shadow-inner">
-                            <i className="fas fa-truck-fast text-yellow-300 text-xl drop-shadow-sm"></i>
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2.5">
-                                <h3 className="text-lg sm:text-xl font-extrabold tracking-tight">Đồng bộ Kế hoạch Nhà máy Giao</h3>
-                                <span className="bg-emerald-500/25 border border-emerald-400/40 text-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                                    CyberSoft K10
-                                </span>
-                            </div>
-                            <div className="text-xs text-sky-100/90 flex flex-wrap items-center gap-2 mt-0.5 font-medium">
-                                <span className="bg-white/15 px-2.5 py-0.5 rounded-md text-[11px] font-semibold text-white">
-                                    Showroom VinFast Thuận An (02.01.08)
-                                </span>
-                                <span>•</span>
-                                <span className="text-[11px] text-amber-200/95 flex items-center gap-1">
-                                    <i className="fas fa-pen-fancy text-[10px]"></i>
-                                    Hiệu chỉnh trực tiếp & Đối chiếu kho Supabase trước khi nạp
-                                </span>
-                            </div>
-                        </div>
+                <div className="k10-header">
+                    <div>
+                        <h3 className="k10-title">Phân bổ Cyber (K10)</h3>
+                        <p className="k10-subtitle">Đồng bộ kế hoạch nhà máy giao cho Showroom VinFast Thuận An (02.01.08) và đối chiếu kho Supabase</p>
                     </div>
 
-                    <div className="flex items-center gap-2 relative z-10">
+                    <div className="flex items-center gap-2">
                         {previewCars.length > 0 && (
                             <button
                                 onClick={handleExportExcel}
-                                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-sm border border-emerald-400/30 cursor-pointer hover:scale-102 active:scale-98"
+                                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-all border border-slate-200 cursor-pointer"
                                 title="Xuất toàn bộ danh sách phân bổ ra file Excel (.xlsx)"
                             >
-                                <i className="fas fa-file-excel text-emerald-200"></i>
                                 <span>Xuất Excel</span>
                             </button>
                         )}
                         <button
                             onClick={onClose}
-                            disabled={isLoading || isUndoing}
-                            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer hover:rotate-90 active:scale-95 border border-white/15"
-                            title="Đóng cửa sổ"
+                            disabled={isUndoing}
+                            className="k10-close-btn"
+                            title="Đóng"
                         >
-                            <i className="fas fa-times text-sm"></i>
+                            <i className="fas fa-times text-xs"></i>
                         </button>
                     </div>
                 </div>
@@ -1083,10 +1132,10 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                             variant="primary"
                             onClick={handleSync}
                             disabled={isLoading || previewCars.length === 0 || selectedNewCount === 0}
-                            className={`text-xs px-4 py-1.5 rounded-xl font-bold flex items-center gap-2 shadow-md transition-all ${
+                            className={`text-xs px-4 py-1.5 rounded-lg font-bold flex items-center gap-2 transition-all ${
                                 previewCars.length === 0 || selectedNewCount === 0
-                                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/25 hover:scale-102 active:scale-98'
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-[#17263b] hover:bg-[#0f172a] text-white'
                             }`}
                         >
                             {isLoading ? (
@@ -1109,17 +1158,17 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                 </div>
 
                 {/* Content / Preview Area */}
-                <div className="p-4 sm:p-5 flex-1 overflow-y-auto min-h-[350px] bg-slate-100/70">
+                <div className="p-4 sm:p-5 flex-1 overflow-y-auto min-h-[350px] bg-white">
                     
                     {/* Thông báo kết quả đồng bộ thành công */}
                     {syncStats && (
-                        <div className="mb-4 p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/90 rounded-2xl flex items-center justify-between text-xs text-emerald-900 animate-fade-in shadow-xs">
+                        <div className="mb-4 p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
                                     <i className="fas fa-check"></i>
                                 </div>
                                 <div>
-                                    <p className="font-extrabold text-sm text-emerald-950">
+                                    <p className="font-bold text-xs text-emerald-950">
                                         Đồng bộ thành công: Đã nạp {syncStats.success} xe vào Kho xe Showroom Thuận An!
                                     </p>
                                     <p className="text-[11px] text-emerald-700 font-medium">
@@ -1131,7 +1180,7 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                                 <button
                                     onClick={handleUndo}
                                     disabled={isUndoing}
-                                    className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                                     title="Xóa các xe vừa nạp khỏi Kho xe"
                                 >
                                     <i className={`fas ${isUndoing ? 'fa-spinner fa-spin' : 'fa-rotate-left'} text-xs`}></i>
@@ -1141,67 +1190,25 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                         </div>
                     )}
 
-                    {/* EMPTY STATE CAO CẤP */}
+                    {/* EMPTY STATE */}
                     {!hasLoadedPreview && !isLoading && !syncStats && (
-                        <div className="h-full min-h-[380px] flex flex-col items-center justify-center text-center p-6 sm:p-8">
-                            <div className="relative mb-5">
-                                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-sky-400/20 text-blue-600 flex items-center justify-center text-3xl shadow-inner border border-blue-200/60">
-                                    <i className="fas fa-warehouse drop-shadow-sm"></i>
-                                </div>
-                                <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-md border-2 border-white">
-                                    <i className="fas fa-bolt"></i>
-                                </span>
-                            </div>
-
-                            <h4 className="text-base sm:text-lg font-extrabold text-slate-800 mb-1.5">
-                                Sẵn sàng đối soát & nạp Kế hoạch giao xe từ Nhà máy
+                        <div className="h-full min-h-[360px] flex flex-col items-center justify-center text-center p-6">
+                            <h4 className="text-[15px] font-bold text-[#17263b] mb-1">
+                                Đối soát & nạp Kế hoạch giao xe từ Nhà máy
                             </h4>
-                            <p className="text-xs sm:text-sm max-w-lg text-slate-500 leading-relaxed mb-6">
-                                Hệ thống sẽ kết nối với phân hệ chứng từ <span className="font-semibold text-slate-700">K10 CyberSoft</span> để lấy kế hoạch xe nhà máy giao cho Showroom Thuận An. Bạn có thể kiểm tra số khung VIN, màu sắc, vị trí kho và hiệu chỉnh trước khi lưu.
+                            <p className="text-xs max-w-md text-[#64748b] leading-relaxed mb-5">
+                                Kết nối phân hệ chứng từ <span className="font-semibold text-[#17263b]">K10 CyberSoft</span> để lấy kế hoạch xe nhà máy giao cho Showroom Thuận An, kiểm tra số VIN, màu sắc, vị trí kho trước khi lưu.
                             </p>
 
-                            {/* Quy trình 3 bước trực quan */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 max-w-2xl w-full mb-7 text-left">
-                                <div className="p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-[11px] flex items-center justify-center">1</span>
-                                        <span className="text-xs font-bold text-slate-800">Chọn kỳ phân bổ</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 leading-snug">
-                                        Chọn nhanh "Tháng này" hoặc khoảng ngày nhận xe từ nhà máy VinFast.
-                                    </p>
-                                </div>
-
-                                <div className="p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[11px] flex items-center justify-center">2</span>
-                                        <span className="text-xs font-bold text-slate-800">Rà soát & Tinh chỉnh</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 leading-snug">
-                                        Sửa nhanh dòng xe, ngoại thất, vị trí kho hoặc gán kho hàng loạt.
-                                    </p>
-                                </div>
-
-                                <div className="p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[11px] flex items-center justify-center">3</span>
-                                        <span className="text-xs font-bold text-slate-800">Nạp Kho an toàn</span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 leading-snug">
-                                        Tự động upsert theo VIN, đối chiếu tồn kho và hỗ trợ hoàn tác 1 chạm.
-                                    </p>
-                                </div>
-                            </div>
-
                             {/* Nút bấm nhanh ngay tại Empty State */}
-                            <div className="flex flex-wrap items-center justify-center gap-3">
+                            <div className="flex flex-wrap items-center justify-center gap-2.5">
                                 <Button
                                     variant="primary"
                                     onClick={() => handlePreview()}
                                     disabled={isLoading}
-                                    className="px-5 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 text-white shadow-md shadow-blue-500/20 hover:scale-103 active:scale-97 flex items-center gap-2"
+                                    className="px-4 py-2 rounded-lg font-bold text-xs bg-[#17263b] hover:bg-[#0f172a] text-white flex items-center gap-2"
                                 >
-                                    <i className="fas fa-play text-xs text-sky-200"></i>
+                                    <i className="fas fa-play text-[10px]"></i>
                                     <span>Tải xem trước kỳ hiện tại ({fromDate} ➔ {toDate})</span>
                                 </Button>
                                 <Button
@@ -1214,9 +1221,9 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                                         handlePreview(getFormattedDate(start), getFormattedDate(end));
                                     }}
                                     disabled={isLoading}
-                                    className="px-4 py-2.5 rounded-xl font-bold text-xs bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 flex items-center gap-1.5 shadow-2xs"
+                                    className="px-3.5 py-2 rounded-lg font-bold text-xs bg-white text-[#17263b] border border-slate-200 hover:bg-slate-50 flex items-center gap-1.5"
                                 >
-                                    <i className="fas fa-clock-rotate-left text-blue-600 text-xs"></i>
+                                    <i className="fas fa-clock-rotate-left text-slate-500 text-xs"></i>
                                     <span>7 ngày gần nhất</span>
                                 </Button>
                             </div>
@@ -1412,10 +1419,10 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                                     </button>
                                 </div>
                             ) : (
-                                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+                                <div className="bg-white rounded-xl border border-[#e9edf2] overflow-hidden">
                                     <div className="max-h-[460px] overflow-y-auto">
                                         <table className="w-full text-left text-xs border-collapse">
-                                            <thead className="bg-slate-100/90 backdrop-blur-md text-slate-700 font-bold border-b border-slate-300 sticky top-0 z-10 select-none shadow-2xs">
+                                            <thead className="bg-[#f8fafc] text-[#64748b] text-[10.5px] uppercase tracking-wide font-bold border-b border-[#e9edf2] sticky top-0 z-10 select-none">
                                                 <tr>
                                                     {/* Checkbox select all (chỉ áp dụng cho xe mới) */}
                                                     <th className="py-2.5 px-3 text-center w-10">
@@ -1808,7 +1815,7 @@ export const CyberSyncAllocationModal: React.FC<CyberSyncAllocationModalProps> =
                         <Button
                             variant="secondary"
                             onClick={onClose}
-                            disabled={isLoading || isUndoing}
+                            disabled={isUndoing}
                             className="text-xs px-4 py-1.5 rounded-xl font-bold bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 shadow-2xs"
                         >
                             Đóng

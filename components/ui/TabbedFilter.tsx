@@ -84,7 +84,7 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
     return (
         <div className="w-full mb-1.5">
             {/* Automotive Cockpit Rail: Ultra-modern floating frosted glass toolbar */}
-            <div className={`relative flex flex-col lg:flex-row lg:items-center justify-between gap-1.5 p-1 lg:p-1 rounded-2xl border backdrop-blur-2xl transition-all duration-300 ${
+            <div className={`ios-orders-filterbar relative flex flex-col lg:flex-row lg:items-center justify-between gap-1.5 p-1 lg:p-1 rounded-2xl border backdrop-blur-2xl transition-all duration-300 ${
                 isNight
                     ? 'bg-slate-900/80 border-slate-800 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.5)] text-slate-100'
                     : 'bg-white/85 border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] text-slate-800'
@@ -98,7 +98,7 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
                         className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1 min-w-0 scroll-smooth py-0.5"
                     >
                         {/* Segmented Model Track Capsule */}
-                        <div className={`flex items-center gap-1 p-0.5 rounded-xl border transition-colors ${
+                        <div className={`ios-orders-model-track flex items-center gap-1 p-0.5 rounded-xl border transition-colors ${
                             isNight
                                 ? 'bg-slate-800/80 border-slate-700/60'
                                 : 'bg-slate-100/80 border-slate-200/60'
@@ -108,6 +108,7 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
                                 return (
                                     <button
                                         key={tab.id}
+                                        data-model-active={isActive}
                                         onClick={() => onTabChange(tab.id)}
                                         className={`
                                             relative flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-semibold rounded-lg transition-all duration-200 outline-none whitespace-nowrap min-h-[26px] lg:min-h-0 select-none

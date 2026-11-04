@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { X } from 'lucide-react';
 import * as apiService from '../../services/apiService';
-import { useModalBackground } from '../../utils/styleUtils';
 
 interface BulkUploadModalProps {
     isOpen: boolean;
@@ -27,9 +27,6 @@ const fileToBase64 = (file: File): Promise<string> => {
     });
 };
 
-/**
- * Chuẩn hóa chuỗi tiếng Việt (bỏ dấu, chuyển thường, giữ chữ và số)
- */
 const normalizeText = (str: string): string => {
     if (!str) return '';
     return str
@@ -42,18 +39,14 @@ const normalizeText = (str: string): string => {
         .trim();
 };
 
-/**
- * Thuật toán tự động tìm mã đơn hàng từ tên file
- */
 const matchOrderFromFileName = (fileName: string, orders: any[] = []): string | null => {
     const cleanFileName = normalizeText(fileName);
 
-    // 1. Kiểm tra xem có chứa trực tiếp Số đơn hàng nào từ cơ sở dữ liệu không
     if (orders && orders.length > 0) {
         for (const o of orders) {
             const sdh = (o["Số đơn hàng"] || o.so_don_hang || '').toString().trim();
             if (!sdh) continue;
-            
+
             const cleanSdh = normalizeText(sdh);
             if (cleanSdh && cleanFileName.includes(cleanSdh)) {
                 return sdh.toUpperCase();
@@ -61,14 +54,12 @@ const matchOrderFromFileName = (fileName: string, orders: any[] = []): string | 
         }
     }
 
-    // 2. Thử khớp Regex mã đơn hàng đa dạng hơn (N...-VSO-..., SO-..., N...)
     const orderNumberRegex = /((N\d+[-_]VSO[-_][A-Z0-9\-_]+)|(SO-\d+)|(N\d{5}-\d+))/i;
     const match = fileName.match(orderNumberRegex);
     if (match && match[1]) {
         return match[1].toUpperCase().replace(/_/g, '-');
     }
 
-    // 3. Khớp theo Tên khách hàng (bỏ dấu tiếng Việt)
     if (orders && orders.length > 0) {
         const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
         const cleanNameOnly = normalizeText(nameWithoutExt);
@@ -100,7 +91,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const [orderSearchFilter, setOrderSearchFilter] = useState<string>('');
 
     const inputRef = useRef<HTMLInputElement>(null);
-    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (isOpen) {
@@ -111,7 +101,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         }
     }, [isOpen]);
 
-    // Đánh giá và cập nhật trạng thái duplicate cho danh sách file
     const updateFileStatuses = useCallback((fileList: UploadableFile[]): UploadableFile[] => {
         const orderCounts = new Map<string, number>();
         fileList.forEach(f => {
@@ -139,6 +128,15 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         setEditingIndex(null);
         onClose();
     }, [onClose]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !isUploading) handleClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, isUploading, handleClose]);
 
     const handleFiles = useCallback(async (incomingFiles: FileList | null) => {
         if (!incomingFiles || incomingFiles.length === 0) return;
@@ -190,7 +188,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         setEditingIndex(null);
     };
 
-    // Gán mã đơn hàng thủ công cho 1 file
     const handleAssignOrderNumber = (index: number, orderNo: string) => {
         const trimmed = orderNo.trim().toUpperCase();
         setFiles(prev => {
@@ -207,7 +204,6 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         setOrderSearchFilter('');
     };
 
-    // Danh sách gợi ý đơn hàng khi gán thủ công
     const filteredOrderSuggestions = useMemo(() => {
         if (!orders || orders.length === 0) return [];
         const term = normalizeText(orderSearchFilter || manualInput);
@@ -266,117 +262,240 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const duplicateFilesCount = files.filter(f => f.status === 'duplicate').length;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 transition-all duration-300" onClick={handleClose}>
-            <div className="bg-surface-card w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-scale-up border border-white/20" onClick={e => e.stopPropagation()} style={bgStyle}>
-                
-                {/* HEADER */}
-                <header className="flex-shrink-0 p-5 bg-gradient-to-r from-slate-50 to-blue-50/30 border-b border-slate-100 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner">
-                            <i className="fas fa-cloud-upload-alt text-lg"></i>
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Tải Hóa Đơn Hàng Loạt</h2>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Tự động nhận diện và ghép đơn theo tên file & khách hàng</p>
-                        </div>
+        <div
+            className="bu-sheet"
+            onClick={(e) => {
+                if (e.target === e.currentTarget && !isUploading) { window.dispatchEvent(new CustomEvent('close-all-sheets')); handleClose(); }
+            }}
+        >
+            <style>{`
+                .bu-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .bu-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .bu-sheet-panel {
+                    width: clamp(360px, 38vw, 520px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: buSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes buSlideInLeft {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+                .bu-header {
+                    padding: 22px 20px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .bu-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .bu-subtitle {
+                    margin: 4px 0 0;
+                    font-size: 11.5px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .bu-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                }
+                .bu-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+                .bu-body {
+                    flex: 1;
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding: 18px 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .bu-dropzone {
+                    border: 1px dashed #cbd5e1;
+                    border-radius: 8px;
+                    padding: 22px 16px;
+                    text-align: center;
+                    background: #f8fafc;
+                    cursor: pointer;
+                    transition: border-color 140ms ease, background-color 140ms ease;
+                }
+                .bu-dropzone:hover, .bu-dropzone.is-drag {
+                    border-color: #3b82f6;
+                    background: #eff6ff;
+                }
+                .bu-table {
+                    border: 1px solid #e9edf2;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    overflow: hidden;
+                }
+                .bu-row {
+                    padding: 11px 12px;
+                    border-bottom: 1px solid #eef2f6;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .bu-row:last-child {
+                    border-bottom: 0;
+                }
+                .bu-footer {
+                    padding: 12px 20px;
+                    border-top: 1px solid #eef2f6;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .bu-btn-cancel {
+                    height: 34px;
+                    padding: 0 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                .bu-btn-cancel:hover:not(:disabled) {
+                    background: #f8fafc;
+                    color: #17263b;
+                }
+                .bu-btn-submit {
+                    height: 34px;
+                    padding: 0 16px;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #17263b;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .bu-btn-submit:hover:not(:disabled) {
+                    background: #0f172a;
+                }
+                .bu-btn-submit:disabled, .bu-btn-cancel:disabled {
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+            `}</style>
+
+            <div className="bu-sheet-panel" onClick={e => e.stopPropagation()}>
+                <header className="bu-header">
+                    <div>
+                        <h2 className="bu-title">Tải lên HĐ hàng loạt</h2>
+                        <p className="bu-subtitle">Tự động nhận diện và ghép đơn theo tên tệp hoặc khách hàng</p>
                     </div>
-                    <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors">
-                        <i className="fas fa-times"></i>
+                    <button onClick={handleClose} className="bu-close-btn" aria-label="Đóng">
+                        <X size={16} strokeWidth={2} />
                     </button>
                 </header>
 
-                <main className="p-6 overflow-y-auto flex-grow min-h-0 custom-scrollbar bg-slate-50/50">
-                    
-                    {/* DRAG AND DROP ZONE */}
-                    <div onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop} className="w-full">
+                <main className="bu-body">
+                    <div onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop}>
                         <input ref={inputRef} type="file" multiple className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={handleChange} />
                         <div
-                            className={`relative w-full h-44 rounded-2xl flex flex-col items-center justify-center transition-all duration-300 group cursor-pointer overflow-hidden
-                                ${dragActive 
-                                    ? 'border-2 border-blue-500 bg-blue-50/80 shadow-[0_0_20px_rgba(59,130,246,0.15)] scale-[1.01]' 
-                                    : 'border-2 border-dashed border-slate-300 bg-white hover:border-blue-400 hover:bg-blue-50/30 hover:shadow-md'
-                                }`}
+                            className={`bu-dropzone ${dragActive ? 'is-drag' : ''}`}
                             onClick={() => inputRef.current?.click()}
                         >
-                            <div className={`w-14 h-14 mb-3 rounded-full flex items-center justify-center transition-all duration-300 ${dragActive ? 'bg-blue-600 text-white scale-110' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 group-hover:scale-110'}`}>
-                                <i className="fas fa-file-upload text-xl"></i>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#17263b' }}>
+                                Kéo thả tệp vào đây hoặc bấm để chọn tệp
                             </div>
-                            <p className="font-bold text-slate-700 text-base">Kéo thả file vào đây</p>
-                            <p className="text-slate-400 text-xs mt-1 mb-2">hoặc <span className="text-blue-600 font-semibold group-hover:underline">duyệt thư mục</span></p>
-                            
-                            <div className="flex items-center gap-2 mt-1 px-3 py-1 bg-slate-100 rounded-full text-[11px] font-medium text-slate-500">
-                                <i className="fas fa-magic text-purple-500"></i>
-                                Hỗ trợ: Tên file chứa SỐ ĐƠN HÀNG hoặc TÊN KHÁCH HÀNG
+                            <div style={{ fontSize: 11, color: '#7b879a', marginTop: 4 }}>
+                                Hỗ trợ PDF, PNG, JPG • Tự động khớp Số đơn hàng hoặc Tên khách hàng
                             </div>
                         </div>
                     </div>
 
-                    {/* FILE LIST ZONE */}
                     {files.length > 0 && (
-                        <div className="mt-6 animate-fade-in-up">
-                            <div className="flex justify-between items-center mb-3">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                        <i className="fas fa-list-ul text-slate-400"></i> Danh sách tải lên
-                                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">{files.length}</span>
-                                    </h3>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11.5, fontWeight: 600, color: '#475569' }}>
+                                    <span>Danh sách tệp ({files.length})</span>
                                     {invalidFilesCount > 0 && (
-                                        <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                            <i className="fas fa-exclamation-triangle"></i> {invalidFilesCount} chưa ghép
-                                        </span>
+                                        <span style={{ color: '#dc2626' }}>• {invalidFilesCount} chưa ghép</span>
                                     )}
                                     {duplicateFilesCount > 0 && (
-                                        <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                                            <i className="fas fa-copy"></i> {duplicateFilesCount} trùng mã
-                                        </span>
+                                        <span style={{ color: '#d97706' }}>• {duplicateFilesCount} trùng mã</span>
                                     )}
                                 </div>
-
                                 <button
+                                    type="button"
                                     onClick={handleClearAll}
-                                    className="text-xs text-slate-400 hover:text-red-500 font-medium transition-colors flex items-center gap-1"
+                                    style={{ border: 0, background: 'transparent', fontSize: 11, fontWeight: 500, color: '#64748b', cursor: 'pointer' }}
                                 >
-                                    <i className="fas fa-trash-alt"></i> Xóa tất cả
+                                    Xóa tất cả
                                 </button>
                             </div>
-                            
-                            <div className="max-h-72 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar">
-                                {files.map((f, i) => (
-                                    <div key={i} className={`p-3 rounded-xl border transition-all duration-200 hover:shadow-md flex flex-col gap-2
-                                        ${f.status === 'invalid_name' 
-                                            ? 'bg-red-50/40 border-red-200' 
-                                            : f.status === 'duplicate'
-                                            ? 'bg-amber-50/40 border-amber-200'
-                                            : 'bg-white border-slate-200/80'}`}>
-                                        
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-9 h-9 flex-shrink-0 rounded-lg flex items-center justify-center 
-                                                ${f.status === 'invalid_name' ? 'bg-red-100 text-red-500' : f.status === 'duplicate' ? 'bg-amber-100 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
-                                                <i className={`fas ${f.file.name.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-file-image'} text-base`}></i>
-                                            </div>
 
-                                            <div className="flex-grow min-w-0">
-                                                <p className="text-xs font-bold text-slate-700 truncate">{f.file.name}</p>
-                                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <div className="bu-table">
+                                {files.map((f, i) => (
+                                    <div key={i} className="bu-row">
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                                            <div style={{ minWidth: 0, flex: 1 }}>
+                                                <div style={{ fontSize: 12, fontWeight: 600, color: '#17263b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {f.file.name}
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, fontSize: 11 }}>
                                                     {f.status === 'invalid_name' ? (
-                                                        <span className="text-[11px] font-semibold text-red-500 flex items-center gap-1">
-                                                            <i className="fas fa-times-circle"></i> Chưa ghép mã đơn
-                                                        </span>
+                                                        <span style={{ color: '#dc2626', fontWeight: 500 }}>Chưa ghép mã đơn</span>
                                                     ) : (
-                                                        <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded-md
-                                                            ${f.status === 'duplicate' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                                                            <i className={`fas ${f.status === 'duplicate' ? 'fa-copy' : 'fa-check-circle'}`}></i>
-                                                            SĐH: {f.orderNumber}
-                                                            {f.manualOverride && <span className="text-[9px] opacity-75">(Thủ công)</span>}
+                                                        <span style={{ color: f.status === 'duplicate' ? '#d97706' : '#16a34a', fontWeight: 600, fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
+                                                            {f.orderNumber} {f.manualOverride ? '(Thủ công)' : ''}
                                                         </span>
                                                     )}
-                                                    <span className="text-[10px] font-medium text-slate-400">{(f.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                                    <span style={{ color: '#94a3b8' }}>• {(f.file.size / 1024 / 1024).toFixed(2)} MB</span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-1">
-                                                {/* Nút sửa/gán mã đơn thủ công */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                                 <button
+                                                    type="button"
                                                     onClick={() => {
                                                         if (editingIndex === i) {
                                                             setEditingIndex(null);
@@ -386,41 +505,43 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                                                             setOrderSearchFilter('');
                                                         }
                                                     }}
-                                                    className={`w-8 h-8 rounded-lg text-xs font-medium flex items-center justify-center transition-colors
-                                                        ${editingIndex === i ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-blue-100 hover:text-blue-600'}`}
-                                                    title="Gán / đổi mã đơn hàng"
+                                                    style={{
+                                                        height: 26,
+                                                        padding: '0 8px',
+                                                        borderRadius: 6,
+                                                        border: '1px solid #e2e8f0',
+                                                        background: editingIndex === i ? '#17263b' : '#ffffff',
+                                                        color: editingIndex === i ? '#ffffff' : '#475569',
+                                                        fontSize: 11,
+                                                        fontWeight: 500,
+                                                        cursor: 'pointer'
+                                                    }}
                                                 >
-                                                    <i className="fas fa-pen"></i>
+                                                    Sửa mã
                                                 </button>
-
-                                                <button 
-                                                    onClick={() => handleRemoveFile(f.file.name)} 
-                                                    className="w-8 h-8 rounded-lg text-slate-400 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition-colors"
-                                                    title="Xóa tệp"
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveFile(f.file.name)}
+                                                    style={{
+                                                        height: 26,
+                                                        padding: '0 8px',
+                                                        borderRadius: 6,
+                                                        border: '1px solid #fee2e2',
+                                                        background: '#ffffff',
+                                                        color: '#dc2626',
+                                                        fontSize: 11,
+                                                        fontWeight: 500,
+                                                        cursor: 'pointer'
+                                                    }}
                                                 >
-                                                    <i className="fas fa-trash-alt text-xs"></i>
+                                                    Xóa
                                                 </button>
                                             </div>
                                         </div>
 
-                                        {/* INLINE ORDER PICKER / SELECTOR */}
                                         {(editingIndex === i || f.status === 'invalid_name') && (
-                                            <div className="mt-1 p-2.5 bg-slate-100/80 rounded-xl border border-slate-200 text-xs flex flex-col gap-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-semibold text-slate-600 flex items-center gap-1">
-                                                        <i className="fas fa-search text-blue-500"></i> Chọn hoặc gõ Mã đơn hàng cho tệp này:
-                                                    </span>
-                                                    {editingIndex === i && (
-                                                        <button 
-                                                            onClick={() => setEditingIndex(null)}
-                                                            className="text-[11px] text-slate-400 hover:text-slate-600"
-                                                        >
-                                                            Đóng
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex gap-2">
+                                            <div style={{ padding: 10, borderRadius: 6, background: '#f8fafc', border: '1px solid #e9edf2', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                                <div style={{ display: 'flex', gap: 6 }}>
                                                     <input
                                                         type="text"
                                                         value={editingIndex === i ? manualInput : orderSearchFilter}
@@ -430,20 +551,40 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                                                             setOrderSearchFilter(val);
                                                         }}
                                                         placeholder="Nhập mã SĐH hoặc tên KH..."
-                                                        className="flex-grow px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-400 uppercase font-mono"
+                                                        style={{
+                                                            flex: 1,
+                                                            height: 32,
+                                                            padding: '0 10px',
+                                                            border: '1px solid #dbe2ea',
+                                                            borderRadius: 6,
+                                                            background: '#ffffff',
+                                                            fontSize: 11.5,
+                                                            fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+                                                            outline: 'none'
+                                                        }}
                                                     />
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleAssignOrderNumber(i, editingIndex === i ? manualInput : orderSearchFilter)}
                                                         disabled={!(editingIndex === i ? manualInput : orderSearchFilter).trim()}
-                                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold disabled:opacity-50 transition-all flex items-center gap-1"
+                                                        style={{
+                                                            height: 32,
+                                                            padding: '0 12px',
+                                                            borderRadius: 6,
+                                                            border: 0,
+                                                            background: '#17263b',
+                                                            color: '#ffffff',
+                                                            fontSize: 11.5,
+                                                            fontWeight: 600,
+                                                            cursor: 'pointer'
+                                                        }}
                                                     >
-                                                        <i className="fas fa-check"></i> Gán
+                                                        Gán
                                                     </button>
                                                 </div>
 
-                                                {/* Danh sách gợi ý từ DB */}
                                                 {filteredOrderSuggestions.length > 0 && (
-                                                    <div className="max-h-32 overflow-y-auto bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 custom-scrollbar">
+                                                    <div style={{ maxHeight: 120, overflowY: 'auto', border: '1px solid #e9edf2', borderRadius: 6, background: '#ffffff' }}>
                                                         {filteredOrderSuggestions.map((o, idx) => {
                                                             const sdh = (o["Số đơn hàng"] || o.so_don_hang || '').toString();
                                                             const kh = (o["Tên khách hàng"] || o.ten_khach_hang || 'Không tên').toString();
@@ -452,13 +593,21 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                                                                 <div
                                                                     key={idx}
                                                                     onClick={() => handleAssignOrderNumber(i, sdh)}
-                                                                    className="px-3 py-1.5 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors"
+                                                                    style={{
+                                                                        padding: '6px 10px',
+                                                                        borderBottom: '1px solid #f1f5f9',
+                                                                        display: 'flex',
+                                                                        justifyContent: 'space-between',
+                                                                        alignItems: 'center',
+                                                                        fontSize: 11,
+                                                                        cursor: 'pointer'
+                                                                    }}
                                                                 >
-                                                                    <div className="flex items-center gap-2 truncate">
-                                                                        <span className="font-mono font-bold text-blue-700">{sdh}</span>
-                                                                        <span className="text-slate-600 truncate">{kh}</span>
+                                                                    <div style={{ display: 'flex', gap: 8, overflow: 'hidden' }}>
+                                                                        <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace', fontWeight: 600, color: '#2563eb' }}>{sdh}</span>
+                                                                        <span style={{ color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{kh}</span>
                                                                     </div>
-                                                                    <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-medium flex-shrink-0">{xe}</span>
+                                                                    <span style={{ color: '#94a3b8', fontSize: 10.5, flexShrink: 0 }}>{xe}</span>
                                                                 </div>
                                                             );
                                                         })}
@@ -473,36 +622,28 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     )}
                 </main>
 
-                <footer className="px-6 py-4 flex justify-between items-center bg-slate-50/80 rounded-b-3xl border-t border-slate-200/60 flex-shrink-0 backdrop-blur-md">
-                    <div className="text-xs text-slate-500 font-medium">
+                <footer className="bu-footer">
+                    <div style={{ fontSize: 11.5, color: '#64748b' }}>
                         {files.length > 0 && (
-                            <span>Sẵn sàng tải lên: <b className="text-blue-600">{validFilesCount}</b> / {files.length} tệp</span>
+                            <span>Hợp lệ: <strong style={{ color: '#17263b' }}>{validFilesCount}</strong> / {files.length} tệp</span>
                         )}
                     </div>
-                    <div className="flex items-center gap-2.5">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button
+                            type="button"
                             onClick={!isUploading ? handleClose : undefined}
                             disabled={isUploading}
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-all disabled:opacity-50"
+                            className="bu-btn-cancel"
                         >
-                            Hủy
+                            Hủy bỏ
                         </button>
                         <button
+                            type="button"
                             onClick={!isUploading && validFilesCount > 0 ? handleUpload : undefined}
                             disabled={isUploading || validFilesCount === 0}
-                            className="px-5 py-2 rounded-lg text-sm font-semibold text-white shadow-md hover:shadow-lg hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 bg-blue-500 flex items-center justify-center gap-2 border border-blue-600/20"
+                            className="bu-btn-submit"
                         >
-                            {isUploading ? (
-                                <>
-                                    <i className="fas fa-spinner fa-spin text-base"></i>
-                                    <span>Đang xử lý...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <i className="fas fa-upload text-base"></i>
-                                    <span>Tải lên {validFilesCount > 0 ? `(${validFilesCount})` : ''}</span>
-                                </>
-                            )}
+                            {isUploading ? 'Đang tải lên...' : `Tải lên ${validFilesCount > 0 ? `(${validFilesCount})` : ''}`}
                         </button>
                     </div>
                 </footer>

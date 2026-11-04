@@ -13,9 +13,10 @@ interface SimpleFileUploadProps {
   compact?: boolean;
   showScan?: boolean; // Legacy prop, can be removed or ignored
   className?: string;
+  variant?: 'default' | 'slot';
 }
 
-const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept, disableCompression = false, showPreview = true, compact = false, className = "" }) => {
+const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept, disableCompression = false, showPreview = true, compact = false, className = "", variant = 'default' }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +48,8 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
         return fileType === type;
       });
       if (!isAccepted) {
-        alert(`Loại tệp không hợp lệ. Vui lòng chọn tệp có định dạng: ${accept}`);
+        const isPdfOnly = accept.includes('.pdf') && !accept.includes('image');
+        alert(isPdfOnly ? 'Loại tệp không hợp lệ. Vui lòng chỉ đính kèm tệp PDF (.pdf).' : `Loại tệp không hợp lệ. Vui lòng chọn tệp có định dạng: ${accept}`);
         return false;
       }
     }
@@ -138,6 +140,93 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
     if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
   };
 
+  if (variant === 'slot') {
+    const fileSizeText = selectedFile
+      ? selectedFile.size >= 1024 * 1024
+        ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
+        : `${(selectedFile.size / 1024).toFixed(1)} KB`
+      : '';
+
+    return (
+      <div
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        onClick={() => inputRef.current?.click()}
+        className={`invoice-pdf-slot ${className}`}
+        data-uploaded={Boolean(selectedFile)}
+        data-dragging={dragActive}
+        data-processing={isProcessing}
+      >
+        <div className="invoice-pdf-slot-icon">
+          {isProcessing ? (
+            <i className="fas fa-spinner fa-spin"></i>
+          ) : (
+            <>
+              <i className="fas fa-file-pdf"></i>
+              {selectedFile && (
+                <span className="invoice-pdf-slot-check">
+                  <i className="fas fa-check"></i>
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="invoice-pdf-slot-body">
+          <div className="invoice-pdf-slot-title">
+            <span>{label}</span>
+            {required && <span className="req">*</span>}
+          </div>
+          <div className="invoice-pdf-slot-meta">
+            {isProcessing ? (
+              <span className="text-blue-600 font-medium">{processingStatus || 'Đang xử lý tệp PDF...'}</span>
+            ) : selectedFile ? (
+              <>
+                <span className="invoice-pdf-slot-filename" title={selectedFile.name}>{selectedFile.name}</span>
+                <span className="invoice-pdf-slot-dot">·</span>
+                <span className="invoice-pdf-slot-size">{fileSizeText}</span>
+              </>
+            ) : (
+              <span>Kéo thả hoặc bấm để đính kèm tệp PDF</span>
+            )}
+          </div>
+        </div>
+
+        <div className="invoice-pdf-slot-actions">
+          {selectedFile ? (
+            <>
+              <span className="invoice-pdf-slot-badge">Đã tải lên</span>
+              <button
+                type="button"
+                onClick={handleRemoveFile}
+                className="invoice-pdf-slot-remove"
+                title="Gỡ tệp này"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </>
+          ) : (
+            <span className="invoice-pdf-slot-btn">
+              <i className="fas fa-cloud-upload-alt"></i>
+              <span>Chọn tệp PDF</span>
+            </span>
+          )}
+        </div>
+
+        <input
+          id={id}
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          accept={accept}
+          onChange={handleFileChange}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`relative ${className}`}>
       <label className={`block font-bold text-text-primary ${compact ? 'text-[10px] mb-1' : 'text-sm mb-2'}`}>
@@ -198,7 +287,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
             </div>
             <div className={compact ? 'flex-1' : 'text-center'}>
               <p className={`font-black text-text-primary uppercase tracking-[0.2em] ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Chọn tệp tin</p>
-              {!compact && <p className="text-[8px] text-text-secondary font-medium tracking-tight mt-1">Hỗ trợ Ảnh, PDF (Tối ưu tự động)</p>}
+              {!compact && <p className="text-[8px] text-text-secondary font-medium tracking-tight mt-1">{accept && !accept.includes('image') ? 'Chỉ hỗ trợ tệp PDF' : 'Hỗ trợ Ảnh, PDF (Tối ưu tự động)'}</p>}
             </div>
             {!compact && isProcessing && (
                <div className="absolute inset-0 bg-black/50 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center text-white z-10 animate-fade-in">

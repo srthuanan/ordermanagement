@@ -1744,6 +1744,21 @@ export const getOrderAuditLogs = async (orderNumber: string): Promise<ApiResult>
                         dotColor: 'bg-amber-500 ring-amber-100',
                         reason: metadata.reason
                     };
+                case 'REQUEST_RESCAN':
+                    return {
+                        title: 'Yêu cầu scan lại chứng từ',
+                        icon: 'fa-qrcode',
+                        badgeBg: 'bg-amber-50 text-amber-700 border-amber-200',
+                        dotColor: 'bg-amber-500 ring-amber-100',
+                        reason: metadata.reason
+                    };
+                case 'APPROVE_INVOICE':
+                    return {
+                        title: 'Phê duyệt yêu cầu xuất hóa đơn',
+                        icon: 'fa-circle-check',
+                        badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        dotColor: 'bg-emerald-500 ring-emerald-100'
+                    };
                 case 'PENDING_SIGNATURE':
                     return {
                         title: 'Chờ ký điện tử hóa đơn',

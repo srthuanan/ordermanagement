@@ -138,3 +138,18 @@ test('forgot password opens a recovery form and can return to login', () => {
   c.find(e => e.type === 'button' && e.props.className?.includes('mx-auto')).props.onClick();
   assert.ok(c.find(e => e.props?.id === 'desktop-login-username'));
 });
+test('decorative motion can pause and resume without changing login or password visibility', () => {
+  const c = setup();
+  const motionButton = () => c.find(e => e.type === 'button' && e.props.className?.includes('pearl-motion-toggle'));
+  assert.equal(c.render().props['data-motion-paused'], false);
+  assert.equal(motionButton().props.type, 'button');
+  motionButton().props.onClick();
+  assert.equal(c.render().props['data-motion-paused'], true);
+  assert.equal(motionButton().props['aria-pressed'], true);
+  assert.equal(c.find(e => e.props?.id === 'desktop-login-password').props.type, 'password');
+  assert.equal(c.successes, 0);
+  assert.equal(c.pending, false);
+  motionButton().props.onClick();
+  assert.equal(c.render().props['data-motion-paused'], false);
+  assert.equal(motionButton().props['aria-pressed'], false);
+});

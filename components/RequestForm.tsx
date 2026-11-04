@@ -5,7 +5,7 @@ import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
-import SelectPolicyModal from './modals/SelectPolicyModal';
+import InlinePolicyPicker from './ui/InlinePolicyPicker';
 import { cleanCyberContractCode } from '../utils/stringUtils';
 interface ImageSource {
     src: string;
@@ -26,7 +26,7 @@ interface RequestFormProps {
 }
 
 const InputGroup: React.FC<{ icon?: string; children: React.ReactNode; label: string; htmlFor: string; required?: boolean; badge?: React.ReactNode }> = ({ children, label, htmlFor, required, icon, badge }) => (
-    <div className="space-y-1.5">
+    <div className="request-form-group space-y-1.5">
         <div className="flex items-center justify-between min-h-[22px]">
             <label htmlFor={htmlFor} className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
                 {icon && <i className={`fas ${icon} text-slate-400`}></i>}
@@ -63,22 +63,21 @@ const isWholesaleDeposit = (policy?: string): boolean => {
 
 const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview, embeddedMobile = false }) => {
     // --- State ---
-    const [step, setStep] = useState<1 | 2>(1); // 1: Config, 2: Info
+    const [step, setStep] = useState<1 | 2>(initialVehicle ? 2 : 1); // 1: Config, 2: Info
     const [formData, setFormData] = useState({
         ten_ban_hang: currentUser,
         ten_khach_hang: '',
         so_don_hang: '',
         ma_hd_cyber: '',
-        dong_xe: '',
-        phien_ban: '',
-        ngoai_that: '',
-        noi_that: '',
+        dong_xe: initialVehicle?.['Dòng xe'] || '',
+        phien_ban: initialVehicle?.['Phiên bản'] || '',
+        ngoai_that: initialVehicle?.['Ngoại thất'] || initialVehicle?.['Màu ngoại thất'] || '',
+        noi_that: initialVehicle?.['Nội thất'] || initialVehicle?.['Màu nội thất'] || '',
         ngay_coc: '',
         thoi_gian_can_xe: '',
-        vin: '',
+        vin: initialVehicle?.VIN || '',
         chinh_sach: '',
     });
-    const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
     const [chicFile, setChicFile] = useState<File | null>(null);
     const [isProcessingOcr, setIsProcessingOcr] = useState(false);
     const [ocrStatus, setOcrStatus] = useState('');
@@ -298,6 +297,24 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         : "w-full pl-4 pr-4 py-3.5 bg-white border border-slate-200 rounded-lg text-base font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300 shadow-sm hover:border-slate-300";
     const isPreFilled = !!initialVehicle;
 
+    useEffect(() => {
+        if (isPreFilled || !formData.dong_xe || formData.phien_ban) return;
+        const versions = [...new Set((versionsMap[formData.dong_xe] || allPossibleVersions).filter(Boolean))];
+        if (versions.length !== 1) return;
+        setFormData(prev => prev.dong_xe === formData.dong_xe && !prev.phien_ban
+            ? { ...prev, phien_ban: versions[0] }
+            : prev);
+    }, [isPreFilled, formData.dong_xe, formData.phien_ban, versionsMap, allPossibleVersions]);
+
+    useEffect(() => {
+        if (isPreFilled || !formData.dong_xe || !formData.phien_ban || formData.noi_that) return;
+        const interiors = [...new Set(getMappedInteriors(formData.dong_xe, formData.phien_ban).filter(Boolean))];
+        if (interiors.length !== 1) return;
+        setFormData(prev => prev.dong_xe === formData.dong_xe && prev.phien_ban === formData.phien_ban && !prev.noi_that
+            ? { ...prev, noi_that: interiors[0] }
+            : prev);
+    }, [isPreFilled, formData.dong_xe, formData.phien_ban, formData.noi_that, getMappedInteriors]);
+
     // --- Effects ---
     useEffect(() => {
         setAvailableExteriors(getMappedExteriors(formData.dong_xe, formData.phien_ban));
@@ -424,6 +441,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         return true;
     };
 
+    const isStep1Complete = Boolean(formData.dong_xe && formData.phien_ban && formData.ngoai_that && formData.noi_that);
+
     const handleNextStep = () => {
         if (step === 1) {
             if (validateStep1()) setStep(2);
@@ -526,10 +545,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     };
 
     return (
-        <form onSubmit={handleConfirmSubmit} className={`flex h-full w-full flex-col overflow-hidden p-0 lg:flex-row lg:gap-6 ${embeddedMobile ? 'bg-white' : 'bg-transparent lg:p-4'}`}>
+        <form onSubmit={handleConfirmSubmit} data-step={step} className={`request-form-layout flex h-full w-full flex-col overflow-hidden p-0 lg:flex-row lg:gap-6 ${embeddedMobile ? 'bg-white' : 'bg-transparent lg:p-4'}`}>
 
             {/* LEFT PANEL: 3D Studio Background & Car (50%) */}
-            <div className={`${embeddedMobile ? 'hidden' : 'hidden md:flex'} relative z-20 order-1 w-full flex-col overflow-hidden rounded-l-3xl lg:order-1 lg:w-[50%]`}>
+            <div className={`request-form-studio ${embeddedMobile ? 'hidden' : 'hidden md:flex'} relative z-20 order-1 w-full flex-col overflow-hidden rounded-l-3xl lg:order-1 lg:w-[50%]`}>
                 {/* 3D Studio Background: Modern Showroom Image */}
                 <div 
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-in-out"
@@ -542,7 +561,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 </div>
 
                 {/* Header */}
-                <div className="absolute top-6 left-8 z-30">
+                <div className="request-form-studio-label absolute top-6 left-8 z-30">
                     <div className="flex items-center gap-3 px-5 py-2 bg-slate-900/95 backdrop-blur-md rounded-md shadow-lg border border-white/10">
                         <i className="fas fa-car-side text-white/80 text-sm"></i>
                         <h1 className="text-[11px] font-bold text-white tracking-[0.2em] uppercase">Yêu cầu ghép xe</h1>
@@ -581,9 +600,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 </div>
 
             {/* RIGHT PANEL: Spacious Form (50%) */}
-            <div className={`relative z-10 order-2 flex h-full flex-1 flex-col bg-white lg:order-2 lg:w-[50%] ${embeddedMobile ? 'overflow-hidden' : 'overflow-y-auto rounded-3xl border border-slate-100/50 shadow-xl'}`}>
+            <div className={`request-form-fields relative z-10 order-2 flex h-full flex-1 flex-col bg-white lg:order-2 lg:w-[50%] ${embeddedMobile ? 'overflow-hidden' : 'overflow-y-auto rounded-3xl border border-slate-100/50 shadow-xl'}`}>
                 {/* Stepper Header - Compact */}
-                <div className={`flex shrink-0 items-center justify-between border-b border-slate-100 ${embeddedMobile ? 'bg-white px-4 py-2.5' : 'bg-transparent px-6 py-4'}`}>
+                <div className={`request-form-stepper flex shrink-0 items-center justify-between border-b border-slate-100 ${embeddedMobile ? 'bg-white px-4 py-2.5' : 'bg-transparent px-6 py-4'}`}>
                     {embeddedMobile ? (
                         <>
                             <div className="min-w-0">
@@ -601,34 +620,35 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                         </>
                     ) : (
                         <>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step >= 1 ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-400'}`}>1</div>
-                                <div className={`h-0.5 w-12 rounded-full transition-all ${step >= 2 ? 'bg-accent-primary' : 'bg-slate-100'}`}></div>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${step >= 2 ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-400'}`}>2</div>
+                            <div className="request-step-indicator" aria-label={`Bước ${step} trên 2`}>
+                                <span data-current={step === 1} data-complete={step > 1} aria-current={step === 1 ? 'step' : undefined}><b>{step > 1 ? '✓' : '1'}</b>Cấu hình xe</span>
+                                <span className="request-step-line" aria-hidden="true" />
+                                <span data-current={step === 2} aria-current={step === 2 ? 'step' : undefined}><b>2</b>Thông tin đơn</span>
                             </div>
-                            <div>
-                                <h3 className="text-[12px] font-extrabold text-slate-900 uppercase tracking-[0.15em]">{step === 1 ? 'Cấu hình xe' : 'Thông tin HĐ'}</h3>
-                            </div>
+                            <span className="request-step-counter">{step}/2</span>
                         </>
                     )}
                 </div>
 
                 {/* Content Area */}
-                <div className={`flex flex-grow flex-col ${embeddedMobile ? 'overflow-hidden p-3' : 'overflow-y-auto p-6 md:p-8'}`}>
+                <div className={`request-form-scroll flex flex-grow flex-col ${embeddedMobile ? 'overflow-hidden p-3' : 'overflow-y-auto p-6 md:p-8'}`}>
                     <div className={`relative flex w-full flex-grow flex-col ${embeddedMobile ? 'justify-start' : 'justify-center'}`}>
 
                         {/* STEP 1: Premium Config Grid */}
                         {step === 1 && (
                             <div className={`relative z-10 animate-fade-in ${embeddedMobile ? 'space-y-3' : 'space-y-4 md:space-y-5'}`}>
-                                <div className={`grid grid-cols-1 ${embeddedMobile ? 'gap-3' : 'gap-5 md:gap-6'}`}>
+                                <div className={`request-config-grid grid grid-cols-1 ${embeddedMobile ? 'gap-3' : 'gap-5 md:gap-6'}`}>
                                     <div>
-                                        <InputGroup label="Dòng xe (Model)" htmlFor="dong_xe" required>
+                                        <InputGroup label="Dòng xe" htmlFor="dong_xe" required>
                                             <div className={`flex flex-wrap ${embeddedMobile ? 'mt-1.5 justify-center gap-1.5' : 'mt-2 gap-2'}`}>
                                                 {vehicleLines.map(model => {
                                                     const isSelected = formData.dong_xe === model;
                                                     return (
                                                         <button
                                                             key={model}
+                                                            data-config-choice="model"
+                                                            data-selected={isSelected}
+                                                            aria-pressed={isSelected}
                                                             type="button"
                                                             disabled={isPreFilled}
                                                             onClick={() => handleInputChange({ target: { name: 'dong_xe', value: model } } as any)}
@@ -646,13 +666,16 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                         </InputGroup>
                                     </div>
                                     <div>
-                                        <InputGroup label="Phiên bản (Version)" htmlFor="phien_ban" required>
+                                        <InputGroup label="Phiên bản" htmlFor="phien_ban" required>
                                             <div className="flex flex-nowrap overflow-x-auto gap-2 mt-2 pb-2 -mx-1 px-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                                 {availableVersions.length > 0 ? availableVersions.map(version => {
                                                     const isSelected = formData.phien_ban === version;
                                                     return (
                                                         <button
                                                             key={version}
+                                                            data-config-choice="version"
+                                                            data-selected={isSelected}
+                                                            aria-pressed={isSelected}
                                                             type="button"
                                                             disabled={!formData.dong_xe || isPreFilled}
                                                             onClick={() => handleInputChange({ target: { name: 'phien_ban', value: version } } as any)}
@@ -673,7 +696,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                     </div>
                                     <div>
                                         <InputGroup
-                                            label="Màu ngoại thất (Exterior Color)"
+                                            label="Ngoại thất"
                                             htmlFor="ngoai_that"
                                             required
                                             badge={embeddedMobile && formData.ngoai_that ? (
@@ -682,7 +705,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                 </span>
                                             ) : undefined}
                                         >
-                                            {!embeddedMobile && <div className="mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
+                                            {!embeddedMobile && <div className="request-color-caption mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
                                                 <span className={`text-[13px] italic ${formData.ngoai_that ? 'text-slate-700' : 'text-slate-400'}`}>
                                                     {formData.ngoai_that || 'Vui lòng chọn vòng màu bên dưới...'}
                                                 </span>
@@ -767,7 +790,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                     </div>
                                     <div>
                                         <InputGroup
-                                            label="Màu nội thất (Interior Color)"
+                                            label="Nội thất"
                                             htmlFor="noi_that"
                                             required
                                             badge={embeddedMobile && formData.noi_that ? (
@@ -776,7 +799,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                 </span>
                                             ) : undefined}
                                         >
-                                            {!embeddedMobile && <div className="mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
+                                            {!embeddedMobile && <div className="request-color-caption mt-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center min-h-[46px]">
                                                 <span className={`text-[13px] italic ${formData.noi_that ? 'text-slate-700' : 'text-slate-400'}`}>
                                                     {formData.noi_that || 'Vui lòng chọn vòng màu bên dưới...'}
                                                 </span>
@@ -823,20 +846,20 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                             <div className={`relative z-10 flex flex-col animate-fade-in ${embeddedMobile ? 'gap-2' : 'gap-3 md:gap-4'}`}>
                                 <div className={`grid grid-cols-1 md:grid-cols-2 ${embeddedMobile ? 'gap-2' : 'gap-3 md:gap-4'}`}>
                                     {/* MÃ HĐ CYBER (BẮT BUỘC) */}
-                                    <div className="relative">
-                                        <div className={`flex items-center justify-between ${embeddedMobile ? 'mb-1' : 'mb-2'}`}>
+                                    <div className="relative request-form-group">
+                                        <div className={`flex items-center justify-between min-h-[20px] ${embeddedMobile ? 'mb-1' : 'mb-1.5'}`}>
                                             <label htmlFor="ma_hd_cyber" className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
-                                                <i className="fas fa-file-signature text-blue-500"></i>
+                                                <i className="fas fa-file-signature text-slate-400"></i>
                                                 Mã HĐ Cyber <span className="text-red-500">*</span>
                                             </label>
                                             {userBacklogList.length > 0 && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsBacklogDropdownOpen(prev => !prev)}
-                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1 border border-blue-200 transition-colors shadow-2xs"
+                                                    className="request-backlog-trigger"
                                                     title="Chọn nhanh từ danh sách hợp đồng cọc tồn của bạn"
                                                 >
-                                                    <i className="fas fa-list-check text-[10px]"></i>
+                                                    <i className="fas fa-layer-group"></i>
                                                     <span>Cọc tồn ({userBacklogList.length})</span>
                                                 </button>
                                             )}
@@ -852,98 +875,96 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                 onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
                                                 required
                                                 placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
-                                                className={`${inputClass} !py-2.5 pr-10 font-mono font-medium ${!formData.ma_hd_cyber ? 'border-amber-300 focus:border-blue-500' : 'border-blue-300 text-blue-900 bg-blue-50/20'}`}
+                                                className={`${inputClass} !py-2.5 pr-9 font-mono font-medium ${!formData.ma_hd_cyber ? 'border-amber-300/80 focus:border-blue-500 bg-amber-50/20' : 'border-blue-300/80 text-blue-900 bg-blue-50/25'}`}
                                             />
                                             {userBacklogList.length > 0 && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsBacklogDropdownOpen(prev => !prev)}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-600 transition-colors"
-                                                    title="Mở danh sách cọc tồn"
+                                                    className="request-backlog-chevron"
+                                                    title={isBacklogDropdownOpen ? "Đóng danh sách cọc tồn" : "Mở danh sách cọc tồn"}
                                                 >
-                                                    <i className={`fas ${isBacklogDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-xs`}></i>
+                                                    <i className={`fas ${isBacklogDropdownOpen ? 'fa-chevron-up text-blue-600' : 'fa-chevron-down text-slate-400'} text-[11px]`}></i>
                                                 </button>
                                             )}
-                                        </div>
 
-                                        {/* DROPDOWN POPUP CỌC TỒN */}
-                                        {isBacklogDropdownOpen && (
-                                            <div
-                                                ref={backlogDropdownRef}
-                                                className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 p-2.5 max-h-72 overflow-hidden flex flex-col animate-fade-in"
-                                                style={{ minWidth: '300px' }}
-                                            >
-                                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 shrink-0">
-                                                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                                                        <i className="fas fa-layer-group text-blue-500"></i>
-                                                        Cọc tồn của bạn ({filteredBacklog.length})
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setIsBacklogDropdownOpen(false)}
-                                                        className="text-slate-400 hover:text-slate-600 text-xs px-1"
-                                                    >
-                                                        <i className="fas fa-times"></i>
-                                                    </button>
-                                                </div>
-
-                                                {userBacklogList.length > 3 && (
-                                                    <div className="mb-2 shrink-0">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Tìm số HĐ, tên KH, xe, SĐT..."
-                                                            value={backlogSearch}
-                                                            onChange={(e) => setBacklogSearch(e.target.value)}
-                                                            className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500"
-                                                            autoFocus
-                                                        />
+                                            {/* DROPDOWN POPUP CỌC TỒN ĐỒNG BỘ VỚI SHEET */}
+                                            {isBacklogDropdownOpen && (
+                                                <div
+                                                    ref={backlogDropdownRef}
+                                                    className="request-backlog-dropdown"
+                                                >
+                                                    <div className="request-backlog-header">
+                                                        <span className="request-backlog-title">
+                                                            <i className="fas fa-layer-group"></i>
+                                                            Cọc tồn của bạn ({filteredBacklog.length})
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setIsBacklogDropdownOpen(false)}
+                                                            className="request-backlog-close"
+                                                            title="Đóng danh sách cọc tồn"
+                                                        >
+                                                            <i className="fas fa-times"></i>
+                                                        </button>
                                                     </div>
-                                                )}
 
-                                                <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
-                                                    {filteredBacklog.length === 0 ? (
-                                                        <div className="py-4 text-center text-xs text-slate-400 italic">
-                                                            {backlogSearch ? 'Không tìm thấy hợp đồng phù hợp' : 'Chưa có hợp đồng cọc tồn nào'}
+                                                    {userBacklogList.length > 3 && (
+                                                        <div className="request-backlog-search-wrap">
+                                                            <i className="fas fa-search"></i>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Tìm số HĐ, tên KH, xe, SĐT..."
+                                                                value={backlogSearch}
+                                                                onChange={(e) => setBacklogSearch(e.target.value)}
+                                                                className="request-backlog-search-input"
+                                                                autoFocus
+                                                            />
                                                         </div>
-                                                    ) : (
-                                                        filteredBacklog.map((item, idx) => {
-                                                            const code = item.so_hop_dong || item.so_ct || item.so_don_hang;
-                                                            const isCurrentSelected = formData.ma_hd_cyber === code;
-                                                            return (
-                                                                <div
-                                                                    key={item.id || code || idx}
-                                                                    onClick={() => handleSelectBacklogContract(item)}
-                                                                    className={`p-2.5 rounded-lg border cursor-pointer transition-all text-left ${
-                                                                        isCurrentSelected
-                                                                            ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-400'
-                                                                            : 'bg-white hover:bg-slate-50 border-slate-200/80 hover:border-blue-200'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-center justify-between gap-2">
-                                                                        <span className="font-mono font-bold text-xs text-blue-700 truncate">
-                                                                            {code}
-                                                                        </span>
-                                                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 shrink-0">
-                                                                            {Number(item.tien_coc || 0).toLocaleString('vi-VN')} ₫
-                                                                        </span>
+                                                    )}
+
+                                                    <div className="request-backlog-list">
+                                                        {filteredBacklog.length === 0 ? (
+                                                            <div className="request-backlog-empty">
+                                                                {backlogSearch ? 'Không tìm thấy hợp đồng phù hợp' : 'Chưa có hợp đồng cọc tồn nào'}
+                                                            </div>
+                                                        ) : (
+                                                            filteredBacklog.map((item, idx) => {
+                                                                const code = item.so_hop_dong || item.so_ct || item.so_don_hang;
+                                                                const isCurrentSelected = formData.ma_hd_cyber === code;
+                                                                return (
+                                                                    <div
+                                                                        key={item.id || code || idx}
+                                                                        onClick={() => handleSelectBacklogContract(item)}
+                                                                        className={`request-backlog-card ${isCurrentSelected ? 'is-selected' : ''}`}
+                                                                    >
+                                                                        <div className="request-backlog-card-top">
+                                                                            <span className="request-backlog-card-code">
+                                                                                {code}
+                                                                            </span>
+                                                                            <span className="request-backlog-card-deposit">
+                                                                                {Number(item.tien_coc || 0).toLocaleString('vi-VN')} ₫
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="request-backlog-card-customer">
+                                                                            <span className="request-backlog-customer-name">{item.khach_hang}</span>
+                                                                            <span className="request-backlog-customer-phone">{item.so_dien_thoai}</span>
+                                                                        </div>
+                                                                        <div className="request-backlog-card-bottom">
+                                                                            <span className="request-backlog-card-model">{item.phien_ban} - {item.ngoai_that}</span>
+                                                                            <span className="request-backlog-card-status">
+                                                                                {item.tien_do || 'Chờ xe'}
+                                                                            </span>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="flex items-center justify-between text-xs text-slate-700 font-semibold mt-1">
-                                                                        <span className="truncate">{item.khach_hang}</span>
-                                                                        <span className="text-[11px] text-slate-500 font-mono shrink-0">{item.so_dien_thoai}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center justify-between text-[11px] text-slate-500 mt-0.5">
-                                                                        <span className="truncate italic">{item.phien_ban} - {item.ngoai_that}</span>
-                                                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
-                                                                            {item.tien_do || 'Chờ xe'}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        }))}
+                                                                );
+                                                            })
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
 
                                         <div>
                                             <InputGroup
@@ -1051,26 +1072,12 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
                                     <div>
                                         <InputGroup label="Chính sách" htmlFor="chinh_sach" icon="fa-scroll" required>
-                                            <div className="relative">
-                                                <input
-                                                    id="chinh_sach"
-                                                    type="text"
-                                                    name="chinh_sach"
-                                                    value={formData.chinh_sach || ''}
-                                                    readOnly
-                                                    required
-                                                    placeholder="Vui lòng chọn chính sách..."
-                                                    className={`${inputClass} !py-2.5 cursor-pointer pr-10`}
-                                                    onClick={() => setIsPolicyModalOpen(true)}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-accent-primary p-2 hover:bg-slate-100 rounded-full transition-colors"
-                                                    onClick={() => setIsPolicyModalOpen(true)}
-                                                >
-                                                    <i className="fas fa-edit"></i>
-                                                </button>
-                                            </div>
+                                            <InlinePolicyPicker
+                                                id="chinh_sach"
+                                                value={formData.chinh_sach}
+                                                carModel={formData.dong_xe}
+                                                onChange={policy => setFormData(prev => ({ ...prev, chinh_sach: policy }))}
+                                            />
                                         </InputGroup>
                                     </div>
 
@@ -1082,7 +1089,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                         </div>
                                     )}
                                 </div>
-                                <div className={`${embeddedMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3 shadow-inner md:p-4'} bg-slate-50/50 backdrop-blur-sm border border-slate-200/50`}>
+                                <div className={`request-form-upload ${embeddedMobile ? 'rounded-xl p-2' : 'rounded-2xl p-3 shadow-inner md:p-4'} bg-slate-50/50 backdrop-blur-sm border border-slate-200/50`}>
                                     <div className={`flex items-center justify-between ${embeddedMobile ? 'mb-2' : 'mb-3'}`}>
                                         <label className="text-xs font-bold text-slate-700 flex items-center gap-2">
                                             <div className="w-6 h-6 rounded-full bg-accent-primary/10 flex items-center justify-center">
@@ -1108,7 +1115,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 </div>
 
                 {/* Footer Actions */}
-                <div className={`flex shrink-0 items-center ${embeddedMobile ? 'border-t border-slate-100 bg-white px-4 py-3' : 'justify-end px-6 py-5 md:px-8'}`}>
+                <div className={`request-form-footer flex shrink-0 items-center ${embeddedMobile ? 'border-t border-slate-100 bg-white px-4 py-3' : 'justify-end px-6 py-5 md:px-8'}`}>
                     <div className={`flex items-center gap-2 ${embeddedMobile ? 'w-full' : 'gap-3'}`}>
                         {step === 1 ? (
                             <button
@@ -1132,8 +1139,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                         {step === 1 ? (
                             <button
                                 type="button"
+                                data-action="next"
+                                data-complete={isStep1Complete}
                                 onClick={handleNextStep}
-                                className={`${embeddedMobile ? 'h-10 flex-[1.25] rounded-xl bg-slate-800 text-[12px] shadow-xs active:bg-slate-900' : 'rounded-full bg-blue-600 px-6 py-2.5 text-sm shadow-md hover:bg-blue-700 hover:shadow-lg active:bg-blue-800'} flex cursor-pointer items-center justify-center gap-2 font-semibold text-white transition-all`}
+                                className={`${embeddedMobile ? 'h-10 flex-[1.25] rounded-xl text-[12px] shadow-xs active:bg-slate-900' : 'rounded-full px-6 py-2.5 text-sm shadow-md transition-all'} flex cursor-pointer items-center justify-center gap-2 font-semibold transition-all`}
                             >
                                 <span>Tiếp theo</span>
                                 <i className="fas fa-arrow-right text-xs"></i>
@@ -1161,17 +1170,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 </div>
             </div>
 
-            <SelectPolicyModal
-                isOpen={isPolicyModalOpen}
-                onClose={() => setIsPolicyModalOpen(false)}
-                onSelect={(policy) => {
-                    setFormData(prev => ({ ...prev, chinh_sach: policy }));
-                }}
-                currentPolicy={formData.chinh_sach}
-                carModel={formData.dong_xe}
-                compact={true}
-                embeddedMobile={embeddedMobile}
-            />
         </form>
     );
 };

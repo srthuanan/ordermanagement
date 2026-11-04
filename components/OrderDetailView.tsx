@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import moment from 'moment';
 import 'moment/locale/vi';
 import { Order } from '../types';
@@ -6,6 +7,7 @@ import StatusBadge from './ui/StatusBadge';
 import CarImage from './ui/CarImage';
 import { getExteriorColorStyle, getInteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
 import SelectPolicyModal from './modals/SelectPolicyModal';
+import InlinePolicyPicker from './ui/InlinePolicyPicker';
 const RequestInvoiceModal = React.lazy(() => import('./modals/RequestInvoiceModal'));
 import { Policy, policyAdminService } from '../services/api/policyAdminService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
@@ -24,7 +26,7 @@ import { getCarChameleonTheme } from '../services/api/designTokenService';
 moment.locale('vi');
 
 const formatDateTime = (dateString?: string) => {
-    if (!dateString) return '—';
+    if (!dateString || ['null', 'undefined', 'n/a'].includes(String(dateString).trim().toLowerCase())) return '—';
     const trimmed = dateString.trim();
     const formats = [
         moment.ISO_8601,
@@ -44,7 +46,7 @@ const formatDateTime = (dateString?: string) => {
 };
 
 const formatDateDisplay = (dateString?: string) => {
-    if (!dateString) return '—';
+    if (!dateString || ['null', 'undefined', 'n/a'].includes(String(dateString).trim().toLowerCase())) return '—';
     const trimmed = dateString.trim();
     const formats = [
         "DD/MM/YYYY",
@@ -60,6 +62,8 @@ const formatDateDisplay = (dateString?: string) => {
 };
 
 export interface OrderDetailViewProps {
+    presentation?: 'panel' | 'sheet' | 'workspace';
+    onOpenApproval?: (order: Order) => void;
     order: Order | null;
     orderList?: Order[];
     onNavigate?: (direction: 'prev' | 'next') => void;
@@ -71,6 +75,7 @@ export interface OrderDetailViewProps {
     onEdit?: (order: Order) => void;
     onSelectPolicy?: (order: Order, policy: string) => void;
     isReferenceAccount?: boolean;
+    isAdmin?: boolean;
     onClose?: () => void;
     /** For inline cancel: callback when cancel is confirmed */
     onCancelConfirm?: (order: Order, reason: string, unmatchType: string, thoiGianCanXe?: string) => Promise<void> | void;
@@ -85,6 +90,8 @@ export interface OrderDetailViewProps {
 }
 
 export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
+    presentation = 'panel',
+    onOpenApproval,
     order,
     orderList = [],
     onCancel,
@@ -95,6 +102,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     onEdit,
     onSelectPolicy,
     isReferenceAccount,
+    isAdmin = false,
     onClose,
     onCancelConfirm,
     onInvoiceConfirm,
@@ -109,6 +117,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     // Inline Action States
     const [inlineMode, setInlineMode] = useState<'VIEW' | 'POLICY' | 'CANCEL' | 'INVOICE' | 'EDIT' | 'TRANSFER'>('VIEW');
+    const [activeFooterPopover, setActiveFooterPopover] = useState<'EDIT' | 'CANCEL' | 'TRANSFER' | null>(null);
+    const [footerPopoverPlacement, setFooterPopoverPlacement] = useState<React.CSSProperties>({ visibility: 'hidden' });
+    const editBtnRef = useRef<HTMLButtonElement>(null);
+    const cancelBtnRef = useRef<HTMLButtonElement>(null);
+    const transferBtnRef = useRef<HTMLButtonElement>(null);
+    const footerPopoverRef = useRef<HTMLDivElement>(null);
     const [policies, setPolicies] = useState<Policy[]>([]);
     const [loadingPolicies, setLoadingPolicies] = useState(false);
     const [policySearch, setPolicySearch] = useState('');
@@ -431,6 +445,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     // Reset inline mode & stale vehicle data when switching to a different order
     useEffect(() => {
         setInlineMode('VIEW');
+        setActiveFooterPopover(null);
         setCyberCarStatus(null);
         setTransferRequest(null);
         setTransferFromWarehouse('');
@@ -441,10 +456,51 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     }, [order?.['Số đơn hàng']]);
 
     useEffect(() => {
-        if (inlineMode === 'TRANSFER' && (hasTd4Effective || !isCarInWarehouse)) {
+        if ((inlineMode === 'TRANSFER' || activeFooterPopover === 'TRANSFER') && (hasTd4Effective || !isCarInWarehouse)) {
             setInlineMode('VIEW');
+            setActiveFooterPopover(null);
         }
-    }, [inlineMode, hasTd4Effective, isCarInWarehouse]);
+    }, [inlineMode, activeFooterPopover, hasTd4Effective, isCarInWarehouse]);
+
+    useLayoutEffect(() => {
+        if (!activeFooterPopover) return;
+        const update = () => {
+            const anchor = activeFooterPopover === 'EDIT' ? editBtnRef.current : activeFooterPopover === 'CANCEL' ? cancelBtnRef.current : transferBtnRef.current;
+            if (!anchor) return;
+            const rect = anchor.getBoundingClientRect();
+            const targetWidth = activeFooterPopover === 'EDIT' ? 370 : activeFooterPopover === 'TRANSFER' ? 350 : 330;
+            const width = Math.min(targetWidth, window.innerWidth - 24);
+            const left = Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12));
+            const above = rect.top - 16;
+            const below = window.innerHeight - rect.bottom - 16;
+            const upwards = above >= 220 || above >= below;
+            setFooterPopoverPlacement({
+                position: 'fixed',
+                width,
+                left,
+                maxHeight: Math.min(440, Math.max(200, upwards ? above : below)),
+                ...(upwards
+                    ? { bottom: window.innerHeight - rect.top + 8, top: 'auto' }
+                    : { top: rect.bottom + 8, bottom: 'auto' })
+            });
+        };
+        const outside = (event: PointerEvent) => {
+            const target = event.target as Node;
+            const anchor = activeFooterPopover === 'EDIT' ? editBtnRef.current : activeFooterPopover === 'CANCEL' ? cancelBtnRef.current : transferBtnRef.current;
+            if (!anchor?.contains(target) && !footerPopoverRef.current?.contains(target)) {
+                setActiveFooterPopover(null);
+            }
+        };
+        update();
+        window.addEventListener('resize', update);
+        window.addEventListener('scroll', update, true);
+        document.addEventListener('pointerdown', outside);
+        return () => {
+            window.removeEventListener('resize', update);
+            window.removeEventListener('scroll', update, true);
+            document.removeEventListener('pointerdown', outside);
+        };
+    }, [activeFooterPopover]);
 
     // Tự động tải thông tin yêu cầu chuyển xe đã gửi & tra cứu kho thực tế từ CyberSoft
     useEffect(() => {
@@ -862,7 +918,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         }
 
         // 2. Chuyển sang giao diện yêu cầu lập phiếu NGAY LẬP TỨC (0ms) để TVBH không phải chờ đợi
-        setInlineMode('TRANSFER');
+        setActiveFooterPopover('TRANSFER');
 
         // 3. Chạy tra cứu CyberSoft trong nền (Background) kèm timeout 2.5s để cập nhật thông tin kho mới nhất
         const vin = resolvedOrder?.VIN;
@@ -1003,6 +1059,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             if (res.success && res.data) {
                 setTransferRequest(res.data);
                 setInlineMode('VIEW');
+                setActiveFooterPopover(null);
+                setInlineMode('VIEW');
                 showToast?.('Đã gửi yêu cầu', `Đã gửi yêu cầu chuyển xe ${vin} tới Admin thành công.`, 'success');
             } else {
                 throw new Error(res.error || 'Lỗi gửi yêu cầu chuyển xe');
@@ -1046,7 +1104,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     };
 
     useEffect(() => {
-        if (inlineMode === 'EDIT' && resolvedOrder) {
+        if ((inlineMode === 'EDIT' || activeFooterPopover === 'EDIT') && resolvedOrder) {
             setEditFormData({
                 "Tên khách hàng": resolvedOrder["Tên khách hàng"] || "",
                 "Số đơn hàng": resolvedOrder["Số đơn hàng"] || "",
@@ -1060,7 +1118,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             setEditErrorMessage(null);
             setEditSuccessMessage(null);
         }
-    }, [inlineMode, resolvedOrder]);
+    }, [inlineMode, activeFooterPopover, resolvedOrder]);
 
     const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -1125,6 +1183,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
             if (Object.keys(changes).length === 0) {
                 setInlineMode('VIEW');
+                setInlineMode('VIEW');
+                setActiveFooterPopover(null);
                 setIsSavingEdit(false);
                 return;
             }
@@ -1152,6 +1212,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             }
 
             setEditSuccessMessage('Cập nhật thông tin đơn hàng thành công!');
+            setActiveFooterPopover(null);
             if (onEdit) {
                 onEdit({
                     ...resolvedOrder,
@@ -1189,6 +1250,9 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             );
             setInlineMode('VIEW');
             setCancelReason('');
+            setInlineMode('VIEW');
+            setActiveFooterPopover(null);
+            setCancelReason('');
             setCancelUnmatchType('Hủy luôn đơn hàng (Hủy đơn)');
             setCancelThoiGianCanXe('');
         } finally {
@@ -1215,9 +1279,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 setSelectedPolicyNames([]);
             }
         }
-    }, [inlineMode, resolvedOrder]);
+    }, [inlineMode, activeFooterPopover, resolvedOrder]);
 
     if (!order || !resolvedOrder) {
+        if (presentation === 'workspace') return <div className="premium-detail-empty"><i className="fa-regular fa-file-lines" aria-hidden="true" /><h2>Chọn một đơn hàng</h2><p>Thông tin xe và tiến độ xử lý sẽ hiển thị tại đây.</p></div>;
         return (
             <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center bg-white/95 backdrop-blur-3xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden relative">
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none"></div>
@@ -1293,6 +1358,224 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         (p.dong_xe || '').toLowerCase().includes(policySearch.toLowerCase())
     );
 
+    const rawPolicyStr = String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '');
+    const parsedPolicyItems = rawPolicyStr
+        ? (rawPolicyStr.includes('\n') ? rawPolicyStr.split('\n') : rawPolicyStr.includes(';') ? rawPolicyStr.split(';') : [rawPolicyStr]).map((s) => s.trim()).filter(Boolean)
+        : [];
+    const workspaceTriColumnsPanel = presentation === 'workspace' ? (() => {
+        const hasInvoiced = Boolean(resolvedOrder["Ngày xuất hóa đơn"] || resolvedOrder.LinkHoaDonDaXuat);
+        const milestoneSteps = [
+            { id: 1, title: 'Ngày Cọc', time: formatDateTime(resolvedOrder["Ngày cọc"]), isDone: formatDateTime(resolvedOrder["Ngày cọc"]) !== '—' },
+            { id: 2, title: 'Tạo Yêu Cầu', time: resolvedOrder["Thời gian nhập"] ? formatDateTime(resolvedOrder["Thời gian nhập"]) : 'Đang chờ xử lý', isDone: Boolean(resolvedOrder["Thời gian nhập"]) },
+            { id: 3, title: 'Ghép VIN', time: resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe', isDone: Boolean(resolvedOrder["Thời gian ghép"]), badge: resolvedOrder["Thời gian ghép"] && daysSincePairedText !== '—' ? daysSincePairedText : null },
+            { id: 4, title: 'Xuất Hóa Đơn', time: resolvedOrder["Ngày xuất hóa đơn"] ? formatDateTime(resolvedOrder["Ngày xuất hóa đơn"]) : (resolvedOrder.LinkHoaDonDaXuat ? 'Đã xuất HĐ' : 'Chưa xuất HĐ'), isDone: hasInvoiced },
+            { id: 5, title: 'Hồ Sơ COC', time: cocReceivedDate ? formatDateDisplay(cocReceivedDate) : 'Chưa có COC', isDone: Boolean(cocReceivedDate) },
+            { id: 6, title: 'Giấy Ra Cổng', time: td4Info.hasTd4 ? (td4Info.soCt || 'Đã lập phiếu') : 'Chưa lập phiếu', isDone: td4Info.post === '9', badge: td4Info.hasTd4 ? td4Info.label : null, onClick: () => setActiveRightTab('TD4') },
+        ];
+        const post = td4Info.post;
+        const isTd4Cancelled = post === '1';
+        const isStep1Done = td4Info.hasTd4 && !isTd4Cancelled;
+        const isStep2Done = td4Info.hasTd4 && !isTd4Cancelled && ['4', '5', '9'].includes(post);
+        const isStep3Done = td4Info.hasTd4 && !isTd4Cancelled && ['5', '9'].includes(post);
+        const isStep4Done = td4Info.hasTd4 && !isTd4Cancelled && post === '9';
+        const td4Steps = [
+            { id: 1, title: 'Lập phiếu ra cổng', actor: 'TVBH / Sale Admin', timeText: td4Info.td?.ngay_ct ? `${formatDateDisplay(td4Info.td.ngay_ct)} ${td4Info.td?.gio_ct || ''}`.trim() : (isStep1Done ? 'Đã khởi tạo' : 'Chưa lập phiếu'), badge: isStep1Done ? 'Đã lập' : 'Chưa lập', isDone: isStep1Done, isCurrent: false },
+            { id: 2, title: 'Kế toán phê duyệt', actor: 'Kế toán công nợ', timeText: isStep2Done ? 'Đã duyệt thanh toán' : (post === '3' ? 'Đang chờ KT duyệt' : 'Chờ bước trước'), badge: isStep2Done ? 'Đã duyệt' : (post === '3' ? 'Đang chờ' : 'Chờ'), isDone: isStep2Done, isCurrent: post === '3' },
+            { id: 3, title: 'Giám đốc phê duyệt', actor: 'Ban Giám Đốc', timeText: isStep3Done ? 'BGĐ đã ký duyệt' : (post === '4' ? 'Đang chờ GĐ ký' : 'Chờ bước trước'), badge: isStep3Done ? 'Đã duyệt' : (post === '4' ? 'Đang chờ' : 'Chờ'), isDone: isStep3Done, isCurrent: post === '4' },
+            { id: 4, title: 'Xe lăn bánh ra cổng', actor: 'Thủ kho & Bảo vệ', timeText: isStep4Done ? 'Đã ra cổng giao khách' : (post === '5' ? 'Sẵn sàng qua cổng' : 'Chưa ra cổng'), badge: isStep4Done ? 'Đã qua cổng' : (post === '5' ? 'Sẵn sàng' : 'Chưa ra'), isDone: isStep4Done, isCurrent: post === '5' },
+        ];
+        const normalizeTitle = (t: string) => t === 'REQUEST_RESCAN' ? 'Yêu cầu scan lại chứng từ' : t === 'APPROVE_INVOICE' ? 'Phê duyệt yêu cầu xuất hóa đơn' : t;
+        const getTone = (dot: string) => dot.includes('emerald') ? 'done' : dot.includes('amber') ? 'warn' : dot.includes('rose') || dot.includes('red') ? 'danger' : dot.includes('indigo') || dot.includes('blue') || dot.includes('sky') || dot.includes('purple') ? 'info' : 'muted';
+
+        return (
+            <div className="premium-tri-board">
+                {/* Cột 1: Tiến Độ | Nhật Ký | Giấy Ra Cổng */}
+                <section className="premium-tri-col">
+                    <header className="premium-tri-head">
+                        <div className="premium-tri-tabs" role="tablist">
+                            <button type="button" data-tab-active={activeRightTab === 'MILESTONES'} onClick={() => setActiveRightTab('MILESTONES')}>
+                                <span>Tiến Độ</span>
+                            </button>
+                            <button type="button" data-tab-active={activeRightTab === 'AUDIT_TRAIL'} onClick={() => setActiveRightTab('AUDIT_TRAIL')}>
+                                <span>Nhật Ký</span>
+                                {auditLogs.length > 0 && <em className="premium-tri-count">{auditLogs.length}</em>}
+                            </button>
+                            <button type="button" data-tab-active={activeRightTab === 'TD4'} onClick={() => setActiveRightTab('TD4')}>
+                                <span>Giấy Ra Cổng</span>
+                                {td4Info.hasTd4 && (
+                                    <em className="premium-tri-count is-violet">
+                                        {td4Info.post === '9' ? 'Đã ra' : td4Info.post === '5' ? 'GĐ duyệt' : td4Info.post === '4' ? 'KT duyệt' : td4Info.label}
+                                    </em>
+                                )}
+                            </button>
+                        </div>
+                        {activeRightTab === 'AUDIT_TRAIL' && (
+                            <button type="button" className="premium-inline-action" onClick={() => resolvedOrder?.['Số đơn hàng'] && fetchAuditLogs(resolvedOrder['Số đơn hàng'])} disabled={isLoadingLogs} title="Làm mới nhật ký">
+                                <i className={`fas fa-rotate-right ${isLoadingLogs ? 'animate-spin' : ''}`} />
+                            </button>
+                        )}
+                        {activeRightTab === 'TD4' && (
+                            <div className="premium-left-actions">
+                                {td4Info.soCt && (
+                                    <button type="button" className="premium-td4-code" title="Click để sao chép số phiếu" onClick={() => { navigator.clipboard.writeText(td4Info.soCt); showToast?.('Đã sao chép', `Đã copy số phiếu: ${td4Info.soCt}`, 'info'); }}>
+                                        {td4Info.soCt}
+                                    </button>
+                                )}
+                                <button type="button" className="premium-inline-action" onClick={handleRefreshTd4Status} disabled={isCheckingTd4 || !resolvedOrder?.VIN} title="Kiểm tra từ CyberSoft">
+                                    <i className={`fas fa-rotate-right ${isCheckingTd4 ? 'animate-spin' : ''}`} />
+                                </button>
+                                {td4Info.hasTd4 && (
+                                    <button type="button" className="premium-inline-action is-dark" onClick={handleOpenPrintTd4} title="In phiếu ra cổng">
+                                        <i className="fas fa-print" />
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </header>
+                    <div className="premium-tri-body">
+                        {activeRightTab === 'MILESTONES' ? (
+                            <div className="premium-timeline">
+                                {milestoneSteps.map((st) => (
+                                    <div key={st.id} data-complete={st.isDone ? 'true' : 'false'} role={st.onClick ? 'button' : undefined} tabIndex={st.onClick ? 0 : undefined} onClick={st.onClick} onKeyDown={st.onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); st.onClick?.(); } } : undefined} className={st.onClick ? 'cursor-pointer' : undefined}>
+                                        <div className="premium-timeline-node"><i className="fas fa-check" /></div>
+                                        <div className="premium-timeline-copy">
+                                            <div>
+                                                <p>{st.title}</p>
+                                                <p>{st.time}</p>
+                                            </div>
+                                            {(st.badge || st.onClick) && (
+                                                <div className="flex items-center gap-1.5">
+                                                    {st.badge && <span>{st.badge}</span>}
+                                                    {st.onClick && <i className="fas fa-arrow-up-right-from-square text-[9px] text-slate-400" />}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : activeRightTab === 'AUDIT_TRAIL' ? (
+                            <div className="premium-audit-panel">
+                                {isLoadingLogs ? (
+                                    <div className="premium-audit-empty"><span>Đang tải nhật ký thay đổi...</span></div>
+                                ) : auditLogs.length === 0 ? (
+                                    <div className="premium-audit-empty">
+                                        <strong>Chưa có nhật ký thay đổi</strong>
+                                        <span>Các thao tác trên đơn hàng sẽ hiển thị tại đây.</span>
+                                    </div>
+                                ) : (
+                                    <div className="premium-audit-scroll">
+                                        <div className="premium-audit-col">
+                                            {auditLogs.map((log) => {
+                                                const detailParts: string[] = [];
+                                                if (log.vin) detailParts.push(`VIN ${log.vin}`);
+                                                if (log.reason) detailParts.push(log.reason);
+                                                const detailText = detailParts.join(' · ');
+                                                return (
+                                                    <div key={log.id} className="premium-audit-row" data-tone={getTone(log.dotColor)} title={detailText ? `${normalizeTitle(log.actionTitle)} — ${log.actorName}\n${detailText}` : undefined}>
+                                                        <span className="premium-audit-dot" aria-hidden="true" />
+                                                        <div className="premium-audit-main">
+                                                            <div className="premium-audit-line">
+                                                                <span className="premium-audit-title">{normalizeTitle(log.actionTitle)}</span>
+                                                                <span className="premium-audit-actor">· {log.actorName}</span>
+                                                            </div>
+                                                            {detailText && <p className="premium-audit-sub">{detailText}</p>}
+                                                        </div>
+                                                        <time className="premium-audit-time">{formatDateTime(log.createdAt)}</time>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="premium-timeline is-four-step">
+                                {td4Steps.map((st) => (
+                                    <div key={st.id} data-complete={st.isDone ? 'true' : 'false'} data-current={st.isCurrent ? 'true' : 'false'}>
+                                        <div className="premium-timeline-node"><i className="fas fa-check" /></div>
+                                        <div className="premium-timeline-copy">
+                                            <div>
+                                                <p>{st.title} <span className="premium-td4-actor">· {st.actor}</span></p>
+                                                <p>{st.timeText}</p>
+                                            </div>
+                                            <div><span data-state={st.isDone ? 'done' : st.isCurrent ? 'current' : 'idle'}>{st.badge}</span></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* Cột 2: Thông Tin & Hồ Sơ */}
+                <section className="premium-tri-col is-bordered">
+                    <header className="premium-tri-head">
+                        <h3>Thông Tin &amp; Hồ Sơ</h3>
+                    </header>
+                    <div className="premium-tri-body">
+                        <div className="premium-dossier-list">
+                            <div className="premium-dossier-row">
+                                <span>Số đơn hàng</span>
+                                <button type="button" className="is-mono" title="Click để sao chép Số đơn hàng" onClick={async () => { try { await navigator.clipboard.writeText(resolvedOrder['Số đơn hàng']); setCopiedLabel('orderId'); setTimeout(() => setCopiedLabel(null), 2000); } catch {} }}>
+                                    {copiedLabel === 'orderId' ? '✓ Đã sao chép' : resolvedOrder['Số đơn hàng']}
+                                </button>
+                            </div>
+                            <div className="premium-dossier-row">
+                                <span>Hợp đồng Cyber</span>
+                                {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) ? (
+                                    <button type="button" className="is-mono" title="Click để sao chép Mã HĐ Cyber" onClick={async () => { const code = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || ''); try { await navigator.clipboard.writeText(code); setCopiedLabel('cyberId'); setTimeout(() => setCopiedLabel(null), 2000); } catch {} }}>
+                                        {copiedLabel === 'cyberId' ? '✓ Đã sao chép' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}
+                                    </button>
+                                ) : (
+                                    <em>Chưa cập nhật</em>
+                                )}
+                            </div>
+                            {[
+                                { label: 'File hợp đồng', url: resolvedOrder.LinkHopDong, empty: 'Chưa tải lên' },
+                                { label: 'Đề nghị XHĐ', url: resolvedOrder.LinkDeNghiXHD, empty: 'Chưa tải lên' },
+                                { label: 'Hóa đơn', url: resolvedOrder.LinkHoaDonDaXuat, empty: 'Chưa xuất' },
+                            ].map((doc) => (
+                                <div key={doc.label} className="premium-dossier-row">
+                                    <span>{doc.label}</span>
+                                    {doc.url ? (
+                                        <a className="premium-dossier-link" href={doc.url} target="_blank" rel="noopener noreferrer">Xem file ↗</a>
+                                    ) : (
+                                        <em>{doc.empty}</em>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Cột 3: Chính sách */}
+                <section className="premium-tri-col is-bordered">
+                    <header className="premium-tri-head">
+                        <h3>Chính sách</h3>
+                        {onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && (
+                            <InlinePolicyPicker id="workspace-tri-policy-picker" value={rawPolicyStr} carModel={resolvedOrder["Dòng xe"]} triggerLabel="Cập nhật chính sách" triggerClassName="premium-policy-edit-trigger" onConfirm={(newPolicy) => onSelectPolicy(resolvedOrder, newPolicy)} />
+                        )}
+                    </header>
+                    <div className="premium-tri-body">
+                        <div className="premium-policy-list">
+                            {parsedPolicyItems.length === 0 ? (
+                                <p className="premium-policy-empty">Không có chính sách hoặc ưu đãi</p>
+                            ) : (
+                                parsedPolicyItems.map((item, idx) => (
+                                    <div key={idx} className="premium-policy-item">
+                                        <span className="premium-policy-dot" aria-hidden="true" />
+                                        <span>{item}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        );
+    })() : null;
+    const workspacePersistentRightColumn: React.ReactNode = null;
+
     const carModel = resolvedOrder["Dòng xe"];
     if (showOnlyMatchModel && carModel) {
         filteredPolicies = filteredPolicies.filter(p => {
@@ -1310,9 +1593,29 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
 
     return (
-        <div className="h-full flex flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg bg-white">
+        <div className="ios-order-detail h-full w-full flex-1 flex flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg bg-white" data-presentation={presentation} data-mode={inlineMode}>
             {/* Compact header with Harmonized Gradient */}
-            {inlineMode !== 'INVOICE' && (
+            {presentation === 'workspace' && <header className="premium-detail-heading">
+                <div className="premium-detail-breadcrumb">Đơn hàng <span>/</span> {resolvedOrder['Số đơn hàng']}</div>
+                <div className="premium-detail-title-row"><div><h2>{resolvedOrder['Tên khách hàng'] || 'Chưa có tên khách hàng'}</h2><p>Tư vấn bán hàng <span>·</span> {resolvedOrder['Tên tư vấn bán hàng'] || 'Chưa cập nhật'}</p></div>
+                    <div className="premium-detail-actions"><StatusBadge status={statusText} />
+
+                        {inlineMode === 'VIEW' && !isReferenceAccount && onOpenApproval && generalStatus === 'chờ phê duyệt' && <button type="button" className="premium-primary" onClick={() => onOpenApproval(resolvedOrder)}>Duyệt hóa đơn</button>}
+                        {inlineMode !== 'VIEW' && (
+                            <button
+                                type="button"
+                                className="premium-back-arrow"
+                                onClick={() => setInlineMode('VIEW')}
+                                title="Quay lại chi tiết"
+                                aria-label="Quay lại chi tiết"
+                            >
+                                <i className="fas fa-arrow-left text-sm" aria-hidden="true" />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </header>}
+            {presentation !== 'workspace' && inlineMode !== 'INVOICE' && (
             <header 
                 className="flex-shrink-0 flex items-center justify-between gap-3 px-5 py-2.5 border-b border-slate-200/80 rounded-t-2xl shadow-xs transition-colors duration-500"
                 style={{
@@ -1340,7 +1643,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             {/* Main Body (FLEX SCALE-TO-FIT NO SCROLL) */}
             {/* Main Body - Tech Micro-Dashed Dot Mesh (15% Darker) */}
             <main 
-                className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-br from-slate-100/90 via-slate-50 to-slate-200/50"
+                className="ios-order-detail-main flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-br from-slate-100/90 via-slate-50 to-slate-200/50"
             >
             {inlineMode === 'INVOICE' ? (
                 <React.Suspense fallback={<div className="flex-1 flex items-center justify-center p-8 text-sm text-gray-500 font-semibold"><i className="fas fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu xuất hóa đơn...</div>}>
@@ -1358,11 +1661,36 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     />
                 </React.Suspense>
             ) : (
-            <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 px-2 py-1.5 md:px-3 md:py-2.5 overflow-hidden relative">
+            <div className="ios-order-detail-body flex-1 min-h-0 flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 px-2 py-1.5 md:px-3 md:py-2.5 overflow-hidden relative">
                 
+                {presentation === 'workspace' && inlineMode === 'VIEW' && <section className="premium-vehicle-summary" aria-label="Thông tin xe">
+                    <div className="premium-vehicle-photo"><CarImage model={resolvedOrder['Dòng xe']} exteriorColor={resolvedOrder['Ngoại thất']} version={resolvedOrder['Phiên bản']} alt={`${resolvedOrder['Dòng xe']} ${resolvedOrder['Ngoại thất'] || ''}`} /></div>
+                    <div className="premium-vehicle-info"><h3>{resolvedOrder['Dòng xe']} <span>{resolvedOrder['Phiên bản']}</span></h3>
+                        <div className="premium-vehicle-vin"><span>VIN</span><button type="button" disabled={!resolvedOrder.VIN} title="Sao chép VIN" onClick={async () => {
+                            if (!resolvedOrder.VIN) return;
+                            try { await navigator.clipboard.writeText(resolvedOrder.VIN); setCopiedLabel('vin'); setTimeout(() => setCopiedLabel(null), 2000); }
+                            catch { showToast?.('Không thể sao chép', 'Vui lòng sao chép số VIN trực tiếp.', 'info'); }
+                        }}>{copiedLabel === 'vin' ? 'Đã sao chép' : resolvedOrder.VIN || 'Chưa ghép xe'}{resolvedOrder.VIN && <i className="fa-regular fa-copy" aria-hidden="true" />}</button>
+                        {currentCarLocation && <small>{currentCarLocation}</small>}</div>
+                        <dl className="premium-vehicle-specs">
+                            {[
+                                { key: 'ext', label: 'Ngoại thất', value: formatShortExteriorColor(resolvedOrder['Ngoại thất']), swatch: true },
+                                { key: 'int', label: 'Nội thất', value: resolvedOrder['Nội thất'] },
+                                { key: 'engine', label: 'Số máy', value: resolvedOrder['Số máy'] },
+                                { key: 'dms', label: 'Mã DMS', value: resolvedOrder['Mã DMS'] || resolvedOrder['Mã DMS'] },
+                            ].filter((s) => s.value && String(s.value).trim() && !['—', '-', 'n/a', 'null', 'undefined'].includes(String(s.value).trim().toLowerCase())).map((s) => (
+                                <div key={s.key}><dt>{s.label}</dt><dd>{s.swatch && <i className="premium-color-swatch" style={{ backgroundColor: getExteriorSwatchColor(resolvedOrder['Ngoại thất']) }} />}{s.value}</dd></div>
+                            ))}
+
+
+
+                        </dl>
+                        {/* HĐ Cyber đã gộp lên dòng VIN để tiết kiệm chiều dọc */}
+                    </div>
+                </section>}
                 {/* LEFT COLUMN: Modern Automotive Studio Digital Twin with Chameleon Theme */}
                 <div 
-                    className={`flex-[4] lg:flex-[4.5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-between py-2 px-3 md:py-3 md:px-4 shrink-0 min-h-[140px] sm:min-h-[180px] md:min-h-0 rounded-2xl bg-white/85 backdrop-blur-xl border shadow-xs overflow-hidden transition-all duration-500`}
+                    className={`ios-order-detail-studio flex-[4] lg:flex-[4.5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-between py-2 px-3 md:py-3 md:px-4 shrink-0 min-h-[140px] sm:min-h-[180px] md:min-h-0 rounded-2xl bg-white/85 backdrop-blur-xl border shadow-xs overflow-hidden transition-all duration-500`}
                     style={{
                         borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.25)`,
                         boxShadow: `0 12px 32px -8px rgba(${chameleonTheme.primaryRgb}, 0.12)`
@@ -1378,7 +1706,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     <div className="w-full flex items-center justify-between gap-2 relative z-20 shrink-0">
                         <div className="flex items-center gap-2 flex-wrap">
                             <div 
-                                className="px-3 py-1.5 rounded-xl bg-slate-900/95 backdrop-blur-md border shadow-md flex items-center gap-2 select-none transition-all"
+                                className="ios-order-vehicle-label px-3 py-1.5 rounded-xl bg-slate-900/95 backdrop-blur-md border shadow-md flex items-center gap-2 select-none transition-all"
                                 style={{ borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.4)` }}
                             >
                                 <span 
@@ -1401,7 +1729,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     </div>
 
                     {/* Fixed & Non-Interactive Car Studio Display */}
-                    <div className="flex-1 w-full min-h-0 relative z-10 flex items-center justify-center py-2 select-none pointer-events-none">
+                    <div className="ios-order-vehicle-visual flex-1 w-full min-h-0 relative z-10 flex items-center justify-center py-2 select-none pointer-events-none">
                         {/* Floor Contact Ground Shadow with Chameleon Sub-Glow */}
                         <div 
                             className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-[320px] h-4 rounded-[100%] blur-md pointer-events-none transform scale-y-50"
@@ -1423,7 +1751,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     </div>
 
                     {/* Floating Specs Dock */}
-                    <div className="w-full relative z-20 shrink-0 pointer-events-auto">
+                    <div className="ios-order-vehicle-meta w-full relative z-20 shrink-0 pointer-events-auto">
                         <div className="bg-white/95 border border-slate-200/90 shadow-md shadow-slate-200/50 rounded-xl p-1.5 md:p-2 flex items-center justify-between gap-1.5 backdrop-blur-md select-none divide-x divide-slate-100">
                             {/* Ngoại thất */}
                             <div className="flex-[1.2] px-1 text-center min-w-0" title={resolvedOrder["Ngoại thất"]}>
@@ -1488,7 +1816,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 </div>
 
                 {/* RIGHT COLUMN: Operations, Milestones & Command Card */}
-                <div className="flex-[6] lg:flex-[5.5] w-full flex flex-col bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative z-10 p-2 sm:p-2.5 md:p-3 gap-2">
+                <div className="ios-order-detail-operations flex-[6] lg:flex-[5.5] w-full flex flex-col bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative z-10 p-2 sm:p-2.5 md:p-3 gap-2">
                     {inlineMode === 'CANCEL' ? (
                         <div className="flex-1 flex flex-col h-full p-4 md:p-6 bg-white/90 rounded-2xl border border-red-100 overflow-hidden animate-fade-in justify-between">
                             {/* Header */}
@@ -1626,9 +1954,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <div className="space-y-2 md:space-y-3">
                                         <h4 className="text-[10.5px] md:text-[11px] font-black text-blue-600 uppercase tracking-wider">THÔNG TIN KHÁCH HÀNG</h4>
                                         
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3">
+                                        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2.5 md:gap-3`}>
+                                            {isAdmin && (
                                             <div>
-                                                <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">TVBH (ADMIN ONLY)</label>
+                                                <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">TƯ VẤN BÁN HÀNG</label>
                                                 <div className="relative">
                                                     <i className="fas fa-user-tie absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                                                     <input 
@@ -1641,6 +1970,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                     />
                                                 </div>
                                             </div>
+                                            )}
                                             <div>
                                                 <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">TÊN KHÁCH HÀNG</label>
                                                 <div className="relative">
@@ -2385,12 +2715,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             </div>
 
                             {/* Minimalist Split Panels: Unified Timeline & Customer Privileges */}
-                            <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 md:p-4 flex flex-col justify-between overflow-y-auto">
+                            {workspaceTriColumnsPanel}
+                            <div className="ios-order-detail-tabs-panel flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 md:p-4 flex flex-col justify-between overflow-y-auto">
                                 {/* Segmented Tab Switcher (macOS / iOS Minimalist Style) */}
                                 <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100 shrink-0 overflow-x-auto no-scrollbar">
-                                    <div className="flex items-center gap-1 p-0.5 sm:p-1 bg-slate-100 rounded-xl shrink-0 flex-nowrap whitespace-nowrap">
+                                    <div className="ios-order-detail-tabs flex items-center gap-1 p-0.5 sm:p-1 bg-slate-100 rounded-xl shrink-0 flex-nowrap whitespace-nowrap">
                                         <button
                                             type="button"
+                                            data-tab-active={activeRightTab === 'MILESTONES'}
                                             onClick={() => setActiveRightTab('MILESTONES')}
                                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                                                 activeRightTab === 'MILESTONES'
@@ -2399,10 +2731,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             }`}
                                         >
                                             <i className="fa-solid fa-bars-progress text-sky-500 text-[10px]"></i>
-                                            <span>Tiến Độ</span>
+                                            <span>{presentation === 'sheet' ? 'Tổng quan' : 'Tiến Độ'}</span>
                                         </button>
                                         <button
                                             type="button"
+                                            data-tab-active={activeRightTab === 'AUDIT_TRAIL'}
                                             onClick={() => setActiveRightTab('AUDIT_TRAIL')}
                                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                                                 activeRightTab === 'AUDIT_TRAIL'
@@ -2426,6 +2759,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         {/* Tab 3: Giấy Ra Cổng */}
                                         <button
                                             type="button"
+                                            data-tab-active={activeRightTab === 'TD4'}
                                             onClick={() => setActiveRightTab('TD4')}
                                             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                                                 activeRightTab === 'TD4'
@@ -2434,7 +2768,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             }`}
                                         >
                                             <i className="fa-solid fa-id-card text-violet-500 text-[10px]"></i>
-                                            <span>Giấy Ra Cổng</span>
+                                            <span>{presentation === 'sheet' ? 'Hồ sơ' : 'Giấy Ra Cổng'}</span>
                                             {td4Info.hasTd4 && (
                                                 <span 
                                                     className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
@@ -2491,8 +2825,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     </div>
                                 </div>
 
+                                {presentation === 'sheet' && activeRightTab === 'TD4' && <div className="orders-sheet-documents"><h3>Tài liệu đơn hàng</h3>{[
+                                    { label: 'Hợp đồng', url: resolvedOrder.LinkHopDong },
+                                    { label: 'Đề nghị xuất hóa đơn', url: resolvedOrder.LinkDeNghiXHD },
+                                    { label: 'Hóa đơn đã xuất', url: resolvedOrder.LinkHoaDonDaXuat },
+                                ].filter(file => !!file.url).map(file => <a key={file.label} href={file.url} target="_blank" rel="noopener noreferrer"><i className="fa-regular fa-file-lines" />{file.label}<i className="fa-solid fa-arrow-up-right-from-square" /></a>)}{!resolvedOrder.LinkHopDong && !resolvedOrder.LinkDeNghiXHD && !resolvedOrder.LinkHoaDonDaXuat && <p>Chưa có tài liệu đính kèm.</p>}</div>}
                                 {activeRightTab === 'MILESTONES' ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch flex-1">
+                                    <div className="premium-progress-grid grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch flex-1">
                                         {/* Left: Continuous Luminous Stepper (No Clumsy Arrows) */}
                                         <div className="flex flex-col justify-between">
                                             <div className="flex items-center justify-between pb-1.5">
@@ -2509,7 +2848,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         id: 1,
                                                         title: '1. Ngày Cọc',
                                                         time: formatDateTime(resolvedOrder["Ngày cọc"]),
-                                                        isDone: true,
+                                                        isDone: formatDateTime(resolvedOrder["Ngày cọc"]) !== '—',
                                                         icon: 'fa-receipt'
                                                     },
                                                     {
@@ -2555,23 +2894,27 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 ];
 
                                                 return (
-                                                    <div className="relative flex-1 flex flex-col justify-between py-1 pl-6 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
+                                                    <div className="premium-timeline relative flex-1 flex flex-col justify-between py-1 pl-6 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
                                                         {steps.map((st: any) => (
                                                             <div 
                                                                 key={st.id} 
+                                                                data-complete={st.isDone}
+                                                                role={st.onClick ? 'button' : undefined}
+                                                                tabIndex={st.onClick ? 0 : undefined}
+                                                                onKeyDown={st.onClick ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); st.onClick(); } } : undefined}
                                                                 onClick={st.onClick}
                                                                 className={`relative flex items-center justify-between group py-1 ${st.onClick ? 'cursor-pointer' : ''}`}
                                                                 title={st.onClick ? 'Click để xem rõ chi tiết tiến trình duyệt giấy ra cổng' : undefined}
                                                             >
                                                                 {/* Automotive Semantic Micro-Badge Node */}
-                                                                <div className={`absolute -left-[24px] w-[24px] h-[24px] rounded-full flex items-center justify-center transition-all ${
+                                                                <div className={`premium-timeline-node absolute -left-[24px] w-[24px] h-[24px] rounded-full flex items-center justify-center transition-all ${
                                                                     st.isDone 
                                                                         ? 'bg-emerald-50 text-emerald-600 border border-emerald-300 shadow-2xs ring-3 ring-white' 
                                                                         : st.id === 6 && td4Info.hasTd4
                                                                             ? 'bg-violet-50 text-violet-600 border border-violet-300 shadow-2xs ring-3 ring-white'
                                                                             : 'bg-slate-100 text-slate-400 border border-slate-200 ring-3 ring-white'
                                                                 }`}>
-                                                                    <i className={`fas ${st.icon} text-[9.5px]`}></i>
+                                                                    <i className={`fas ${presentation === 'workspace' && st.isDone ? 'fa-check' : st.icon} text-[9.5px]`}></i>
                                                                     {st.isDone && (
                                                                         <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[6px] ring-1 ring-white shadow-2xs">
                                                                             <i className="fas fa-check"></i>
@@ -2580,12 +2923,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                                 </div>
 
                                                                 {/* Step Info Row - Bỏ đóng khung, chữ nhỏ thanh thoát */}
-                                                                <div className={`flex-1 ml-2 py-0.5 flex items-center justify-between gap-2 transition-all ${
+                                                                <div className={`premium-timeline-copy flex-1 ml-2 py-0.5 flex items-center justify-between gap-2 transition-all ${
                                                                     !st.isDone && !(st.id === 6 && td4Info.hasTd4) ? 'opacity-50' : ''
                                                                 }`}>
                                                                     <div className="min-w-0">
                                                                         <p className="text-[8.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5 truncate">
-                                                                            {st.title}
+                                                                            {presentation === 'workspace' ? st.title.replace(/^\d+\.\s*/, '') : st.title}
                                                                         </p>
                                                                         <p className={`text-[9.5px] tracking-tight tabular-nums leading-none truncate ${
                                                                             st.isDone 
@@ -2622,14 +2965,51 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         </div>
 
                                         {/* Right: Modern Minimalist Privilege & Policies Hub */}
-                                        <div className="flex flex-col justify-between gap-2 border-t md:border-t-0 md:border-l border-slate-100 pt-2.5 md:pt-0 md:pl-3.5 flex-1">
+                                        <div className="premium-policy-column flex flex-col justify-between gap-2 border-t md:border-t-0 md:border-l border-slate-100 pt-2.5 md:pt-0 md:pl-3.5 flex-1">
+                                            {presentation === 'workspace' && (
+                                                <div className="premium-dossier-section">
+                                                    <div className="premium-dossier-header"><h3>Thông Tin &amp; Hồ Sơ</h3></div>
+                                                    <div className="premium-dossier-list">
+                                                        <div className="premium-dossier-row">
+                                                            <span>Số đơn hàng</span>
+                                                            <button type="button" className="is-mono" title="Click để sao chép Số đơn hàng" onClick={async () => { try { await navigator.clipboard.writeText(resolvedOrder['Số đơn hàng']); setCopiedLabel('orderId'); setTimeout(() => setCopiedLabel(null), 2000); } catch {} }}>
+                                                                {copiedLabel === 'orderId' ? '✓ Đã sao chép' : resolvedOrder['Số đơn hàng']}
+                                                            </button>
+                                                        </div>
+                                                        <div className="premium-dossier-row">
+                                                            <span>Hợp đồng Cyber</span>
+                                                            {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) ? (
+                                                                <button type="button" className="is-mono" title="Click để sao chép Mã HĐ Cyber" onClick={async () => { const code = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || ''); try { await navigator.clipboard.writeText(code); setCopiedLabel('cyberId'); setTimeout(() => setCopiedLabel(null), 2000); } catch {} }}>
+                                                                    {copiedLabel === 'cyberId' ? '✓ Đã sao chép' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}
+                                                                </button>
+                                                            ) : (
+                                                                <em>Chưa cập nhật</em>
+                                                            )}
+                                                        </div>
+                                                        <div className="premium-dossier-row">
+                                                            <span>Tài liệu đính kèm</span>
+                                                            <div className="premium-dossier-docs">
+                                                                {resolvedOrder.LinkHopDong || resolvedOrder.LinkDeNghiXHD || resolvedOrder.LinkHoaDonDaXuat ? (
+                                                                    <>
+                                                                        {resolvedOrder.LinkHopDong && <a href={resolvedOrder.LinkHopDong} target="_blank" rel="noopener noreferrer">Hợp đồng ↗</a>}
+                                                                        {resolvedOrder.LinkDeNghiXHD && <a href={resolvedOrder.LinkDeNghiXHD} target="_blank" rel="noopener noreferrer">Đề nghị XHĐ ↗</a>}
+                                                                        {resolvedOrder.LinkHoaDonDaXuat && <a href={resolvedOrder.LinkHoaDonDaXuat} target="_blank" rel="noopener noreferrer">Hóa đơn ↗</a>}
+                                                                    </>
+                                                                ) : (
+                                                                    <em>Chưa tải chứng từ</em>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="flex items-center justify-between pb-1.5">
                                                 <h3 className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <i className="fas fa-gem text-sky-500 text-[10px]"></i> Chính Sách &amp; Đặc Quyền
+                                                    <i className="fas fa-gem text-sky-500 text-[10px]"></i> Chính sách</h3>{presentation === 'workspace' && onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && <InlinePolicyPicker id="order-detail-policy-picker-inline" value={String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '')} carModel={resolvedOrder["Dòng xe"]} triggerLabel="Cập nhật chính sách" triggerClassName="premium-policy-edit-trigger" onConfirm={(newPolicy) => onSelectPolicy(resolvedOrder, newPolicy)} />}<h3 className="hidden">
                                                 </h3>
                                             </div>
                                             
-                                            <div className="flex-1 flex flex-col justify-between bg-slate-50/70 rounded-2xl p-3 border border-slate-200/80 min-h-[120px]">
+                                            <div className="premium-policy-box flex-1 flex flex-col justify-between bg-slate-50/70 rounded-2xl p-3 border border-slate-200/80 min-h-[120px]">
                                                 {/* Danh sách chính sách / Voucher */}
                                                 <div className="flex-1 overflow-y-auto space-y-2 mb-2 pr-0.5">
                                                     {(() => {
@@ -2652,15 +3032,59 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 </div>
                                                 
                                                 {onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && (
-                                                    <button 
-                                                        onClick={() => setInlineMode('POLICY')}
-                                                        className="text-[10.5px] font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition-all w-full text-center shadow-2xs active:scale-[0.98] cursor-pointer shrink-0"
-                                                    >
-                                                        Cập nhật chính sách
-                                                    </button>
+                                                    <InlinePolicyPicker id="order-detail-policy-picker" value={String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '')} carModel={resolvedOrder["Dòng xe"]} triggerLabel="Cập nhật chính sách" triggerClassName="premium-policy-bottom-btn text-[10.5px] font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition-all w-full text-center shadow-2xs active:scale-[0.98] cursor-pointer shrink-0" onConfirm={(newPolicy) => onSelectPolicy(resolvedOrder, newPolicy)} />
                                                 )}
                                             </div>
                                         </div>
+                                    </div>
+                                ) : activeRightTab === 'AUDIT_TRAIL' && presentation === 'workspace' ? (
+                                    <div className="premium-progress-grid">
+                                        <div className="premium-audit-panel">
+                                            <div className="premium-left-header">
+                                                <h3>Nhật Ký Thay Đổi</h3>
+                                                <button type="button" className="premium-inline-action" onClick={() => resolvedOrder?.['Số đơn hàng'] && fetchAuditLogs(resolvedOrder['Số đơn hàng'])} disabled={isLoadingLogs}>
+                                                    <i className={`fas fa-rotate-right ${isLoadingLogs ? 'animate-spin' : ''}`} />
+                                                    <span>Làm mới</span>
+                                                </button>
+                                            </div>
+                                            {isLoadingLogs ? (
+                                                <div className="premium-audit-empty"><span>Đang tải nhật ký thay đổi...</span></div>
+                                            ) : auditLogs.length === 0 ? (
+                                                <div className="premium-audit-empty">
+                                                    <strong>Chưa có nhật ký thay đổi</strong>
+                                                    <span>Mọi thao tác ghép xe, đổi xe, cập nhật cấu hình hoặc xuất hóa đơn sẽ hiển thị tại đây.</span>
+                                                </div>
+                                            ) : (() => {
+                                                const normalizeTitle = (t: string) => t === 'REQUEST_RESCAN' ? 'Yêu cầu scan lại chứng từ' : t === 'APPROVE_INVOICE' ? 'Phê duyệt yêu cầu xuất hóa đơn' : t;
+                                                const getTone = (dot: string) => dot.includes('emerald') ? 'done' : dot.includes('amber') ? 'warn' : dot.includes('rose') || dot.includes('red') ? 'danger' : dot.includes('indigo') || dot.includes('blue') || dot.includes('sky') || dot.includes('purple') ? 'info' : 'muted';
+                                                return (
+                                                    <div className="premium-audit-scroll">
+                                                        <div className="premium-audit-col">
+                                                            {auditLogs.map((log) => {
+                                                                const detailParts: string[] = [];
+                                                                if (log.vin) detailParts.push(`VIN ${log.vin}`);
+                                                                if (log.reason) detailParts.push(log.reason);
+                                                                const detailText = detailParts.join(' · ');
+                                                                return (
+                                                                    <div key={log.id} className="premium-audit-row" data-tone={getTone(log.dotColor)} title={detailText ? `${normalizeTitle(log.actionTitle)} — ${log.actorName}\n${detailText}` : undefined}>
+                                                                        <span className="premium-audit-dot" aria-hidden="true" />
+                                                                        <div className="premium-audit-main">
+                                                                            <div className="premium-audit-line">
+                                                                                <span className="premium-audit-title">{normalizeTitle(log.actionTitle)}</span>
+                                                                                <span className="premium-audit-actor">· {log.actorName}</span>
+                                                                            </div>
+                                                                            {detailText && <p className="premium-audit-sub">{detailText}</p>}
+                                                                        </div>
+                                                                        <time className="premium-audit-time">{formatDateTime(log.createdAt)}</time>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        {workspacePersistentRightColumn}
                                     </div>
                                 ) : activeRightTab === 'AUDIT_TRAIL' ? (
                                     /* Audit Trail Timeline View */
@@ -2778,7 +3202,65 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         )}
                                     </div>
                                 ) : (
-                                    /* Tab 3: Giấy Ra Cổng (TD4) - Tinh gọn tối đa, 1 khối tập trung 4 bước */
+                                    presentation === 'workspace' ? (() => {
+                                        const post = td4Info.post;
+                                        const isTd4Cancelled = post === '1';
+                                        const isStep1Done = td4Info.hasTd4 && !isTd4Cancelled;
+                                        const isStep2Done = td4Info.hasTd4 && !isTd4Cancelled && ['4', '5', '9'].includes(post);
+                                        const isStep3Done = td4Info.hasTd4 && !isTd4Cancelled && ['5', '9'].includes(post);
+                                        const isStep4Done = td4Info.hasTd4 && !isTd4Cancelled && post === '9';
+                                        const steps = [
+                                            { id: 1, title: 'Lập phiếu ra cổng', actor: 'TVBH / Sale Admin', timeText: td4Info.td?.ngay_ct ? `${formatDateDisplay(td4Info.td.ngay_ct)} ${td4Info.td?.gio_ct || ''}`.trim() : (isStep1Done ? 'Đã khởi tạo' : 'Chưa lập phiếu'), badge: isStep1Done ? 'Đã lập' : 'Chưa lập', isDone: isStep1Done, isCurrent: false },
+                                            { id: 2, title: 'Kế toán phê duyệt', actor: 'Kế toán công nợ', timeText: isStep2Done ? 'Đã duyệt thanh toán' : (post === '3' ? 'Đang chờ Kế toán duyệt' : 'Chờ bước trước'), badge: isStep2Done ? 'Đã duyệt' : (post === '3' ? 'Đang chờ' : 'Chờ'), isDone: isStep2Done, isCurrent: post === '3' },
+                                            { id: 3, title: 'Giám đốc phê duyệt', actor: 'Ban Giám Đốc', timeText: isStep3Done ? 'BGĐ đã ký duyệt' : (post === '4' ? 'Đang chờ Giám đốc ký' : 'Chờ bước trước'), badge: isStep3Done ? 'Đã duyệt' : (post === '4' ? 'Đang chờ' : 'Chờ'), isDone: isStep3Done, isCurrent: post === '4' },
+                                            { id: 4, title: 'Xe lăn bánh ra cổng', actor: 'Thủ kho & Bảo vệ', timeText: isStep4Done ? 'Đã ra cổng giao khách' : (post === '5' ? 'Sẵn sàng qua cổng' : 'Chưa ra cổng'), badge: isStep4Done ? 'Đã qua cổng' : (post === '5' ? 'Sẵn sàng' : 'Chưa ra'), isDone: isStep4Done, isCurrent: post === '5' },
+                                        ];
+                                        return (
+                                            <div className="premium-progress-grid premium-td4-grid">
+                                                <div>
+                                                    <div className="premium-left-header">
+                                                        <div className="premium-td4-title-group">
+                                                            <h3>Phiếu Ra Cổng</h3>
+                                                            {td4Info.soCt ? (
+                                                                <button type="button" className="premium-td4-code" title="Click để sao chép số phiếu" onClick={() => { navigator.clipboard.writeText(td4Info.soCt); showToast?.('Đã sao chép', `Đã copy số phiếu: ${td4Info.soCt}`, 'info'); }}>
+                                                                    {td4Info.soCt}
+                                                                </button>
+                                                            ) : (
+                                                                <span className="premium-td4-idle">Chưa lập</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="premium-left-actions">
+                                                            <button type="button" className="premium-inline-action" onClick={handleRefreshTd4Status} disabled={isCheckingTd4 || !resolvedOrder?.VIN}>
+                                                                <i className={`fas fa-rotate-right ${isCheckingTd4 ? 'animate-spin' : ''}`} />
+                                                                <span>Kiểm tra</span>
+                                                            </button>
+                                                            {td4Info.hasTd4 && (
+                                                                <button type="button" className="premium-inline-action is-dark" onClick={handleOpenPrintTd4}>
+                                                                    <i className="fas fa-print" />
+                                                                    <span>In</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="premium-timeline is-four-step">
+                                                        {steps.map((st) => (
+                                                            <div key={st.id} data-complete={st.isDone ? 'true' : 'false'} data-current={st.isCurrent ? 'true' : 'false'}>
+                                                                <div className="premium-timeline-node"><i className="fas fa-check" /></div>
+                                                                <div className="premium-timeline-copy">
+                                                                    <div>
+                                                                        <p>{st.title} <span className="premium-td4-actor">· {st.actor}</span></p>
+                                                                        <p>{st.timeText}</p>
+                                                                    </div>
+                                                                    <div><span data-state={st.isDone ? 'done' : st.isCurrent ? 'current' : 'idle'}>{st.badge}</span></div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                {workspacePersistentRightColumn}
+                                            </div>
+                                        );
+                                    })() :
                                     <div className="flex-1 flex flex-col justify-between max-w-xl mx-auto w-full py-1 px-1 sm:px-2">
                                         {/* Tiêu đề tóm tắt phiếu & trạng thái */}
                                         <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-slate-100 shrink-0">
@@ -2933,7 +3415,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
             {/* Segmented Action Toolbar Dock Footer */}
             {inlineMode === 'VIEW' && (
-            <footer className="flex-shrink-0 px-3.5 py-2.5 sm:px-5 sm:py-2.5 bg-slate-50/90 backdrop-blur-xl border-t border-slate-200/80 flex items-center justify-between gap-2 relative z-20 rounded-b-2xl">
+            <footer className="ios-order-detail-footer flex-shrink-0 px-3.5 py-2.5 sm:px-5 sm:py-2.5 bg-slate-50/90 backdrop-blur-xl border-t border-slate-200/80 flex items-center justify-between gap-2 relative z-20 rounded-b-2xl">
                 {onClose ? (
                     <button 
                         type="button" 
@@ -2992,21 +3474,29 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         )}
                         {canEdit && !isReferenceAccount && (
                             <button 
-                                onClick={() => setInlineMode('EDIT')} 
+                                ref={editBtnRef}
+                                type="button"
+                                onClick={() => setActiveFooterPopover(prev => prev === 'EDIT' ? null : 'EDIT')} 
                                 className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
                             >
                                 <i className="fas fa-pen text-[9.5px] text-slate-400"></i>
-                                <span>Sửa</span>
+                                <span>Chỉnh Sửa</span>
                             </button>
                         )}
                         {canCancel && !isReferenceAccount && (
                             <button
+                                ref={cancelBtnRef}
+                                type="button"
                                 onClick={() => {
                                     if (onCancelConfirm) {
-                                        setCancelReason('');
-                                        setCancelUnmatchType('Hủy luôn đơn hàng (Hủy đơn)');
-                                        setCancelThoiGianCanXe(resolvedOrder['Thời gian cần xe'] || '');
-                                        setInlineMode('CANCEL');
+                                        if (activeFooterPopover === 'CANCEL') {
+                                            setActiveFooterPopover(null);
+                                        } else {
+                                            setCancelReason('');
+                                            setCancelUnmatchType('Hủy luôn đơn hàng (Hủy đơn)');
+                                            setCancelThoiGianCanXe(resolvedOrder['Thời gian cần xe'] || '');
+                                            setActiveFooterPopover('CANCEL');
+                                        }
                                     } else {
                                         onCancel?.(resolvedOrder);
                                     }
@@ -3034,8 +3524,15 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 null
                             ) : (
                                 <button
+                                    ref={transferBtnRef}
                                     type="button"
-                                    onClick={handleOpenTransferMode}
+                                    onClick={() => {
+                                        if (activeFooterPopover === 'TRANSFER') {
+                                            setActiveFooterPopover(null);
+                                        } else {
+                                            handleOpenTransferMode();
+                                        }
+                                    }}
                                     disabled={isLoadingTransferReq}
                                     className={`h-8 px-3.5 inline-flex items-center gap-1.5 font-medium text-xs transition-colors cursor-pointer shrink-0 ${
                                         transferRequest?.status === 'pending'
@@ -3094,6 +3591,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         {/* Nút Xuất Hóa Đơn - Tinh gọn, chuẩn mực, hiện đại */}
                         {canRequestInvoice && !isReferenceAccount && (
                             <button 
+                                data-primary-action="invoice"
                                 onClick={() => {
                                     if (onInvoiceConfirm || showToast) {
                                         setInlineMode('INVOICE');
@@ -3132,6 +3630,338 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     setIsPolicyModalOpen(false);
                 }}
             />
+
+            {activeFooterPopover && typeof document !== 'undefined' && createPortal(
+                <div
+                    ref={footerPopoverRef}
+                    className="inline-policy-panel"
+                    style={footerPopoverPlacement}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                            e.stopPropagation();
+                            setActiveFooterPopover(null);
+                        }
+                    }}
+                >
+                    {activeFooterPopover === 'EDIT' && (() => {
+                        const currentLine = editFormData['Dòng xe'] || '';
+                        const currentVersion = editFormData['Phiên bản'] || '';
+                        const availableVersions = currentLine ? (versionsMap[currentLine] || allPossibleVersions || []) : (allPossibleVersions || []);
+                        const versionOptions = Array.from(new Set([
+                            ...(currentVersion ? [currentVersion] : []),
+                            ...availableVersions
+                        ])).filter(Boolean);
+                        const mappedExteriors = currentLine && currentVersion && getMappedExteriors
+                            ? getMappedExteriors(currentLine, currentVersion)
+                            : (vehicleColors || []);
+                        const exteriorOptions = Array.from(new Set([
+                            ...(editFormData['Ngoại thất'] ? [editFormData['Ngoại thất']] : []),
+                            ...(mappedExteriors && mappedExteriors.length > 0 ? mappedExteriors : (vehicleColors || []))
+                        ])).filter(Boolean);
+                        const mappedInteriors = currentLine && currentVersion && getMappedInteriors
+                            ? getMappedInteriors(currentLine, currentVersion)
+                            : (vehicleInteriors || []);
+                        const interiorOptions = Array.from(new Set([
+                            ...(editFormData['Nội thất'] ? [editFormData['Nội thất']] : []),
+                            ...(mappedInteriors && mappedInteriors.length > 0 ? mappedInteriors : (vehicleInteriors || []))
+                        ])).filter(Boolean);
+
+                        return (
+                            <form onSubmit={handleSaveInlineEdit} className="flex flex-col min-h-0 flex-1">
+                                <div className="inline-action-header">
+                                    <strong>Chỉnh sửa đơn hàng</strong>
+                                    <small>{resolvedOrder['Số đơn hàng']}</small>
+                                </div>
+                                <div className="inline-action-body">
+                                    {resolvedOrder.VIN && (
+                                        <div className="inline-action-note" data-tone="amber">
+                                            <i className="fas fa-lock mr-1.5"></i>
+                                            <strong>Đã ghép VIN ({resolvedOrder.VIN}):</strong> Đổi cấu hình xe sẽ giải phóng VIN.
+                                        </div>
+                                    )}
+                                    {editErrorMessage && (
+                                        <div className="inline-action-note" data-tone="red">
+                                            <i className="fas fa-exclamation-circle mr-1.5"></i>
+                                            {editErrorMessage}
+                                        </div>
+                                    )}
+                                    {editSuccessMessage && (
+                                        <div className="inline-action-note" data-tone="emerald">
+                                            <i className="fas fa-check-circle mr-1.5"></i>
+                                            {editSuccessMessage}
+                                        </div>
+                                    )}
+                                    <div className="inline-action-field">
+                                        <label>Tên khách hàng</label>
+                                        <input
+                                            type="text"
+                                            name="Tên khách hàng"
+                                            value={editFormData['Tên khách hàng'] || ''}
+                                            onChange={handleEditInputChange}
+                                            placeholder="Tên khách hàng..."
+                                        />
+                                    </div>
+                                    <div className="inline-action-grid">
+                                        <div className="inline-action-field">
+                                            <label>Số đơn hàng</label>
+                                            <input
+                                                type="text"
+                                                name="Số đơn hàng"
+                                                value={editFormData['Số đơn hàng'] || ''}
+                                                onChange={handleEditInputChange}
+                                                placeholder="Mã đơn hàng..."
+                                            />
+                                        </div>
+                                        <div className="inline-action-field">
+                                            <label>Mã HĐ Cyber</label>
+                                            <input
+                                                type="text"
+                                                name="Mã HĐ Cyber"
+                                                value={editFormData['Mã HĐ Cyber'] || ''}
+                                                onChange={handleEditInputChange}
+                                                onBlur={() => setEditFormData(prev => ({ ...prev, 'Mã HĐ Cyber': cleanCyberContractCode(prev['Mã HĐ Cyber']) }))}
+                                                placeholder="02.xxxx/xx/2026/HĐMB-MDP"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="inline-action-grid">
+                                        <div className="inline-action-field">
+                                            <label>Dòng xe</label>
+                                            <select name="Dòng xe" value={editFormData['Dòng xe'] || ''} onChange={handleEditInputChange}>
+                                                <option value="">Chọn dòng xe</option>
+                                                {vehicleLines.map(line => (
+                                                    <option key={line} value={line}>{line}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="inline-action-field">
+                                            <label>Phiên bản</label>
+                                            <select
+                                                name="Phiên bản"
+                                                value={editFormData['Phiên bản'] || ''}
+                                                onChange={handleEditInputChange}
+                                                disabled={!editFormData['Dòng xe']}
+                                            >
+                                                <option value="">Chọn phiên bản</option>
+                                                {versionOptions.map(ver => (
+                                                    <option key={ver} value={ver}>{ver}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="inline-action-grid">
+                                        <div className="inline-action-field">
+                                            <label>Màu ngoại thất</label>
+                                            <select
+                                                name="Ngoại thất"
+                                                value={editFormData['Ngoại thất'] || ''}
+                                                onChange={handleEditInputChange}
+                                                disabled={!editFormData['Dòng xe'] || !editFormData['Phiên bản']}
+                                            >
+                                                <option value="">Chọn ngoại thất</option>
+                                                {exteriorOptions.map(col => (
+                                                    <option key={col} value={col}>{col}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="inline-action-field">
+                                            <label>Màu nội thất</label>
+                                            <select
+                                                name="Nội thất"
+                                                value={editFormData['Nội thất'] || ''}
+                                                onChange={handleEditInputChange}
+                                                disabled={!editFormData['Dòng xe'] || !editFormData['Phiên bản']}
+                                            >
+                                                <option value="">Chọn nội thất</option>
+                                                {interiorOptions.map(col => (
+                                                    <option key={col} value={col}>{col}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {(isAdmin || Boolean(onOpenApproval)) && (
+                                        <div className="inline-action-field">
+                                            <label>Tư vấn bán hàng</label>
+                                            <input
+                                                type="text"
+                                                name="Tên tư vấn bán hàng"
+                                                value={editFormData['Tên tư vấn bán hàng'] || ''}
+                                                onChange={handleEditInputChange}
+                                                placeholder="Tên TVBH..."
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="inline-policy-footer">
+                                    <button type="button" className="inline-action-cancel" onClick={() => setActiveFooterPopover(null)}>
+                                        Đóng
+                                    </button>
+                                    <button type="submit" disabled={isSavingEdit}>
+                                        {isSavingEdit ? 'Đang lưu...' : '✓ Lưu thay đổi'}
+                                    </button>
+                                </div>
+                            </form>
+                        );
+                    })()}
+
+                    {activeFooterPopover === 'CANCEL' && (
+                        <>
+                            <div className="inline-action-header">
+                                <strong>Xác nhận hủy đơn</strong>
+                                <small>{resolvedOrder['Số đơn hàng']}</small>
+                            </div>
+                            <div className="inline-action-body">
+                                <div className="inline-action-note" data-tone="red">
+                                    Hủy đơn <strong>{resolvedOrder['Số đơn hàng']}</strong> — <strong>{resolvedOrder['Tên khách hàng']}</strong>
+                                </div>
+                                <div className="inline-action-field">
+                                    <label>Tùy chọn hủy *</label>
+                                    <select value={cancelUnmatchType} onChange={(e) => setCancelUnmatchType(e.target.value)}>
+                                        <option value="Hủy luôn đơn hàng (Hủy đơn)">Hủy luôn đơn hàng (Hủy đơn)</option>
+                                        <option value="Hủy ghép & Đợi xe khác (Chờ xe)">Hủy ghép &amp; Đợi xe khác (Chờ xe)</option>
+                                    </select>
+                                </div>
+                                {cancelUnmatchType.includes('Chờ xe') && (
+                                    <div className="inline-action-field">
+                                        <label>Thời gian cần xe *</label>
+                                        <input
+                                            type="date"
+                                            value={cancelThoiGianCanXe}
+                                            onChange={(e) => setCancelThoiGianCanXe(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                                <div className="inline-action-field">
+                                    <label>Lý do hủy *</label>
+                                    <textarea
+                                        rows={3}
+                                        value={cancelReason}
+                                        onChange={(e) => setCancelReason(e.target.value)}
+                                        placeholder="Nhập lý do hủy..."
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                            <div className="inline-policy-footer">
+                                <button type="button" className="inline-action-cancel" onClick={() => setActiveFooterPopover(null)}>
+                                    Đóng
+                                </button>
+                                <button
+                                    type="button"
+                                    data-tone="danger"
+                                    disabled={isCancelling || !cancelReason.trim()}
+                                    onClick={handleInlineCancel}
+                                >
+                                    {isCancelling ? 'Đang xử lý...' : '✓ Xác nhận hủy'}
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {activeFooterPopover === 'TRANSFER' && (
+                        <>
+                            <div className="inline-action-header">
+                                <strong>Yêu cầu chuyển xe</strong>
+                                <small>{resolvedOrder.VIN}</small>
+                            </div>
+                            <div className="inline-action-body">
+                                <div className="inline-action-note">
+                                    <span>Kho xuất: <strong>{isDetectingWarehouse ? 'Đang dò...' : (transferFromWarehouseName || transferFromWarehouse || 'Kho xe')}</strong></span>
+                                    {' · '}
+                                    <span>Kho nhận: <strong>Thuận An (K83)</strong></span>
+                                </div>
+                                <div className="inline-action-field">
+                                    <label>Lý do điều chuyển *</label>
+                                    <select
+                                        value={transferReason}
+                                        onChange={(e) => setTransferReason(e.target.value)}
+                                        disabled={transferRequest?.status === 'pending' || transferRequest?.status === 'completed'}
+                                    >
+                                        <option value="Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH">Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH</option>
+                                        <option value="Lấy xe về PDI giao KH">Lấy xe về PDI giao KH</option>
+                                        <option value="Chuyển về Showroom Thuận An trưng bày / giao xe">Chuyển về Showroom Thuận An trưng bày / giao xe</option>
+                                        <option value="Chuyển xe đi đăng ký / đăng kiểm">Chuyển xe đi đăng ký / đăng kiểm</option>
+                                        <option value="Khác">Lý do khác...</option>
+                                    </select>
+                                    {transferReason === 'Khác' && (
+                                        <input
+                                            type="text"
+                                            value={customTransferReason}
+                                            onChange={(e) => setCustomTransferReason(e.target.value)}
+                                            placeholder="Nhập lý do điều chuyển cụ thể..."
+                                            disabled={transferRequest?.status === 'pending' || transferRequest?.status === 'completed'}
+                                        />
+                                    )}
+                                </div>
+                                <div className="inline-action-field">
+                                    <label>Ghi chú cho Admin</label>
+                                    <input
+                                        type="text"
+                                        value={transferNote}
+                                        onChange={(e) => setTransferNote(e.target.value)}
+                                        placeholder="Ví dụ: Cần xe trước ngày 22/09 để giao khách..."
+                                        disabled={transferRequest?.status === 'pending' || transferRequest?.status === 'completed'}
+                                    />
+                                </div>
+                                {transferRequest && (
+                                    <div
+                                        className="inline-action-note"
+                                        data-tone={
+                                            transferRequest.status === 'completed'
+                                                ? 'emerald'
+                                                : transferRequest.status === 'rejected'
+                                                ? 'red'
+                                                : 'amber'
+                                        }
+                                    >
+                                        {transferRequest.status === 'completed' ? (
+                                            <span><strong>Đã lập phiếu DNX:</strong> {transferRequest.soCtDnx || 'Hoàn tất'}</span>
+                                        ) : transferRequest.status === 'rejected' ? (
+                                            <span><strong>Yêu cầu bị từ chối:</strong> {transferRequest.adminNote || 'Admin từ chối điều chuyển'}</span>
+                                        ) : (
+                                            <span><i className="fas fa-clock mr-1.5"></i>Đã gửi yêu cầu — Đang chờ Admin lập phiếu DNX</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="inline-policy-footer">
+                                {transferRequest && transferRequest.status === 'pending' ? (
+                                    <button
+                                        type="button"
+                                        className="inline-action-cancel"
+                                        onClick={handleCancelTransferRequest}
+                                        disabled={isCancellingTransfer}
+                                    >
+                                        {isCancellingTransfer ? 'Đang hủy...' : 'Hủy yêu cầu'}
+                                    </button>
+                                ) : (
+                                    <button type="button" className="inline-action-cancel" onClick={() => setActiveFooterPopover(null)}>
+                                        Đóng
+                                    </button>
+                                )}
+                                {transferRequest && transferRequest.status === 'pending' ? (
+                                    <button type="button" onClick={() => setActiveFooterPopover(null)}>
+                                        ✓ Xong
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        disabled={isSubmittingTransfer}
+                                        onClick={handleSubmitTransferRequest}
+                                    >
+                                        {isSubmittingTransfer
+                                            ? 'Đang gửi...'
+                                            : transferRequest?.status === 'rejected'
+                                            ? '✓ Gửi lại yêu cầu'
+                                            : '✓ Gửi yêu cầu'}
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>,
+                document.body
+            )}
 
             <CyberDnxPrintModal
                 isOpen={isPrintDnxOpen}

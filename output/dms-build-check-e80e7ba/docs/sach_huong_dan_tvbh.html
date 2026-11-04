@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cẩm Nang Hướng Dẫn Sử Dụng Ứng Dụng TVBH — VinFast Thuận An</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --vf-blue: #004ea2;
+            --vf-blue-dark: #003670;
+            --vf-blue-light: #e8f1fa;
+            --vf-red: #e21a22;
+            --vf-red-dark: #b8141b;
+            --vf-gold: #c5a059;
+            --vf-emerald: #10b981;
+            --vf-amber: #f59e0b;
+            --vf-slate-900: #0f172a;
+            --vf-slate-800: #1e293b;
+            --vf-slate-700: #334155;
+            --vf-slate-600: #475569;
+            --vf-slate-100: #f1f5f9;
+            --vf-slate-50: #f8fafc;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.65;
+            color: var(--vf-slate-800);
+            background-color: #f3f6fa;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .book-wrapper {
+            max-width: 1060px;
+            margin: 0 auto;
+            background: #ffffff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ==================== BÌA SÁCH ==================== */
+        .book-cover {
+            min-height: 100vh;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: linear-gradient(145deg, #021b3a 0%, #004ea2 60%, #032b5e 100%);
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+        }
+
+        .book-cover::before {
+            content: "";
+            position: absolute;
+            top: -150px;
+            right: -150px;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(226, 26, 34, 0.25) 0%, rgba(226, 26, 34, 0) 70%);
+            z-index: 1;
+        }
+
+        .book-cover::after {
+            content: "";
+            position: absolute;
+            bottom: -100px;
+            left: -100px;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 78, 162, 0.4) 0%, rgba(0, 78, 162, 0) 70%);
+            z-index: 1;
+        }
+
+        .cover-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 2;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding-bottom: 25px;
+        }
+
+        .cover-logo {
+            max-height: 54px;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+        }
+
+        .cover-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cover-body {
+            z-index: 2;
+            margin: 60px 0;
+        }
+
+        .cover-subtitle {
+            display: inline-block;
+            color: #93c5fd;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            padding: 4px 12px;
+            background: rgba(147, 197, 253, 0.1);
+            border-radius: 6px;
+        }
+
+        .cover-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 44px;
+            line-height: 1.15;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 24px;
+            text-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .cover-title span {
+            color: #fca5a5;
+        }
+
+        .cover-desc {
+            font-size: 17px;
+            color: #cbd5e1;
+            max-width: 720px;
+            line-height: 1.7;
+            margin-bottom: 35px;
+        }
+
+        .cover-features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .cover-feature-card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+
+        .cover-feature-card strong {
+            display: block;
+            font-size: 15px;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .cover-feature-card span {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .cover-footer {
+            z-index: 2;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 25px;
+        }
+
+        .cover-author strong {
+            display: block;
+            font-size: 15px;
+            color: #ffffff;
+        }
+
+        .cover-author span {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .cover-edition {
+            text-align: right;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* ==================== PHẦN NỘI DUNG ==================== */
+        .book-content {
+            padding: 60px 60px 80px;
+        }
+
+        /* MỤC LỤC */
+        .toc-box {
+            background: var(--vf-slate-50);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 36px 40px;
+            margin-bottom: 60px;
+            page-break-after: always;
+        }
+
+        .toc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--vf-blue);
+        }
+
+        .toc-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--vf-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 26px;
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 12px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--vf-slate-700);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .toc-item:hover {
+            border-color: var(--vf-blue);
+            color: var(--vf-blue);
+            transform: translateX(4px);
+        }
+
+        .toc-item span.num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: var(--vf-blue-light);
+            color: var(--vf-blue);
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        /* CHƯƠNG */
+        .chapter {
+            margin-bottom: 65px;
+            page-break-inside: avoid;
+        }
+
+        .chapter-header {
+            margin-bottom: 22px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .chapter-badge {
+            background: var(--vf-blue);
+            color: #ffffff;
+            font-size: 12.5px;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 7px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .chapter-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--vf-slate-900);
+            letter-spacing: -0.3px;
+        }
+
+        .section-title {
+            font-size: 16.5px;
+            font-weight: 700;
+            color: var(--vf-blue);
+            margin: 22px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        p {
+            font-size: 14.5px;
+            color: var(--vf-slate-700);
+            margin-bottom: 14px;
+            line-height: 1.65;
+        }
+
+        /* HỘP HÌNH ẢNH CẮT CHI TIẾT (FIGURE) */
+        .figure-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 18px 0 24px;
+            box-shadow: var(--shadow-md);
+            page-break-inside: avoid;
+        }
+
+        .figure-topbar {
+            background: #f8fafc;
+            padding: 8px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .figure-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .figure-dot {
+            width: 8.5px;
+            height: 8.5px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .figure-dot.red { background: #ef4444; }
+        .figure-dot.yellow { background: #f59e0b; }
+        .figure-dot.green { background: #10b981; }
+
+        .figure-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--vf-slate-600);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .figure-img-box {
+            background: #0b1329;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 6px;
+        }
+
+        .figure-img-box.light-bg {
+            background: #f8fafc;
+        }
+
+        .figure-img-box img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .figure-caption {
+            padding: 9px 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: var(--vf-slate-600);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .figure-caption strong {
+            color: var(--vf-blue);
+        }
+
+        /* LƯỚI HÌNH ẢNH ĐÔI (2 CỘT) */
+        .figure-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 18px 0 24px;
+        }
+
+        .figure-grid-2 .figure-card {
+            margin: 0;
+        }
+
+        /* HỘP THÔNG BÁO (ALERTS) */
+        .callout {
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 18px 0;
+            font-size: 14px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            page-break-inside: avoid;
+        }
+
+        .callout-icon {
+            font-size: 18px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .callout-content {
+            flex: 1;
+        }
+
+        .callout-content strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .callout-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .callout-tip {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            color: #166534;
+        }
+
+        .callout-warning {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .callout-danger {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+
+        /* DANH SÁCH BƯỚC THAO TÁC */
+        .step-list {
+            list-style: none;
+            margin: 14px 0 18px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--vf-slate-700);
+        }
+
+        .step-num {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: var(--vf-blue);
+            color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .step-text strong {
+            color: var(--vf-slate-900);
+        }
+
+        /* BẢNG BIỂU */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 20px;
+            font-size: 13px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .data-table th {
+            background: var(--vf-blue);
+            color: #ffffff;
+            font-weight: 700;
+            text-align: left;
+            padding: 9px 12px;
+        }
+
+        .data-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: var(--vf-slate-700);
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .data-table tr:hover {
+            background: #f1f5f9;
+        }
+
+        /* FOOTER TÀI LIỆU */
+        .book-footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12.5px;
+            color: var(--vf-slate-600);
+        }
+
+        /* ==================== PRINT CSS ==================== */
+        @media print {
+            body {
+                background: #ffffff;
+            }
+            .book-wrapper {
+                max-width: 100%;
+                box-shadow: none;
+            }
+            .book-cover {
+                min-height: 100vh;
+                padding: 40px;
+            }
+            .book-content {
+                padding: 20px;
+            }
+            .chapter {
+                page-break-before: always;
+            }
+            .figure-card {
+                box-shadow: none;
+                border: 1px solid #cbd5e1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper">
+
+    <!-- ==================== BÌA SÁCH ==================== -->
+    <header class="book-cover">
+        <div class="cover-header">
+            __LOGO_SHOWROOM__
+            <div class="cover-badge">
+                TÀI LIỆU NỘI BỘ • 2026
+            </div>
+        </div>
+
+        <div class="cover-body">
+            <span class="cover-subtitle">SHOWROOM VINFAST THUẬN AN — BÌNH DƯƠNG</span>
+            <h1 class="cover-title">ĐẠI CẨM NANG HƯỚNG DẪN<br>SỬ DỤNG DÀNH CHO <span>TVBH</span></h1>
+            <p class="cover-desc">
+                Tài liệu nghiệp vụ toàn diện bao quát trọn bộ 12 chức năng tác nghiệp chuyên sâu: bàn làm việc, tạo đơn cọc xe, ghép VIN, chỉnh sửa cấu hình xe, hủy đơn/nhả VIN, yêu cầu xuất hóa đơn VAT, nộp bổ sung chứng từ, quản lý giữ xe & gia hạn giữ xe, lập phiếu lái thử, bảng tính lăn bánh và hoán đổi xe (Swap).
+            </p>
+
+            <div class="cover-features">
+                <div class="cover-feature-card">
+                    <strong>Trọn Bộ 12 Phân Hệ</strong>
+                    <span>Bao quát 100% chức năng tác nghiệp</span>
+                </div>
+                <div class="cover-feature-card">
+                    <strong>Ảnh Cắt Phóng To Chi Tiết</strong>
+                    <span>Chụp trực tiếp từ hệ thống tác nghiệp</span>
+                </div>
+                <div class="cover-feature-card">
+                    <strong>Đồng Bộ Quy Trình DMS</strong>
+                    <span>Lưu trữ Cloud và gửi email tự động</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div class="cover-author">
+                <strong>VinFast Showroom Thuận An</strong>
+                <span>Ban Công Nghệ & Quản Trị Hệ Thống Phân Phối</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== PHẦN NỘI DUNG ==================== -->
+    <main class="book-content">
+
+        <!-- MỤC LỤC -->
+        <section class="toc-box">
+            <div class="toc-header">
+                <h2 class="toc-title">📑 Mục Lục 12 Chương Nghiệp Vụ Chuyên Sâu</h2>
+                <span style="font-size: 13px; font-weight: 700; color: var(--vf-slate-600);">ĐẦY ĐỦ 100% CHỨC NĂNG</span>
+            </div>
+            <div class="toc-grid">
+                <a href="#chuong-1" class="toc-item"><span><span class="num">1</span> Tổng Quan Giao Diện Header</span> ➔</a>
+                <a href="#chuong-2" class="toc-item"><span><span class="num">2</span> Quản Lý Đơn Hàng & Ghép Xe</span> ➔</a>
+                <a href="#chuong-3" class="toc-item"><span><span class="num">3</span> Tạo Đơn Mới (ORDER & Flex-Match)</span> ➔</a>
+                <a href="#chuong-4" class="toc-item"><span><span class="num">4</span> Chỉnh Sửa Đơn & Hủy Đơn / Nhả VIN</span> ➔</a>
+                <a href="#chuong-5" class="toc-item"><span><span class="num">5</span> Quy Trình Yêu Cầu Xuất HĐ VAT</span> ➔</a>
+                <a href="#chuong-6" class="toc-item"><span><span class="num">6</span> Bổ Sung & Scan Lại Hồ Sơ</span> ➔</a>
+                <a href="#chuong-7" class="toc-item"><span><span class="num">7</span> Kho Xe Thực Tế & Gia Hạn Giữ Xe</span> ➔</a>
+                <a href="#chuong-8" class="toc-item"><span><span class="num">8</span> Bản Đồ Radar Định Vị GPS</span> ➔</a>
+                <a href="#chuong-9" class="toc-item"><span><span class="num">9</span> Lập Phiếu Lái Thử Điện Tử</span> ➔</a>
+                <a href="#chuong-10" class="toc-item"><span><span class="num">10</span> Báo Giá Lăn Bánh & Trả Góp</span> ➔</a>
+                <a href="#chuong-11" class="toc-item"><span><span class="num">11</span> Lịch Sử Xe Đã Bán & Doanh Số</span> ➔</a>
+                <a href="#chuong-12" class="toc-item"><span><span class="num">12</span> Hộp Thư Đổi Xe (Swap Inbox)</span> ➔</a>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 1 -->
+        <section id="chuong-1" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 1</span>
+                <h2 class="chapter-title">Tổng Quan Bàn Làm Việc TVBH (Header Navigation)</h2>
+            </div>
+            <p>
+                Toàn bộ phím tắt chức năng đều được bố trí trực quan trên thanh Header phía trên cùng của ứng dụng:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 1.1 — Chi tiết Thanh điều hướng tác nghiệp (Top Header)</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_02_header_nav.png" alt="Thanh điều hướng Header">
+                </div>
+                <div class="figure-caption">
+                    <strong>Minh họa chi tiết:</strong> Logo VinFast Thuận An, các tab nghiệp vụ, nút ORDER phát sáng, Chuông 🔔, Trợ lý AI 🤖 và Avatar TVBH.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 1.2 — Thanh lọc nhanh theo số lượng thực tế từng dòng xe</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_02_model_filter_bar.png" alt="Thanh lọc dòng xe">
+                </div>
+                <div class="figure-caption">
+                    <strong>Minh họa chi tiết:</strong> Thẻ lọc Tất cả, LIMO, MINIO, VF 2, VF 3, VF 7, VF 8 kèm số lượng hợp đồng tương ứng.
+                </div>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-icon">🔐</div>
+                <div class="callout-content">
+                    <strong>Đổi mật khẩu tài khoản định kỳ:</strong>
+                    TVBH nhấp vào Avatar góc trên cùng bên phải Header ➔ Chọn <strong>"Đổi mật khẩu"</strong> để cập nhật mật khẩu mới, bảo vệ an toàn cho dữ liệu khách hàng.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 2 -->
+        <section id="chuong-2" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 2</span>
+                <h2 class="chapter-title">Quản Lý Đơn Hàng & Chi Tiết Ghép Xe</h2>
+            </div>
+            <p>
+                Phân hệ Đơn Hàng được chia thành 3 phân vùng rõ rệt: Cột trạng thái bên trái, Khung chi tiết khách hàng ở giữa, và Khung đối soát xe phù hợp ở bên phải.
+            </p>
+
+            <div class="figure-grid-2">
+                <div class="figure-card">
+                    <div class="figure-topbar">
+                        <div class="figure-dots">
+                            <span class="figure-dot red"></span>
+                            <span class="figure-dot yellow"></span>
+                            <span class="figure-dot green"></span>
+                        </div>
+                        <span class="figure-label">Hình 2.1 — Cột phân loại trạng thái</span>
+                    </div>
+                    <div class="figure-img-box light-bg">
+                        <img src="./images/crop_03_order_status_tabs.png" alt="Cột trạng thái đơn hàng">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Trạng thái:</strong> Chờ Ghép Xe, Đơn Có Xe, Đã Ghép Xe.
+                    </div>
+                </div>
+
+                <div class="figure-card">
+                    <div class="figure-topbar">
+                        <div class="figure-dots">
+                            <span class="figure-dot red"></span>
+                            <span class="figure-dot yellow"></span>
+                            <span class="figure-dot green"></span>
+                        </div>
+                        <span class="figure-label">Hình 2.2 — Kho xe phù hợp thực tế</span>
+                    </div>
+                    <div class="figure-img-box light-bg">
+                        <img src="./images/crop_03_matching_stock.png" alt="Kho xe phù hợp thực tế">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Đối soát kho:</strong> Quét các xe có số VIN trùng khớp màu.
+                    </div>
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 2.3 — Khung chi tiết đơn hàng, Xe 3D & Thước đo tiến trình</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_03_order_detail_center.png" alt="Chi tiết đơn hàng và xe 3D">
+                </div>
+                <div class="figure-caption">
+                    <strong>Thông tin đầy đủ:</strong> Khách hàng DƯƠNG VĂN TRẮNG, HĐ <code>N31913-VSO-26-09-0002</code>, mô phỏng VF 3 Plus Zenith Grey và thanh 4 bước tiến độ.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 2.4 — Cụm nút hành động nghiệp vụ</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_03_action_buttons.png" alt="Cụm nút hành động">
+                </div>
+                <div class="figure-caption">
+                    <strong>Thao tác nhanh:</strong> <em>Đổi xe</em>, <em>Hủy</em> (đỏ), <em>Sửa</em> (chỉnh cấu hình), <strong>Xuất Hóa Đơn</strong> (xanh), và <em>In</em>.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 3 -->
+        <section id="chuong-3" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 3</span>
+                <h2 class="chapter-title">Tạo Yêu Cầu Ghép Xe Mới (Nút ORDER & FLEX-MATCH)</h2>
+            </div>
+            <p>
+                Khi có hợp đồng đặt cọc mới, TVBH nhấp vào nút <strong>ORDER</strong> ở góc trên bên phải để mở hộp thoại tạo đơn:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 3.1 — Vị trí nút ORDER trên thanh Header</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_04_order_btn.png" alt="Nút ORDER">
+                </div>
+                <div class="figure-caption">
+                    <strong>Nút ORDER:</strong> Có hiệu ứng viền xanh chuyển động thu hút ánh nhìn.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 3.2 — Bước 1: Lưới lựa chọn dòng xe (Model Grid)</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_04_model_grid.png" alt="Lưới chọn model xe">
+                </div>
+                <div class="figure-caption">
+                    <strong>Danh mục dòng xe:</strong> VF 3, VF 5, VF 6, VF 7, VF 8, VF 9, LIMO, MINIO, EC VAN, VF 2.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 3.3 — Bảng chọn Màu sắc & Tính năng Ghép xe biên độ mở (FLEX-MATCH)</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_04_colors_flexmatch.png" alt="Bảng chọn màu sắc và Flexmatch">
+                </div>
+                <div class="figure-caption">
+                    <strong>Lưu ý quan trọng:</strong> Tích chọn <strong>FLEX-MATCH</strong> để hệ thống ưu tiên ghép khi có bất kỳ màu nào trong danh sách, giúp khách <strong>nhận xe sớm 2 - 3 tuần!</strong>
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 3.4 — Nút điều hướng chuyển bước và hoàn tất</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_04_step_buttons.png" alt="Nút chuyển bước">
+                </div>
+                <div class="figure-caption">
+                    <strong>Chuyển sang Bước 2:</strong> Điền Họ tên khách, SĐT, Số đơn hàng DMS và bấm <em>Xác nhận tạo yêu cầu</em>.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 4: CHỈNH SỬA & HỦY ĐƠN -->
+        <section id="chuong-4" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 4</span>
+                <h2 class="chapter-title">Chỉnh Sửa Đơn Hàng (Đổi Cấu Hình Xe) & Quy Trình Hủy Đơn</h2>
+            </div>
+            <p>
+                Khi khách hàng có nhu cầu đổi màu sơn, đổi phiên bản hoặc có sự thay đổi về kế hoạch nhận xe:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 4.1 — Giao diện Chỉnh sửa Đơn hàng (Nút Sửa)</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_edit_order_panel.png" alt="Chỉnh sửa đơn hàng">
+                </div>
+                <div class="figure-caption">
+                    <strong>Vùng điều chỉnh:</strong> Đổi tên khách hàng, đổi Dòng xe / Phiên bản / Màu sơn / Màu nội thất, cập nhật ngày cọc & thời gian cần xe.
+                </div>
+            </div>
+
+            <h3 class="section-title">4.1. Hai hình thức xử lý khi bấm nút "Hủy"</h3>
+            <ul class="step-list">
+                <li class="step-item">
+                    <span class="step-num">1</span>
+                    <div class="step-text">
+                        <strong>Hủy luôn đơn hàng (Hủy đơn):</strong> Khách hàng rút cọc hoàn toàn, chuyển hồ sơ lên Ban Quản Lý phê duyệt hủy hợp đồng.
+                    </div>
+                </li>
+                <li class="step-item">
+                    <span class="step-num">2</span>
+                    <div class="step-text">
+                        <strong>Hủy ghép VIN hiện tại - Đưa về Chờ xe:</strong> Giải phóng số khung xe hiện tại cho TVBH khác, nhưng giữ nguyên cọc của khách bạn ở trạng thái <em>Chờ ghép</em> cho lô sau.
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- CHƯƠNG 5: YÊU CẦU XUẤT HÓA ĐƠN -->
+        <section id="chuong-5" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 5</span>
+                <h2 class="chapter-title">Quy Trình Lập Yêu Cầu Xuất Hóa Đơn VAT (Request Invoice)</h2>
+            </div>
+            <p>
+                Khi đơn hàng đã chuyển sang trạng thái <strong>Đã ghép xe</strong> (đã có số khung VIN chính thức), nút màu xanh <strong>`Xuất Hóa Đơn`</strong> sẽ xuất hiện ở thanh Dock phía dưới cùng:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 5.1 — Giao diện Lập Yêu Cầu Xuất Hóa Đơn (Bước 1: Thông tin)</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_invoice_step1_full.png" alt="Giao diện yêu cầu xuất hóa đơn Bước 1">
+                </div>
+                <div class="figure-caption">
+                    <strong>Minh họa chi tiết:</strong> Thanh tiến trình 3 bước (Thông tin ➔ Chứng từ ➔ Xác nhận) và các khối thông tin đơn hàng, số VIN, mã DMS.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 5.2 — Thiết lập Chính sách bán hàng & Thu cũ đổi mới xe xăng</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_invoice_step1_policy.png" alt="Chính sách bán hàng và thu cũ">
+                </div>
+                <div class="figure-caption">
+                    <strong>Thao tác:</strong> Chọn gói ưu đãi áp dụng theo dòng xe, nhập số VIN xe xăng cũ (nếu có thu cũ), và mã Voucher/VPoint.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 5.3 — Khu vực tải tệp Hợp đồng mua bán & Giấy đề nghị xuất hóa đơn</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_invoice_step2_files.png" alt="Tải lên hợp đồng và đề nghị">
+                </div>
+                <div class="figure-caption">
+                    <strong>Hồ sơ tải lên:</strong> Hợp đồng mua bán đã ký đầy đủ (Tệp 1) và Giấy đề nghị xuất hóa đơn có MST/Địa chỉ (Tệp 2).
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 6: BỔ SUNG LẠI HỒ SƠ -->
+        <section id="chuong-6" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 6</span>
+                <h2 class="chapter-title">Quy Trình Bổ Sung & Scan Lại Hồ Sơ Chứng Từ (Supplementary File)</h2>
+            </div>
+            <p>
+                Khi Kế toán phát hiện chứng từ bị mờ, thiếu trang hoặc thiếu chữ ký, đơn hàng sẽ chuyển sang trạng thái cảnh báo màu vàng cam: <strong>"Yêu cầu bổ sung"</strong>.
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 6.1 — Cửa sổ BỔ SUNG CHỨNG TỪ / SCAN LẠI FILE</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_supplement_modal_full.png" alt="Cửa sổ bổ sung chứng từ">
+                </div>
+                <div class="figure-caption">
+                    <strong>Giao diện:</strong> Hiển thị mã đơn hàng, tên khách hàng (VD: <em>CÔNG TY TNHH PHÁP LÝ ONELAW</em>), số VIN và cảnh báo lý do yêu cầu từ Kế toán.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 6.2 — Vùng tải lên tệp mới cần bổ sung hoặc thay thế</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_supplement_dropzones.png" alt="Vùng tải tệp bổ sung">
+                </div>
+                <div class="figure-caption">
+                    <strong>Quy tắc an toàn:</strong> Chỉ cần tải lên đúng tệp bị thiếu hoặc cần thay thế. Các tệp cũ đạt chuẩn sẽ được hệ thống giữ nguyên vẹn 100%.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 7 -->
+        <section id="chuong-7" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 7</span>
+                <h2 class="chapter-title">Tra Cứu Kho Xe Thực Tế, Quy Định Giữ Xe & Gia Hạn Giữ Xe</h2>
+            </div>
+            <p>
+                Tab <strong>Kho xe</strong> phản ánh số liệu thực tế về toàn bộ lượng xe đang có mặt tại bãi xe Showroom Thuận An hoặc trên xe lồng vận tải:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 7.1 — Thanh đếm tồn kho thực tế theo từng dòng xe</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_05_stock_counter_bar.png" alt="Thanh thống kê kho xe">
+                </div>
+                <div class="figure-caption">
+                    <strong>Thống kê trực tiếp:</strong> EC Van, LIMO, VF 2, VF 3, VF 5, VF 6, VF 7, VF 8, VF LIMO.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 7.2 — Cấu trúc Thẻ xe (Stock Card) & Nút Giữ xe</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_05_single_card.png" alt="Thẻ xe chi tiết">
+                </div>
+                <div class="figure-caption">
+                    <strong>Thông tin:</strong> Ảnh 3D, Mã màu, Số VIN, và nút bấm <strong>Giữ xe</strong> (quy định giữ tối đa 24 tiếng).
+                </div>
+            </div>
+
+            <div class="callout callout-warning">
+                <div class="callout-icon">⏱️</div>
+                <div class="callout-content">
+                    <strong>Gia hạn giữ xe (Hold Extension):</strong>
+                    Khi sắp hết thời hạn 24 tiếng giữ xe mà khách cần thêm thời gian để hoàn tất thủ tục ngân hàng/chuyển khoản cọc, TVBH bấm <strong>"Gia hạn giữ xe"</strong>, tải lên ảnh chụp ủy nhiệm chi/chứng từ cam kết để gửi Admin phê duyệt gia hạn thêm.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 8 -->
+        <section id="chuong-8" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 8</span>
+                <h2 class="chapter-title">Bản Đồ Radar Định Vị Xe Bãi Đỗ GPS (Live Map)</h2>
+            </div>
+            <p>
+                Bản đồ vệ tinh trực tuyến định vị chính xác vị trí xe tại Bãi đỗ xe Showroom Thuận An, Kho vệ tinh Miền Nam, hay trên xe vận tải chuyên dụng:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 8.1 — Bản đồ GPS vị trí xe thời gian thực</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_05_gps_radar_map.png" alt="Bản đồ GPS vị trí xe">
+                </div>
+                <div class="figure-caption">
+                    <strong>Định vị vị trí:</strong> Bãi chính Showroom Thuận An hay Kho trung chuyển.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 9 -->
+        <section id="chuong-9" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 9</span>
+                <h2 class="chapter-title">Lập Phiếu Đăng Ký Lái Thử Điện Tử Chuẩn Nhận Diện</h2>
+            </div>
+            <p>
+                Phân hệ Lái Thử giúp TVBH chuẩn bị giấy tờ lái thử xe Demo cho khách hàng chỉ trong 30 giây:
+            </p>
+
+            <div class="figure-grid-2">
+                <div class="figure-card">
+                    <div class="figure-topbar">
+                        <div class="figure-dots">
+                            <span class="figure-dot red"></span>
+                            <span class="figure-dot yellow"></span>
+                            <span class="figure-dot green"></span>
+                        </div>
+                        <span class="figure-label">Hình 9.1 — Biểu mẫu nhập thông tin lái thử</span>
+                    </div>
+                    <div class="figure-img-box light-bg">
+                        <img src="./images/crop_06_test_drive_form.png" alt="Biểu mẫu đăng ký lái thử">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Nhập liệu:</strong> Xe demo, Biển số, Thời gian, Số CCCD, Số GPLX và Hạng bằng.
+                    </div>
+                </div>
+
+                <div class="figure-card">
+                    <div class="figure-topbar">
+                        <div class="figure-dots">
+                            <span class="figure-dot red"></span>
+                            <span class="figure-dot yellow"></span>
+                            <span class="figure-dot green"></span>
+                        </div>
+                        <span class="figure-label">Hình 9.2 — Bản in Phiếu Yêu Cầu Lái Thử</span>
+                    </div>
+                    <div class="figure-img-box light-bg">
+                        <img src="./images/crop_06_print_preview.png" alt="Bản in phiếu lái thử chuẩn">
+                    </div>
+                    <div class="figure-caption">
+                        <strong>Xuất phiếu A4:</strong> Mẫu in VinFast Minh Đạo Thuận An kèm phiếu khảo sát.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 10 -->
+        <section id="chuong-10" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 10</span>
+                <h2 class="chapter-title">Công Cụ Báo Giá Lăn Bánh & Dự Toán Trả Góp</h2>
+            </div>
+            <p>
+                Trợ thủ đắc lực khi tư vấn trực tiếp hoặc gửi báo giá tài chính qua Zalo cho khách hàng:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 10.1 — Mô phỏng xe 3D đổi màu sơn & 3 thông số vàng</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_07_model_3d_colors.png" alt="Chọn xe và xoay màu 3D">
+                </div>
+                <div class="figure-caption">
+                    <strong>Trực quan:</strong> Đổi màu sơn tức thì, hiển thị Công suất (kW), Pin (kWh) và Quãng đường (NEDC).
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 10.2 — Bảng tính giá lăn bánh & Lịch trả góp ngân hàng chi tiết</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_07_price_loan_table.png" alt="Bảng tính chi phí và trả góp">
+                </div>
+                <div class="figure-caption">
+                    <strong>Chi tiết tài chính:</strong> Giá xe, thuế trước bạ, ưu đãi giảm giá và số tiền trả góp hàng tháng.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 11 -->
+        <section id="chuong-11" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 11</span>
+                <h2 class="chapter-title">Tra Cứu Lịch Sử Xuất Hóa Đơn & Doanh Số</h2>
+            </div>
+            <p>
+                Lưu trữ tập trung các đơn hàng đã bàn giao xe thành công và xuất hóa đơn tài chính:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 11.1 — Bộ lọc thời gian theo Tháng / Năm</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_08_history_filter.png" alt="Bộ lọc lịch sử">
+                </div>
+                <div class="figure-caption">
+                    <strong>Đối soát hoa hồng:</strong> Chọn tháng cần xem để kiểm tra doanh số cá nhân.
+                </div>
+            </div>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 11.2 — Danh sách đơn hàng đã xuất hóa đơn điện tử</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_08_history_table.png" alt="Bảng danh sách xe đã bán">
+                </div>
+                <div class="figure-caption">
+                    <strong>Hồ sơ xe:</strong> Ngày xuất HĐ, Khách hàng, Số hóa đơn VAT, Số VIN, Số máy và liên kết tải hóa đơn.
+                </div>
+            </div>
+        </section>
+
+        <!-- CHƯƠNG 12 -->
+        <section id="chuong-12" class="chapter">
+            <div class="chapter-header">
+                <span class="chapter-badge">Chương 12</span>
+                <h2 class="chapter-title">Hộp Thư Thông Báo & Tính Năng Đổi Xe (Swap Inbox)</h2>
+            </div>
+            <p>
+                Nhấp vào biểu tượng <strong>Chuông 🔔</strong> trên thanh Header để mở danh sách thông báo biến động:
+            </p>
+
+            <div class="figure-card">
+                <div class="figure-topbar">
+                    <div class="figure-dots">
+                        <span class="figure-dot red"></span>
+                        <span class="figure-dot yellow"></span>
+                        <span class="figure-dot green"></span>
+                    </div>
+                    <span class="figure-label">Hình 12.1 — Cửa sổ thông báo xe rảnh mới về & Đổi xe</span>
+                </div>
+                <div class="figure-img-box light-bg">
+                    <img src="./images/crop_09_notification_dropdown.png" alt="Khung thông báo chuông">
+                </div>
+                <div class="figure-caption">
+                    <strong>Thông báo tức thời:</strong> Báo xe rảnh mới cập bến và nút truy cập <strong>Hộp Thư Đổi Xe</strong>.
+                </div>
+            </div>
+
+            <div class="callout callout-info">
+                <div class="callout-icon">💡</div>
+                <div class="callout-content">
+                    <strong>Cảnh báo tồn kho FIFO thông minh:</strong>
+                    Khi ghép xe hoặc giữ xe, nếu TVBH chọn một xe mới về kho trong khi còn một chiếc xe cùng cấu hình nhập kho trước đó lâu hơn, hệ thống sẽ bật thông báo gợi ý số VIN xe cũ cần ưu tiên ghép trước để Showroom luân chuyển kho tối ưu.
+                </div>
+            </div>
+
+            <div class="callout callout-danger">
+                <div class="callout-icon">🛡️</div>
+                <div class="callout-content">
+                    <strong>Bảo mật thông tin khách hàng:</strong>
+                    Tất cả thông tin khách hàng, số CCCD và dữ liệu đơn hàng đều được mã hóa theo tiêu chuẩn VinFast. Nghiêm cấm chụp và chia sẻ dữ liệu cá nhân của khách hàng ra ngoài showroom.
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER TÀI LIỆU -->
+        <footer class="book-footer">
+            <div>
+                <strong>SHOWROOM VINFAST THUẬN AN — BÌNH DƯƠNG</strong><br>
+                <span>Hệ thống phân phối ô tô điện VinFast chính hãng</span>
+            </div>
+            <div style="text-align: right;">
+                <span>Tài liệu lưu hành nội bộ</span><br>
+                <strong>Tháng 09/2026</strong>
+            </div>
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>

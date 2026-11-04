@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { logStaffActivity } from '../../services/activityLogger';
+import CarImage from '../ui/CarImage';
+import { getExteriorSwatchColor } from '../../utils/styleUtils';
+import '../stock/faceted-stock.css';
 
 interface StockLocationGuardProps {
   children: React.ReactNode;
@@ -211,274 +214,282 @@ export const StockLocationGuard: React.FC<StockLocationGuardProps> = ({
     return <>{children}</>;
   }
 
-// Khung xương (Skeleton) Kho xe khớp 100% từng thẻ xe và bộ lọc từ giao diện thật của Showroom
-const StockSkeletonBackground: React.FC = () => {
-  const stockMockCards = [
-    // Hàng 1 (Từ trái qua phải đúng như ảnh thực tế)
-    { model: 'EC Van', version: 'Plus_Cửa trượt', extColor: 'Solar Ruby (CE2...)', extColorClass: 'text-rose-600', intColor: 'Black', vin: 'RNXVGRMK9TT725625', warehouse: 'Thuận An', status: 'Chưa ghép', btn: 'hold', web: true, spider: true },
-    { model: 'EC Van', version: 'Plus', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RNXVGRPK0TT741176', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true },
-    { model: 'EC Van', version: 'Plus', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RNXVGRPK1TT741154', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true, spider: true },
-    { model: 'MINIO', version: 'MINIO', extColor: 'Solar Ruby (CE2Q)', extColorClass: 'text-rose-600', intColor: 'Grey', vin: 'RLNVMNP56TT710017', warehouse: 'Thuận An', status: 'Đã ghép', btn: 'queue', web: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RLLVFPNT0TH844051', warehouse: 'QL13 (HCM)', status: 'Đã ghép', btn: 'queue', web: true },
-    { model: 'VF LIMO', version: 'MPV 7', extColor: 'Jet Black (CE11)', extColorClass: 'text-slate-900', intColor: 'Brown', vin: 'RLLVFPTT5TH735460', warehouse: 'Thuận An', status: 'Chưa ghép', btn: 'hold', web: false, pumpkin: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RLLVFPNT7TH845536', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RLLVFPNT7TH845021', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true, spider: true },
+const tone = (status?: string) => {
+  if (status === 'Chưa ghép') return '#22a774';
+  if (status === 'Đang giữ') return '#edae27';
+  return '#3978d5';
+};
 
-    // Hàng 2 (Đúng như ảnh thực tế)
-    { model: 'LIMO', version: 'LIMO', extColor: 'Solar Ruby (CE2...)', extColorClass: 'text-rose-600', intColor: 'Black', vin: 'RLLVFPNT1TH812760', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'Jet Black (CE11)', extColorClass: 'text-slate-900', intColor: 'Black', vin: 'RLLVFPNT9TH810643', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: false },
-    { model: 'VF LIMO', version: 'MPV 7', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Brown', vin: 'RLLVFPTT1TH811840', warehouse: 'Thuận An', status: 'Chưa ghép', btn: 'hold', web: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RLLVFPNT9TH801084', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RLLVFPNT2TH799842', warehouse: 'Q12 (HCM)', status: 'Chưa ghép', btn: 'hold', web: false, pumpkin: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'Solar Ruby (CE2...)', extColorClass: 'text-rose-600', intColor: 'Black', vin: 'RLLVFPNT7TH839817', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: false },
-    { model: 'VF LIMO', version: 'MPV 7', extColor: 'White (CE18)', extColorClass: 'text-slate-600', intColor: 'Black', vin: 'RLLVFPTT1TH813698', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: true },
-    { model: 'LIMO', version: 'LIMO', extColor: 'Silver (CE17)', extColorClass: 'text-slate-700', intColor: 'Black', vin: 'RLLVFPNT0TH842493', warehouse: 'QL13 (HCM)', status: 'Chưa ghép', btn: 'hold', web: false }
+// Khung xương (Skeleton) Kho xe khớp 100% Mẫu 36 từ giao diện thật của Showroom
+const StockSkeletonBackground: React.FC = () => {
+  const mockVehicles = [
+    { model: 'VF 5', version: 'Plus', extColor: 'Urbant Mint (CE1W)', vin: 'RLNV5JSE8TH842156', warehouse: 'Q12 (HCM)', dms: 'N31913', engine: 'VFCAFB269040212', holder: 'PHẠM KHÁNH DUY', status: 'Đã ghép' },
+    { model: 'VF 6', version: 'Plus', extColor: 'Urbant Mint (CE1W)', vin: 'RLLVAG8C5TH835257', warehouse: 'Q12 (HCM)', dms: 'N31913', engine: 'VFBALB269040088', holder: '', status: 'Chưa ghép' },
+    { model: 'VF 6', version: 'Plus', extColor: 'Jet Black (CE11)', vin: 'RLLVAG8C1TH833179', warehouse: 'Q12 (HCM)', dms: 'N31913', engine: 'VFBALD268150157', holder: 'NGUYỄN TRẦN HOÀNG THANH', status: 'Đã ghép' },
+    { model: 'VF LIMO', version: 'MPV 7', extColor: 'White (CE18)', vin: 'RLLVFPTT5TH813980', warehouse: 'Q12 (HCM)', dms: 'N31923', engine: 'ENBALD266260106', holder: '', status: 'Chưa ghép' },
+    { model: 'VF 5', version: 'Plus', extColor: 'Zenith Grey (CE1V)', vin: 'RLNV5JSE7TH803851', warehouse: 'Q12 (HCM)', dms: 'N31913', engine: 'VFCAFB266300365', holder: 'NGUYỄN HOÀNG KHANG HUY', status: 'Đã ghép' },
+    { model: 'VF 3', version: 'Eco', extColor: 'Infinity Blanc Roof-Sky Blue (182G)', vin: 'RLNVBL9K4TT733352', warehouse: 'Q12 (HCM)', dms: 'N31903', engine: 'TZ160X30G26053000272', holder: '', status: 'Chưa ghép' },
+    { model: 'VF 3', version: 'Eco', extColor: 'Brahminy White Roof - Summer Yellow Body (181U)', vin: 'RLNVBL9K4TT743542', warehouse: 'Q12 (HCM)', dms: 'N31911', engine: 'TZ160X30G26071600058', holder: '', status: 'Chưa ghép' },
+    { model: 'VF 3', version: 'Plus', extColor: 'White (CE18)', vin: 'RLNVBL9K9TT750082', warehouse: 'Q12 (HCM)', dms: 'N31923', engine: 'TZ160X30G26081200482', holder: 'TRẦN DANH PHƯƠNG', status: 'Đang giữ' },
+    { model: 'VF 8', version: 'Eco Tiêu chuẩn', extColor: 'White (CE18)', vin: 'RLLV1MTC6TH809210', warehouse: 'QL13 (HCM)', dms: 'N31920', engine: 'VFBALB266260216', holder: '', status: 'Chưa ghép' },
+    { model: 'VF LIMO', version: 'MPV 7', extColor: 'White (CE18)', vin: 'RLLVFPTT3TH791655', warehouse: 'QL13 (HCM)', dms: 'N31913', engine: 'ENBALB265210261', holder: '', status: 'Chưa ghép' },
+    { model: 'VF 5', version: 'Plus', extColor: 'Solar Ruby (CE2Q)', vin: 'RLNV5JSE8TH793685', warehouse: 'Q12 (HCM)', dms: 'N31913', engine: 'VFCAFB266190118', holder: '', status: 'Chưa ghép' },
+    { model: 'VF 6', version: 'Eco', extColor: 'Jet Black (CE11)', vin: 'RLLVAGND5TH790351', warehouse: 'QL13 (HCM)', dms: 'N31923', engine: 'VFCAJB266110194', holder: '', status: 'Chưa ghép' }
   ];
 
-  const realTabs = [
-    { label: 'Tất cả', count: 48, active: true },
-    { label: 'EC Van', count: 3, active: false },
-    { label: 'LIMO', count: 19, active: false },
-    { label: 'MINIO', count: 1, active: false },
-    { label: 'VF 3', count: 16, active: false },
-    { label: 'VF 5', count: 15, active: false },
-    { label: 'VF 6', count: 9, active: false },
-    { label: 'VF 7', count: 3, active: false },
-    { label: 'VF 8', count: 2, active: false },
-    { label: 'VF LIMO', count: 9, active: false }
+  const statuses = [
+    { name: 'Tất cả trạng thái', count: 67, active: true },
+    { name: 'Chưa ghép', count: 45, active: false },
+    { name: 'Đang giữ', count: 1, active: false },
+    { name: 'Đã ghép', count: 21, active: false }
+  ];
+
+  const models = [
+    { name: 'Tất cả dòng xe', count: 67, active: true },
+    { name: 'EC Van', count: 2, active: false },
+    { name: 'LIMO', count: 14, active: false },
+    { name: 'MINIO', count: 1, active: false },
+    { name: 'VF 2', count: 2, active: false },
+    { name: 'VF 3', count: 17, active: false },
+    { name: 'VF 5', count: 16, active: false },
+    { name: 'VF 6', count: 6, active: false },
+    { name: 'VF 7', count: 1, active: false },
+    { name: 'VF 8', count: 1, active: false },
+    { name: 'VF LIMO', count: 7, active: false }
+  ];
+
+  const locations = [
+    { name: 'Tất cả vị trí', count: 67, active: true },
+    { name: 'Q12 (HCM)', count: 24, active: false },
+    { name: 'QL13 (HCM)', count: 28, active: false },
+    { name: 'Thuận An', count: 15, active: false }
   ];
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none opacity-85 filter blur-[0.8px] scale-[0.995] p-2 flex flex-col bg-slate-100 z-0">
-      {/* 1. Thanh Tabs & Bộ lọc chuẩn 100% từ ảnh thật */}
-      <div className="w-full mb-1 flex-shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-1.5 p-1 lg:py-1 lg:px-2 border bg-white/95 border-slate-200/90 rounded-xl shadow-xs">
-          
-          {/* Nhóm Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1 min-w-0">
-            <div className="flex items-center gap-0.5 bg-slate-100/90 border border-slate-200/70 rounded-lg p-0.5">
-              {realTabs.map((tab, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md whitespace-nowrap ${
-                    tab.active
-                      ? 'bg-gradient-to-r from-sky-600 via-sky-500 to-blue-600 text-white shadow-xs'
-                      : 'text-slate-600 bg-transparent'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded-full ${
-                    tab.active ? 'bg-white/30 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}>
-                    {tab.count}
-                  </span>
-                </div>
-              ))}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none opacity-85 filter blur-[0.8px] scale-[0.995] z-0">
+      <div className="cmd-root" style={{ height: '100%' }}>
+        {/* Left Sidebar: 100% đồng bộ với Tab Đơn Hàng */}
+        <aside className="cmd-sidebar">
+          <div className="cmd-sidebar-head">
+            <h1>Kho xe <span>67 / 67</span></h1>
+            <div className="cmd-sidebar-actions">
+              <button type="button" className="cmd-icon-btn">
+                <i className="fa-solid fa-radar"></i>
+              </button>
+              <button type="button" className="cmd-icon-btn">
+                <i className="fa-solid fa-rotate"></i>
+              </button>
             </div>
           </div>
 
-          {/* Ô tìm kiếm & Các nút lọc dropdown */}
-          <div className="flex items-center gap-1.5">
-            <div className="relative w-44 lg:w-48">
-              <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <div className="w-full pl-7 pr-3 py-1 bg-white border border-slate-200 rounded-lg text-[11px] text-slate-400 truncate">
-                Tìm hồ sơ...
-              </div>
-            </div>
-
-            {['Kho', 'Phiên Bản', 'Mã DMS', 'Trạng Thái', 'Ngoại Thất'].map((filterName, i) => (
-              <div key={i} className="hidden xl:flex items-center gap-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-600 shadow-2xs">
-                <span>{filterName}</span>
-                <i className="fa-solid fa-chevron-down text-[8px] text-slate-400"></i>
-              </div>
-            ))}
-
-            <div className="hidden xl:flex items-center justify-center w-7 h-7 bg-white border border-slate-200 rounded-lg text-slate-400 text-xs">
-              <i className="fa-solid fa-xmark"></i>
-            </div>
+          <div className="cmd-search-wrap">
+            <label className="cmd-search-label">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 21l-5-5 M18 10a8 8 0 1 0-16 0 8 8 0 0 0 16 0" />
+              </svg>
+              <input readOnly placeholder="Tìm VIN, dòng xe, số máy, DMS…" />
+            </label>
           </div>
-        </div>
-      </div>
 
-      {/* 2. Lưới thẻ xe chuẩn 8 cột khớp 100% với ảnh thật */}
-      <div className="flex-1 flex flex-col min-h-0 bg-slate-50 rounded-2xl shadow-xs border border-slate-200/80 p-2 overflow-hidden">
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-8 gap-2 overflow-hidden">
-          {stockMockCards.map((car, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl border border-slate-200/80 p-2 shadow-2xs flex flex-col justify-between relative overflow-hidden"
-            >
-              {/* Halloween Spiderweb góc trên bên trái */}
-              {car.web && (
-                <div className="absolute top-0.5 left-0.5 pointer-events-none opacity-40 text-xs">
-                  🕸️
-                </div>
-              )}
-              {car.spider && (
-                <div className="absolute top-1 right-2 pointer-events-none opacity-40 text-[9px]">
-                  🕷️
-                </div>
-              )}
-              {car.pumpkin && (
-                <div className="absolute top-1 right-1 pointer-events-none opacity-50 text-[10px]">
-                  🎃
-                </div>
-              )}
-
-              <div>
-                {/* Ảnh xe & Sparkle backdrop */}
-                <div className="relative h-[82px] w-full bg-gradient-to-br from-slate-50 to-white rounded-lg flex items-center justify-center mb-1 border border-slate-100 overflow-hidden">
-                  <div className="w-24 h-12 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400 text-2xl">
-                    <i className="fa-solid fa-car-side"></i>
+          <div className="cmd-facets-scroll">
+            <div className="facet-group">
+              <strong>Trạng thái ghép xe</strong>
+              <div className="facet-btn-list">
+                {statuses.map(s => (
+                  <div key={s.name} className={`facet-item ${s.active ? 'active' : ''}`}>
+                    <span>{s.name}</span>
+                    <small>{s.count}</small>
                   </div>
-                  <div className="absolute top-1 right-1 text-[8px] text-amber-400 opacity-60">✨</div>
-                </div>
-
-                {/* Dòng 1: Dòng xe & Phiên bản */}
-                <div className="flex items-baseline gap-1 overflow-hidden mb-0.5">
-                  <span className="font-bold text-[12px] text-slate-800 whitespace-nowrap">{car.model}</span>
-                  <span className="text-[9.5px] text-slate-500 truncate">{car.version}</span>
-                </div>
-
-                {/* Dòng 2: Ngoại thất | Nội thất */}
-                <div className="text-[9px] text-slate-600 truncate flex items-center gap-1 mb-1">
-                  <span className={`font-medium ${car.extColorClass}`}>{car.extColor}</span>
-                  <span className="text-slate-300">|</span>
-                  <span className="flex items-center gap-0.5 text-slate-500">
-                    <i className="fa-solid fa-chair text-[8px]"></i> {car.intColor}
-                  </span>
-                </div>
-
-                {/* Dòng 3: Số VIN */}
-                <div className="flex items-center gap-1 text-[9.5px] font-mono mb-0.5">
-                  <i className="fa-solid fa-tag text-slate-400 text-[8px]"></i>
-                  <span className="text-slate-400 text-[9px] font-sans">VIN</span>
-                  <span className="font-bold text-blue-600 truncate">{car.vin}</span>
-                </div>
-
-                {/* Dòng 4: Vị trí kho */}
-                <div className="flex items-center gap-1 text-[9.5px] mb-1.5">
-                  <i className="fa-solid fa-warehouse text-emerald-600 text-[8.5px]"></i>
-                  <span className="text-emerald-700 font-semibold text-[9px]">Kho</span>
-                  <span className="text-slate-700 font-bold text-[9.5px] truncate">{car.warehouse}</span>
-                </div>
-
-                {/* Dòng 5: Huy hiệu trạng thái */}
-                <div className="mb-2">
-                  <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded ${
-                    car.status === 'Đã ghép'
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'bg-slate-100 text-slate-700 border border-slate-200'
-                  }`}>
-                    {car.status}
-                  </span>
-                </div>
-              </div>
-
-              {/* Dòng 6: Nút thao tác Giữ xe / Chờ xe */}
-              <div>
-                <div className={`w-full py-1 px-2 rounded-lg border text-[10.5px] font-bold flex items-center justify-center gap-1 shadow-2xs ${
-                  car.btn === 'queue'
-                    ? 'border-amber-400 text-amber-700 bg-amber-50/60'
-                    : 'border-blue-400 text-blue-600 bg-blue-50/40'
-                }`}>
-                  {car.btn === 'queue' ? (
-                    <>
-                      <i className="fa-solid fa-user-plus text-[9px]"></i>
-                      <span>Chờ xe</span>
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-lock text-[9px]"></i>
-                      <span>Giữ xe</span>
-                    </>
-                  )}
-                </div>
+                ))}
               </div>
             </div>
-          ))}
+
+            <div className="facet-group">
+              <strong>Dòng xe VinFast</strong>
+              <div className="facet-btn-list">
+                {models.map(m => (
+                  <div key={m.name} className={`facet-item ${m.active ? 'active' : ''}`}>
+                    <span>{m.name}</span>
+                    <small>{m.count}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="facet-group">
+              <strong>Vị trí kho bãi</strong>
+              <div className="facet-btn-list">
+                {locations.map(l => (
+                  <div key={l.name} className={`facet-item ${l.active ? 'active' : ''}`}>
+                    <span>{l.name}</span>
+                    <small>{l.count}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="cmd-sidebar-footer">
+            <span>67 / 67 xe</span>
+          </div>
+        </aside>
+
+        {/* Right Stream */}
+        <div className="cmd-content-col">
+          <div className="cmd-stream-fixed-spacer" aria-hidden="true" />
+          <main className="cmd-stream">
+            {mockVehicles.map(c => {
+              const paint = getExteriorSwatchColor(c.extColor);
+              return (
+                <article key={c.vin} className="cmd-card">
+                  <div className="cmd-card-thumb">
+                    <CarImage
+                      model={c.model}
+                      exteriorColor={c.extColor}
+                      version={c.version}
+                      alt={c.model}
+                    />
+                  </div>
+                  <div className="cmd-card-content">
+                    <div className="cmd-card-header">
+                      <strong>
+                        {c.model} <small>{c.version || 'Tiêu chuẩn'}</small>
+                      </strong>
+                      <span className="cmd-status" style={{ '--tone': tone(c.status) } as React.CSSProperties}>
+                        {c.status}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="cmd-card-vin">
+                        {c.vin}
+                      </div>
+                    </div>
+                    <div className="cmd-card-meta">
+                      <span>
+                        <i className="cmd-swatch" style={{ background: paint }}></i>
+                        {c.extColor || '—'}
+                      </span>
+                      <span>📍 {c.warehouse || '—'}</span>
+                    </div>
+                    <div className="cmd-card-specs">
+                      DMS: {c.dms || '—'} · Máy: {c.engine || '—'}
+                    </div>
+                    <div className="cmd-card-footer">
+                      <small className="cmd-card-holder">
+                        {c.holder ? `Giữ: ${c.holder}` : 'Chưa có người giữ'}
+                      </small>
+                      <div className="cmd-actions">
+                        <button type="button" className="cmd-btn">Chi tiết</button>
+                        {c.status === 'Chưa ghép' && (
+                          <button type="button" className="cmd-btn primary">Giữ xe (24h)</button>
+                        )}
+                        {c.status === 'Đang giữ' && (
+                          <button type="button" className="cmd-btn">Hủy giữ</button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </main>
         </div>
       </div>
     </div>
   );
 };
 
-  if (isVerified) {
-    return <>{children}</>;
-  }
-
   return (
     <div className="h-full w-full relative overflow-hidden select-none font-sans animate-fade-in bg-slate-100">
       {/* 1. Khung xương (Skeleton) kho xe hiển thị mờ vui nhộn phía sau */}
       <StockSkeletonBackground />
 
-      {/* 2. Hộp thoại xác thực vị trí nổi trên nền kính mờ */}
-      <div className="absolute inset-0 z-10 flex items-center justify-center p-4 bg-slate-900/25 backdrop-blur-[2px]">
-        <div className="relative max-w-[360px] w-full bg-white/95 backdrop-blur-md rounded-3xl border border-white/80 shadow-2xl p-7 text-center flex flex-col items-center">
-          
-          {/* Soft VinFast Blue Icon */}
-          <div className="relative w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center text-xl shadow-sm mb-4">
-            <i className={`fa-solid ${isVerifying ? 'fa-circle-notch fa-spin' : errorMessage ? 'fa-location-dot text-amber-500' : 'fa-location-crosshairs'}`}></i>
-            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${errorMessage ? 'bg-amber-400' : 'bg-blue-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-3 w-3 border-2 border-white ${errorMessage ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
-            </span>
+      {/* 2. Sheet nhỏ trượt từ trên xuống đồng bộ với Mẫu 36 */}
+      <div className="cmd-top-sheet-overlay">
+        <aside
+          className="cmd-top-sheet"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Top subtle drag pill */}
+          <div className="pt-2 flex justify-center">
+            <span className="w-9 h-1 rounded-full bg-slate-200"></span>
           </div>
 
-          {/* Title & Subtitle */}
-          <h2 className="text-base font-bold text-slate-800 mb-1 tracking-tight">
-            Xác thực vị trí
-          </h2>
-          <p className="text-xs text-slate-500 mb-4">
-            Bật định vị GPS để mở Kho xe
-          </p>
+          <div className="p-4 space-y-3">
+            {/* Header hàng ngang gọn gàng */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="relative w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center text-sm shadow-xs shrink-0">
+                  <i className={`fa-solid ${isVerifying ? 'fa-circle-notch fa-spin' : errorMessage ? 'fa-location-dot text-amber-500' : 'fa-location-crosshairs'}`}></i>
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${errorMessage ? 'bg-amber-400' : 'bg-blue-400'}`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 border border-white ${errorMessage ? 'bg-amber-500' : 'bg-blue-500'}`}></span>
+                  </span>
+                </div>
+                <div>
+                  <h2 className="text-[13.5px] font-bold text-slate-800 leading-tight">Xác thực vị trí</h2>
+                  <p className="text-[11px] text-slate-500 leading-tight mt-0.5">Bật định vị GPS để mở Kho xe</p>
+                </div>
+              </div>
 
-          {/* Gentle Security Note */}
-          <div className="w-full bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-[11.5px] text-slate-600 mb-4 flex items-center gap-2 text-left">
-            <i className="fa-solid fa-shield-halved text-blue-500 text-xs shrink-0"></i>
-            <span className="leading-snug">Vì lý do bảo mật, bắt buộc chia sẻ vị trí để xem kho xe.</span>
-          </div>
-
-          {/* Status / Error Guidance */}
-          {errorMessage && (
-            <div className="w-full bg-amber-50 border border-amber-200/80 rounded-xl px-3 py-2.5 text-[11.5px] text-amber-900 mb-4 flex items-start gap-2 text-left animate-shake">
-              <i className="fa-solid fa-triangle-exclamation text-amber-500 text-xs shrink-0 mt-0.5"></i>
-              <span className="leading-snug">{errorMessage}</span>
+              <button
+                type="button"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors text-base leading-none cursor-pointer"
+                onClick={onCancel}
+                title="Quay lại"
+                aria-label="Đóng"
+              >
+                ×
+              </button>
             </div>
-          )}
 
-          {/* Action Buttons */}
-          <div className="w-full space-y-2">
-            <button
-              type="button"
-              onClick={requestLocation}
-              disabled={isVerifying}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-            >
-              {isVerifying ? (
-                <>
-                  <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
-                  <span>Đang lấy vị trí thiết bị...</span>
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-location-arrow text-xs"></i>
-                  <span>Chia sẻ vị trí của tôi</span>
-                </>
-              )}
-            </button>
+            {/* Thông báo an ninh súc tích */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-[11px] text-slate-600 flex items-center gap-2">
+              <i className="fa-solid fa-shield-halved text-blue-500 text-xs shrink-0"></i>
+              <span className="leading-snug">Vì lý do bảo mật, bắt buộc chia sẻ vị trí để xem kho xe.</span>
+            </div>
 
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isVerifying}
-              className="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition-all cursor-pointer"
-            >
-              Quay lại
-            </button>
+            {/* Cảnh báo lỗi nếu có */}
+            {errorMessage && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-[11px] text-amber-900 flex items-start gap-2 animate-shake">
+                <i className="fa-solid fa-triangle-exclamation text-amber-500 text-xs shrink-0 mt-0.5"></i>
+                <span className="leading-snug">{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Nút hành động ngang compact */}
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={requestLocation}
+                disabled={isVerifying}
+                className="flex-1 py-2 px-3 bg-[#234f87] hover:bg-[#1b4172] text-white font-bold text-[11.5px] rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              >
+                {isVerifying ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch fa-spin text-xs"></i>
+                    <span>Đang lấy vị trí...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-location-arrow text-xs"></i>
+                    <span>Chia sẻ vị trí của tôi</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={onCancel}
+                disabled={isVerifying}
+                className="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-[11.5px] rounded-xl transition-all cursor-pointer whitespace-nowrap"
+              >
+                Quay lại
+              </button>
+            </div>
           </div>
-
-        </div>
+        </aside>
       </div>
     </div>
   );

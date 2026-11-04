@@ -160,11 +160,11 @@ export const RealtimeFooterClock: React.FC<{ className?: string }> = ({ classNam
                 title="Bấm để mở lịch ngày & giờ"
                 className={`flex items-center gap-1.5 font-sans [font-variant-numeric:tabular-nums] text-[10px] font-semibold tracking-wider uppercase select-none transition-all px-2 py-0.5 rounded-md cursor-pointer ${
                     isOpen 
-                        ? 'text-blue-600 bg-blue-50/80 shadow-2xs font-bold' 
-                        : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 active:scale-95'
+                        ? 'text-sky-400 bg-sky-500/20 shadow-2xs font-bold' 
+                        : 'text-[#a7b3c4] hover:text-white hover:bg-white/10 active:scale-95'
                 }`}
             >
-                <i className={`far fa-calendar-alt text-[10px] transition-transform ${isOpen ? 'text-blue-600 scale-110' : 'text-slate-400'}`}></i>
+                <i className={`far fa-calendar-alt text-[10px] transition-transform ${isOpen ? 'text-sky-400 scale-110' : 'text-[#a7b3c4]'}`}></i>
                 <span>{footerTimeText}</span>
             </button>
 

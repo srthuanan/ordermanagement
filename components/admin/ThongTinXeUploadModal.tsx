@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import * as xlsx from 'xlsx';
 import { supabaseAdmin } from '../../services/supabaseClient';
 import { logAction, getExteriorColorName, getInteriorColorName } from '../../services/api/baseService';
@@ -44,7 +45,6 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
     const [focusedCell, setFocusedCell] = useState<{ rowIndex: number; colIndex: number } | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Find & Replace State
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [replaceQuery, setReplaceQuery] = useState('');
@@ -62,10 +62,13 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
         }
     }, [isOpen]);
 
-    // Keyboard shortcut Ctrl+F / Ctrl+H
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isOpen) return;
+            if (e.key === 'Escape' && !isUploading) {
+                onClose();
+                return;
+            }
             if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F' || e.key === 'h' || e.key === 'H')) {
                 e.preventDefault();
                 setIsSearchOpen(prev => !prev);
@@ -73,7 +76,7 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen]);
+    }, [isOpen, isUploading, onClose]);
 
     if (!isOpen) return null;
 
@@ -268,7 +271,7 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
 
     const handleDownloadTemplate = () => {
         const ws = xlsx.utils.json_to_sheet([
-            { 
+            {
                 'Số VIN': 'VF312345678901234',
                 'Mô tả sản phẩm': 'VF 3',
                 'Khu vực': 'DMS-HCM',
@@ -276,7 +279,7 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
                 'Màu ngoại thất xe': 'Trắng',
                 'Màu nội thất xe': 'Đen'
             },
-            { 
+            {
                 'Số VIN': 'VF598765432109876',
                 'Mô tả sản phẩm': 'VF 5',
                 'Khu vực': 'DMS-HN',
@@ -317,7 +320,7 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
                     for (const key in row) {
                         normalizedRow[key.trim()] = row[key];
                     }
-                    
+
                     const moTa = String(normalizedRow['Mô tả sản phẩm'] || normalizedRow['Dòng xe'] || '').trim();
                     let phienBan = String(normalizedRow['Phiên bản'] || '').trim();
                     if (moTa) {
@@ -391,18 +394,18 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
             const uploadedVins = uniqueFormattedData.map(d => d.vin);
             const QUERY_CHUNK_SIZE = 200;
             let existingKhoxe: any[] = [];
-            
+
             for (let i = 0; i < uploadedVins.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = uploadedVins.slice(i, i + QUERY_CHUNK_SIZE);
                 const { data: chunkData, error: chunkErr } = await (supabaseAdmin as any)
                     .from('khoxe')
                     .select('vin')
                     .in('vin', chunk);
-                
+
                 if (chunkErr) throw chunkErr;
                 if (chunkData) existingKhoxe = [...existingKhoxe, ...chunkData];
             }
-            
+
             if (existingKhoxe && existingKhoxe.length > 0) {
                 const existingVins = existingKhoxe.map((x: any) => x.vin);
                 const updates = uniqueFormattedData
@@ -413,11 +416,11 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
                         noi_that: getInteriorColorName(d.noi_that),
                         ma_dms: d.khu_vuc
                     }));
-                    
+
                 const CHUNK_SIZE = 50;
                 for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
                     const chunk = updates.slice(i, i + CHUNK_SIZE);
-                    await Promise.all(chunk.map(updateData => 
+                    await Promise.all(chunk.map(updateData =>
                         (supabaseAdmin as any).from('khoxe').update({
                             ngoai_that: updateData.ngoai_that,
                             noi_that: updateData.noi_that,
@@ -429,7 +432,7 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
 
             await logAction('UPLOAD_THONGTINXE', { rowCount: uniqueFormattedData.length, syncedKhoXe: existingKhoxe?.length || 0 }, 'bulk_import', 'SETTINGS');
             showToast('Thành công', `Đã cập nhật ${uniqueFormattedData.length} mã xe Master thành công.`, 'success');
-            
+
             if (onSuccess) onSuccess();
             onClose();
 
@@ -442,183 +445,305 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
     };
 
     return (
-        <div 
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-2 md:p-4 animate-fade-in"
+        <div
+            className="ttx-sheet"
             onPaste={handlePaste}
+            onClick={(e) => {
+                if (e.target === e.currentTarget && !isUploading) { window.dispatchEvent(new CustomEvent('close-all-sheets')); onClose(); }
+            }}
         >
-            <div 
-                className="bg-white w-full max-w-6xl max-h-[94vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Excel Green Header */}
-                <header className="flex items-center justify-between px-6 py-3.5 bg-[#107c41] text-white">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white text-lg font-black shadow-sm">
-                            <i className="fas fa-table"></i>
-                        </div>
-                        <div>
-                            <h2 className="text-base font-black tracking-tight flex items-center gap-2">
-                                Bảng Tính Excel Cập Nhật Xe Master (thongtinxe)
-                                <span className="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Excel Grid 100%</span>
-                            </h2>
-                            <p className="text-[11px] text-emerald-100">Bấm Ctrl+V để dán dữ liệu | Bấm Ctrl+H để tìm kiếm và thay thế hàng loạt</p>
-                        </div>
-                    </div>
+            <style>{`
+                .ttx-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .ttx-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .ttx-sheet-panel {
+                    width: clamp(640px, 68vw, 960px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: ttxSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes ttxSlideInLeft {
+                    from { transform: translateX(-100%); }
+                    to { transform: translateX(0); }
+                }
+                .ttx-header {
+                    padding: 22px 24px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .ttx-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .ttx-subtitle {
+                    margin: 4px 0 0;
+                    font-size: 11.5px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .ttx-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+                .ttx-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+                .ttx-toolbar {
+                    padding: 10px 24px;
+                    border-bottom: 1px solid #e9edf2;
+                    background: #f8fafc;
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .ttx-tool-btn {
+                    height: 30px;
+                    padding: 0 11px;
+                    border: 1px solid #dbe2ea;
+                    border-radius: 6px;
+                    background: #ffffff;
+                    color: #17263b;
+                    font-size: 11.5px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .ttx-tool-btn:hover {
+                    background: #f1f5f9;
+                }
+                .ttx-search-bar {
+                    padding: 10px 24px;
+                    border-bottom: 1px solid #e9edf2;
+                    background: #ffffff;
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: 11.5px;
+                }
+                .ttx-table-wrap {
+                    flex: 1;
+                    min-height: 0;
+                    overflow: auto;
+                    background: #ffffff;
+                }
+                .ttx-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12px;
+                }
+                .ttx-table th {
+                    padding: 9px 10px;
+                    background: #f8fafc;
+                    border-bottom: 1px solid #e9edf2;
+                    border-right: 1px solid #eef2f6;
+                    font-size: 10.5px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.03em;
+                    color: #64748b;
+                    text-align: left;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                }
+                .ttx-table td {
+                    padding: 0;
+                    border-bottom: 1px solid #eef2f6;
+                    border-right: 1px solid #f1f5f9;
+                    position: relative;
+                }
+                .ttx-cell-input {
+                    width: 100%;
+                    height: 34px;
+                    padding: 0 10px;
+                    border: 0;
+                    background: transparent;
+                    font-size: 12px;
+                    color: #17263b;
+                    outline: none;
+                }
+                .ttx-cell-input:focus {
+                    background: #eff6ff;
+                    box-shadow: inset 0 0 0 1.5px #3b82f6;
+                }
+                .ttx-footer {
+                    padding: 12px 24px;
+                    border-top: 1px solid #eef2f6;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .ttx-btn-cancel {
+                    height: 34px;
+                    padding: 0 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                .ttx-btn-submit {
+                    height: 34px;
+                    padding: 0 16px;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #17263b;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .ttx-btn-submit:disabled {
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+            `}</style>
 
-                    <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors">
-                        <i className="fas fa-times text-xs"></i>
+            <div className="ttx-sheet-panel" onClick={e => e.stopPropagation()}>
+                <header className="ttx-header">
+                    <div>
+                        <h2 className="ttx-title">Cập nhật Core / thongtinxe</h2>
+                        <p className="ttx-subtitle">Đồng bộ danh mục xe gốc Master và tự động ánh xạ sang kho hiện hành</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="ttx-close-btn" aria-label="Đóng">
+                        <X size={16} strokeWidth={2} />
                     </button>
                 </header>
 
-                {/* Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-slate-100 border-b border-slate-200 text-xs">
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={handleAddRow}
-                            className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
-                        >
-                            <i className="fas fa-plus text-emerald-600"></i> Thêm Dòng
+                <div className="ttx-toolbar">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <button type="button" onClick={handleAddRow} className="ttx-tool-btn">
+                            + Thêm dòng
                         </button>
-
                         <button
                             type="button"
                             onClick={() => setIsSearchOpen(prev => !prev)}
-                            className={`px-3 py-1.5 rounded-lg border font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95 ${
-                                isSearchOpen ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-300 hover:bg-slate-50 text-slate-700'
-                            }`}
+                            className="ttx-tool-btn"
+                            style={isSearchOpen ? { borderColor: '#3b82f6', color: '#2563eb' } : undefined}
                         >
-                            <i className="fas fa-search text-amber-600"></i> Tìm & Thay Thế (Ctrl+H)
+                            Tìm & Thay thế
                         </button>
-
-                        <label className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 font-bold text-slate-700 flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95">
-                            <i className="fas fa-file-excel text-[#107c41]"></i> Tải File Excel (.xlsx)
+                        <label className="ttx-tool-btn">
+                            Chọn tệp Excel (.xlsx)
                             <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileUpload} />
                         </label>
-
-                        <button
-                            type="button"
-                            onClick={handleDownloadTemplate}
-                            className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 font-bold text-blue-600 flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
-                            title="Tải file Excel mẫu chuẩn"
-                        >
-                            <i className="fas fa-download text-blue-600"></i> Tải File Mẫu
+                        <button type="button" onClick={handleDownloadTemplate} className="ttx-tool-btn">
+                            Tải tệp mẫu
                         </button>
-
-                        <button
-                            type="button"
-                            onClick={handleClearAll}
-                            className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-red-50 text-red-600 font-bold flex items-center gap-1.5 shadow-sm transition-all"
-                        >
-                            <i className="fas fa-trash-alt"></i> Xóa Sạch Bảng
+                        <button type="button" onClick={handleClearAll} className="ttx-tool-btn" style={{ color: '#dc2626' }}>
+                            Xóa bảng
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold px-3 py-1 rounded-lg">
-                            <i className="fas fa-check-circle text-emerald-600"></i>
-                            <span>Hợp lệ: <b>{validRows.length}</b> / {gridRows.length} dòng</span>
-                        </div>
-                        {focusedCell && (
-                            <span className="text-[11px] text-[#107c41] font-bold bg-emerald-100/80 px-2 py-0.5 rounded">
-                                Đang chọn: Dòng {focusedCell.rowIndex + 1}, Cột {focusedCell.colIndex + 1} ({TTX_GRID_COLUMNS[focusedCell.colIndex]?.toUpperCase()})
-                            </span>
-                        )}
+                    <div style={{ fontSize: 11.5, color: '#64748b' }}>
+                        VIN hợp lệ: <strong style={{ color: '#17263b' }}>{validRows.length}</strong> / {gridRows.length} dòng
                     </div>
                 </div>
 
-                {/* Find & Replace Floating Panel */}
                 {isSearchOpen && (
-                    <div className="bg-amber-50/90 border-b border-amber-200 px-6 py-3 flex flex-wrap items-center gap-4 text-xs animate-fade-in shadow-inner no-grid-paste">
-                        <div className="flex items-center gap-2">
-                            <span className="font-bold text-amber-900 flex items-center gap-1">
-                                <i className="fas fa-search text-amber-600"></i> Tìm kiếm:
-                            </span>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                placeholder="Từ khóa cần tìm (VD: VF3)..."
-                                className="px-3 py-1.5 border border-amber-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 w-44 bg-white font-medium"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <span className="font-bold text-amber-900 flex items-center gap-1">
-                                <i className="fas fa-exchange-alt text-amber-600"></i> Thay thế bằng:
-                            </span>
-                            <input
-                                type="text"
-                                value={replaceQuery}
-                                onChange={e => setReplaceQuery(e.target.value)}
-                                placeholder="Giá trị mới (VD: VF 3)..."
-                                className="px-3 py-1.5 border border-amber-300 rounded-lg outline-none focus:ring-2 focus:ring-amber-500 w-44 bg-white font-medium"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-3 font-semibold text-amber-800">
-                            <label className="flex items-center gap-1 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={matchExact}
-                                    onChange={e => setMatchExact(e.target.checked)}
-                                    className="rounded border-amber-400 text-amber-600 focus:ring-amber-500"
-                                />
-                                Exact cell
-                            </label>
-                            <label className="flex items-center gap-1 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={matchCase}
-                                    onChange={e => setMatchCase(e.target.checked)}
-                                    className="rounded border-amber-400 text-amber-600 focus:ring-amber-500"
-                                />
-                                Match case
-                            </label>
-                        </div>
-
+                    <div className="ttx-search-bar no-grid-paste">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Tìm từ khóa..."
+                            style={{ height: 30, padding: '0 10px', border: '1px solid #dbe2ea', borderRadius: 6, fontSize: 12 }}
+                        />
+                        <input
+                            type="text"
+                            value={replaceQuery}
+                            onChange={e => setReplaceQuery(e.target.value)}
+                            placeholder="Thay thế bằng..."
+                            style={{ height: 30, padding: '0 10px', border: '1px solid #dbe2ea', borderRadius: 6, fontSize: 12 }}
+                        />
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#475569' }}>
+                            <input type="checkbox" checked={matchExact} onChange={e => setMatchExact(e.target.checked)} />
+                            Khớp toàn ô
+                        </label>
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#475569' }}>
+                            <input type="checkbox" checked={matchCase} onChange={e => setMatchCase(e.target.checked)} />
+                            Phân biệt hoa/thường
+                        </label>
                         <button
                             type="button"
                             onClick={handleReplaceAll}
-                            className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm active:scale-95 transition-all flex items-center gap-1.5 ml-auto"
+                            style={{ height: 30, padding: '0 12px', border: 0, borderRadius: 6, background: '#17263b', color: '#ffffff', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
                         >
-                            <i className="fas fa-check-double"></i> Thay Thế Tất Cả (Replace All)
+                            Thay thế tất cả
                         </button>
                     </div>
                 )}
 
-                {/* Spreadsheet Body */}
-                <main className="flex-1 overflow-auto bg-slate-200/60 p-0">
-                    <table className="w-full border-collapse text-xs bg-white">
+                <main className="ttx-table-wrap">
+                    <table className="ttx-table">
                         <thead>
-                            <tr className="bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-wider border-b border-slate-300 select-none sticky top-0 z-10 shadow-sm">
-                                <th className="w-12 py-2 px-2 border-r border-slate-300 text-center bg-slate-200/80 text-slate-500">#</th>
-                                <th className="py-2 px-3 border-r border-slate-300 min-w-[170px] text-emerald-800">
-                                    <div className="flex items-center justify-between">
-                                        <span>A | SỐ VIN (17 KÝ TỰ)</span>
-                                        <i className="fas fa-asterisk text-[8px] text-red-500"></i>
-                                    </div>
-                                </th>
-                                <th className="py-2 px-3 border-r border-slate-300 min-w-[130px]">B | MÔ TẢ / DÒNG XE</th>
-                                <th className="py-2 px-3 border-r border-slate-300 min-w-[110px]">C | KHU VỰC</th>
-                                <th className="py-2 px-3 border-r border-slate-300 min-w-[120px]">D | PHIÊN BẢN</th>
-                                <th className="py-2 px-3 border-r border-slate-300 min-w-[120px]">E | NGOẠI THẤT</th>
-                                <th className="py-2 px-3 border-r border-slate-300 min-w-[120px]">F | NỘI THẤT</th>
-                                <th className="w-10 py-2 border-slate-300 text-center bg-slate-200/80"></th>
+                            <tr>
+                                <th style={{ width: 42, textAlign: 'center' }}>#</th>
+                                <th style={{ minWidth: 165 }}>Số VIN (17 ký tự)</th>
+                                <th style={{ minWidth: 120 }}>Mô tả / Dòng xe</th>
+                                <th style={{ minWidth: 110 }}>Khu vực</th>
+                                <th style={{ minWidth: 120 }}>Phiên bản</th>
+                                <th style={{ minWidth: 120 }}>Ngoại thất</th>
+                                <th style={{ minWidth: 120 }}>Nội thất</th>
+                                <th style={{ width: 38, textAlign: 'center' }}></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200 font-mono text-[12px]">
+                        <tbody>
                             {gridRows.map((row, rIdx) => {
                                 const isValidVin = row.vin.length === 17;
                                 return (
-                                    <tr key={row.id} className="hover:bg-amber-50/40 group transition-colors">
-                                        {/* Row Index */}
-                                        <td className="py-1 px-2 border-r border-slate-300 text-center font-bold bg-slate-100 text-slate-500 select-none">
+                                    <tr key={row.id}>
+                                        <td style={{ textAlign: 'center', color: '#94a3b8', background: '#f8fafc', fontSize: 11, fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace' }}>
                                             {rIdx + 1}
                                         </td>
-
-                                        {/* Col A: VIN */}
-                                        <td className={`p-0 border-r border-slate-300 relative ${isValidVin ? 'bg-emerald-50/30' : row.vin ? 'bg-amber-50/40' : ''}`}>
+                                        <td>
                                             <input
                                                 type="text"
                                                 value={row.vin}
@@ -626,84 +751,72 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
                                                 placeholder="Số VIN 17 ký tự..."
                                                 onFocus={() => setFocusedCell({ rowIndex: rIdx, colIndex: 0 })}
                                                 onChange={e => handleCellChange(row.id, 'vin', e.target.value)}
-                                                className="w-full h-9 px-2.5 font-mono font-bold uppercase text-slate-900 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-[#107c41] focus:z-20 transition-all placeholder:font-sans placeholder:font-normal placeholder:text-slate-300"
+                                                className="ttx-cell-input font-mono font-semibold uppercase"
                                             />
                                             {row.vin && (
-                                                <span className={`absolute right-2 top-2 text-[10px] font-bold px-1.5 rounded ${isValidVin ? 'text-emerald-700 bg-emerald-100' : 'text-amber-700 bg-amber-100'}`}>
+                                                <span style={{ position: 'absolute', right: 8, top: 9, fontSize: 10, fontWeight: 600, color: isValidVin ? '#16a34a' : '#d97706' }}>
                                                     {row.vin.length}/17
                                                 </span>
                                             )}
                                         </td>
-
-                                        {/* Col B: Mô tả / Dòng Xe */}
-                                        <td className="p-0 border-r border-slate-300">
+                                        <td>
                                             <input
                                                 type="text"
                                                 value={row.mo_ta}
-                                                placeholder="VF 3, VF 5, VF 8..."
+                                                placeholder="VF 3, VF 5..."
                                                 onFocus={() => setFocusedCell({ rowIndex: rIdx, colIndex: 1 })}
                                                 onChange={e => handleCellChange(row.id, 'mo_ta', e.target.value)}
-                                                className="w-full h-9 px-2.5 font-sans font-bold text-slate-800 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-[#107c41] focus:z-20 transition-all placeholder:text-slate-300"
+                                                className="ttx-cell-input"
                                             />
                                         </td>
-
-                                        {/* Col C: Khu Vực / Mã DMS */}
-                                        <td className="p-0 border-r border-slate-300">
+                                        <td>
                                             <input
                                                 type="text"
                                                 value={row.khu_vuc}
                                                 placeholder="DMS-HCM..."
                                                 onFocus={() => setFocusedCell({ rowIndex: rIdx, colIndex: 2 })}
                                                 onChange={e => handleCellChange(row.id, 'khu_vuc', e.target.value)}
-                                                className="w-full h-9 px-2.5 font-sans text-slate-700 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-[#107c41] focus:z-20 transition-all placeholder:text-slate-300"
+                                                className="ttx-cell-input"
                                             />
                                         </td>
-
-                                        {/* Col D: Phiên Bản */}
-                                        <td className="p-0 border-r border-slate-300">
+                                        <td>
                                             <input
                                                 type="text"
                                                 value={row.phien_ban}
-                                                placeholder="Plus, Eco, Base..."
+                                                placeholder="Plus, Eco..."
                                                 onFocus={() => setFocusedCell({ rowIndex: rIdx, colIndex: 3 })}
                                                 onChange={e => handleCellChange(row.id, 'phien_ban', e.target.value)}
-                                                className="w-full h-9 px-2.5 font-sans font-medium text-slate-700 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-[#107c41] focus:z-20 transition-all placeholder:text-slate-300"
+                                                className="ttx-cell-input"
                                             />
                                         </td>
-
-                                        {/* Col E: Ngoại Thất */}
-                                        <td className="p-0 border-r border-slate-300">
+                                        <td>
                                             <input
                                                 type="text"
                                                 value={row.ngoai_that}
-                                                placeholder="Trắng, Đỏ, Xám..."
+                                                placeholder="Trắng, Đỏ..."
                                                 onFocus={() => setFocusedCell({ rowIndex: rIdx, colIndex: 4 })}
                                                 onChange={e => handleCellChange(row.id, 'ngoai_that', e.target.value)}
-                                                className="w-full h-9 px-2.5 font-sans font-medium text-slate-700 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-[#107c41] focus:z-20 transition-all placeholder:text-slate-300"
+                                                className="ttx-cell-input"
                                             />
                                         </td>
-
-                                        {/* Col F: Nội Thất */}
-                                        <td className="p-0 border-r border-slate-300">
+                                        <td>
                                             <input
                                                 type="text"
                                                 value={row.noi_that}
-                                                placeholder="Đen, Nâu, Vàng..."
+                                                placeholder="Đen, Nâu..."
                                                 onFocus={() => setFocusedCell({ rowIndex: rIdx, colIndex: 5 })}
                                                 onChange={e => handleCellChange(row.id, 'noi_that', e.target.value)}
-                                                className="w-full h-9 px-2.5 font-sans font-medium text-slate-700 bg-transparent outline-none focus:bg-white focus:ring-2 focus:ring-[#107c41] focus:z-20 transition-all placeholder:text-slate-300"
+                                                className="ttx-cell-input"
                                             />
                                         </td>
-
-                                        {/* Actions */}
-                                        <td className="py-1 px-1 text-center bg-slate-50 border-r border-slate-300">
+                                        <td style={{ textAlign: 'center', background: '#f8fafc' }}>
                                             <button
                                                 type="button"
                                                 onClick={() => handleDeleteRow(row.id)}
-                                                className="w-6 h-6 rounded hover:bg-red-100 text-slate-300 group-hover:text-red-500 flex items-center justify-center transition-colors m-auto"
-                                                title="Xóa dòng này"
+                                                style={{ border: 0, background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: 12 }}
+                                                title="Xóa dòng"
                                             >
-                                                <i className="fas fa-trash-alt text-[10px]"></i>
+                                                ×
                                             </button>
                                         </td>
                                     </tr>
@@ -713,33 +826,21 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
                     </table>
                 </main>
 
-                {/* Footer */}
-                <footer className="px-6 py-3.5 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <i className="fas fa-info-circle text-[#107c41]"></i>
-                        <span>Chỉ các dòng xe có <b>Số VIN đúng 17 ký tự</b> ({validRows.length} xe) mới được cập nhật vào danh mục Master.</span>
+                <footer className="ttx-footer">
+                    <div style={{ fontSize: 11.5, color: '#64748b' }}>
+                        Chỉ các dòng có Số VIN đủ 17 ký tự ({validRows.length} xe) mới được cập nhật vào bảng Master.
                     </div>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
-                        >
-                            Hủy Bỏ
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button type="button" onClick={onClose} className="ttx-btn-cancel">
+                            Hủy bỏ
                         </button>
                         <button
                             type="button"
                             onClick={handleUploadToMaster}
                             disabled={validRows.length === 0 || isUploading}
-                            className={`px-6 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-2 shadow-lg transition-all ${
-                                validRows.length > 0 && !isUploading
-                                    ? 'bg-[#107c41] hover:bg-[#0b5c30] shadow-emerald-200 active:scale-95'
-                                    : 'bg-slate-300 cursor-not-allowed shadow-none'
-                            }`}
+                            className="ttx-btn-submit"
                         >
-                            {isUploading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-file-import"></i>}
-                            Cập Nhật Xe Master {validRows.length > 0 ? `(${validRows.length} Xe)` : ''}
+                            {isUploading ? 'Đang cập nhật...' : `Cập nhật Master ${validRows.length > 0 ? `(${validRows.length} xe)` : ''}`}
                         </button>
                     </div>
                 </footer>

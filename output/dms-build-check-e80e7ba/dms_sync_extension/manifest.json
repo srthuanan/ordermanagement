@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "VinFast DMS - Đồng Bộ Cookie",
+  "version": "1.0",
+  "description": "Tự động lấy Cookie từ trình duyệt đang mở và đồng bộ sang App Tra Cứu Biển Số",
+  "permissions": [
+    "cookies",
+    "tabs",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Đồng bộ Cookie VinFast DMS",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}

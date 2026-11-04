@@ -15,6 +15,9 @@ export const useVinFastApi = (currentUser?: string, isCurrentUserAdmin?: boolean
         // ... (rest of the fetching logic)
         // 1. Tải dữ liệu mới nhất (active) từ API
         const res = await apiService.getPaginatedData(usersToView, currentUser, isCurrentUserAdmin);
+        if (res.status !== 'SUCCESS') {
+            throw new Error(res.message || 'Không thể tải dữ liệu đơn hàng.');
+        }
         let activeData: Order[] = res.data || [];
         const activeOrderNumbers = new Set(activeData.map(o => o['Số đơn hàng']));
 

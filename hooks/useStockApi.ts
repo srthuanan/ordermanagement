@@ -6,7 +6,13 @@ import { supabase } from '../services/supabaseClient';
 import { enrichTransitCarsWithRealLocations } from '../services/api/satelliteWarehouseService';
 
 export const useStockApi = () => {
-    const { data: result, error, mutate } = useSWR('stockData', () => apiService.getStockData(), {
+    const { data: result, error, mutate } = useSWR('stockData', async () => {
+        const response = await apiService.getStockData();
+        if (response.status !== 'SUCCESS') {
+            throw new Error(response.message || 'Không thể tải dữ liệu kho xe.');
+        }
+        return response;
+    }, {
         revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
@@ -17,26 +23,37 @@ export const useStockApi = () => {
     });
 
     useEffect(() => {
+        let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+        let refreshQueue = false;
+        const scheduleRefresh = (includeQueue = false) => {
+            refreshQueue = refreshQueue || includeQueue;
+            if (refreshTimer !== undefined) return;
+            refreshTimer = setTimeout(() => {
+                refreshTimer = undefined;
+                const includeQueued = refreshQueue;
+                refreshQueue = false;
+                void mutate();
+                if (includeQueued) void mutateQueued();
+            }, 150);
+        };
         const channel = supabase.channel('khoxe_realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'khoxe' }, (payload) => {
-                console.log('Real-time stock change:', payload);
-                mutate(); 
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'khoxe' }, () => {
+                scheduleRefresh();
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'car_hold_activities' }, (payload) => {
-                console.log('Real-time hold activity change:', payload);
-                mutateQueued();
-                mutate();
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'car_hold_activities' }, () => {
+                scheduleRefresh(true);
             })
             .subscribe();
 
         const handleSatelliteUpdate = () => {
-            mutate();
+            scheduleRefresh();
         };
         if (typeof window !== 'undefined') {
             window.addEventListener('satellite_warehouses_updated', handleSatelliteUpdate);
         }
 
         return () => {
+            if (refreshTimer !== undefined) clearTimeout(refreshTimer);
             supabase.removeChannel(channel);
             if (typeof window !== 'undefined') {
                 window.removeEventListener('satellite_warehouses_updated', handleSatelliteUpdate);

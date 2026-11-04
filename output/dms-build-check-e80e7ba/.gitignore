@@ -1,0 +1,72 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+release
+out
+.venv
+price
+*.local
+.env
+.env.*
+*.exe
+*.msi
+*.zip
+*.eml
+*.bak
+LuanChuyenKeyCodex.bat
+vf-kim-son-trang-dai/LuanChuyenKeyCodex.bat
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temp & cache
+__pycache__/
+*.pyc
+temp_pdfs/
+tmp/
+scratch/
+mobile_ui_test_results/
+*.part
+vite.config.ts.timestamp-*
+
+# Temp data files
+*.xlsx
+tmp_*.json
+tmp_*.js
+.vercel
+
+.dms_profiles/
+minvoice_cookie.txt
+bookmarklets/
+
+# Do not track cached cyber PDFs
+public/cyber_pdfs/*.pdf
+!public/cyber_pdfs/.gitkeep
+
+# Backups
+backups/
+
+# VNPT temp & config
+vnpt_config.json
+vnpt_invoices_cache.json
+downloads_vnpt/
+*.pdf
+!public/cyber_pdfs/.gitkeep
+.env*

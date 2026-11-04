@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { X, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import * as authService from '../../services/authService';
 
 interface ChangePasswordModalProps {
@@ -14,6 +15,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showOld, setShowOld] = useState(false);
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [localError, setLocalError] = useState<string | null>(null);
 
@@ -51,7 +55,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
 
         if (result.success) {
             showToast('Thành Công', result.message || 'Mật khẩu đã được thay đổi thành công!', 'success');
-            onClose();
+            handleClose();
         } else {
             setLocalError(result.message || 'Đổi mật khẩu không thành công.');
         }
@@ -62,10 +66,22 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        setShowOld(false);
+        setShowNew(false);
+        setShowConfirm(false);
         setIsSubmitting(false);
         setLocalError(null);
         onClose();
     };
+
+    useEffect(() => {
+        if (!isOpen || embedded) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') handleClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isOpen, embedded]);
 
     if (!isOpen) return null;
 
@@ -148,102 +164,345 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         );
     }
 
-
     return (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif]" onClick={handleClose}>
-            <div className="w-full max-w-[500px] bg-white rounded-[16px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#e2e8f0] overflow-hidden animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
-                <form onSubmit={handleSubmit}>
-                    {/* Header matching Email & ResetPasswordView */}
-                    <header className="px-8 pt-[25px] pb-[15px] border-b border-[#f1f5f9]">
-                        <div className="flex justify-between items-start">
-                            <img 
-                                src="https://raw.githubusercontent.com/srthuanan/ordermanagement/main/pictures/logomd.webp" 
-                                alt="VinFast" 
-                                className="h-[38px] w-auto block"
+        <div
+            className="cp-sheet"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) { window.dispatchEvent(new CustomEvent('close-all-sheets')); handleClose(); }
+            }}
+        >
+            <style>{`
+                .cp-sheet {
+                    position: fixed;
+                    inset: 0 0 0 64px;
+                    width: calc(100vw - 64px);
+                    height: 100dvh;
+                    z-index: 1005;
+                    display: flex;
+                    align-items: stretch;
+                    justify-content: flex-start;
+                    background: rgba(15, 23, 42, 0.08);
+                    overflow: hidden;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                }
+                @media (max-width: 768px) {
+                    .cp-sheet {
+                        inset: 0;
+                        width: 100vw;
+                    }
+                }
+                .cp-sheet-panel {
+                    width: clamp(290px, 25vw, 390px);
+                    max-width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    background: #ffffff;
+                    color: #17263b;
+                    border-right: 1px solid #e2e8f0;
+                    box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                    animation: cpSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+                }
+                @keyframes cpSlideInLeft {
+                    from {
+                        transform: translateX(-100%);
+                    }
+                    to {
+                        transform: translateX(0);
+                    }
+                }
+                .cp-header {
+                    padding: 22px 20px 14px;
+                    border-bottom: 1px solid #e9edf2;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                }
+                .cp-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 650;
+                    line-height: 1.15;
+                    letter-spacing: -0.5px;
+                    color: #17263b;
+                }
+                .cp-subtitle {
+                    margin: 3px 0 0;
+                    font-size: 11px;
+                    font-weight: 450;
+                    color: #7b879a;
+                }
+                .cp-close-btn {
+                    width: 28px;
+                    height: 28px;
+                    border: 0;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #64748b;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: background-color 140ms ease, color 140ms ease;
+                }
+                .cp-close-btn:hover {
+                    background: #f1f5f9;
+                    color: #0f172a;
+                }
+                .cp-body {
+                    flex: 1;
+                    min-height: 0;
+                    overflow-y: auto;
+                    padding: 18px 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+                .cp-hint {
+                    font-size: 11.5px;
+                    line-height: 1.45;
+                    color: #64748b;
+                    padding-bottom: 4px;
+                    border-bottom: 1px solid #f1f5f9;
+                }
+                .cp-error {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 8px;
+                    padding: 9px 11px;
+                    border-radius: 8px;
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                    color: #dc2626;
+                    font-size: 11.5px;
+                    font-weight: 500;
+                    line-height: 1.4;
+                }
+                .cp-field {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                .cp-label {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #475569;
+                }
+                .cp-input-wrap {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
+                .cp-input {
+                    width: 100%;
+                    height: 36px;
+                    padding: 0 34px 0 11px;
+                    border: 1px solid #dbe2ea;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    font-size: 12.5px;
+                    font-weight: 500;
+                    color: #17263b;
+                    outline: none;
+                    transition: border-color 140ms ease, box-shadow 140ms ease;
+                }
+                .cp-input::placeholder {
+                    color: #94a3b8;
+                    font-weight: 400;
+                }
+                .cp-input:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+                }
+                .cp-eye-btn {
+                    position: absolute;
+                    right: 6px;
+                    width: 24px;
+                    height: 24px;
+                    border: 0;
+                    border-radius: 5px;
+                    background: transparent;
+                    color: #94a3b8;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                }
+                .cp-eye-btn:hover {
+                    color: #475569;
+                    background: #f1f5f9;
+                }
+                .cp-footer {
+                    padding: 12px 20px;
+                    border-top: 1px solid #eef2f6;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 8px;
+                }
+                .cp-btn-cancel {
+                    height: 34px;
+                    padding: 0 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background-color 140ms ease, color 140ms ease;
+                }
+                .cp-btn-cancel:hover:not(:disabled) {
+                    background: #f8fafc;
+                    color: #17263b;
+                }
+                .cp-btn-submit {
+                    height: 34px;
+                    padding: 0 16px;
+                    border: 0;
+                    border-radius: 8px;
+                    background: #17263b;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    transition: background-color 140ms ease;
+                }
+                .cp-btn-submit:hover:not(:disabled) {
+                    background: #0f172a;
+                }
+                .cp-btn-submit:disabled,
+                .cp-btn-cancel:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+            `}</style>
+
+            <form onSubmit={handleSubmit} className="cp-sheet-panel" onClick={e => e.stopPropagation()}>
+                <header className="cp-header">
+                    <div>
+                        <h2 className="cp-title">
+                            {isFirstLogin ? 'Kích hoạt tài khoản' : 'Đổi mật khẩu'}
+                        </h2>
+                        <p className="cp-subtitle">Tài khoản: {username}</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="cp-close-btn"
+                        aria-label="Đóng"
+                    >
+                        <X size={16} strokeWidth={2} />
+                    </button>
+                </header>
+
+                <main className="cp-body">
+                    <div className="cp-hint">
+                        Mật khẩu mới cần tối thiểu 10 ký tự, bao gồm cả chữ và số.
+                    </div>
+
+                    {localError && (
+                        <div className="cp-error">
+                            <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                            <span>{localError}</span>
+                        </div>
+                    )}
+
+                    <div className="cp-field">
+                        <label className="cp-label">Mật khẩu hiện tại</label>
+                        <div className="cp-input-wrap">
+                            <input
+                                type={showOld ? 'text' : 'password'}
+                                value={oldPassword}
+                                onChange={e => setOldPassword(e.target.value)}
+                                placeholder={isFirstLogin ? 'Nhập mật khẩu tạm thời' : 'Nhập mật khẩu hiện tại'}
+                                required
+                                autoFocus
+                                className="cp-input"
                             />
-                            <div className="text-right">
-                                <div className="text-[12px] font-bold text-[#1e3a8a]">VINFAST THUẬN AN</div>
-                            </div>
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => setShowOld(v => !v)}
+                                className="cp-eye-btn"
+                                aria-label="Hiện/ẩn mật khẩu"
+                            >
+                                {showOld ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
                         </div>
-                    </header>
+                    </div>
 
-                    <main className="px-8 py-6">
-                        <div className="text-[13px] text-[#64748b] mb-[5px] font-medium">Chào Bạn,</div>
-                        <div className="text-[18px] text-[#0f172a] font-bold mb-6 uppercase">
-                            {isFirstLogin ? 'Kích Hoạt Tài Khoản' : 'Đổi Mật Khẩu'}
+                    <div className="cp-field">
+                        <label className="cp-label">Mật khẩu mới</label>
+                        <div className="cp-input-wrap">
+                            <input
+                                type={showNew ? 'text' : 'password'}
+                                value={newPassword}
+                                onChange={e => setNewPassword(e.target.value)}
+                                placeholder="Nhập mật khẩu mới"
+                                required
+                                className="cp-input"
+                            />
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => setShowNew(v => !v)}
+                                className="cp-eye-btn"
+                                aria-label="Hiện/ẩn mật khẩu"
+                            >
+                                {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
                         </div>
+                    </div>
 
-                        {/* Inner Form Box */}
-                        <div className="bg-[#f8fafc] border border-[#f1f5f9] rounded-[12px] p-5 space-y-4">
-                            {localError && (
-                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-xs font-medium flex items-center gap-2 animate-shake">
-                                    <i className="fas fa-exclamation-circle"></i>
-                                    {localError}
-                                </div>
-                            )}
-
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Mật khẩu hiện tại</label>
-                                <input
-                                    type="password"
-                                    value={oldPassword}
-                                    onChange={e => setOldPassword(e.target.value)}
-                                    placeholder={isFirstLogin ? "Mật khẩu tạm thời" : "Nhập mật khẩu hiện tại..."}
-                                    required
-                                    className="w-full py-2.5 bg-transparent border-b border-[#e2e8f0] focus:border-[#1e3a8a] outline-none text-[13px] text-[#334155] font-semibold transition-all placeholder:text-[#cbd5e1] placeholder:font-normal"
-                                />
-                            </div>
-
-                            <div className="space-y-1 pt-2">
-                                <label className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Mật khẩu mới</label>
-                                <input
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={e => setNewPassword(e.target.value)}
-                                    placeholder="Nhập mật khẩu mới..."
-                                    required
-                                    className="w-full py-2.5 bg-transparent border-b border-[#e2e8f0] focus:border-[#1e3a8a] outline-none text-[13px] text-[#334155] font-semibold transition-all placeholder:text-[#cbd5e1] placeholder:font-normal"
-                                />
-                            </div>
-
-                            <div className="space-y-1 pt-2">
-                                <label className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Xác nhận mật khẩu mới</label>
-                                <input
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={e => setConfirmPassword(e.target.value)}
-                                    placeholder="Nhập lại mật khẩu mới..."
-                                    required
-                                    className="w-full py-2.5 bg-transparent border-b border-[#e2e8f0] focus:border-[#1e3a8a] outline-none text-[13px] text-[#334155] font-semibold transition-all placeholder:text-[#cbd5e1] placeholder:font-normal"
-                                />
-                            </div>
+                    <div className="cp-field">
+                        <label className="cp-label">Xác nhận mật khẩu mới</label>
+                        <div className="cp-input-wrap">
+                            <input
+                                type={showConfirm ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                placeholder="Nhập lại mật khẩu mới"
+                                required
+                                className="cp-input"
+                            />
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => setShowConfirm(v => !v)}
+                                className="cp-eye-btn"
+                                aria-label="Hiện/ẩn mật khẩu"
+                            >
+                                {showConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
                         </div>
-                    </main>
+                    </div>
+                </main>
 
-                    <footer className="px-8 pb-8 flex items-center justify-between">
-                        <button 
-                            type="button" 
-                            onClick={handleClose} 
-                            disabled={isSubmitting}
-                            className="text-[#64748b] hover:text-[#1e3a8a] text-[13px] font-medium transition-colors"
-                        >
-                            {isFirstLogin ? 'Thoát' : 'Hủy bỏ'}
-                        </button>
-                        
-                        <button 
-                            type="submit" 
-                            disabled={isSubmitting}
-                            className="bg-[#1e3a8a] hover:bg-[#162e70] text-white px-8 py-2.5 rounded-[30px] font-bold text-[13px] shadow-[0_4px_12px_rgba(30,58,138,0.15)] transition-all transform hover:scale-[1.05] active:scale-[0.95] disabled:opacity-70 flex items-center justify-center gap-2"
-                        >
-                            {isSubmitting ? (
-                                <><i className="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...</>
-                            ) : (
-                                <>{isFirstLogin ? 'KÍCH HOẠT NGAY' : 'XÁC NHẬN ĐỔI'}</>
-                            )}
-                        </button>
-                    </footer>
-                </form>
-            </div>
+                <footer className="cp-footer">
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        disabled={isSubmitting}
+                        className="cp-btn-cancel"
+                    >
+                        {isFirstLogin ? 'Thoát' : 'Hủy bỏ'}
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="cp-btn-submit"
+                    >
+                        {isSubmitting ? 'Đang lưu...' : (isFirstLogin ? 'Kích hoạt' : 'Lưu mật khẩu')}
+                    </button>
+                </footer>
+            </form>
         </div>
     );
 };

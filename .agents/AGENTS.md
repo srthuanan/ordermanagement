@@ -1,13 +1,40 @@
 # Agent Rules
 
+- **Tốc độ mở sheet ghép xe**: Khung sheet phải hiện ngay khi bấm, không chờ tải form; tải trước form khi vào Kho xe và khởi tạo sẵn cấu hình/step 2 khi ghép VIN cụ thể.
+
+- **Gia hạn giữ xe trong 20 phút cuối**: Chỉ hiện nút Gia hạn cho chính người đang giữ khi 0 < thời gian còn lại <= 20 phút. Ẩn khi còn hơn 20 phút, đã hết hạn, thiếu hạn hoặc vô thời hạn; tự cập nhật khi trang đang mở.
+
+- **Nhiều tác vụ Kho xe**: Chỉ hiện tác vụ chính trên thẻ (ưu tiên Ghép); gom các tác vụ phụ vào menu ⋯ để chân thẻ không xuống nhiều hàng. Giữ chữ xanh lá, không nền/khung trên nút.
+
+- **Nút Chi tiết Kho xe**: Bỏ nút Chi tiết theo yêu cầu mới nhất; bấm nội dung thẻ mở thông tin, bấm nút tác vụ hoặc sao chép không mở thông tin.
+
+- **Số cột Kho xe**: Màn hình laptop/desktop từ 1200px dùng 4 thẻ mỗi hàng theo yêu cầu người dùng để giảm chiều ngang thẻ; màn hình nhỏ giảm cột phù hợp.
+
+- **Mẫu Kho xe được chọn mới nhất**: Dùng ảnh `exec-383a321f-42b1-4036-a6c8-e1e2d35bea8d.png` (01 · Thẻ gọn cân đối), thay cho các bố cục trước: tên/phiên bản trên trái, trạng thái trên phải; ảnh trái và VIN/màu/kho bên phải; DMS và số máy ở chân cùng nút tác vụ. Giữ sao chép VIN/số máy và trạng thái không khung/nền.
+
+- **Vite và ảnh kiểm tra**: Giữ `output/**` trong danh sách bỏ qua của Vite watcher; hồ sơ Edge trong thư mục này có file cache bị khóa gây crash EBUSY.
+
+- **Cân đối phần đầu thẻ Kho xe**: Gom trạng thái và VIN bên phải, ảnh trái và tên/phiên bản giữa để xử lý hai vùng trống người dùng đánh dấu.
+
+- **Phạm vi chỉnh Kho xe**: Chỉ tinh chỉnh trên mẫu thẻ hiện tại theo yêu cầu người dùng, không chuyển sang thẻ ngang hoặc thiết kế khác.
+
+- **Giữ dev server hoạt động**: Khi người dùng đang xem giao diện qua `npm run dev`, giữ tiến trình chạy nền xuyên suốt công việc; không tự tắt hoặc khởi động lại nếu không cần thiết. Người dùng đã yêu cầu bật và giữ dev server trong phiên làm việc này.
+
+- **Mật độ thẻ Kho xe**: Ưu tiên thẻ gọn, giảm khoảng trắng và nhãn lặp theo phản hồi thẻ quá to; giữ bố cục mẫu 4, bấm VIN/số máy sao chép và trạng thái không nền/khung.
+
+- **Trạng thái thẻ Kho xe**: Không đóng khung hoặc tô nền màu; chỉ hiển thị chữ và chấm màu trạng thái nhỏ.
+
+- **Thẻ Kho xe mẫu 4**: Dùng bố cục hai cột theo mẫu người dùng đã chọn; bấm trực tiếp số VIN hoặc số máy để sao chép ngay và hiện xác nhận thành công. Nút Chi tiết tiếp tục mở thông tin xe.
+
 - **Quy Tắc Không Tự Động Chạy NPM/NPX Sau Khi Chỉnh Sửa**:
   1. Sau khi chỉnh sửa code hoặc giao diện, AI Agent **KHÔNG ĐƯỢC tự động chạy bất kỳ lệnh `npm` hoặc `npx` nào**.
   2. Chỉ được phép chạy `npm` hoặc `npx` khi Người dùng yêu cầu trực tiếp trong tác vụ hiện tại.
   3. Quy tắc này áp dụng cả cho kiểm tra TypeScript, build, Expo, Clasp và mọi công cụ được gọi thông qua `npm` hoặc `npx`.
+  4. **Quy Tắc Không Tự Động Commit/Push Git Khi Chưa Có Yêu Cầu**: AI Agent **KHÔNG ĐƯỢC tự động chạy `git commit` hoặc `git push`** sau khi chỉnh sửa code nếu Người dùng chưa yêu cầu trực tiếp trong tác vụ hiện tại.
 
 - **Quy Tắc Ghi Nhận Chỉ Đạo Quan Trọng (Important Directives & Memory Protocol)**:
   1. Kể từ hôm nay, bất cứ khi nào Người dùng (USER) đưa ra chỉ đạo quan trọng, lưu ý cốt lõi, quyết định kiến trúc hoặc quy chuẩn nghiệp vụ, AI Agent **BẮT BUỘC PHẢI CHỦ ĐỘNG GHI NHẬN VÀ LƯU NGAY** vào hệ thống quy tắc `.agents/AGENTS.md`.
-  2. Mọi chỉ đạo sau khi ghi nhận phải được lưu trữ và commit vào Git để vĩnh viễn không bị lãng quên hay mai một, đảm bảo toàn bộ các phiên làm việc tiếp theo luôn tự động kế thừa và tuân thủ tuyệt đối.
+  2. Mọi chỉ đạo sau khi ghi nhận **chỉ lưu trực tiếp vào file `.agents/AGENTS.md` trên máy cục bộ**, tuyệt đối **KHÔNG tự ý chạy `git commit` hay `git push`** trừ khi Người dùng có yêu cầu rõ ràng.
   3. **Tuyệt Đối Không Đề Xuất Lại**: Không bao giờ đề xuất lại các tính năng: Cổng hành trình xe cho khách hàng (Customer Tracking Portal), Báo giá lăn bánh PDF 1-chạm, Bot Telegram/Zalo cảnh báo, Biên bản bàn giao PDI ký số, Bảng vinh danh TVBH trên Smart TV. Mọi đề xuất tiếp theo phải tập trung vào nghiệp vụ quản trị nội bộ sâu hơn.
 
 - **Kỷ Luật Kiểm Thử Bắt Buộc Trước Khi Báo Cáo (Mandatory Test Verification Protocol)**:
@@ -34,9 +61,14 @@
   3. Mọi truy vấn và đồng bộ dữ liệu chỉ nhằm mục đích phục vụ công tác điều hành hợp pháp của showroom; luôn đảm bảo an toàn thông tin, bảo mật dữ liệu khách hàng và chỉ đọc (Read-only) khi không có chỉ định nghiệp vụ được phê duyệt rõ ràng.
 
 - **Kỷ Luật Thép Về Một Lệnh Duy Nhất & Tự Động Thực Thi Tuyệt Đối (Single Command & Zero Permission Prompts)**:
-  1. **Tự Động Thực Thi Không Xin Quyền (Zero Permission Prompts)**: Khi người dùng yêu cầu xử lý bất cứ việc gì, AI Agent phải tự chủ thực thi hoàn tất ngay. Tuyệt đối không chạy các lệnh shell tra cứu phức tạp (như grep, Select-String qua shell) vì sẽ làm IDE bật popup modal hỏi quyền xác nhận gây phiền hà và chậm trễ. Mọi thao tác đọc, tìm kiếm, sửa file code BẮT BUỘC dùng công cụ bản địa (`view_file`, `replace_file_content`, `multi_replace_file_content`).
+  1. **Tự Động Thực Thi Không Xin Quyền (Zero Permission Prompts)**: Khi người dùng yêu cầu xử lý bất cứ việc gì, AI Agent phải tự chủ thực thi hoàn tất ngay. Tuyệt đối không chạy các lệnh shell tra cứu phức tạp (như grep, Select-String qua shell) vì sẽ làm IDE bật popup modal hỏi quyền xác nhận gây phiền hà và chậm trễ. Mọi thao tác đọc, tìm kiếm, sửa file code BẮT BUỘC dùng công cụ bản địa (`read_file`, `edit_file`, `write_file`).
   2. **Một Lệnh Duy Nhất Xử Lý Dứt Điểm (Single Command Only)**: Khi cần chạy terminal, AI Agent **BẮT BUỘC PHẢI GOM TOÀN BỘ CÁC BƯỚC** vào **ĐÚNG 1 LỆNH TERMINAL DUY NHẤT** (chỉ dùng duy nhất để commit và push lên Git).
   3. **Ghi Ngắn Gọn Đúng 1 Câu Mục Đích**: Trước khi thực thi lệnh duy nhất đó, luôn ghi **ngắn gọn đúng 1 câu** nêu rõ mục đích để người dùng nắm rõ tức thì.
+
+- **Quy Chuẩn Đọc & Phân Tích Mã Nguồn Toàn Khối (Bulk & Continuous File Reading Protocol)**:
+  1. **Tuyệt Đối Tránh Đọc Vụn Vặt & Dò Lắt Nhắt**: Khi cần kiểm tra, phân tích hoặc sửa đổi một file (đặc biệt là các file component, service dài hàng nghìn dòng), AI Agent **TUYỆT ĐỐI KHÔNG nhảy dò từng đoạn nhỏ 20-50 dòng lắt nhắt** kèm nhiều lượt chờ suy nghĩ (`Thought for ...s`) gây chậm trễ và sốt ruột cho người dùng.
+  2. **Ưu Tiên Đọc Nguyên Khối Lớn Liền Mạch (Chunk 800 dòng/lần)**: Chủ động đọc liền các dải khối lớn tối đa (ví dụ 1–800, 801–1600, 1601–hết) trong đúng một nhịp để nạp trọn vẹn toàn bộ ngữ cảnh file vào bộ nhớ, hiểu thấu suốt 100% logic tổng thể trước khi phân tích hoặc chỉnh sửa.
+  3. **Chỉ Đọc Trọng Tâm Khi Phạm Vi Đã Xác Định Tuyệt Đối**: Chỉ đọc đoạn ngắn khi đã biết chính xác số dòng cần sửa cụ thể (để edit file); còn trong giai đoạn tìm hiểu, điều tra lỗi hoặc phân tích logic, bắt buộc phải đọc khối lớn liền mạch.
 
 - **Quy Chuẩn Hiển Thị Nút Tác Nghiệp Đơn Hàng (Action Button Visibility Protocol)**:
   1. **Nút "TB Giao Xe" (Thông Báo Giao Xe)**: Đơn hàng có trạng thái từ *Chờ phê duyệt* đến *Đã xuất hoá đơn* (bao gồm: Chờ duyệt, Yêu cầu XHĐ, Đã ghép, Chờ ký, Đã xuất hóa đơn) **TUYỆT ĐỐI KHÔNG HIỂN THỊ** nút "TB Giao Xe". Nút này chỉ xuất hiện khi đơn hàng đã hoàn tất xuất hóa đơn và chuyển sang giai đoạn bàn giao xe.
@@ -180,3 +212,17 @@
   1. Theo yêu cầu người dùng, màn hình đăng nhập laptop/desktop phải đồng bộ với phong cách mobile: nền sáng nhẹ, logo VinFast, khung đăng nhập tập trung ở giữa, bo góc mềm, cùng kiểu chữ và nút xanh đậm.
   2. Bỏ nền ô ly, kẹp giấy, hiệu ứng nghiêng và các khối giới thiệu bên trái khỏi màn hình đăng nhập laptop. Giữ đăng nhập bằng Passkey và các luồng quên mật khẩu/kích hoạt tài khoản.
   3. Phạm vi chỉ áp dụng màn hình đăng nhập; không thay đổi các màn hình nghiệp vụ desktop hoặc giao diện mobile.
+
+- **Bản Xem Trước Kho Xe Đọc Dữ Liệu Thật, Không Ghi Nhận Thao Tác**:
+  1. Theo yêu cầu người dùng, bản xem trước Kho xe được đọc dữ liệu kho thật nhưng mọi thao tác giữ/nhả, hàng chờ, ghép/đổi xe, gia hạn, sửa/xóa chỉ mô phỏng trong bộ nhớ trang.
+  2. Không gọi API/RPC ghi dữ liệu, gửi thông báo, ghi nhật ký hoạt động lên hệ thống hoặc kích hoạt đồng bộ DMS từ bản xem trước. Chỉ đọc bằng quyền hiện có; không dùng service-role hay thay đổi RLS.
+  3. Hiển thị rõ nguồn dữ liệu thật và trạng thái mô phỏng; không tự điền dữ liệu VIN giả khi trường nguồn thiếu. Có nút hủy thay đổi thử và tải lại kho thật.
+
+- **Giữ Nguyên Vị Trí Xe Khi Tác Nghiệp Kho**:
+  1. Khi người dùng bấm Giữ, Chờ, Nhả hoặc thao tác khác trên xe, giữ nguyên thứ tự VIN và vị trí cuộn; cập nhật dữ liệu không tự đưa xe lên đầu hoặc đẩy xe sang vị trí khác.
+  2. Xe vừa thao tác vẫn hiển thị ở vị trí cũ với trạng thái mới kể cả khi không còn khớp bộ lọc hiện tại. Áp dụng lại bộ lọc khi người dùng chủ động đổi hoặc xóa bộ lọc.
+  3. Xe thực sự bị xóa khỏi nguồn không được giữ lại dưới dạng bản ghi giả; xe mới được thêm cuối danh sách đang xem.
+
+- **Đóng Sheet Khi Bấm Bên Ngoài**:
+  1. Bấm vùng nền ngoài sheet (Thông báo, cài đặt, yêu cầu ghép xe...) phải đóng sheet; bấm nội dung bên trong không tự đóng hoặc bấm xuyên xuống màn hình phía sau.
+  2. Callback đóng phải đặt trạng thái đóng rõ ràng, không đảo trạng thái bằng toggle; nhiều lệnh đóng trong cùng sự kiện không được làm sheet mở lại.

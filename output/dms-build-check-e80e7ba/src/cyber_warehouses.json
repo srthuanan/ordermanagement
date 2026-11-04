@@ -1,0 +1,850 @@
+[
+  {
+    "id": "K00",
+    "name": "K00 - Kho xe ô tô Tổng công ty",
+    "short_name": "Kho xe ô tô Tổng công ty",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K01",
+    "name": "K01 - Kho xe DEMO",
+    "short_name": "Kho xe DEMO",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K02",
+    "name": "K02 - Kho phụ tùng",
+    "short_name": "Kho phụ tùng",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K03",
+    "name": "K03 - Kho phụ kiện",
+    "short_name": "Kho phụ kiện",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K04",
+    "name": "K04 - Kho vật tư Thái Nguyên",
+    "short_name": "Kho vật tư Thái Nguyên",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K05",
+    "name": "K05 - Kho vật tư phụ",
+    "short_name": "Kho vật tư phụ",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K06",
+    "name": "K06 - Kho công cụ dụng cụ",
+    "short_name": "Kho công cụ dụng cụ",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K07",
+    "name": "K07 - Kho nguyên vật liệu, vật tư đóng thùng",
+    "short_name": "Kho nguyên vật liệu, vật tư đóng thùng",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K08",
+    "name": "K08 - Kho thùng xe",
+    "short_name": "Kho thùng xe",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K09",
+    "name": "K09 - Kho hàng ký gửi",
+    "short_name": "Kho hàng ký gửi",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K10",
+    "name": "K10 - Kho vật tư khách sạn hữu nghị",
+    "short_name": "Kho vật tư khách sạn hữu nghị",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K100",
+    "name": "K100 - Kho thiết bị sạc V-GREEN",
+    "short_name": "Kho thiết bị sạc V-GREEN",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K101",
+    "name": "K101 - Kho trụ sạc VINFAST- Trả góp",
+    "short_name": "Kho trụ sạc VINFAST- Trả góp",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K102",
+    "name": "K102 - Kho Trụ sạc HO",
+    "short_name": "Kho Trụ sạc HO",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K103",
+    "name": "K103 - Kho xe ô tô Lĩnh Nam",
+    "short_name": "Kho xe ô tô Lĩnh Nam",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K104",
+    "name": "K104 - Kho Vật tư Sơn - Hà Huy Giáp",
+    "short_name": "Kho Vật tư Sơn - Hà Huy Giáp",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K105",
+    "name": "K105 - Kho Phụ tùng - Hà Huy Giáp",
+    "short_name": "Kho Phụ tùng - Hà Huy Giáp",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K106",
+    "name": "K106 - Kho xe ô tô - Hà Huy Giáp",
+    "short_name": "Kho xe ô tô - Hà Huy Giáp",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K107",
+    "name": "K107 - Kho CCDC Hà Huy Giáp",
+    "short_name": "Kho CCDC Hà Huy Giáp",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K108",
+    "name": "K108 - Kho Phụ Kiện Hà Huy Giáp",
+    "short_name": "Kho Phụ Kiện Hà Huy Giáp",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K109",
+    "name": "K109 - Kho VT Sơn Bắc Ninh",
+    "short_name": "Kho VT Sơn Bắc Ninh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K11",
+    "name": "K11 - Kho sơn, vật tư sơn - VF Sóc Sơn",
+    "short_name": "Kho sơn, vật tư sơn - VF Sóc Sơn",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K12",
+    "name": "K12 - Kho công cụ dụng cụ - VF Sóc Sơn",
+    "short_name": "Kho công cụ dụng cụ - VF Sóc Sơn",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K14",
+    "name": "K14 - Kho xe ô tô Suzuki Hoài Đức",
+    "short_name": "Kho xe ô tô Suzuki Hoài Đức",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K17",
+    "name": "K17 - Kho xe SR Cam Giá",
+    "short_name": "Kho xe SR Cam Giá",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K18",
+    "name": "K18 - Kho xe ô tô Vinfast Cầu Gia Bảy",
+    "short_name": "Kho xe ô tô Vinfast Cầu Gia Bảy",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K19",
+    "name": "K19 - Kho xe ô tô Vinfast Phổ Yên",
+    "short_name": "Kho xe ô tô Vinfast Phổ Yên",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K20",
+    "name": "K20 - Kho xe máy Vinfast Cầu Gia Bảy",
+    "short_name": "Kho xe máy Vinfast Cầu Gia Bảy",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K21",
+    "name": "K21 - Kho xe máy Vinfast Phổ Yên",
+    "short_name": "Kho xe máy Vinfast Phổ Yên",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K23",
+    "name": "K23 - Kho xe ô tô Vinfast Điện Biên",
+    "short_name": "Kho xe ô tô Vinfast Điện Biên",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K24",
+    "name": "K24 - Kho phụ tùng xe máy điện Vinfast",
+    "short_name": "Kho phụ tùng xe máy điện Vinfast",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K25",
+    "name": "K25 - Kho CCDC xe máy điện Vinfast",
+    "short_name": "Kho CCDC xe máy điện Vinfast",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K28",
+    "name": "K28 - kho phụ tùng Hòa Bình",
+    "short_name": "kho phụ tùng Hòa Bình",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K28_01",
+    "name": "K28_01 - Kho vật tư tiêu hao - Hoà Bình",
+    "short_name": "Kho vật tư tiêu hao - Hoà Bình",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K29",
+    "name": "K29 - KHO PHỤ TÙNG MĐ SÓC SƠN",
+    "short_name": "KHO PHỤ TÙNG MĐ SÓC SƠN",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K-29",
+    "name": "K-29 - KHO PHỤ TÙNG MĐ SÓC SƠN",
+    "short_name": "KHO PHỤ TÙNG MĐ SÓC SƠN",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K30",
+    "name": "K30 - Kho voucher ô tô",
+    "short_name": "Kho voucher ô tô",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K30_01",
+    "name": "K30_01 - Kho phụ tùng suzuki Quý Hạnh",
+    "short_name": "Kho phụ tùng suzuki Quý Hạnh",
+    "dvcs": "03",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K30_02",
+    "name": "K30_02 - Kho phụ tùng suzuki Quý Hạnh",
+    "short_name": "Kho phụ tùng suzuki Quý Hạnh",
+    "dvcs": "03",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K31",
+    "name": "K31 - Kho lazang phay",
+    "short_name": "Kho lazang phay",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K33",
+    "name": "K33 - Xuất trả đơn vị đóng thùng",
+    "short_name": "Xuất trả đơn vị đóng thùng",
+    "dvcs": "05",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K35",
+    "name": "K35 - Kho hàng ký gửi TITACO",
+    "short_name": "Kho hàng ký gửi TITACO",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K36",
+    "name": "K36 - Kho xe ô tô Vinfast tại Hải Phòng",
+    "short_name": "Kho xe ô tô Vinfast tại Hải Phòng",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K37",
+    "name": "K37 - Kho phụ tùng VINFAST cũ",
+    "short_name": "Kho phụ tùng VINFAST cũ",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K38",
+    "name": "K38 - Kho voucher XMĐ",
+    "short_name": "Kho voucher XMĐ",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K39",
+    "name": "K39 - Kho Phụ kiên theo xe",
+    "short_name": "Kho Phụ kiên theo xe",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K40",
+    "name": "K40 - Kho vật tư hành chính Vân Đạo",
+    "short_name": "Kho vật tư hành chính Vân Đạo",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K41",
+    "name": "K41 - Kho xe đăng kiểm",
+    "short_name": "Kho xe đăng kiểm",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K42",
+    "name": "K42 - Kho xe khách sạn",
+    "short_name": "Kho xe khách sạn",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K43",
+    "name": "K43 - Kho xe Gia Lai",
+    "short_name": "Kho xe Gia Lai",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K44",
+    "name": "K44 - Kho pin ô tô VinFasst",
+    "short_name": "Kho pin ô tô VinFasst",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K44.1",
+    "name": "K44.1 - Kho pin ô tô VinFasst",
+    "short_name": "Kho pin ô tô VinFasst",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K45",
+    "name": "K45 - Kho xe Đà Nẵng",
+    "short_name": "Kho xe Đà Nẵng",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K46",
+    "name": "K46 - Kho xe Hồ Chí Minh",
+    "short_name": "Kho xe Hồ Chí Minh",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K47",
+    "name": "K47 - Kho vật tư hành chính Hyundai",
+    "short_name": "Kho vật tư hành chính Hyundai",
+    "dvcs": "07",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K48",
+    "name": "K48 - Kho phụ tùng lô xe BCA",
+    "short_name": "Kho phụ tùng lô xe BCA",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K49",
+    "name": "K49 - Kho xe Hưng Yên - Hiệp Hòa",
+    "short_name": "Kho xe Hưng Yên - Hiệp Hòa",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K50",
+    "name": "K50 - Kho cơ khí",
+    "short_name": "Kho cơ khí",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K55",
+    "name": "K55 - Kho ô tô Nguyễn Trãi",
+    "short_name": "Kho ô tô Nguyễn Trãi",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K56",
+    "name": "K56 - Kho phụ tùng Vinfast Thuận An",
+    "short_name": "Kho phụ tùng Vinfast Thuận An",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K56_01",
+    "name": "K56_01 - Kho phụ tùng ngoài - Thuận An",
+    "short_name": "Kho phụ tùng ngoài - Thuận An",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K56_02",
+    "name": "K56_02 - Kho vật tư Sơn - Thuận An",
+    "short_name": "Kho vật tư Sơn - Thuận An",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K57",
+    "name": "K57 - Kho xe ô tô Vinfast Bắc Ninh",
+    "short_name": "Kho xe ô tô Vinfast Bắc Ninh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K58",
+    "name": "K58 - Kho xe ô tô Vinfast Lê Văn Việt",
+    "short_name": "Kho xe ô tô Vinfast Lê Văn Việt",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K59",
+    "name": "K59 - Kho xe ô tô Vinfast Times city",
+    "short_name": "Kho xe ô tô Vinfast Times city",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K60",
+    "name": "K60 - Kho xe ô tô Vinfast 3/2",
+    "short_name": "Kho xe ô tô Vinfast 3/2",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K61",
+    "name": "K61 - Kho xe Quang Trung",
+    "short_name": "Kho xe Quang Trung",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K62",
+    "name": "K62 - Kho xe ô tô Vinfast Vincom TN",
+    "short_name": "Kho xe ô tô Vinfast Vincom TN",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K63",
+    "name": "K63 - Kho xe VF Quý Hạnh - Sóc Sơn",
+    "short_name": "Kho xe VF Quý Hạnh - Sóc Sơn",
+    "dvcs": "01",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K64",
+    "name": "K64 - Kho phụ tùng Quang Trung",
+    "short_name": "Kho phụ tùng Quang Trung",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K65",
+    "name": "K65 - Kho xe ô tô Viinfast Vũng Tàu",
+    "short_name": "Kho xe ô tô Viinfast Vũng Tàu",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K66",
+    "name": "K66 - Kho xe ô tô Đăng kiểm TN",
+    "short_name": "Kho xe ô tô Đăng kiểm TN",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K69",
+    "name": "K69 - Kho xe ô tô Vinfast Hòa Bình",
+    "short_name": "Kho xe ô tô Vinfast Hòa Bình",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K70",
+    "name": "K70 - Kho phụ kiện Royal city",
+    "short_name": "Kho phụ kiện Royal city",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K72",
+    "name": "K72 - Kho phụ tùng Vũng Tàu",
+    "short_name": "Kho phụ tùng Vũng Tàu",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K72_01",
+    "name": "K72_01 - Kho vật tư tiêu hao/ Phụ tùng ngoài - Vũng Tàu",
+    "short_name": "Kho vật tư tiêu hao/ Phụ tùng ngoài - Vũng Tàu",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K72_02",
+    "name": "K72_02 - Kho phụ kiên - Vũng Tàu",
+    "short_name": "Kho phụ kiên - Vũng Tàu",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K74",
+    "name": "K74 - Kho xe ô tô Vinfast Mê Linh",
+    "short_name": "Kho xe ô tô Vinfast Mê Linh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K75",
+    "name": "K75 - Kho xe ô tô vinfast GO Việt Trì",
+    "short_name": "Kho xe ô tô vinfast GO Việt Trì",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K76",
+    "name": "K76 - Kho xe ô tô vinfast GO Thái Bình",
+    "short_name": "Kho xe ô tô vinfast GO Thái Bình",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K77",
+    "name": "K77 - Kho xe ô tô vinfast GO Hạ Long",
+    "short_name": "Kho xe ô tô vinfast GO Hạ Long",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K80",
+    "name": "K80 - Kho sạc ô tô VinFasst",
+    "short_name": "Kho sạc ô tô VinFasst",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K81",
+    "name": "K81 - Kho sạc ô tô VinFasst",
+    "short_name": "Kho sạc ô tô VinFasst",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K82",
+    "name": "K82 - Kho xe ô tô Hyundai BG",
+    "short_name": "Kho xe ô tô Hyundai BG",
+    "dvcs": "07",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K83",
+    "name": "K83 - Kho xe ô tô Thuận An",
+    "short_name": "Kho xe ô tô Thuận An",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K84",
+    "name": "K84 - Kho trụ sạc VINFAST",
+    "short_name": "Kho trụ sạc VINFAST",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K85",
+    "name": "K85 - Kho xe ô tô Dĩ An",
+    "short_name": "Kho xe ô tô Dĩ An",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K86",
+    "name": "K86 - Kho xe ô tô Vinfast Q12 - HCM",
+    "short_name": "Kho xe ô tô Vinfast Q12 - HCM",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K87",
+    "name": "K87 - Kho xe ô tô QL13 - HCM",
+    "short_name": "Kho xe ô tô QL13 - HCM",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K88",
+    "name": "K88 - Kho Phụ Tùng VF MĐ Mê Linh",
+    "short_name": "Kho Phụ Tùng VF MĐ Mê Linh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K89",
+    "name": "K89 - Kho VT Sơn - VF MĐ Mê Linh",
+    "short_name": "Kho VT Sơn - VF MĐ Mê Linh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K9",
+    "name": "K9 - Kho vật tư tiêu hao (Bắc Ninh)",
+    "short_name": "Kho vật tư tiêu hao (Bắc Ninh)",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K90",
+    "name": "K90 - Kho xe ô tô cũ",
+    "short_name": "Kho xe ô tô cũ",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K91",
+    "name": "K91 - Kho xe ô tô OCP 2",
+    "short_name": "Kho xe ô tô OCP 2",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K97",
+    "name": "K97 - Kho thiết bị sạc V-GREEN",
+    "short_name": "Kho thiết bị sạc V-GREEN",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K98",
+    "name": "K98 - Kho hàng ký gửi ( Bắc Ninh )",
+    "short_name": "Kho hàng ký gửi ( Bắc Ninh )",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "K99",
+    "name": "K99 - Kho phụ tùng Bắc Ninh",
+    "short_name": "Kho phụ tùng Bắc Ninh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KBN.TS",
+    "name": "KBN.TS - Kho xe Từ Sơn - Bắc Ninh",
+    "short_name": "Kho xe Từ Sơn - Bắc Ninh",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KHB.SH",
+    "name": "KHB.SH - Kho xe Shop House - Hòa Bình",
+    "short_name": "Kho xe Shop House - Hòa Bình",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KHC",
+    "name": "KHC - Kho Hành chính",
+    "short_name": "Kho Hành chính",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KHCM.PVD",
+    "name": "KHCM.PVD - Kho xe Phạm Văn Đồng - TPHCM",
+    "short_name": "Kho xe Phạm Văn Đồng - TPHCM",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KN",
+    "name": "KN - Kho phụ tùng ô tô hàng ngoài",
+    "short_name": "Kho phụ tùng ô tô hàng ngoài",
+    "dvcs": "07",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KTN.CK",
+    "name": "KTN.CK - Kho xe Xưởng cơ khí - Thái Nguyên",
+    "short_name": "Kho xe Xưởng cơ khí - Thái Nguyên",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KTN.NM",
+    "name": "KTN.NM - Kho xe Nhà máy SXLR - Thái Nguyên",
+    "short_name": "Kho xe Nhà máy SXLR - Thái Nguyên",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KTN.TL",
+    "name": "KTN.TL - Kho xe Tân Long - Thái Nguyên",
+    "short_name": "Kho xe Tân Long - Thái Nguyên",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  },
+  {
+    "id": "KTN.TT",
+    "name": "KTN.TT - Kho xe Tân Thịnh - Thái Nguyên",
+    "short_name": "Kho xe Tân Thịnh - Thái Nguyên",
+    "dvcs": "02",
+    "ttcp": "",
+    "acti": "1"
+  }
+]

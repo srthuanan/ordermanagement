@@ -1,9 +1,6 @@
 import React, { useState, useMemo, Suspense, useEffect, useCallback, useRef } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
-import { DropdownFilterConfig } from './components/ui/Filters';
-import TabbedFilter from './components/ui/TabbedFilter';
-import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
 
 // Lazy Load Views & Heavy Components
 const StockView = React.lazy(() => import('./components/StockView'));
@@ -17,7 +14,7 @@ const VirtualAssistant = React.lazy(() => import('./components/VirtualAssistant'
 const CancelRequestModal = React.lazy(() => import('./components/modals/CancelRequestModal'));
 const RequestInvoiceModal = React.lazy(() => import('./components/modals/RequestInvoiceModal'));
 const SupplementaryFileModal = React.lazy(() => import('./components/modals/SupplementaryFileModal'));
-const CreateRequestModal = React.lazy(() => import('./components/modals/CreateRequestModal'));
+import CreateRequestModal from './components/modals/CreateRequestModal';
 const SuperEditModal = React.lazy(() => import('./components/modals/SuperEditModal'));
 const EditOrderModal = React.lazy(() => import('./components/modals/EditOrderModal'));
 const ChangePasswordModal = React.lazy(() => import('./components/modals/ChangePasswordModal'));
@@ -34,6 +31,10 @@ const ReportBacklogModal = React.lazy(() => import('./components/modals/ReportBa
 // Eager imports for core components
 import { OrderDetailView } from './components/OrderDetailView';
 import OrderGridView from './components/OrderGridView';
+import PremiumOrdersWorkspace from './components/orders/PremiumOrdersWorkspace';
+import { DropdownFilterConfig } from './components/ui/Filters';
+import TabbedFilter from './components/ui/TabbedFilter';
+import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
 import CustomTitleBar from './components/layout/CustomTitleBar';
 import TVBHBacklogOrdersView from './components/orders/TVBHBacklogOrdersView';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './components/admin/CyberDnxPrintModal';
@@ -139,7 +140,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     const {
         notifications, unreadCount, isNotificationPanelOpen, notificationContainerRef,
-        toggleNotificationPanel, handleMarkAllAsRead, handleNotificationClick,
+        toggleNotificationPanel, handleMarkAllAsRead, handleNotificationClick, setIsNotificationPanelOpen,
         fetchNotifications: fetchNotificationsInternal, requestNotificationPermission
     } = useNotification(showToast);
 
@@ -168,8 +169,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
     const [mobileSubTab, setMobileSubTab] = useState<'list' | 'detail'>('list');
-
-
     const handleSelectOrderMobile = useCallback((order: Order) => {
         handleViewDetails(order);
         setMobileSubTab('detail');
@@ -198,6 +197,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     // State để điều hướng từ thông báo đến đúng xe
     const [stockSearch, setStockSearch] = useState('');
+
+    // Tự động giải phóng tìm kiếm kho khi chuyển sang màn hình khác
+    useEffect(() => {
+        if (activeView !== 'stock' && stockSearch) {
+            setStockSearch('');
+        }
+    }, [activeView, stockSearch]);
 
     // State hiển thị modal in phiếu DNX toàn cục cho TVBH khi Admin hoàn tất
     const [globalDnxPrintData, setGlobalDnxPrintData] = useState<CyberDnxPrintData | null>(null);
@@ -591,6 +597,41 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isLastArchive, setIsLastArchive] = useState(archivesLoadedFromCache);
     const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
 
+    useEffect(() => {
+        const handleCloseAllSheets = (e: Event) => {
+            const except = (e as CustomEvent)?.detail?.except;
+            if (except !== 'search') setIsGlobalSearchOpen(false);
+            if (except !== 'password') setIsChangePasswordModalOpen(false);
+            if (except !== 'notification') setIsNotificationPanelOpen(false);
+            if (except !== 'createRequest') setCreateRequestData({ isOpen: false });
+            setIsPendingStatsModalOpen(false);
+            setIsBacklogModalOpen(false);
+            setOrderToCancel(null);
+            setOrderToRequestInvoice(null);
+            setOrderToSupplement(null);
+            setOrderToEdit(null);
+            setOrderToRequestVC(null);
+            setOrderToConfirmVC(null);
+            setOrderToSuperEdit(null);
+            setExtensionVehicle(null);
+        };
+        window.addEventListener('close-all-sheets', handleCloseAllSheets);
+        return () => window.removeEventListener('close-all-sheets', handleCloseAllSheets);
+    }, [
+        setIsChangePasswordModalOpen,
+        setIsNotificationPanelOpen,
+        setCreateRequestData,
+        setIsPendingStatsModalOpen,
+        setOrderToCancel,
+        setOrderToRequestInvoice,
+        setOrderToSupplement,
+        setOrderToEdit,
+        setOrderToRequestVC,
+        setOrderToConfirmVC,
+        setOrderToSuperEdit,
+        setExtensionVehicle
+    ]);
+
     React.useEffect(() => {
         setIsLastArchive(archivesLoadedFromCache);
     }, [archivesLoadedFromCache]);
@@ -598,6 +639,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     // Update Document Title
     React.useEffect(() => {
         const baseTitles: Record<string, string> = {
+            'dashboard': 'Bàn Điều Khiển',
             'orders': 'Đơn Hàng',
             'stock': 'Kho Xe',
             'sold': 'Lịch Sử',
@@ -695,16 +737,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             { threshold: 0.1, rootMargin: '100px' }
         );
 
-        if (loadMoreRef.current) {
-            observer.observe(loadMoreRef.current);
-        }
-
-        return () => {
-            if (loadMoreRef.current) {
-                observer.unobserve(loadMoreRef.current);
-            }
-        };
-    }, [visibleCount, processedData.length, batchSize, setVisibleCount]);
+        const target = loadMoreRef.current;
+        if (target) observer.observe(target);
+        return () => observer.disconnect();
+    }, [visibleCount, processedData.length, batchSize, setVisibleCount, activeView, isLoadingHistory]);
 
     const handleLoadMoreArchives = async () => {
         setIsLoadingArchives(true);
@@ -760,7 +796,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 setSelectedOrder(paginatedData[0]);
             }
         }
-    }, [activeView, paginatedData, setSelectedOrder]);
+    }, [activeView, paginatedData, setSelectedOrder, isMobileScreen]);
 
     const vehicleAnalyticsData = useMemo((): AnalyticsData => {
         const pendingRequests = allHistoryData.filter((o: any) => o['Kết quả']?.toLowerCase().includes('chưa'));
@@ -855,6 +891,30 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const isLoading = isLoadingHistory;
         const error = errorHistory;
 
+        if (!isMobileScreen) return <PremiumOrdersWorkspace
+            orders={historyData} visibleOrders={paginatedData} filteredCount={processedData.length}
+            selectedOrderId={selectedOrder?.['Số đơn hàng']} filters={filters}
+            onFilterChange={handleFilterChange} onReset={handleResetFilters}
+            onSelect={handleSelectOrderMobile} onRefresh={() => refetchHistory()}
+            onCreateOrder={!isReferenceAccount ? () => setCreateRequestData({ isOpen: true }) : undefined}
+            onStats={() => setIsPendingStatsModalOpen(true)}
+            loading={isLoading} error={error} processingOrder={processingOrder}
+            loadMoreRef={loadMoreRef} onLoadMore={() => setVisibleCount(count => count + 20)}
+            hasArchives={!isLastArchive} loadingArchives={isLoadingArchives} onLoadArchives={handleLoadMoreArchives}
+        ><OrderDetailView
+            presentation="workspace" order={selectedOrder} orderList={processedData}
+            onNavigate={handleOrderNavigation} onCancel={setOrderToCancel}
+            onRequestInvoice={setOrderToRequestInvoice} onSupplement={setOrderToSupplement}
+            onRequestVC={setOrderToRequestVC} onConfirmVC={setOrderToConfirmVC}
+            onEdit={updatedOrder => handleEditSuccess(undefined, updatedOrder)}
+            onSelectPolicy={handleSelectPolicy} isReferenceAccount={isReferenceAccount}
+            isAdmin={isCurrentUserAdmin}
+            showToast={showToast} onInvoiceConfirm={handleRequestInvoice}
+            onCancelConfirm={handleCancelOrder} stockData={stockData}
+            onOpenApproval={isCurrentUserAdmin && !isReferenceAccount ? order => showOrderInAdmin(order, 'invoices') : undefined}
+            onClose={() => setSelectedOrder(null)}
+        /></PremiumOrdersWorkspace>;
+
         // --- FILTER CONFIGS ---
         // Exclude 'carModel' from general filters as it is now used for Tabs
         const dropdownConfigs: DropdownFilterConfig[] = [
@@ -918,7 +978,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
 
         return (
-            <div className={`flex flex-col h-full`}>
+            <div className="flex min-h-0 flex-1 flex-col gap-2 h-full">
                 <div className="flex-shrink-0 relative z-20">
                     <TabbedFilter
                         tabs={tabs}
@@ -1027,7 +1087,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
                             {/* Right Pane: Embedded Order Details Panel (70% width on Desktop, Full height when active on Mobile) */}
                             <div className={`w-full lg:w-[70%] ${mobileSubTab === 'detail' ? 'h-full flex' : 'hidden lg:flex'} lg:h-full relative overflow-hidden p-1 flex-col`}>
-                                <div className="flex-1 min-h-0 h-full">
+                                <div className="flex-1 min-h-0 h-full flex flex-col">
                                 <OrderDetailView
                                     order={selectedOrder}
                                     orderList={processedData}
@@ -1040,6 +1100,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     onEdit={(updatedOrder) => handleEditSuccess(undefined, updatedOrder)}
                                     onSelectPolicy={handleSelectPolicy}
                                     isReferenceAccount={isReferenceAccount}
+                                    isAdmin={isCurrentUserAdmin}
                                     showToast={showToast}
                                     onInvoiceConfirm={handleRequestInvoice}
                                     onCancelConfirm={handleCancelOrder}
@@ -1156,7 +1217,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         );
     }
 
-    // Khi đang truy cập bằng điện thoại và ở màn hình Đơn hàng (Mobile-First iOS Feed)
+
     if (isMobileScreen && activeView === 'orders') {
         return (
             <>
@@ -1293,6 +1354,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     processingVin={processingVin}
                     allOrders={allHistoryData}
                     forcedSearch={stockSearch}
+                                                    onClearForcedSearch={() => setStockSearch('')}
                     isReferenceAccount={isReferenceAccount}
                     onBack={() => setActiveView('dashboard')}
                 />
@@ -1526,8 +1588,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
                 <div id="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)} className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}></div>
 
-                <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out w-full pb-16 lg:pb-0`}>
+                <div className={`${!isMobileScreen ? 'app-desktop-sidebar-shell' : ''} relative h-screen flex flex-col transition-all duration-300 ease-in-out w-full pb-16 lg:pb-0`}>
                     <Header
+                        presentation={isMobileScreen ? 'navbar' : 'sidebar'}
                         setCreateRequestData={setCreateRequestData}
                         toggleNotificationPanel={toggleNotificationPanel}
                         unreadCount={unreadCount}
@@ -1558,10 +1621,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         activeView={activeView}
                         setActiveView={setActiveView}
                         isCurrentUserAdmin={isCurrentUserAdmin}
-                        onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
+                        onOpenGlobalSearch={() => {
+                            window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'search' } }));
+                            setIsGlobalSearchOpen(prev => !prev);
+                        }}
                         currentUser={currentUser}
                         userRole={userRole}
-                        onOpenChangePassword={() => setIsChangePasswordModalOpen(true)}
+                        onOpenChangePassword={() => {
+                            window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'password' } }));
+                            setIsChangePasswordModalOpen(true);
+                        }}
                         isStockEnabled={isStockEnabled}
                         isTogglingStock={isTogglingStock}
                         handleToggleStockGlobal={handleToggleStockGlobal}
@@ -1579,8 +1648,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     />
 
 
-                    <main className={`flex-1 p-0.5 flex flex-col overflow-y-auto`}>
-                        <div hidden={activeView !== 'orders'} className="h-full">
+                    <main className="flex-1 min-h-0 flex flex-col overflow-y-auto p-0.5 no-scrollbar">
+
+                        <div hidden={activeView !== 'orders'} className="h-full flex flex-col">
                             {renderOrdersContent()}
                         </div>
                         <div hidden={activeView !== 'backlog'} className="h-full">
@@ -1784,14 +1854,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         isReferenceAccount={isReferenceAccount}
                                         mobileMode={isMobileScreen}
                                         onBack={() => setActiveView('dashboard')}
+                                        onEnsureAdminView={() => setActiveView('admin')}
                                     />
                                 </Suspense>
                             )}
                         </div>
                     </main >
-                    <footer className="hidden lg:flex flex-shrink-0 h-7 px-5 bg-transparent items-center justify-between text-[10px] select-none">
+                    <footer className="hidden lg:flex flex-shrink-0 h-7 px-5 bg-[#142236] border-t border-white/[0.08] text-[#a7b3c4] items-center justify-between text-[10px] select-none">
                         <RealtimeFooterClock />
-                        <span className="font-bold tracking-[0.22em] text-slate-400/80 uppercase">© 2026 ORDER MANAGEMENT</span>
+                        <span className="font-bold tracking-[0.22em] text-[#a7b3c4]/70 uppercase">© 2026 ORDER MANAGEMENT</span>
                     </footer>
                 </div >
 

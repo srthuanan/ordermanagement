@@ -1,0 +1,16 @@
+const SPREADSHEET_ID = "1CzYUfDAcwt4D64UIZIUC77lZ2lOYQ257xlmVXy2nZG0";
+const SHOWROOM_SPREADSHEET_ID = "1GMAX4_0Xubwz4ByRN9eDIokZntLO98NlmzeURkYBc8M";
+const SHOWROOM_YEUCAUXHD_SHEET = "_DATA_YEUCAUXHD";
+
+// ===== CẤU HÌNH SUPABASE =====
+var SUPABASE_URL = PropertiesService.getScriptProperties().getProperty('SUPABASE_URL') || "https://jwvgxqrkjlbewvpkvucj.supabase.co";
+var SUPABASE_SERVICE_KEY = PropertiesService.getScriptProperties().getProperty('SUPABASE_SERVICE_KEY') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU";
+
+const DRIVE_FOLDER_ID = "1eLbuAfT349u0D5hF6aJgTzS7cmKUs0ab";
+const ADMIN_EMAIL = "showroomthuanan@gmail.com";
+
+// Cấu hình Telegram
+const TELEGRAM_BOT_TOKEN = "8444242103:AAGupLJ1RJS3b3LD5LMEYIWMfwCFW3mzhB4";
+const TELEGRAM_CHAT_ID = "5812034168";
+
+const EMAIL_BACKGROUND_IMAGE_URL = "https://raw.githubusercontent.com/srthuanan/ordermanagement/refs/heads/main/pictures/b557cf85e54efd6a7da71db596ca4754.jpg";

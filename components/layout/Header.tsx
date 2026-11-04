@@ -1,6 +1,5 @@
 import React from 'react';
-import moment from 'moment';
-import { Notification, NotificationType } from '../../types';
+import { Notification } from '../../types';
 
 import yeucauAnimationUrl from '../../pictures/yeucau.json?url';
 import logoShowroomThuanAn from '../../pictures/logo_showroom_thuan_an.webp';
@@ -9,6 +8,7 @@ import logoShowroomThuanAnHalloween from '../../pictures/logo_showroom_thuan_an_
 import tabActiveTrungThuBg from '../../pictures/tab_active_trung_thu_bg.webp';
 import { isMidAutumnSeason, isHalloweenSeason } from '../ui/HolidayThemeDecorator';
 import Button from '../ui/Button';
+import NotificationSheet from './NotificationSheet';
 import Avatar from '../ui/Avatar';
 import { CyberAutoSyncBadge } from '../ui/CyberAutoSyncBadge';
 import { SwapInboxModal } from '../modals/SwapInboxModal';
@@ -20,8 +20,9 @@ import { recordAndGetVisitCount } from '../../services/visitCounterService';
 
 
 interface HeaderProps {
+    presentation?: 'navbar' | 'sidebar';
     setCreateRequestData: (data: { isOpen: boolean }) => void;
-    toggleNotificationPanel: () => void;
+    toggleNotificationPanel: (open?: boolean) => void;
     unreadCount: number;
     isNotificationPanelOpen: boolean;
     notifications: Notification[];
@@ -58,6 +59,7 @@ import { useGlobalNotificationContext } from '../context/GlobalNotificationConte
 import speakerAnim from '../../pictures/speaker_anim.gif';
 import NotificationDetailModal from '../modals/NotificationDetailModal';
 import InternalChat from '../chat/InternalChat';
+import './sidebar-navigation.css';
 
 const formatDisplayName = (name: string) => {
     if (!name) return '';
@@ -65,18 +67,8 @@ const formatDisplayName = (name: string) => {
     return name;
 };
 
-const getCompactTime = (timestamp: any) => {
-    const min = moment().diff(moment(timestamp), 'minutes');
-    if (min < 1) return 'Vừa xong';
-    if (min < 60) return `${min}p`;
-    const hr = moment().diff(moment(timestamp), 'hours');
-    if (hr < 24) return `${hr}h`;
-    const day = moment().diff(moment(timestamp), 'days');
-    if (day < 7) return `${day}d`;
-    return moment(timestamp).format('DD/MM');
-};
-
 const Header: React.FC<HeaderProps> = ({
+    presentation = 'navbar',
     setCreateRequestData,
     toggleNotificationPanel,
     unreadCount,
@@ -169,7 +161,18 @@ const Header: React.FC<HeaderProps> = ({
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        const handleCloseAllSheets = (e: Event) => {
+            const except = (e as CustomEvent)?.detail?.except;
+            if (except !== 'profileMenu') setIsProfileMenuOpen(false);
+            if (except !== 'adminControls') setIsAdminControlsOpen(false);
+            if (except !== 'notificationHistory') setIsNotificationHistoryOpen(false);
+            if (except !== 'swapInbox') setIsSwapInboxOpen(false);
+        };
+        window.addEventListener('close-all-sheets', handleCloseAllSheets);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('close-all-sheets', handleCloseAllSheets);
+        };
     }, []);
 
 
@@ -189,8 +192,9 @@ const Header: React.FC<HeaderProps> = ({
 
     return (
         <>
-            <header className="relative sticky top-0 w-full z-[1010] h-14 bg-white/80 border-slate-200/80 backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-6 shadow-sm">
-                <div className="flex items-center gap-2 sm:gap-4 relative z-10">
+            <header onClick={(e) => { if (!(e.target as HTMLElement).closest('button, a, input, select, textarea, .sidebar-popover, #notification-sheet')) { window.dispatchEvent(new CustomEvent('close-all-sheets')); } }} className={`${presentation === 'sidebar' ? 'app-sidebar-navigation' : ''} relative sticky top-0 z-[1010] h-14 w-full shrink-0 backdrop-blur-xl bg-white/80 border-b border-slate-200/80 shadow-sm flex items-center justify-between px-4 sm:px-6`}>
+                <div className="app-navigation-brand flex items-center gap-2 sm:gap-4 relative z-10">
+                    {presentation === 'sidebar' ? <span className="app-sidebar-wordmark" title="VinFast Thuận An" aria-label="VinFast Thuận An">V</span> : (
                     <div 
                         className="flex flex-col cursor-default select-none relative" 
                         title={isHalloween ? "VinFast Showroom Thuận An - Halloween Edition" : (isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An")}
@@ -210,31 +214,34 @@ const Header: React.FC<HeaderProps> = ({
                                 pointerEvents: 'none'
                             }}
                         />
-                    </div>
+                    </div>)}
 
                 </div>
 
                 {/* Top Navigation — Frameless */}
-                <nav className="hidden lg:flex items-center gap-1 absolute left-[41%] xl:left-[43%] 2xl:left-[45%] transform -translate-x-1/2 transition-all duration-300 z-10">
+                <nav aria-label="Điều hướng chính" className="app-main-navigation hidden lg:flex items-center gap-1 absolute left-[41%] xl:left-[43%] 2xl:left-[45%] transform -translate-x-1/2 transition-all duration-300 z-10">
                         {navItems.map((item) => {
                             const isActive = activeView === item.id;
                             return (
                                 <button
                                     key={item.id}
-                                    onClick={() => setActiveView(item.id as any)}
+                                    type="button"
+                                    aria-label={item.label}
+                                    aria-current={isActive ? 'page' : undefined}
+                                    onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets')); setActiveView(item.id as any); }}
                                     title={item.label}
                                     className={`
                                         relative h-8 rounded-xl font-semibold flex items-center justify-center overflow-hidden
                                         transition-all duration-300 ease-out outline-none group select-none
                                         ${isActive
-                                            ? (isMidAutumn
+                                            ? (isMidAutumn && presentation !== 'sidebar'
                                                 ? 'text-slate-800 font-bold shadow-sm border border-amber-200/90'
                                                 : 'bg-slate-100 text-slate-900 px-4 gap-2 font-bold shadow-sm'
                                               )
                                             : 'text-gray-400 hover:text-gray-700 hover:bg-slate-100/70 w-9'
                                         }
                                     `}
-                                    style={isActive && isMidAutumn ? {
+                                    style={isActive && isMidAutumn && presentation !== 'sidebar' ? {
                                         backgroundImage: `url(${tabActiveTrungThuBg})`,
                                         backgroundPosition: 'left center',
                                         backgroundSize: 'auto 100%',
@@ -244,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({
                                     } : {}}
                                 >
                                     {isActive ? (
-                                        isMidAutumn ? (
+                                        isMidAutumn && presentation !== 'sidebar' ? (
                                             <span className="text-[11px] font-bold tracking-wide whitespace-nowrap text-slate-800">
                                                 {item.label}
                                             </span>
@@ -263,10 +270,11 @@ const Header: React.FC<HeaderProps> = ({
                     </nav>
 
 
-                <div className="flex items-center justify-end gap-1.5 sm:gap-3 relative z-10">
-                    {!isReferenceAccount && (
+                <div className="app-navigation-utilities flex items-center justify-end gap-1.5 sm:gap-3 relative z-10">
+                    {!isReferenceAccount && presentation === 'sidebar' && <button type="button" className="app-sidebar-create" title="Tạo yêu cầu mới" aria-label="Tạo yêu cầu mới" onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'createRequest' } })); setCreateRequestData({ isOpen: true }); }}><i className="fas fa-plus" aria-hidden="true" /></button>}
+                    {!isReferenceAccount && presentation !== 'sidebar' && (
                         <div
-                            onClick={() => setCreateRequestData({ isOpen: true })}
+                            onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'createRequest' } })); setCreateRequestData({ isOpen: true }); }}
                             title="Tạo Yêu Cầu Mới"
                             className="flex cursor-pointer relative z-10 items-center justify-center w-[90px] sm:w-[120px] lg:w-[150px] h-[40px] transition-transform hover:scale-105 active:scale-95 mr-1"
                         >
@@ -284,9 +292,9 @@ const Header: React.FC<HeaderProps> = ({
                     )}
 
                     {/* Controls Dock */}
-                    <div className="flex items-center gap-1 sm:gap-1.5 transition-all">
+                    <div className="app-navigation-controls flex items-center gap-1 sm:gap-1.5 transition-all">
                         {isReferenceAccount && (
-                            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-xs animate-pulse mx-1">
+                            <div className="app-navigation-reference hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-xs animate-pulse mx-1">
                                 <i className="fa-solid fa-eye text-amber-600 text-xs"></i>
                                 <span className="text-[10px] font-black text-amber-700 tracking-tighter uppercase whitespace-nowrap">BẢN THAM KHẢO (CHỈ XEM)</span>
                             </div>
@@ -298,12 +306,12 @@ const Header: React.FC<HeaderProps> = ({
 
                         {/* Huy hiệu trạng thái kết nối máy VP / Cloud Render */}
                         {isCurrentUserAdmin && (
-                            <div className="hidden sm:flex items-center mx-1">
+                            <div className="app-navigation-sync hidden sm:flex items-center mx-1">
                                 <CyberAutoSyncBadge />
                             </div>
                         )}
 
-                        <div className="flex items-center gap-1 relative">
+                        <div className="app-navigation-admin flex items-center gap-1 relative">
                             {isCurrentUserAdmin && (
                                 <>
                                     <Button
@@ -318,8 +326,9 @@ const Header: React.FC<HeaderProps> = ({
                                     {/* Menu Bật/Tắt Tính Năng Gọn Gàng Cho Admin */}
                                     <div ref={adminControlsRef} className="relative">
                                         <Button
-                                            onClick={() => setIsAdminControlsOpen(prev => !prev)}
+                                            onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'adminControls' } })); setIsAdminControlsOpen(prev => !prev); }}
                                             variant="ghost"
+                                            data-active={isAdminControlsOpen}
                                             className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all ${
                                                 isAdminControlsOpen
                                                     ? 'bg-blue-50 text-blue-600 shadow-xs ring-1 ring-blue-500/20'
@@ -331,83 +340,69 @@ const Header: React.FC<HeaderProps> = ({
                                         </Button>
 
                                         {isAdminControlsOpen && (
-                                            <div className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 p-3 z-[1000] animate-fade-in flex flex-col gap-1.5">
-                                                <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-1">
-                                                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                                                        <i className="fas fa-sliders text-blue-500"></i> Tính Năng TVBH
-                                                    </span>
-                                                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
-                                                        Admin
-                                                    </span>
+                                            <div className="app-navigation-admin-menu sidebar-popover absolute right-0 top-full mt-2 w-60 z-[1000] animate-fade-in">
+                                                <div className="sidebar-popover-header">
+                                                    <span className="sidebar-popover-title">Tính năng TVBH</span>
+                                                    <span className="sidebar-popover-badge">Admin</span>
                                                 </div>
 
-                                                {/* Kho xe */}
-                                                <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50/80 transition-colors">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${isStockEnabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
-                                                            <i className={`fas ${isTogglingStock ? 'fa-spinner fa-spin' : (isStockEnabled ? 'fa-warehouse' : 'fa-eye-slash')}`}></i>
-                                                        </div>
-                                                        <div className="flex flex-col text-left">
-                                                            <span className="text-xs font-bold text-slate-800">Kho Xe</span>
-                                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                <div className="sidebar-popover-list">
+                                                    {/* Kho xe */}
+                                                    <div className="sidebar-toggle-row">
+                                                        <div className="sidebar-toggle-copy">
+                                                            <span className="sidebar-toggle-label">Kho xe</span>
+                                                            <span className="sidebar-toggle-sub">
                                                                 {isStockEnabled ? 'Đang mở cho TVBH' : 'Đang ẩn với TVBH'}
                                                             </span>
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleToggleStockGlobal}
+                                                            disabled={isTogglingStock}
+                                                            className={`sidebar-switch ${isStockEnabled ? 'is-on' : ''}`}
+                                                            aria-pressed={isStockEnabled}
+                                                        >
+                                                            <span className="sidebar-switch-thumb" />
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleToggleStockGlobal}
-                                                        disabled={isTogglingStock}
-                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isStockEnabled ? 'bg-indigo-600' : 'bg-slate-300'} disabled:opacity-50`}
-                                                    >
-                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${isStockEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                                                    </button>
-                                                </div>
 
-                                                {/* Trợ lý AI */}
-                                                <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50/80 transition-colors">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${isChatEnabled ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
-                                                            <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-comment-slash')}`}></i>
-                                                        </div>
-                                                        <div className="flex flex-col text-left">
-                                                            <span className="text-xs font-bold text-slate-800">Trợ Lý AI</span>
-                                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                    {/* Trợ lý AI */}
+                                                    <div className="sidebar-toggle-row">
+                                                        <div className="sidebar-toggle-copy">
+                                                            <span className="sidebar-toggle-label">Trợ lý AI</span>
+                                                            <span className="sidebar-toggle-sub">
                                                                 {isChatEnabled ? 'Đang kích hoạt' : 'Đang tắt'}
                                                             </span>
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={_handleToggleChatGlobal}
+                                                            disabled={_isTogglingChat}
+                                                            className={`sidebar-switch ${isChatEnabled ? 'is-on' : ''}`}
+                                                            aria-pressed={isChatEnabled}
+                                                        >
+                                                            <span className="sidebar-switch-thumb" />
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={_handleToggleChatGlobal}
-                                                        disabled={_isTogglingChat}
-                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isChatEnabled ? 'bg-blue-600' : 'bg-slate-300'} disabled:opacity-50`}
-                                                    >
-                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${isChatEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                                                    </button>
-                                                </div>
 
-                                                {/* Tab KHTN */}
-                                                <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50/80 transition-colors">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${isCrmEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                                                            <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin' : (isCrmEnabled ? 'fa-user-plus' : 'fa-user-slash')}`}></i>
-                                                        </div>
-                                                        <div className="flex flex-col text-left">
-                                                            <span className="text-xs font-bold text-slate-800">Tab KHTN</span>
-                                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                    {/* Tab KHTN */}
+                                                    <div className="sidebar-toggle-row">
+                                                        <div className="sidebar-toggle-copy">
+                                                            <span className="sidebar-toggle-label">Tab KHTN</span>
+                                                            <span className="sidebar-toggle-sub">
                                                                 {isCrmEnabled ? 'Đang mở cho TVBH' : 'Đang tắt với TVBH'}
                                                             </span>
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleToggleCrmGlobal}
+                                                            disabled={isTogglingCrm}
+                                                            className={`sidebar-switch ${isCrmEnabled ? 'is-on' : ''}`}
+                                                            aria-pressed={isCrmEnabled}
+                                                        >
+                                                            <span className="sidebar-switch-thumb" />
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleToggleCrmGlobal}
-                                                        disabled={isTogglingCrm}
-                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isCrmEnabled ? 'bg-emerald-600' : 'bg-slate-300'} disabled:opacity-50`}
-                                                    >
-                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${isCrmEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                                                    </button>
                                                 </div>
                                             </div>
                                         )}
@@ -418,154 +413,45 @@ const Header: React.FC<HeaderProps> = ({
 
                         {/* Consolidated Notification Center Bell */}
                         <div ref={notificationContainerRef} className="static sm:relative">
-                            <Button onClick={toggleNotificationPanel} variant="ghost" className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all group relative" title="Hộp thư thông báo & Đổi xe">
+                            <Button onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'notification' } })); toggleNotificationPanel(); }} aria-haspopup="dialog" aria-controls="notification-sheet" aria-expanded={isNotificationPanelOpen} data-active={isNotificationPanelOpen} variant="ghost" className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all group relative" title="Hộp thư thông báo & Đổi xe">
                                 <i className="fas fa-bell text-[14px] group-hover:scale-110 transition-transform"></i>
                                 {(unreadCount + pendingSwapCount) > 0 && (
-                                    <span id="notification-badge" className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 text-[9.5px] font-black text-white shadow-xs ring-2 ring-white px-1 z-10 animate-bounce">
+                                    <span id="notification-badge" className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 text-[9.5px] font-black text-white shadow-xs ring-2 ring-white px-1 z-10">
                                         {(unreadCount + pendingSwapCount) > 9 ? '9+' : (unreadCount + pendingSwapCount)}
                                     </span>
                                 )}
                             </Button>
 
-                            <div className={`notification-panel !fixed md:!absolute top-[56px] md:top-[calc(100%+12px)] left-0 right-0 md:left-auto md:right-0 w-full md:w-[360px] h-auto max-h-[45dvh] md:max-h-[350px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] border-t md:border border-slate-200 md:border-white/60 md:rounded-2xl transition-all duration-300 origin-top z-[10000] flex-col ${isNotificationPanelOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
-
-                                <div className="notification-panel-header flex justify-between items-center !px-4 !py-3 !bg-slate-50/50 !border-b !border-slate-100">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-700">Thông Báo</span>
-                                        {(unreadCount + pendingSwapCount) > 0 && (
-                                            <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-[0_2px_8px_rgba(239,68,68,0.4)]">
-                                                {unreadCount + pendingSwapCount}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {/* Quick Swap Inbox Button */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsSwapInboxOpen(true);
-                                            }}
-                                            className="text-[10px] font-extrabold bg-amber-50 text-amber-800 px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-all border border-amber-200/80 shadow-2xs flex items-center gap-1.5 group"
-                                            title="Mở Hộp Thư Trao Đổi Xe"
-                                        >
-                                            <i className="fa-solid fa-right-left text-amber-600 group-hover:rotate-180 transition-transform text-xs"></i>
-                                            <span>Hộp Thư Đổi Xe</span>
-                                            {pendingSwapCount > 0 && (
-                                                <span className="bg-amber-500 text-white text-[8px] px-1.5 rounded-full font-extrabold">
-                                                    {pendingSwapCount}
-                                                </span>
-                                            )}
-                                        </button>
-
-                                        {/* Browser Notification Permission Button */}
-                                        {('Notification' in window) && window.Notification.permission !== 'granted' && (
-                                            <button
-                                                onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    await requestNotificationPermission();
-                                                }}
-                                                className="text-[10px] font-bold bg-white text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-50 transition-all border border-blue-100/50 shadow-2xs flex items-center gap-1.5"
-                                                title="Cho phép thông báo đẩy trên trình duyệt"
-                                            >
-                                                <i className="fas fa-bell"></i>
-                                                <span>Bật đẩy</span>
-                                            </button>
-                                        )}
-
-                                        {unreadCount > 0 && (
-                                            <Button onClick={handleMarkAllAsRead} variant="ghost" size="sm" className="text-[10px] font-medium text-slate-400 hover:text-blue-600 transition-colors !h-auto !p-0">Đọc tất cả</Button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="notification-list p-2 flex flex-col gap-1.5 flex-1 overflow-y-auto bg-slate-50/50">
-                                    {/* Prominent Banner for Pending Swap Requests */}
-                                    {pendingSwapCount > 0 && (
-                                        <div
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsSwapInboxOpen(true);
-                                            }}
-                                            className="px-3.5 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-xl shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all flex items-center justify-between group"
-                                        >
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center text-xs shadow-inner">
-                                                    <i className="fa-solid fa-right-left group-hover:rotate-180 transition-transform duration-300"></i>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-extrabold leading-tight">Yêu Cầu Trao Đổi Xe</p>
-                                                    <p className="text-[10px] text-amber-100 font-medium">Bạn có {pendingSwapCount} yêu cầu trao đổi cần xử lý</p>
-                                                </div>
-                                            </div>
-                                            <i className="fa-solid fa-chevron-right text-xs opacity-80 group-hover:translate-x-1 transition-transform"></i>
-                                        </div>
-                                    )}
-
-                                    {notifications.length > 0 ? (
-                                        notifications.map((notification, index) => {
-                                            const iconMap: Record<NotificationType, { icon: string, color: string }> = {
-                                                success: { icon: 'fa-check-circle', color: 'text-emerald-600' },
-                                                danger: { icon: 'fa-times-circle', color: 'text-red-600' },
-                                                warning: { icon: 'fa-exclamation-triangle', color: 'text-amber-600' },
-                                                info: { icon: 'fa-info-circle', color: 'text-blue-600' },
-                                                error: { icon: 'fa-times-circle', color: 'text-red-600' },
-                                                stock_hero: { icon: 'fa-car', color: 'text-indigo-600' },
-                                                broadcast: { icon: 'fa-bullhorn', color: 'text-red-600' }
-                                            };
-                                            const type = notification.type === 'error' ? 'danger' : notification.type;
-                                            const iconDef = iconMap[type as NotificationType] || { icon: 'fa-bell', color: 'text-slate-400' };
-                                            return (
-                                                <div
-                                                    key={notification.id || index}
-                                                    className={`relative px-3 py-2.5 flex cursor-pointer transition-all rounded-xl border hover:shadow-md hover:-translate-y-[1px] ${!notification.isRead ? 'bg-white border-blue-200 shadow-sm shadow-blue-500/5' : 'bg-white/60 border-slate-200/60 shadow-sm hover:border-slate-300 hover:bg-white'}`}
-                                                    onClick={(e) => handleNotificationClick(notification, e)}
-                                                >
-                                                    {!notification.isRead && (
-                                                        <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-blue-500 rounded-l-xl opacity-80"></div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0 flex items-start gap-3">
-                                                        <div className="flex-1 min-w-0 flex items-start gap-2">
-                                                            <div className={`flex-shrink-0 mt-[2px] ${iconDef.color}`}>
-                                                                <i className={`fa-solid ${iconDef.icon} text-[11px]`}></i>
-                                                            </div>
-                                                            <div className={`text-[12px] leading-relaxed ${!notification.isRead ? 'font-semibold text-slate-800' : 'font-medium text-slate-500'}`} dangerouslySetInnerHTML={{ __html: notification.message }}></div>
-                                                        </div>
-                                                        <div className="flex-shrink-0 flex flex-col items-end gap-1.5 mt-0.5">
-                                                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest whitespace-nowrap">
-                                                                {getCompactTime(notification.timestamp)}
-                                                            </p>
-                                                            {index === 0 && !notification.isRead && (
-                                                                <span className="text-[8px] font-black text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded shadow-sm border border-blue-200">MỚI</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        pendingSwapCount === 0 && (
-                                            <div className="no-notifications flex flex-col items-center justify-center py-12">
-                                                <i className="fa-solid fa-bell-slash text-2xl text-slate-300 mb-3 block"></i>
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Không có thông báo nào</p>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            </div>
+                            <NotificationSheet
+                                isOpen={isNotificationPanelOpen}
+                                notifications={notifications}
+                                unreadCount={unreadCount}
+                                pendingSwapCount={pendingSwapCount}
+                                onClose={() => toggleNotificationPanel(false)}
+                                onNotificationClick={handleNotificationClick}
+                                onMarkAllAsRead={handleMarkAllAsRead}
+                                onOpenSwapInbox={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'swapInbox' } })); setIsSwapInboxOpen(true); }}
+                                onRequestPermission={requestNotificationPermission}
+                            />
                         </div>
 
-                        <div className="w-px h-4 bg-slate-200/80 mx-1"></div>
+                        <div className="app-navigation-divider w-px h-4 bg-slate-200/80 mx-1"></div>
 
                         {/* Profile Pill */}
-                        <div ref={profileMenuRef} className="relative">
-                            <div
-                                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                                className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 py-1 px-2 rounded-xl transition-all border border-transparent group"
+                        <div ref={profileMenuRef} className="app-navigation-profile relative">
+                            <button
+                                type="button"
+                                aria-label={`Tài khoản ${formatDisplayName(currentUser || currentUserName)}`}
+                                title={formatDisplayName(currentUser || currentUserName) || 'Tài khoản'}
+                                aria-expanded={isProfileMenuOpen}
+                                aria-controls="app-profile-menu"
+                                onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'profileMenu' } })); setIsProfileMenuOpen(!isProfileMenuOpen); }}
+                                className="app-navigation-profile-trigger flex items-center gap-2 cursor-pointer hover:bg-slate-100 py-1 px-2 rounded-xl transition-all border border-transparent group"
                             >
                                 <div className="relative flex-shrink-0">
                                     <Avatar name={currentUser} size="sm" />
                                 </div>
-                                <div className="flex flex-col items-start leading-tight">
+                                <div className="app-navigation-profile-copy flex flex-col items-start leading-tight">
                                     <span className="hidden sm:block text-[12px] font-extrabold text-slate-800 max-w-[130px] lg:max-w-[150px] truncate leading-tight" title={formatDisplayName(currentUser || currentUserName)}>
                                         {formatDisplayName(currentUser || currentUserName)}
                                     </span>
@@ -577,48 +463,40 @@ const Header: React.FC<HeaderProps> = ({
                                     )}
                                 </div>
                                 <i className={`hidden lg:block fas fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-600 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`}></i>
-                            </div>
+                            </button>
 
                             {/* Dropdown Menu */}
                             {isProfileMenuOpen && (
-                                <div className="absolute top-full right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.14),0_0_0_1px_rgba(0,0,0,0.06)] py-1.5 animate-fade-in-up origin-top-right z-[100] overflow-hidden">
-
+                                <div id="app-profile-menu" className="app-navigation-profile-menu sidebar-popover absolute top-full right-0 mt-2 w-52 animate-fade-in-up origin-top-right z-[100]">
                                     {/* User Header */}
-                                    <div className="px-3 py-2.5 mx-1.5 mb-1 rounded-xl bg-gradient-to-br from-slate-50 to-gray-100/80 flex items-center gap-2.5">
+                                    <div className="sidebar-profile-header">
                                         <div className="relative flex-shrink-0">
                                             <Avatar name={currentUser} size="sm" />
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="font-bold text-[13px] text-gray-900 truncate leading-tight">{formatDisplayName(currentUser || currentUserName) || 'User'}</p>
-                                            <p className="text-[11px] text-gray-400 capitalize leading-tight">{userRole || 'Member'}</p>
+                                        <div className="sidebar-profile-copy">
+                                            <p className="sidebar-profile-name">{formatDisplayName(currentUser || currentUserName) || 'User'}</p>
+                                            <p className="sidebar-profile-role">{userRole || 'Member'}</p>
                                         </div>
                                     </div>
 
                                     {/* Menu Items */}
-                                    <div className="px-1.5 space-y-0.5">
+                                    <div className="sidebar-menu-actions">
                                         <button
+                                            type="button"
                                             onClick={() => { onOpenChangePassword(); setIsProfileMenuOpen(false); }}
-                                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] text-gray-700 hover:bg-gray-100 transition-colors text-left group"
+                                            className="sidebar-menu-item"
                                         >
-                                            <span className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                                                <i className="fas fa-key text-[11px]"></i>
-                                            </span>
-                                            <span className="font-medium">Đổi mật khẩu</span>
+                                            <span>Đổi mật khẩu</span>
                                         </button>
-                                        <div className="h-px bg-gray-100 my-1"></div>
 
                                         <button
+                                            type="button"
                                             onClick={() => { onLogout(); setIsProfileMenuOpen(false); }}
-                                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] text-red-500 hover:bg-red-50 transition-colors text-left group"
+                                            className="sidebar-menu-item is-danger"
                                         >
-                                            <span className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center text-red-400 flex-shrink-0 group-hover:bg-red-100 transition-colors">
-                                                <i className="fas fa-sign-out-alt text-[11px]"></i>
-                                            </span>
-                                            <span className="font-medium">Đăng xuất</span>
+                                            <span>Đăng xuất</span>
                                         </button>
                                     </div>
-
-                                    <div className="h-1.5"></div>
                                 </div>
                             )}
                         </div>
@@ -629,7 +507,7 @@ const Header: React.FC<HeaderProps> = ({
             {/* Global Notification Display */}
             {
                 notification && notification.isActive && !isDismissed && (
-                    <div className="w-full overflow-hidden relative z-40 h-7 flex items-center border-b border-white/10 shadow-md">
+                    <div className="app-announcement-banner w-full overflow-hidden relative z-40 h-7 flex items-center border-b border-white/10 shadow-md">
                         {/* Type-Specific Overlays */}
                         {notification.type === 'info' && <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-slate-900 to-blue-900/90 mix-blend-multiply"></div>}
                         {notification.type === 'warning' && <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 via-yellow-900/80 to-amber-700/80"></div>}

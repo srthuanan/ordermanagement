@@ -1,0 +1,702 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4"
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+type CacheEntry<T> = {
+  value: T;
+  expiresAt: number;
+};
+
+const memoryCache = new Map<string, CacheEntry<any>>();
+
+function getCached<T>(key: string): T | null {
+  const hit = memoryCache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return hit.value as T;
+}
+
+async function cached<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<T> {
+  const hit = getCached<T>(key);
+  if (hit !== null) return hit;
+  const value = await loader();
+  memoryCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+  return value;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HÀM TRUY VẤN VECTƠ (Vector Search)
+// ═══════════════════════════════════════════════════════════════
+async function getGeminiEmbedding(text: string, keys: string[]) {
+  if (keys.length === 0) return null;
+  
+  // Trộn key để phân phối tải
+  const shuffledKeys = [...keys].sort(() => Math.random() - 0.5);
+  const models = ["text-embedding-004", "gemini-embedding-001"];
+
+  for (const key of shuffledKeys) {
+    for (const modelName of models) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:embedContent?key=${key}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: `models/${modelName}`,
+            content: { parts: [{ text }] },
+            output_dimensionality: 768
+          })
+        });
+        const result = await res.json();
+        if (result.embedding?.values) return result.embedding.values;
+        console.warn(`⚠️ Model ${modelName} with key ${key.substring(0,5)} failed:`, result.error?.message);
+      } catch (err) {
+        console.error(`❌ Embedding attempt failed:`, err);
+      }
+    }
+  }
+  return null;
+}
+
+async function searchVectorKnowledge(supabase: any, embedding: number[], isAdmin: boolean = false) {
+  if (!embedding) return [];
+  const { data, error } = await supabase.rpc('match_ai_knowledge', {
+    query_embedding: embedding,
+    match_threshold: 0.5,
+    match_count: 5,
+    p_is_admin: isAdmin // CUNG CẤP QUYỀN ADMIN CHO RPC
+  });
+  if (error) {
+    console.error("❌ Vector search error:", error);
+    return [];
+  }
+  return data || [];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ĐỊNH DẠNG CÔNG CỤ (Tool Definition)
+// ═══════════════════════════════════════════════════════════════
+const AI_TOOLS = [
+  {
+    functionDeclarations: [
+      {
+        name: "get_car_details",
+        description: "Lấy thông tin chi tiết về một chiếc xe dựa trên mã VIN (toàn bộ hoặc một phần).",
+        parameters: {
+          type: "object",
+          properties: {
+            vin: { type: "string", description: "Mã VIN hoặc 6 số cuối VIN." }
+          },
+          required: ["vin"]
+        }
+      },
+      {
+        name: "get_order_details",
+        description: "Lấy thông tin chi tiết về một đơn hàng dựa trên số đơn hàng.",
+        parameters: {
+          type: "object",
+          properties: {
+            order_no: { type: "string", description: "Số đơn hàng (ví dụ: SO123456)." }
+          },
+          required: ["order_no"]
+        }
+      }
+    ]
+  },
+  {
+    googleSearch: {}
+  }
+];
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  try {
+    const body = await req.json();
+    if (body.ping) {
+      return new Response(JSON.stringify({ status: 'ok', message: 'AI Brain v2.0 is ALIVE 🧠' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const DEEPSEEK_KEY = Deno.env.get("DEEPSEEK_KEY") || "";
+    const GROQ_KEY = Deno.env.get("GROQ_KEY") || "";
+    const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN") || "";
+    const OPENAI_KEY = Deno.env.get("OPENAI_KEY") || "";
+    const geminiKeysEnv = Deno.env.get("GEMINI_KEYS") || "";
+    const GEMINI_KEYS = geminiKeysEnv ? geminiKeysEnv.split(",") : [];
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    if (body.action === 'history') {
+      const username = body.username || "Anonymous";
+      const { data, error } = await supabaseAdmin
+        .from('ai_chat_history')
+        .select('messages')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ messages: data?.messages || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { messages } = body;
+    const recentMessages = Array.isArray(messages) ? messages.slice(-12) : [];
+    
+    // ═══════════════════════════════════════════════════════════
+    // BƯỚC 1: Gom dữ liệu SONG SONG (triệu hồi cùng lúc)
+    // ═══════════════════════════════════════════════════════════
+    const lastUserMessage = recentMessages[recentMessages.length - 1]?.content || "";
+    
+    // Trích xuất từ khóa thông minh v3.0 (Siêu thám tử)
+    const extractSearchTerms = (msg: string): string[] => {
+      const terms: string[] = [];
+      const uMsg = msg.toUpperCase();
+      
+      // 1. VIN pattern (17 chars) hoặc 6 số cuối VIN
+      const vinMatch = msg.match(/[VR][A-Z0-9]{16}/gi);
+      if (vinMatch) terms.push(...vinMatch.map(v => v.toUpperCase()));
+      const partialVin = msg.match(/[0-9]{6,}/g);
+      if (partialVin) terms.push(...partialVin);
+
+      // 2. Tên dòng xe (VF3, VF 3, VF5...) -> Chuẩn hóa về VF3
+      const modelMatch = msg.match(/VF\s?[3-9]/gi);
+      if (modelMatch) {
+        terms.push(...modelMatch.map(m => m.replace(/\s+/g, '').toUpperCase()));
+      }
+
+      // 3. Tên tiếng Việt (Họ tên đầy đủ)
+      const nameMatch = msg.match(/[A-ZÀ-Ỹ][a-zà-ỹ]+(?:\s[A-ZÀ-Ỹ][a-zà-ỹ]+)+/g);
+      if (nameMatch) terms.push(...nameMatch);
+
+      // 4. Các từ khóa màu sắc quan trọng
+      const colors = ["đỏ", "trắng", "đen", "xanh", "xám", " bạc", "crimson", "zenith", "brahminy", "deepocean", "brown", "introspective", "nâu"];
+      const colorAbbr: Record<string, string> = { "TR": "Trắng", "Đ": "Đỏ", "ĐE": "Đen", "XA": "Xanh", "BA": "Bạc" };
+      
+      colors.forEach(c => {
+        if (msg.toLowerCase().includes(c)) terms.push(c);
+      });
+      
+      // Check for standalone abbreviations in capital letters
+      Object.keys(colorAbbr).forEach(abbr => {
+        const regex = new RegExp(`\\b${abbr}\\b`, 'g');
+        if (msg.toUpperCase().match(regex)) terms.push(colorAbbr[abbr]);
+      });
+
+      // 5. Số đơn hàng (Pattern: N31920-VSO-... hoặc XX-XX-...)
+      const orderMatch = msg.match(/[A-Z0-9]+-[A-Z0-9]+-[0-9-]+/gi);
+      if (orderMatch) terms.push(...orderMatch.map(o => o.toUpperCase()));
+
+      if (terms.length === 0 && msg.trim().length > 2) {
+        terms.push(msg.trim().substring(0, 50));
+      }
+      return [...new Set(terms)];
+    };
+
+    const contextData = body.contextData || {};
+    const userFullName = contextData?.userContext?.fullName || '';
+    const userRole = contextData?.userContext?.role || 'Thành viên';
+    const isAdmin = userRole === 'Quản trị viên' || userRole === 'Admin' || userRole === 'admin';
+
+    // ═══════════════════════════════════════════════════════════
+    // BỘ LỌC BẢO MẬT (Security Guard) v2.0
+    // ═══════════════════════════════════════════════════════════
+    const isOwner = (ownerName: any): boolean => {
+      if (isAdmin) return true;
+      if (!ownerName || typeof ownerName !== 'string') return false;
+      const normalizedOwner = ownerName.trim().toLowerCase().normalize('NFC');
+      const normalizedUser = userFullName.trim().toLowerCase().normalize('NFC');
+      return normalizedOwner === normalizedUser || normalizedOwner.includes(normalizedUser) || normalizedUser.includes(normalizedOwner);
+    };
+
+    const filterPrivateData = (obj: any): any => {
+      if (isAdmin || !obj) return obj;
+      
+      const checkOwnership = (item: any, contextKey?: string): boolean => {
+          if (!item || typeof item !== 'object') return true;
+          
+          // Rules for what a TVBH can see:
+          // 1. Kho xe: Rảnh thì thấy hết, Đã ghép/giữ thì phải là chủ
+          if (contextKey === 'khoxe' || (item.vin && !item.so_don_hang)) {
+              if (item.trang_thai === 'Chưa ghép') return true;
+              return isOwner(item.nguoi_giu_xe) || isOwner(item.username_giu_xe);
+          }
+          
+          // 2. Thông tin xe (Master data): Công khai
+          if (contextKey === 'thongtinxe') return true;
+          
+          // 3. Đơn hàng/Hóa đơn/Yêu cầu: Phải là chủ
+          const ownerFields = ['tvbh', 'ten_tu_van_ban_hang', 'nguoi_yc', 'tvbh_name', 'tu_van_ban_hang', 'leader', 'username', 'actor_name', 'recipient'];
+          for (const field of ownerFields) {
+            if (item[field] && isOwner(item[field])) return true;
+          }
+          
+          return false;
+      };
+
+      const processed = { ...obj };
+      for (const key in processed) {
+        if (Array.isArray(processed[key])) {
+          processed[key] = processed[key].filter((item: any) => checkOwnership(item, key));
+        } else if (typeof processed[key] === 'object' && processed[key] !== null) {
+          if (!checkOwnership(processed[key], key)) {
+            processed[key] = null; // Ẩn hoàn toàn nếu không thuộc quyền hạn
+          }
+        }
+      }
+      return processed;
+    };
+
+    const searchTerms = extractSearchTerms(lastUserMessage);
+    if (!isAdmin && userFullName && !searchTerms.includes(userFullName)) {
+      searchTerms.push(userFullName);
+    }
+
+    const normalizedQuestion = lastUserMessage.toLowerCase();
+    const wantsOverviewContext = /tổng quan|tong quan|báo cáo|bao cao|thống kê|thong ke|dashboard|kho|xe rảnh|xe ranh|đơn hàng mới|don hang moi|mới nhất|moi nhat|lỗi|loi|thiếu|thieu|pending|chờ|cho/.test(normalizedQuestion);
+    const wantsKnowledgeOnly = /quy trình|quy trinh|chính sách|chinh sach|hướng dẫn|huong dan|cách|cach|nghiệp vụ|nghiep vu|quy định|quy dinh/.test(normalizedQuestion);
+    const shouldLoadFullContext = wantsOverviewContext || (!wantsKnowledgeOnly && searchTerms.length <= 1 && lastUserMessage.length < 40);
+    const shouldUseVectorSearch = wantsKnowledgeOnly || lastUserMessage.length >= 12;
+    const shouldSearchTables = !wantsKnowledgeOnly || /vin|đơn|don|khách|khach|vf\s?[3-9]|[0-9]{6,}|[A-Z0-9]+-[A-Z0-9]+-[0-9-]+/i.test(lastUserMessage);
+
+    const promises: Promise<any>[] = [
+      shouldLoadFullContext
+        ? cached(`ai_full_context:${isAdmin ? 'admin' : userFullName || 'user'}`, 45_000, () =>
+            supabaseAdmin.rpc('ai_full_context').then(r => filterPrivateData(r.data)).catch(() => null)
+          )
+        : Promise.resolve(null),
+      cached(`ai_lessons:${isAdmin ? 'admin' : 'public'}`, 180_000, () =>
+        supabaseAdmin.from('ai_knowledge_base')
+          .select('content')
+          .neq('status', 'PENDING') // LỌC QUA TRẠM KIỂM DUYỆT (Chỉ lấy bài học đã Duyệt)
+          .or(isAdmin ? `visibility.eq.public,visibility.eq.admin` : `visibility.eq.public`) // LỌC KIẾN THỨC THEO QUYỀN
+          .order('importance', { ascending: false })
+          .limit(20)
+          .then(r => r.data)
+          .catch(() => [])
+      ),
+    ];
+    
+    if (shouldSearchTables) {
+      for (const term of searchTerms.slice(0, 4)) {
+        if (term && term.length >= 2) {
+          promises.push(
+            supabaseAdmin.rpc('ai_global_search', { search_term: term })
+              .then(r => filterPrivateData(r.data))
+              .catch(() => null)
+          );
+        }
+      }
+    }
+
+    const [fullContext, dbLessons, ...searchResults] = await Promise.all(promises);
+    
+    // --- BỔ SUNG: TRUY VẤN VECTƠ (Vector RAG) ---
+    let vectorLessons: any[] = [];
+    if (GEMINI_KEYS.length > 0 && shouldUseVectorSearch) {
+      const embedding = await cached(`embed:${lastUserMessage}`, 300_000, () => getGeminiEmbedding(lastUserMessage, GEMINI_KEYS));
+      if (embedding) {
+        vectorLessons = await cached(
+          `vector:${isAdmin ? 'admin' : 'public'}:${lastUserMessage}`,
+          300_000,
+          () => searchVectorKnowledge(supabaseAdmin, embedding, isAdmin)
+        );
+      }
+    }
+    // -------------------------------------------
+    
+    // --- FALLBACK LOGIC ---
+    let detectiveData = searchResults.filter(Boolean);
+    const totalHits = detectiveData.reduce((acc, curr) => {
+      const hits = (curr.donhang?.length || 0) + (curr.khoxe?.length || 0) + (curr.yeucauxhd?.length || 0);
+      return acc + hits;
+    }, 0);
+
+    // Nếu RPC trả về rỗng hoặc lỗi, thực hiện tìm kiếm thủ công (Brute force)
+    if (shouldSearchTables && totalHits === 0 && searchTerms.length > 0) {
+      console.log("[AI-CHAT] RPC returned no hits (or filtered). Falling back to manual table search...");
+      const fallbackPromises = [];
+      for (const term of searchTerms.slice(0, 2)) {
+        fallbackPromises.push(
+          supabaseAdmin.from('khoxe').select('*').ilike('vin', `%${term}%`).limit(10).then(r => ({ khoxe: r.data || [] })),
+          supabaseAdmin.from('donhang').select('*').ilike('vin', `%${term}%`).limit(10).then(r => ({ donhang: r.data || [] })),
+          supabaseAdmin.from('donhang').select('*').ilike('so_don_hang', `%${term}%`).limit(10).then(r => ({ donhang: r.data || [] })),
+          supabaseAdmin.from('donhang').select('*').ilike('ten_khach_hang', `%${term}%`).limit(10).then(r => ({ donhang: r.data || [] })),
+          supabaseAdmin.from('yeucauxhd').select('*').ilike('so_don_hang', `%${term}%`).limit(10).then(r => ({ yeucauxhd: r.data || [] }))
+        );
+      }
+      const fallbacks = (await Promise.all(fallbackPromises)).map(filterPrivateData);
+      detectiveData = [
+        ...detectiveData,
+        ...fallbacks.filter(f => (f.khoxe?.length || 0) > 0 || (f.donhang?.length || 0) > 0 || (f.yeucauxhd?.length || 0) > 0)
+      ];
+    }
+    // -----------------------
+    const lessonsList = [
+      ...dbLessons?.map((l: any) => `[Keyword Match] ${l.content}`) || [],
+      ...vectorLessons.map((l: any) => `[Vector Match] ${l.content}`)
+    ].join('\n');
+
+    const ROLE_RULES = isAdmin 
+      ? `## QUYỀN HẠN: ADMIN (TOÀN QUYỀN)
+- Bạn được phép xem toàn bộ dữ liệu hệ thống. Hãy chủ động phân tích và báo cáo số liệu tổng hợp.`
+      : `## PHÂN QUYỀN & BẢO MẬT (SECURITY PROTOCOL):
+Người dùng hiện tại: **${userFullName}** | Vai trò: **${userRole}**
+
+1. **QUYỀN TVBH (Tư vấn bán hàng)**:
+   - **Được xem**: Kho xe rảnh (\`trang_thai = 'Chưa ghép'\`), các đơn hàng/yêu cầu do CHÍNH MÌNH QUẢN LÝ (tên "${userFullName}").
+   - **CẤM TUYỆT ĐỐI**: Không được xem dữ liệu (khách hàng, trạng thái, VIN...) của bất kỳ TVBH nào khác.
+   - **HÀNH ĐỘNG**: Nếu người dùng hỏi về thông tin của người khác, bạn phải từ chối lịch sự: "Dạ, em chỉ có quyền hỗ trợ tra cứu dữ liệu cá nhân của anh/chị thôi ạ". KHÔNG GIẢI THÍCH CHI TIẾT những gì bạn không thấy.
+2. **DỮ LIỆU ĐÃ ĐƯỢC LỌC**: Hệ thống đã tự động ẩn đi các đơn hàng không thuộc quyền hạn của bạn. Nếu bạn thấy danh sách trống, nghĩa là không tìm thấy đơn hàng nào của bạn khớp với từ khóa.`;
+
+    // Giới hạn kích thước data đưa vào prompt để tránh context quá lớn gây chậm
+    const truncate = (obj: any, maxLen: number) => {
+      const str = JSON.stringify(obj || {});
+      return str.length > maxLen ? str.substring(0, maxLen) + '... [truncated]' : str;
+    };
+
+    const SYSTEM_PROMPT = `
+MỤC TIÊU: Bạn là một "Người cộng sự đắc lực" của VinFast.
+- Xưng "em", gọi người dùng là "anh" hoặc "chị" dựa trên tên "${userFullName}".
+- TUYỆT ĐỐI TUÂN THỦ PHÂN QUYỀN: Không bao giờ tiết lộ thông tin của TVBH khác.
+- Trình bày HẤP DẪN, sinh động bằng Markdown. Dùng EMOJI phong phú để làm nổi bật thông tin.
+- TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT tên xe hoặc giá xe. Trả lời bằng kiến thức thực tế hoặc dữ liệu có sẵn.
+- [ẢNH THỰC TẾ (RẤT QUAN TRỌNG)]: Bạn BẮT BUỘC phải chèn mã Markdown ảnh vào câu trả lời bằng ĐÚNG CÚ PHÁP NÀY: \`![Mô tả](https://tse1.mm.bing.net/th?q=TỪ+KHÓA+BẰNG+TIẾNG+ANH)\`
+Ví dụ: \`![Kinh tế thế giới](https://tse1.mm.bing.net/th?q=global+economy+market)\` hoặc \`![Vinfast VF3](https://tse1.mm.bing.net/th?q=VinFast+VF3+car)\`
+TUYỆT ĐỐI KHÔNG viết văn bản chay mô tả ảnh (như "(Biểu đồ...)"). BẮT BUỘC phải xuất ra thẻ ảnh Markdown bắt đầu bằng dấu chấm than \`!\`.
+- [TRỢ LÝ ĐA NĂNG]: Nếu khách hàng hỏi những câu hỏi ngoài lề, kiến thức chung, hoặc thị trường thế giới... BẠN VẪN PHẢI TRẢ LỜI nhiệt tình, đầy đủ và chi tiết dựa trên Google Search hoặc hiểu biết của bạn. TUYỆT ĐỐI KHÔNG TỪ CHỐI với lý do "chỉ là trợ lý VinFast" hay "không có quyền hạn/dữ liệu".
+- [QUAN TRỌNG: KẺ BẢNG]: Khi dữ liệu trả về có từ 2 danh mục/sản phẩm/đơn hàng trở lên, bạn BẮT BUỘC phải dùng định dạng BẢNG MARKDOWN để hiển thị cho đẹp và dễ nhìn. Cột nào quan trọng (giá, trạng thái) hãy in đậm.
+
+${ROLE_RULES}
+
+## CORE DATA FOCUS:
+Bạn am tường 3 bảng: khoxe (Kho xe), donhang (Đơn hàng), yeucauxhd (Hóa đơn).
+- "Xe rảnh" = Có trong \`khoxe\` với \`trang_thai = 'Chưa ghép'\`.
+
+## QUY TẮC BẢO MẬT TỐI THƯỢNG:
+- Nếu dữ liệu [DETECTIVE DATA] trống cho một yêu cầu cụ thể, hãy thông báo lịch sự là không tìm thấy dữ liệu CHÍNH CHỦ.
+- Không bao giờ nói "Đơn hàng này của ông A nên tôi không cho xem". Chỉ cần nói "Em không tìm thấy đơn hàng này trong danh sách quản lý của anh/chị ạ".
+
+## [DỮ LIỆU REALTIME]:
+${truncate(fullContext, 4000)}
+
+## [KẾT QUẢ TRUY VẾT THÁM TỬ]:
+${truncate(detectiveData, 3000)}
+
+## [KIẾN THỨC NGHIỆP VỤ]:
+${lessonsList.substring(0, 2000)}
+`;
+
+    const AI_PROVIDERS = [
+      // ── TIER 1: GOOGLE FLASH ──
+      { type: "google", model: "gemini-2.5-flash" },
+      { type: "google", model: "gemini-2.0-flash" },
+      { type: "google", model: "gemini-1.5-flash" },
+
+      // ── TIER 2: EXTERNAL (✅ luôn hoạt động) ──
+      { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o" },
+      { type: "github", apiKey: GITHUB_TOKEN, model: "Meta-Llama-3.1-405B-Instruct" },
+      { type: "groq", apiKey: GROQ_KEY, model: "llama-3.3-70b-versatile" },
+      { type: "groq", apiKey: GROQ_KEY, model: "llama-3.1-8b-instant" },
+      { type: "groq", apiKey: GROQ_KEY, model: "qwen/qwen3-32b" },
+
+      // ── TIER 3: GOOGLE PRO ──
+      { type: "google", model: "gemini-2.5-pro" },
+      { type: "google", model: "gemini-2.0-pro-exp-02-05" },
+      { type: "google", model: "gemini-1.5-pro" },
+
+      // ── TIER 4: EXTERNAL FALLBACK & OVER-QUOTA BACKUP ──
+      { type: "openai", apiKey: OPENAI_KEY, model: "gpt-4o-mini" },
+      { type: "openai", apiKey: OPENAI_KEY, model: "gpt-4o" },
+      { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o-mini" },
+    ];
+ 
+    // Diagnostic: Log trạng thái các API key
+    const keyStatus = {
+      OPENAI_KEY: OPENAI_KEY ? '✅' : '❌ MISSING',
+      GEMINI_KEYS: GEMINI_KEYS.length > 0 ? `${GEMINI_KEYS.length} key(s)` : '❌ MISSING',
+      GROQ_KEY: GROQ_KEY ? '✅' : '❌ MISSING',
+      GITHUB_TOKEN: GITHUB_TOKEN ? '✅' : '❌ MISSING',
+    };
+    console.log(`--- AI Brain v2.1 | User: ${contextData?.userContext?.name || 'Admin'} | Terms: ${searchTerms.join(', ')} | Detective hits: ${detectiveData.length} ---`);
+    console.log(`🔑 API Keys Status:`, JSON.stringify(keyStatus));
+ 
+    let lastError = "";
+    const failedProviders: string[] = [];
+    
+    // Utility to sleep between retries if needed
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // Strip non-standard fields from messages before sending to OpenAI-compatible APIs.
+    // History DB stores { role, content, time }; Qwen3 adds 'thought' to assistant messages.
+    // Groq/GitHub APIs only accept { role, content } — any extra field causes a 400 error.
+    const sanitizeMessages = (msgs: any[]) => msgs.map(m => ({
+      role: m.role,
+      content: m.content ?? "",
+    }));
+ 
+    // --- LƯU LỊCH SỬ CHAT (PERSISTENCE) ---
+    const username = contextData?.userContext?.username || "Anonymous";
+    
+    const saveToHistory = async (role: string, content: string) => {
+      try {
+        const { data: historyRow } = await supabaseAdmin
+          .from('ai_chat_history')
+          .select('messages')
+          .eq('username', username)
+          .maybeSingle();
+        
+        const newHistory = [
+          ...(historyRow?.messages || []),
+          { role, content, time: new Date().toISOString() }
+        ].slice(-50);
+ 
+        await supabaseAdmin
+          .from('ai_chat_history')
+          .upsert({ username, messages: newHistory, updated_at: new Date().toISOString() });
+      } catch (dbErr) {
+        console.error("⚠️ Failed to save history:", dbErr.message);
+      }
+    };
+ 
+    // Lưu tin nhắn User trước
+    await saveToHistory('user', body.messages[body.messages.length - 1].content);
+    // -------------------------------------
+ 
+    // Track các key đã bị quota exhausted để skip nhanh
+    const exhaustedKeys = new Set<string>();
+
+    for (const provider of AI_PROVIDERS) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per provider
+ 
+      try {
+        // ... (rest of the provider logic)
+        // Đối với Google, chúng ta sẽ thử TẤT CẢ các key có sẵn nếu bị giới hạn dung lượng
+        if (provider.type === "google") {
+          const keys = GEMINI_KEYS.length > 0 ? GEMINI_KEYS : [];
+          if (keys.length === 0) continue;
+ 
+          // Lọc bỏ key đã bị quota exhausted, rồi trộn ngẫu nhiên
+          const availableKeys = keys.filter(k => !exhaustedKeys.has(k));
+          if (availableKeys.length === 0) {
+            console.warn(`⏭️ All keys exhausted, skipping Google/${provider.model}`);
+            failedProviders.push(`Google/${provider.model} (ALL KEYS EXHAUSTED)`);
+            continue;
+          }
+          const shuffledKeys = [...availableKeys].sort(() => Math.random() - 0.5);
+ 
+          for (const key of shuffledKeys) {
+            try {
+              // Format history cho Gemini
+              const geminiContents = recentMessages.map((m: any) => ({
+                role: m.role === 'assistant' || m.role === 'model' ? 'model' : 'user',
+                parts: [{ text: m.content || "" }]
+              }));
+ 
+              // --- HỖ TRỢ TOOL USE & ITERATIVE RESPONSE ---
+              const lastUserMsg = recentMessages[recentMessages.length - 1]?.content || "";
+              const isInternalIntent = /kho|đơn hàng|so\d+|vin|số khung|khách hàng/i.test(lastUserMsg);
+              let toolChoices = isInternalIntent ? [AI_TOOLS[0]] : [AI_TOOLS[1]];
+              
+              let currentContents = [...geminiContents];
+              let finalResponse = null;
+ 
+              for (let step = 0; step < 5; step++) { // Max 5 steps for tools
+                console.log(`[AI-CHAT] Call Gemini (Step ${step + 1})...`);
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:generateContent?key=${key}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                    contents: currentContents,
+                    tools: toolChoices
+                  }),
+                  signal: controller.signal
+                });
+ 
+                const data = await res.json();
+                if (!res.ok) {
+                    const errorReason = data?.error?.details?.[0]?.reason || "";
+                    const errorCode = data?.error?.code || res.status;
+                    if (errorCode === 429 || errorReason === "MODEL_CAPACITY_EXHAUSTED") {
+                        console.warn(`⚠️ Key ${key.substring(0, 5)} quota exhausted for ${provider.model}. Marking key...`);
+                        exhaustedKeys.add(key); // Đánh dấu key đã hết quota
+                        throw new Error("RETRY_WITH_NEXT_KEY");
+                    }
+                    if (errorCode === 503) {
+                        console.warn(`⚠️ Model ${provider.model} overloaded. Trying next key...`);
+                        throw new Error("RETRY_WITH_NEXT_KEY");
+                    }
+                    throw new Error(JSON.stringify(data?.error || data));
+                }
+ 
+                const candidate = data.candidates?.[0];
+                const parts = candidate?.content?.parts || [];
+                const toolCalls = parts.filter((p: any) => p.functionCall);
+                const textPart = parts.find((p: any) => p.text);
+ 
+                if (toolCalls.length > 0) {
+                  // Lưu tool call vào history để AI biết nó đã yêu cầu gì
+                  currentContents.push(candidate.content);
+                  
+                  const toolResults = [];
+                  for (const tc of toolCalls) {
+                    const { name, args } = tc.functionCall;
+                    console.log(`[AI-CHAT] Executing tool: ${name}`, args);
+                    
+                    let result;
+                    if (name === "get_car_details") {
+                      const { data } = await supabaseAdmin.rpc('get_car_details', { p_vin: args.vin });
+                      result = filterPrivateData(data);
+                    } else if (name === "get_order_details") {
+                      const { data } = await supabaseAdmin.rpc('get_order_details', { p_order_no: args.order_no });
+                      result = filterPrivateData(data);
+                    }
+ 
+                    toolResults.push({
+                      functionResponse: {
+                        name: name,
+                        response: { content: result || "Không tìm thấy dữ liệu." }
+                      }
+                    });
+                  }
+                  
+                  currentContents.push({ role: "user", parts: toolResults });
+                  continue; // Loop again with tool results
+                } else if (textPart?.text) {
+                  finalResponse = textPart.text;
+                  break;
+                } else {
+                  break;
+                }
+              }
+
+              if (finalResponse) {
+                clearTimeout(timeoutId);
+                await saveToHistory('assistant', finalResponse);
+                return new Response(JSON.stringify({ content: finalResponse, model: provider.model, provider: "google" }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+              }
+            } catch (innerErr: any) {
+              if (innerErr.message === "RETRY_WITH_NEXT_KEY") continue;
+              lastError = `Google/${provider.model}: ${innerErr.message}`;
+              console.error(`❌ Google Key ${key.substring(0, 5)} failed:`, innerErr.message);
+            }
+          }
+          // Nếu tất cả các key của model Google này đều thất bại, chuyển sang Provider tiếp theo
+          failedProviders.push(`Google/${provider.model}`);
+          continue;
+        }
+
+        // --- CÁC PROVIDER KHÁC ---
+        if (!provider.apiKey) {
+          console.warn(`⏭️ Skipping ${provider.type}/${provider.model} - API key not configured`);
+          failedProviders.push(`${provider.type}/${provider.model} (NO KEY)`);
+          continue;
+        }
+
+        if (provider.type === "openai") {
+          const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: provider.model,
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(recentMessages)]
+            }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(data?.error || data));
+          if (data.choices?.[0]?.message?.content) {
+            clearTimeout(timeoutId);
+            const content = data.choices[0].message.content;
+            await saveToHistory('assistant', content);
+            return new Response(JSON.stringify({ content, model: provider.model, provider: "openai" }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        }
+
+        if (provider.type === "deepseek") {
+          const res = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: provider.model,
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(recentMessages)]
+            }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(data?.error || data));
+          if (data.choices?.[0]?.message?.content) {
+            clearTimeout(timeoutId);
+            const content = data.choices[0].message.content;
+            await saveToHistory('assistant', content);
+            return new Response(JSON.stringify({ content, model: provider.model, provider: "deepseek" }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        }
+
+
+        if (provider.type === "github" || provider.type === "groq") {
+          const url = provider.type === "github" 
+            ? "https://models.inference.ai.azure.com/chat/completions" 
+            : "https://api.groq.com/openai/v1/chat/completions";
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: provider.model,
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(recentMessages)]
+            }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(data?.error || data));
+          if (data.choices?.[0]?.message?.content) {
+            clearTimeout(timeoutId);
+            const content = data.choices[0].message.content;
+            await saveToHistory('assistant', content);
+            return new Response(JSON.stringify({ content, model: provider.model, provider: provider.type }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        }
+
+      } catch (err: any) {
+        lastError = `${provider.type}/${provider.model}: ${err.message}`;
+        failedProviders.push(`${provider.type}/${provider.model}`);
+        console.error(`❌ Provider ${provider.type} (${provider.model}) failed:`, err.message);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    console.error(`⛔ ALL PROVIDERS FAILED! Failed: [${failedProviders.join(', ')}] | Last error: ${lastError}`);
+    console.error(`🔑 Key status reminder:`, JSON.stringify(keyStatus));
+    throw new Error(`Dạ, hiện tại tất cả các hệ thống AI đều đang quá tải hoặc lỗi xác thực. Vui lòng thử lại sau 1-2 phút. (${failedProviders.length} providers failed)`);
+
+  } catch (error: any) {
+    console.error("🔥 CRITICAL ERROR in ai-chat function:", error);
+    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
+      status: 200, // Return 200 with error field to avoid browser 500 block and see the message
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+})

@@ -1,0 +1,68 @@
+.inline-policy-picker { height: 46px; border: 1px solid #dce5f0; border-radius: 10px; background: #fbfcff; transition: border-color .18s; }
+.inline-policy-picker[data-expanded="true"] { border-color: #c6d8ef; background: #fff; }
+.inline-policy-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 43px; padding: 10px 13px; border: 0; background: transparent; color: #7c8fa8; font-size: 12px; font-weight: 450; text-align: left; }
+.inline-policy-trigger:hover { background: #f4f7fc; }
+.inline-policy-trigger { height: 100%; border-radius: inherit; }
+.inline-policy-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inline-policy-trigger svg { flex-shrink: 0; color: #91a3ba; transition: transform .18s; }
+.inline-policy-picker[data-expanded="true"] .inline-policy-trigger svg { transform: rotate(180deg); }
+.inline-policy-panel { position: fixed; z-index: 10050; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #dce5f1; border-radius: 12px; padding-top: 10px; background: #fff; box-shadow: 0 12px 35px -8px #243e6433, 0 2px 8px #243e6408; animation: inline-policy-reveal .18s ease-out; }
+.inline-policy-panel button { cursor: pointer; }
+.inline-policy-search { display: flex; align-items: center; gap: 8px; margin: 0 12px; padding: 0 10px; min-height: 34px; border-radius: 8px; background: #f1f4f9; color: #9aa9bc; }
+.inline-policy-search input { flex: 1; min-width: 0; padding: 8px 0; border: 0; outline: none; background: transparent; color: #526982; font-size: 11px; }
+.inline-policy-search:focus-within { box-shadow: 0 0 0 2px #ccddf4; }
+.inline-policy-search input::placeholder { color: #a0adc0; }
+.inline-policy-filter { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; color: #8b9ab0; font-size: 10px; }
+.inline-policy-filter > button { position: relative; width: 29px; height: 17px; padding: 0; border: 0; border-radius: 20px; background: #d7dfe9; transition: background .18s; }
+.inline-policy-filter > button[aria-checked="true"] { background: #5193e4; }
+.inline-policy-filter > button > span { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px #34547b22; transition: transform .18s; }
+.inline-policy-filter > button[aria-checked="true"] > span { transform: translateX(12px); }
+.inline-policy-options { flex: 1; min-height: 0; max-height: 220px; overflow-y: auto; padding: 0 7px; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
+.inline-policy-panel > .inline-policy-search, .inline-policy-filter, .inline-policy-footer { flex-shrink: 0; }
+.inline-policy-option { position: relative; display: flex; align-items: center; gap: 12px; padding: 11px 8px; border-top: 1px solid #eef2f7; cursor: pointer; }
+.inline-policy-option:hover { background: #f7faff; }
+.inline-policy-option[data-selected="true"] { background: #f1f6fd; border-radius: 8px; border-color: transparent; }
+.inline-policy-option > input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.inline-policy-option:focus-within { outline: 2px solid #8ab4ec; outline-offset: -2px; border-radius: 8px; }
+.inline-policy-option-copy { flex: 1; min-width: 0; }
+.inline-policy-option-copy strong { display: block; color: #52667f; font-size: 11px; font-weight: 550; line-height: 1.55; }
+.inline-policy-option-copy small { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; color: #9ba8bb; font-size: 9px; line-height: 1.5; }
+.inline-policy-check { display: grid; place-items: center; flex-shrink: 0; width: 17px; height: 17px; border: 1px solid #d8e1ec; border-radius: 50%; background: #fff; color: #fff; }
+.inline-policy-option[data-selected="true"] .inline-policy-check { background: #528ddd; border-color: #528ddd; }
+.inline-policy-option[data-selected="true"] strong { color: #3d73b9; }
+.inline-policy-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 13px; border-top: 1px solid #e9eef6; background: #fafcff; color: #96a4b8; font-size: 10px; }
+.inline-policy-footer b { font-weight: 550; color: #6486b2; }
+.inline-policy-footer > button { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border: 0; border-radius: 7px; background: #eaf1fb; color: #517fb9; font-size: 10px; font-weight: 550; }
+.inline-policy-footer > button:hover { background: #dfeafa; }
+.inline-policy-state { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; min-height: 95px; padding: 20px 12px; text-align: center; color: #91a1b7; font-size: 11px; }
+.inline-policy-state button { border: 0; background: transparent; color: #548bd2; font-size: 11px; }
+.inline-policy-picker button:focus-visible, .inline-policy-panel button:focus-visible { outline: 2px solid #8ab4ec; outline-offset: -2px; }
+.inline-action-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 14px 10px; border-bottom: 1px solid #eef2f7; }
+.inline-action-header strong { display: inline-flex; align-items: center; gap: 6px; color: #3d526d; font-size: 11.5px; font-weight: 600; margin: 0; }
+.inline-action-header small { color: #91a1b7; font-size: 10px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.inline-action-header > button { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #91a1b7; font-size: 11px; }
+.inline-action-header > button:hover { background: #eef3f9; color: #52667f; }
+.inline-action-body { display: flex; flex-direction: column; gap: 9px; padding: 11px 13px; overflow-y: auto; max-height: 320px; scrollbar-width: none; -ms-overflow-style: none; }
+.inline-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.inline-action-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.inline-action-field > span, .inline-action-field > label { color: #8495ab; font-size: 10px; font-weight: 500; line-height: 1.4; }
+.inline-action-field input, .inline-action-field select, .inline-action-field textarea { width: 100%; min-width: 0; padding: 7px 10px; border: 1px solid #e2eaf3; border-radius: 8px; background: #f4f7fb; color: #435873; font-size: 11px; font-weight: 450; outline: none; transition: border-color .15s, background .15s, box-shadow .15s; }
+.inline-action-field input::placeholder, .inline-action-field textarea::placeholder { color: #a0adc0; font-size: 10.5px; font-weight: 400; }
+.inline-action-field input:focus, .inline-action-field select:focus, .inline-action-field textarea:focus { border-color: #b8d0ee; background: #fff; box-shadow: 0 0 0 2px #ccddf466; }
+.inline-action-field textarea { resize: none; line-height: 1.45; }
+.inline-action-note { padding: 8px 10px; border-radius: 8px; background: #f3f7fd; color: #56749a; font-size: 10.5px; line-height: 1.5; }
+.inline-action-note strong { color: #3d526d; font-weight: 600; }
+.inline-action-note[data-tone="amber"] { background: #fef8eb; color: #94681d; }
+.inline-action-note[data-tone="amber"] strong { color: #7a5211; }
+.inline-action-note[data-tone="red"] { background: #fdf2f2; color: #b44d4d; }
+.inline-action-note[data-tone="red"] strong { color: #963838; }
+.inline-action-note[data-tone="green"], .inline-action-note[data-tone="emerald"] { background: #eefaf4; color: #2b7a56; }
+.inline-action-note[data-tone="green"] strong, .inline-action-note[data-tone="emerald"] strong { color: #1f5f42; }
+.inline-policy-footer > button[data-tone="danger"] { background: #fceaea; color: #c24646; }
+.inline-policy-footer > button[data-tone="danger"]:hover { background: #f9dede; }
+.inline-policy-footer > .inline-action-cancel { background: transparent; color: #8b9ab0; padding-inline: 6px; font-weight: 500; }
+.inline-policy-footer > .inline-action-cancel:hover { background: #eef3f9; color: #52667f; }
+@keyframes inline-policy-reveal { from { opacity: .3; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .inline-policy-panel { animation: none; } .inline-policy-picker, .inline-policy-trigger svg, .inline-policy-filter button, .inline-policy-filter button span { transition: none; } }
+
+.inline-policy-options::-webkit-scrollbar, .inline-action-body::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }

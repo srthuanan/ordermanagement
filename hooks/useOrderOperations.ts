@@ -72,8 +72,8 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 //         showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading'); 
         try {
             const res = await apiService.holdCar(vin);
-            if (res && res.status === 'ERROR') {
-                showToast('Giữ Xe Thất Bại', res.message || 'Không thể giữ xe.', 'error', 5000);
+            if (!res || res.status !== 'SUCCESS') {
+                showToast('Giữ Xe Thất Bại', res?.message || 'Không thể giữ xe.', 'error', 5000);
             } else {
                 showToast('Giữ Xe Thành Công', `Đã giữ xe ${vin}.`, 'success', 3000);
                 logStaffActivity({ actionType: 'HOLD_CAR', actionTitle: `Giữ xe VIN ${vin}`, targetVin: vin });
@@ -94,7 +94,10 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         const actionText = outcome === 'matched' ? 'đã ghép' : 'hủy giữ';
 //         showToast('Đang xử lý...', `Đang ${actionText} xe VIN ${vin}.`, 'loading'); 
         try {
-            await apiService.releaseCar(vin, outcome);
+            const res = await apiService.releaseCar(vin, outcome);
+            if (!res || res.status !== 'SUCCESS') {
+                throw new Error(res?.message || `Không thể ${actionText} xe.`);
+            }
             showToast('Thành Công', `Đã ${actionText} xe ${vin}.`, 'success', 3000);
             logStaffActivity({ actionType: 'UNHOLD_CAR', actionTitle: `Nhả giữ xe VIN ${vin} (${actionText})`, targetVin: vin });
             refetchStock(true);

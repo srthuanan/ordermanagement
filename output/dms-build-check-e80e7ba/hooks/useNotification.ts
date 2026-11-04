@@ -1,0 +1,331 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Notification as SystemNotification } from '../types';
+import * as apiService from '../services/apiService';
+import { supabase } from '../services/supabaseClient';
+
+export const useNotification = (showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void) => {
+    const [notifications, setNotifications] = useState<SystemNotification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+    const notificationContainerRef = useRef<HTMLDivElement>(null);
+
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const result = await apiService.fetchNotifications();
+            const fetchedNotifications = result.notifications || [];
+            const fetchedUnreadCount = result.unreadCount || 0;
+            
+            setNotifications(fetchedNotifications);
+            setUnreadCount(prevUnreadCount => {
+                const nextUnreadCount = fetchedUnreadCount;
+                if (nextUnreadCount > prevUnreadCount) {
+                    const badge = document.getElementById('notification-badge');
+                    badge?.classList.add('animate-pop');
+                    setTimeout(() => badge?.classList.remove('animate-pop'), 300);
+                }
+
+                // Update Badging API (PWA)
+                if ('setAppBadge' in navigator) {
+                    if (nextUnreadCount > 0) {
+                        (navigator as any).setAppBadge(nextUnreadCount).catch(console.error);
+                    } else {
+                        (navigator as any).clearAppBadge().catch(console.error);
+                    }
+                }
+
+                return nextUnreadCount;
+            });
+
+        } catch (error) {
+            console.error("Failed to fetch notifications:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+        const intervalId = setInterval(fetchNotifications, 5 * 60 * 1000); // 5 minutes fallback (Realtime is primary)
+        return () => clearInterval(intervalId);
+    }, [fetchNotifications]);
+
+    // --- BROWSER PUSH NOTIFICATIONS ---
+    const requestNotificationPermission = useCallback(async () => {
+        if (!('Notification' in window)) return false;
+        if (window.Notification.permission === 'granted') return true;
+        
+        const permission = await window.Notification.requestPermission();
+        return permission === 'granted';
+    }, []);
+
+    const showBrowserNotification = useCallback((notification: SystemNotification) => {
+        if (!('Notification' in window) || window.Notification.permission !== 'granted') return;
+
+        const { message, type } = notification;
+        const baseUrl = import.meta.env.BASE_URL.endsWith('/') ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+        const icon = `${baseUrl}logoweb.png`;
+        
+        // Derive title from type or use constant
+        const titleMap: Record<string, string> = {
+            'success': 'Thành công',
+            'error': 'Lỗi hệ thống',
+            'warning': 'Cảnh báo',
+            'info': 'Thông tin mới',
+            'danger': 'Khẩn cấp',
+            'stock_hero': 'Kho xe mới'
+        };
+        const title = titleMap[type] || 'Thông báo mới';
+
+        try {
+            const n = new window.Notification(title, {
+                body: message || 'Bạn có thông báo mới',
+                icon: icon,
+                badge: icon,
+                requireInteraction: true
+            });
+
+            n.onclick = () => {
+                window.focus();
+                n.close();
+            };
+        } catch (e) {
+            console.error("Failed to show notification:", e);
+        }
+    }, []);
+
+
+    // --- REALTIME NOTIFICATIONS ---
+    useEffect(() => {
+        const channel = supabase
+            .channel('db-changes-notifications')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'interactions' }, (payload) => {
+                const newInteraction = payload.new as any;
+                if (newInteraction.category === 'NOTIFICATION') {
+                    console.log('New notification detected:', payload);
+                    const newNotif = {
+                        ...newInteraction,
+                        timestamp: newInteraction.created_at,
+                        createdBy: newInteraction.actor_name,
+                        targetView: newInteraction.target_view,
+                        targetId: newInteraction.target_id,
+                        metadata: newInteraction.metadata
+                    } as unknown as SystemNotification;
+                    
+                    if (document.visibilityState !== 'visible') {
+                        showBrowserNotification(newNotif);
+                    }
+                    fetchNotifications();
+                }
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'interactions' }, () => fetchNotifications())
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'interactions' }, () => fetchNotifications())
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [fetchNotifications, showBrowserNotification]);
+
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationContainerRef.current && !notificationContainerRef.current.contains(event.target as Node)) {
+                setIsNotificationPanelOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const markAllAsReadInternal = useCallback(async () => {
+        if (unreadCount === 0) return;
+        const currentNotifications = [...notifications];
+        const currentUnreadCount = unreadCount;
+        
+        // Optimistic UI update
+        setUnreadCount(0);
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        
+        try {
+            await apiService.markAllNotificationsAsRead();
+        } catch (error) {
+            console.error("Failed to mark all notifications as read", error);
+            setNotifications(currentNotifications);
+            setUnreadCount(currentUnreadCount);
+            showToast('Thao Tác Thất Bại', 'Không thể đánh dấu đã đọc tất cả thông báo.', 'error', 3000);
+        }
+    }, [unreadCount, notifications, showToast]);
+
+    const toggleNotificationPanel = () => {
+        setIsNotificationPanelOpen(prev => {
+            const next = !prev;
+            if (next === true && unreadCount > 0) {
+                // Tự động đánh dấu đã đọc khi mở bảng thông báo
+                markAllAsReadInternal();
+            }
+            return next;
+        });
+    };
+
+    const handleMarkAllAsRead = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        await markAllAsReadInternal();
+    };
+
+    const handleNotificationClick = async (
+        notification: SystemNotification,
+        event: React.MouseEvent,
+        navigationOptions?: {
+            isAdmin?: boolean;
+            allHistoryData?: any[];
+            setSelectedOrder?: (order: any) => void;
+            setActiveView?: (view: any) => void;
+            setStockFilter?: (vin: string) => void;
+            showInquiryInAdmin?: (inquiryId: string) => void;
+            setTargetInquiryIdForTVBH?: (id: string) => void;
+            showAdminTab?: (tab: any) => void;
+            setExtensionVehicle?: (vin: string) => void;
+        }
+    ) => {
+        event.stopPropagation();
+        const { isAdmin = false, allHistoryData = [], setSelectedOrder, setActiveView, setStockFilter, showInquiryInAdmin, showAdminTab, setTargetInquiryIdForTVBH, setExtensionVehicle } = navigationOptions || {};
+
+        if (!notification.isRead) {
+            setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            try {
+                await apiService.markNotificationAsRead(notification.id);
+            } catch (error) {
+                console.error("Failed to mark notification as read", error);
+                setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: false } : n));
+                setUnreadCount(prev => prev + 1);
+            }
+        }
+
+        // Nếu là thông báo phiếu DNX đã lập, lập tức mở modal hiển thị file in
+        if (notification.metadata?.print_data) {
+            window.dispatchEvent(new CustomEvent('open-dnx-modal', { detail: notification.metadata.print_data }));
+        }
+
+        // Logic điều hướng dựa trên Target View & Target ID
+        let derivedTargetView = notification.targetView;
+        let derivedTargetId = notification.targetId;
+        const msg = notification.message || '';
+        const msgLower = msg.toLowerCase();
+
+        // Check for Order Numbers first (support en-dash \u2013, em-dash \u2014, and hyphen -)
+        const orderMatch = msg.match(/N\d{5}[-\u2013\u2014]VSO[-\u2013\u2014]\d{2}[-\u2013\u2014]\d{2}[-\u2013\u2014]\d{4}/i);
+        let foundOrderNumber = orderMatch ? orderMatch[0].replace(/[\u2013\u2014]/g, '-').toUpperCase() : null;
+
+        // Check for VINs
+        const vinMatch = msg.match(/\b[A-HJ-NPR-Z0-9]{17}\b/i);
+        let foundVin = vinMatch ? vinMatch[0].toUpperCase() : null;
+
+        // Smart derivation based on words for TVBH vs Admin
+        if (derivedTargetView === 'admin' || !derivedTargetView) {
+            if (msgLower.includes('yêu cầu xuất hóa đơn') || msgLower.includes('đã yêu cầu xuất hóa đơn') || msgLower.includes('hồ sơ bổ sung') || msgLower.includes('hóa đơn')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'invoices';
+            } else if (msgLower.includes('vinclub') || msgLower.includes('unc') || msgLower.includes('yêu cầu cấp vc')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'vc';
+            } else if (msgLower.includes('tra cứu kho') || msgLower.includes('tra cứu')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'inquiries';
+            } else if (msgLower.includes('giữ xe') || msgLower.includes('gia hạn') || msgLower.includes('hàng chờ') || msgLower.includes('hủy giữ xe')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'holds';
+            } else if (msgLower.includes('ghép xe') || msgLower.includes('đã ghép xe')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'paired';
+            } else if (msgLower.includes('xe thiếu') || msgLower.includes('incomplete')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'incomplete_cars';
+            } else if (msgLower.includes('đơn tồn')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'don_ton';
+            } else if (msgLower.includes('chính sách')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'policies';
+            }
+        }
+
+        // If it's specifically about an order number or VIN, prioritize directly going to it
+        if (foundOrderNumber) {
+            derivedTargetView = 'orders';
+            derivedTargetId = foundOrderNumber;
+        } else if (foundVin) {
+            derivedTargetView = 'stock';
+            derivedTargetId = foundVin;
+        }
+
+        // NEVER allow non-admins to navigate to the admin view
+        if (!isAdmin && derivedTargetView === 'admin') {
+            derivedTargetView = 'orders';
+            derivedTargetId = undefined;
+        }
+
+        // Logic điều hướng dựa trên Target View & Target ID
+        if (derivedTargetView) {
+            if (setActiveView) setActiveView(derivedTargetView as any);
+            
+            // Nếu là đơn hàng, mở chi tiết đơn hàng
+            if (derivedTargetView === 'orders' && derivedTargetId && setSelectedOrder && allHistoryData.length > 0) {
+                const order = allHistoryData.find(o => {
+                    if (!o['Số đơn hàng']) return false;
+                    const normalizedOrderNum = o['Số đơn hàng'].replace(/[\u2013\u2014]/g, '-').toUpperCase();
+                    return normalizedOrderNum === derivedTargetId!.toUpperCase();
+                });
+                if (order) setSelectedOrder(order);
+            }
+            
+            // Nếu là kho xe, có thể filter theo VIN
+            if (derivedTargetView === 'stock' && derivedTargetId && setStockFilter) {
+                setStockFilter(derivedTargetId);
+                // Nếu là thông báo nhắc nhở gia hạn (có chữ gia hạn trong tin nhắn), mở luôn modal
+                if (notification.message && notification.message.toLowerCase().includes('gia hạn') && setExtensionVehicle) {
+                    setExtensionVehicle(derivedTargetId);
+                }
+            }
+
+            // Nếu là tra cứu kho (TVBH nhắn tin cho admin)
+            if (derivedTargetView === 'inquiries' && derivedTargetId && showInquiryInAdmin) {
+                showInquiryInAdmin(derivedTargetId);
+            }
+
+            // Nếu là tra cứu kho (Admin nhắn cho TVBH)
+            if (derivedTargetView === 'inquiry' && derivedTargetId && setTargetInquiryIdForTVBH) {
+                setTargetInquiryIdForTVBH(derivedTargetId);
+            }
+
+            // Nếu là admin view và chọn tab cụ thể
+            if (derivedTargetView === 'admin' && derivedTargetId && showAdminTab) {
+                showAdminTab(derivedTargetId);
+            }
+        } else if (notification.link) {
+            // Logic cũ dự phòng cho các link GAS hoặc liên kết ngoài
+            const orderNumberMatch = notification.link.match(/orderNumber=([^&]+)/);
+            if (orderNumberMatch && orderNumberMatch[1] && allHistoryData.length > 0 && setSelectedOrder) {
+                const order = allHistoryData.find(o => o['Số đơn hàng'] && o['Số đơn hàng'].toUpperCase() === decodeURIComponent(orderNumberMatch[1]).toUpperCase());
+                if (order) setSelectedOrder(order);
+                else window.location.href = notification.link;
+            } else {
+                window.location.href = notification.link;
+            }
+        }
+        
+        setIsNotificationPanelOpen(false);
+    };
+
+    return {
+        notifications,
+        unreadCount,
+        isNotificationPanelOpen,
+        notificationContainerRef,
+        toggleNotificationPanel,
+        handleMarkAllAsRead,
+        handleNotificationClick,
+        setIsNotificationPanelOpen,
+        fetchNotifications,
+        requestNotificationPermission
+    };
+};
+

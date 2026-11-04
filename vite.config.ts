@@ -489,6 +489,12 @@ function cyberSyncPlugin(): Plugin {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    watch: {
+      // Generated previews and browser profiles contain locked cache files on Windows.
+      ignored: ['**/output/**'],
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(Date.now().toString())
   },

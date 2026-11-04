@@ -713,7 +713,7 @@ const HoldManagementView: React.FC<HoldManagementViewProps> = ({ showToast, onOp
             </div>
 
             <style dangerouslySetInnerHTML={{ __html: `
-                .custom-scrollbar-premium::-webkit-scrollbar { width: 5px; height: 5px; }
+                .custom-scrollbar-premium::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
                 .custom-scrollbar-premium::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar-premium::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.05); border-radius: 10px; }
                 .custom-scrollbar-premium::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.1); }

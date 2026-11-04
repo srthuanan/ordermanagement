@@ -81,7 +81,7 @@ export const holdCar = async (vin: string) => {
         const { data, error } = await supabase.rpc('rpc_hold_car', { p_vin: vin, p_username: username, p_full_name: fullName });
         if (error) throw error;
         if (data.status === 'SUCCESS') {
-            await createNotification({ message: `TVBH ${fullName} vừa mới giữ xe ${vin}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: vin });
+            void createNotification({ message: `TVBH ${fullName} vừa mới giữ xe ${vin}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: vin }).catch(error => console.warn('[Stock] Hold notification failed:', error));
             // Kích hoạt quét ngầm DMS Radar (lưu Supabase) khi TVBH thao tác giữ xe
             autoSyncDmsRadarIfNeeded(false, true).catch(e => console.warn('[DmsSync] holdCar trigger error:', e));
             return { status: 'SUCCESS', message: data.message };
@@ -91,7 +91,7 @@ export const holdCar = async (vin: string) => {
         }
         return { status: 'ERROR', message: data.message };
     } catch (err: any) {
-        return { status: 'ERROR', message: 'Lỗi khi giữ xe.' };
+        return { status: 'ERROR', message: err?.message || 'Lỗi khi giữ xe.' };
     }
 };
 
@@ -132,10 +132,10 @@ export const joinHoldQueue = async (vin: string) => {
             if (error.code === '23505') return { status: 'ERROR', message: 'Bạn đã ở trong hàng chờ của xe này.' };
             throw error;
         }
-        await createNotification({ message: `TVBH ${fullName} đã tham gia hàng chờ ưu tiên xe ${vin}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: vin });
+        void createNotification({ message: `TVBH ${fullName} đã tham gia hàng chờ ưu tiên xe ${vin}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: vin }).catch(error => console.warn('[Stock] Queue notification failed:', error));
         return { status: 'SUCCESS', message: 'Bạn đã gia nhập hàng chờ thành công.' };
-    } catch (err) {
-        return { status: 'ERROR', message: 'Không thể đăng ký hàng chờ.' };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err?.message || 'Không thể đăng ký hàng chờ.' };
     }
 };
 
@@ -241,7 +241,19 @@ export const getPendingHoldExtensions = async () => {
     }
 };
 
-export const processExpiredQueuePriorities = async () => {
+let queuePriorityProcessing: Promise<void> | null = null;
+
+// Realtime refreshes can arrive while this routine is writing queue changes.
+// Share the running pass instead of starting overlapping releases for the same VIN.
+export const processExpiredQueuePriorities = (): Promise<void> => {
+    if (queuePriorityProcessing) return queuePriorityProcessing;
+    queuePriorityProcessing = runExpiredQueuePriorities().finally(() => {
+        queuePriorityProcessing = null;
+    });
+    return queuePriorityProcessing;
+};
+
+const runExpiredQueuePriorities = async () => {
     try {
         const now = new Date();
         const fifteenMinsAgo = new Date(now.getTime() - 15 * 60000).toISOString();

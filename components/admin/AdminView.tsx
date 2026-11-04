@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Order, StockVehicle, AdminSubView, User } from '../../types';
 import InvoiceInboxView from './InvoiceInboxView';
@@ -27,6 +27,7 @@ import ActiveUsersModal from './ActiveUsersModal';
 import TvbhEmailManager from './TvbhEmailManager';
 import AnnouncementModal from './AnnouncementModal';
 import DataRecoveryModal from './DataRecoveryModal';
+import ManageTabsSheet from './ManageTabsSheet';
 import { useGlobalNotification } from '../../hooks/useGlobalNotification';
 import AdminStats from './AdminStats';
 import IncompleteCarsView from './IncompleteCarsView';
@@ -74,9 +75,10 @@ interface AdminViewProps {
     isReferenceAccount?: boolean;
     mobileMode?: boolean;
     onBack?: () => void;
+    onEnsureAdminView?: () => void;
 }
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount, mobileMode = false, onBack }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount, mobileMode = false, onBack, onEnsureAdminView }) => {
 
     const [showMatchingModal, setShowMatchingModal] = useState(false);
     const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
@@ -233,13 +235,48 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [showCyberLocationSyncModal, setShowCyberLocationSyncModal] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
+    const closeAllAdminSheets = useCallback(() => {
+        setShowCyberSyncModal(false);
+        setShowCyberLocationSyncModal(false);
+        actions.setAdminModal(null);
+        actions.setIsBulkUploadModalOpen(false);
+        setIsImportLocationModalOpen(false);
+        setIsManageTabsModalOpen(false);
+        setIsAnnouncementModalOpen(false);
+        setIsDataRecoveryModalOpen(false);
+        setIsActiveUsersModalOpen(false);
+        setIsTvbhEmailManagerOpen(false);
+        setShowMatchingModal(false);
+        actions.setSuggestionModalState(null);
+        actions.setInvoiceModalState(null);
+        actions.handleCloseBulkActionModal();
+    }, [actions]);
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) { setIsActionMenuOpen(false); }
+            if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+                setIsActionMenuOpen(false);
+            }
+        };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsActionMenuOpen(false);
+            }
+        };
+        const handleCloseAllSheets = (e: Event) => {
+            const except = (e as CustomEvent)?.detail?.except;
+            if (except !== 'boltMenu') setIsActionMenuOpen(false);
+            closeAllAdminSheets();
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        document.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('close-all-sheets', handleCloseAllSheets);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('close-all-sheets', handleCloseAllSheets);
+        };
+    }, [closeAllAdminSheets]);
 
     const [currentCategory, setCurrentCategory] = useState<'orders' | 'inventory' | 'system' | 'stats'>(() => {
         const saved = localStorage.getItem('adminCurrentCategory');
@@ -276,10 +313,9 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
 
-    // Auto-redirect if current adminView is satellite_warehouses (moved into cyber_plan) or hidden
+    // Auto-redirect if current adminView is hidden
     useEffect(() => {
-        if (adminView === 'satellite_warehouses') {
-            setAdminView('cyber_plan');
+        if (adminView === 'satellite_warehouses' || adminView === 'vc') {
             return;
         }
         if (hiddenTabs.includes(adminView)) {
@@ -430,31 +466,30 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
 
     const adminTools = [
-        { title: 'Kho Vệ Tinh (3 Kho)', icon: 'fa-warehouse text-rose-500', action: () => setAdminView('satellite_warehouses') },
-        { title: 'Phân Bổ Cyber (K10)', icon: 'fa-bolt text-yellow-500', action: () => setShowCyberSyncModal(true) },
-        { title: 'Vị Trí Kho Cyber', icon: 'fa-map-marker-alt text-emerald-400', action: () => setShowCyberLocationSyncModal(true) },
-        { title: 'Tra Cứu Kế Hoạch Cyber', icon: 'fa-search-location text-indigo-400', action: () => setAdminView('cyber_plan') },
-        { title: 'Hộp thư Xử lý VC', icon: 'fa-file-invoice-dollar text-red-500', action: () => setAdminView('vc') },
-        { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => actions.setAdminModal('addCar') },
-        { title: 'Thêm Xe Hàng Loạt', icon: 'fa-layer-group', action: () => actions.setAdminModal('bulkAddCar') },
-        { title: 'Nhập Vị Trí Kho', icon: 'fa-warehouse text-emerald-600', action: () => setIsImportLocationModalOpen(true) },
-        { title: 'Nhập Xe Từ Excel', icon: 'fa-file-excel', action: () => actions.setAdminModal('bulkAddCarExcel') },
-        { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => actions.setAdminModal('deleteCar') },
-        { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => actions.setAdminModal('restoreCar') },
-        { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => actions.setAdminModal('addUser') },
-        { title: 'Xóa Nhân Viên', icon: 'fa-user-minus text-red-500', action: () => actions.setAdminModal('deleteUser') },
-        { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => actions.setAdminModal('deleteOrder') },
-        { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => actions.setAdminModal('revertOrder') },
-        { title: 'Tiến Tới Trạng Thái', icon: 'fa-step-forward', action: () => actions.setAdminModal('advanceOrder') },
-        { title: 'Tải Lên HĐ Hàng Loạt', icon: 'fa-file-upload', action: () => actions.setIsBulkUploadModalOpen(true) },
-        { title: 'Xuất Toàn Bộ Hệ Thống KH', icon: 'fa-file-excel', action: () => exportAllSavedOrdersToExcel(showToast) },
-        { title: 'Xuất Báo Cáo Ghép Xe', icon: 'fa-file-export', action: () => exportOrderReport(pendingData, pairedData) },
-        { title: 'Cài Đặt Hiển Thị Tab', icon: 'fa-eye-slash', action: () => setIsManageTabsModalOpen(true) },
-        { title: 'Cài Đặt Thông Báo', icon: 'fa-bullhorn', action: () => setIsAnnouncementModalOpen(true) },
-        { title: 'Khôi Phục CSDL Lõi', icon: 'fa-database text-red-500', action: () => setIsDataRecoveryModalOpen(true) },
-        { title: 'Cập Nhật Core/thongtinxe', icon: 'fa-database', action: () => actions.setAdminModal('thongTinXeExcel') },
-        { title: 'Lưu Trữ Hóa Đơn Tháng Trước', icon: 'fa-archive', action: () => actions.setAdminModal('archive') },
-
+        { id: 'satellite', title: 'Kho Vệ Tinh (3 Kho)', subtitle: 'Đối soát tồn kho 3 bãi vệ tinh', group: 'Cyber', icon: 'fa-warehouse', action: () => { onEnsureAdminView?.(); setAdminView('satellite_warehouses'); } },
+        { id: 'cyber_k10', title: 'Phân Bổ Cyber (K10)', subtitle: 'Đồng bộ phân bổ xe từ hệ thống Cyber', group: 'Cyber', icon: 'fa-bolt', action: () => setShowCyberSyncModal(true) },
+        { id: 'cyber_loc', title: 'Vị Trí Kho Cyber', subtitle: 'Cập nhật vị trí kho bãi thực tế Cyber', group: 'Cyber', icon: 'fa-map-marker-alt', action: () => setShowCyberLocationSyncModal(true) },
+        { id: 'cyber_plan', title: 'Tra Cứu Kế Hoạch Cyber', subtitle: 'Theo dõi lịch trình rút xe & kế hoạch', group: 'Cyber', icon: 'fa-search-location', action: () => { onEnsureAdminView?.(); setAdminView('cyber_plan'); } },
+        { id: 'vc_inbox', title: 'Hộp thư Xử lý VC', subtitle: 'Phê duyệt và đối soát yêu cầu VinClub', group: 'Đơn hàng', icon: 'fa-file-invoice-dollar', action: () => { onEnsureAdminView?.(); setAdminView('vc'); } },
+        { id: 'bulk_invoice', title: 'Tải Lên HĐ Hàng Loạt', subtitle: 'Đính kèm nhiều file hóa đơn PDF cùng lúc', group: 'Đơn hàng', icon: 'fa-file-upload', action: () => actions.setIsBulkUploadModalOpen(true) },
+        { id: 'revertOrder', title: 'Hoàn Tác Trạng Thái', subtitle: 'Khôi phục trạng thái trước đó của đơn hàng', group: 'Đơn hàng', icon: 'fa-history', inline: true, action: () => actions.setAdminModal('revertOrder') },
+        { id: 'advanceOrder', title: 'Tiến Tới Trạng Thái', subtitle: 'Chuyển đơn hàng sang bước kế tiếp', group: 'Đơn hàng', icon: 'fa-step-forward', inline: true, action: () => actions.setAdminModal('advanceOrder') },
+        { id: 'deleteOrder', title: 'Xóa Đơn Hàng', subtitle: 'Hủy và chuyển đơn hàng vào lưu trữ đã hủy', group: 'Đơn hàng', icon: 'fa-times-circle', danger: true, inline: true, action: () => actions.setAdminModal('deleteOrder') },
+        { id: 'addCar', title: 'Thêm Xe Mới', subtitle: 'Thêm nhanh 1 xe vào kho bằng số VIN', group: 'Kho xe', icon: 'fa-plus-circle', inline: true, action: () => actions.setAdminModal('addCar') },
+        { id: 'bulkAddCar', title: 'Thêm Xe Hàng Loạt', subtitle: 'Dán danh sách số VIN & phiên bản từ Excel', group: 'Kho xe', icon: 'fa-layer-group', inline: true, action: () => actions.setAdminModal('bulkAddCar') },
+        { id: 'import_loc', title: 'Nhập Vị Trí Kho', subtitle: 'Cập nhật hàng loạt vị trí bãi đỗ xe', group: 'Kho xe', icon: 'fa-warehouse', action: () => setIsImportLocationModalOpen(true) },
+        { id: 'bulk_excel', title: 'Nhập Xe Từ Excel', subtitle: 'Tải file Excel danh sách xe nhập kho', group: 'Kho xe', icon: 'fa-file-excel', action: () => actions.setAdminModal('bulkAddCarExcel') },
+        { id: 'restoreCar', title: 'Phục Hồi Xe', subtitle: 'Khôi phục xe đã xóa trở lại kho Chưa ghép', group: 'Kho xe', icon: 'fa-undo', inline: true, action: () => actions.setAdminModal('restoreCar') },
+        { id: 'deleteCar', title: 'Xóa Xe Khỏi Kho', subtitle: 'Gỡ xe khỏi kho hiện hành và lưu nhật ký', group: 'Kho xe', icon: 'fa-trash-alt', danger: true, inline: true, action: () => actions.setAdminModal('deleteCar') },
+        { id: 'addUser', title: 'Thêm Nhân Viên', subtitle: 'Tạo tài khoản và gửi lời mời kích hoạt', group: 'Nhân sự', icon: 'fa-user-plus', inline: true, action: () => actions.setAdminModal('addUser') },
+        { id: 'deleteUser', title: 'Xóa Nhân Viên', subtitle: 'Gỡ vĩnh viễn tài khoản nhân sự khỏi hệ thống', group: 'Nhân sự', icon: 'fa-user-minus', danger: true, inline: true, action: () => actions.setAdminModal('deleteUser') },
+        { id: 'export_all', title: 'Xuất Toàn Bộ Hệ Thống KH', subtitle: 'Tải xuống file Excel toàn bộ dữ liệu khách hàng', group: 'Hệ thống', icon: 'fa-file-excel', action: () => exportAllSavedOrdersToExcel(showToast) },
+        { id: 'export_match', title: 'Xuất Báo Cáo Ghép Xe', subtitle: 'Kết xuất báo cáo đơn chờ ghép và đã ghép', group: 'Hệ thống', icon: 'fa-file-export', action: () => exportOrderReport(pendingData, pairedData) },
+        { id: 'manageTabs', title: 'Cài Đặt Hiển Thị Tab', subtitle: 'Bật/tắt các phân hệ trên thanh điều hành', group: 'Hệ thống', icon: 'fa-eye-slash', inline: true, action: () => setIsManageTabsModalOpen(true) },
+        { id: 'announcement', title: 'Cài Đặt Thông Báo', subtitle: 'Cấu hình biểu ngữ thông báo toàn hệ thống', group: 'Hệ thống', icon: 'fa-bullhorn', action: () => setIsAnnouncementModalOpen(true) },
+        { id: 'thongtinxe', title: 'Cập Nhật Core/thongtinxe', subtitle: 'Đồng bộ bảng dữ liệu gốc thông tin xe', group: 'Hệ thống', icon: 'fa-database', action: () => actions.setAdminModal('thongTinXeExcel') },
+        { id: 'archive', title: 'Lưu Trữ Hóa Đơn Tháng Trước', subtitle: 'Chuyển các đơn đã xuất HĐ tháng cũ sang lưu trữ', group: 'Hệ thống', icon: 'fa-archive', inline: true, action: () => actions.setAdminModal('archive') },
+        { id: 'recovery', title: 'Khôi Phục CSDL Lõi', subtitle: 'Công cụ sao lưu và phục hồi dữ liệu khẩn cấp', group: 'Hệ thống', icon: 'fa-database', danger: true, action: () => setIsDataRecoveryModalOpen(true) },
     ];
 
     // Modal Inputs
@@ -873,7 +908,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <div className="bg-white pb-2 pt-2"><div className="mx-auto h-1 w-9 rounded-full bg-slate-300" /><div className="mt-1 flex h-9 items-center justify-between px-4"><span className="w-12" /><h3 className="text-[13px] font-bold text-slate-800">Công cụ quản trị</h3><button type="button" onClick={() => setIsActionMenuOpen(false)} className="h-8 text-[13px] font-semibold text-blue-600">Xong</button></div></div>
                                 <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto p-3 no-scrollbar">
                                     {adminTools.map(tool => (
-                                        <button key={tool.title} type="button" onClick={() => { tool.action(); setIsActionMenuOpen(false); }} className="flex min-h-[52px] items-center gap-2 rounded-[14px] bg-white px-3 py-2 text-left shadow-2xs ring-1 ring-slate-200/70 active:scale-[0.98]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-slate-100 text-slate-500"><i className={`fas ${tool.icon} text-[11px]`} /></span><span className="text-[9.5px] font-semibold leading-tight text-slate-700">{tool.title}</span></button>
+                                        <button key={tool.title} type="button" onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets')); closeAllAdminSheets(); tool.action(); setIsActionMenuOpen(false); }} className="flex min-h-[52px] items-center gap-2 rounded-[14px] bg-white px-3 py-2 text-left shadow-2xs ring-1 ring-slate-200/70 active:scale-[0.98]"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-slate-100 text-slate-500"><i className={`fas ${tool.icon} text-[11px]`} /></span><span className="text-[9.5px] font-semibold leading-tight text-slate-700">{tool.title}</span></button>
                                     ))}
                                 </div>
                             </div>
@@ -1044,32 +1079,37 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
             {/* PORTAL: Admin Lightning Action Menu into Global Header */}
             {document.getElementById('admin-portal-target') && createPortal(
-                <div className="relative mr-0.5" ref={actionMenuRef}>
-                    <div className="flex items-center gap-1.5">
-                        <button
-                            onClick={() => setIsActionMenuOpen(prev => !prev)}
-                            title="Thao Tác Nhanh Quản Trị"
-                            className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isActionMenuOpen ? 'bg-accent-primary text-white shadow-md' : 'bg-transparent text-gray-400 hover:text-accent-primary hover:bg-white hover:shadow-sm'}`}
-                        >
-                            <i className="fas fa-bolt text-[13px]"></i>
-                        </button>
-                    </div>
+                <div className="relative" ref={actionMenuRef}>
+                    <button
+                        type="button"
+                        onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets', { detail: { except: 'boltMenu' } })); setIsActionMenuOpen(prev => !prev); }}
+                        title="Thao Tác Nhanh Quản Trị"
+                        data-active={isActionMenuOpen}
+                        className="w-8 h-8 flex items-center justify-center rounded-xl transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                    >
+                        <i className="fas fa-bolt text-[13px]"></i>
+                    </button>
+
                     {isActionMenuOpen && (
-                        <div className="fixed sm:absolute top-[56px] sm:top-full left-2 right-2 sm:left-auto sm:right-0 sm:mt-3 w-auto sm:w-64 bg-white border border-border-primary shadow-[0_10px_40px_rgba(0,0,0,0.12)] rounded-2xl z-[12000] p-1.5 animate-fade-in-scale-up origin-top sm:origin-top-right">
-                            <div className="px-3 py-2 border-b border-slate-50 mb-1.5">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Công cụ quản trị</span>
+                        <div className="app-navigation-bolt-menu sidebar-popover absolute right-0 top-full mt-2 w-60 z-[12000] animate-fade-in">
+                            <div className="sidebar-popover-header">
+                                <span className="sidebar-popover-title">Công cụ quản trị</span>
+                                <span className="sidebar-popover-badge">Admin</span>
                             </div>
-                            <div className="grid grid-cols-1 gap-0.5 max-h-[70vh] sm:max-h-[60vh] overflow-y-auto pr-1 -mr-1 custom-scrollbar">
+                            <div className="sidebar-menu-actions max-h-[380px] overflow-y-auto pr-0.5 custom-scrollbar">
                                 {adminTools.map(tool => (
-                                    <button 
-                                        key={tool.title} 
-                                        onClick={() => { tool.action(); setIsActionMenuOpen(false); }} 
-                                        className="flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 text-xs rounded-lg text-slate-700 hover:bg-slate-50 transition-colors group"
+                                    <button
+                                        key={tool.title}
+                                        type="button"
+                                        onClick={() => {
+                                            window.dispatchEvent(new CustomEvent('close-all-sheets'));
+                                            closeAllAdminSheets();
+                                            tool.action();
+                                            setIsActionMenuOpen(false);
+                                        }}
+                                        className={`sidebar-menu-item ${(tool as any).danger ? 'is-danger' : ''}`}
                                     >
-                                        <div className="w-6 h-6 rounded border border-slate-100/50 bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-500 group-hover:bg-accent-primary group-hover:text-white group-hover:border-accent-primary transition-all">
-                                            <i className={`fas ${tool.icon} text-[10px]`}></i>
-                                        </div>
-                                        <span className="font-semibold text-slate-700/90">{tool.title}</span>
+                                        <span>{tool.title}</span>
                                     </button>
                                 ))}
                             </div>
@@ -1247,98 +1287,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         onClose={() => setIsDataRecoveryModalOpen(false)}
                         showToast={showToast}
                     />
-                    
-                    {isManageTabsModalOpen && (
-                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[150] flex items-center justify-center p-2 sm:p-6">
-                            <div className="bg-white/95 backdrop-blur-xl rounded-[2rem] sm:rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col animate-fade-in-up border border-white/20">
-                                {/* Header */}
-                                <div className="p-4 sm:p-6 border-b border-slate-100/50 flex items-center justify-between">
-                                    <div className="flex items-center gap-3 sm:gap-4">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg transform -rotate-3">
-                                            <i className="fas fa-th-large text-sm sm:text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-black text-slate-800 text-lg sm:text-2xl tracking-tight">Cấu Hình Tab</h3>
-                                            <p className="text-[10px] sm:text-sm text-slate-400 font-medium">Bật/tắt các thẻ chức năng quan trọng</p>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={() => setIsManageTabsModalOpen(false)} 
-                                        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl sm:rounded-2xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all shadow-sm group"
-                                    >
-                                        <i className="fas fa-times group-hover:rotate-90 transition-transform duration-300 text-xs sm:text-base"></i>
-                                    </button>
-                                </div>
-
-                                {/* Body - Horizontal Grid */}
-                                <div className="p-4 sm:p-8 bg-slate-50/30 overflow-y-auto">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
-                                        {Object.entries(categories).map(([catKey, cat]) => (
-                                            <div key={catKey} className="flex flex-col h-full bg-white/50 p-4 sm:p-6 rounded-3xl border border-slate-100/50 shadow-sm">
-                                                <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-red-600 text-white flex items-center justify-center text-[10px] sm:text-[11px] shadow-md shadow-red-100">
-                                                        <i className={`fas ${cat.icon}`}></i>
-                                                    </div>
-                                                    <div className="text-[10px] sm:text-[12px] font-black text-slate-800 uppercase tracking-widest">{cat.label}</div>
-                                                </div>
-                                                
-                                                <div className="flex flex-col gap-2 sm:gap-3">
-                                                    {cat.views.map(view => {
-                                                        const isVisible = !hiddenTabs.includes(view);
-                                                        return (
-                                                            <div 
-                                                                key={view} 
-                                                                onClick={() => toggleTabVisibility(view)}
-                                                                className={`
-                                                                    group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-300
-                                                                    ${isVisible 
-                                                                        ? 'bg-white shadow-sm border border-slate-200' 
-                                                                        : 'bg-slate-100/50 opacity-50 border border-transparent'}
-                                                                    hover:border-red-200 hover:shadow-md
-                                                                `}
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className={`
-                                                                        w-8 h-8 rounded-lg flex items-center justify-center transition-all
-                                                                        ${isVisible ? 'bg-red-50 text-red-600 font-bold' : 'bg-slate-200 text-slate-400'}
-                                                                    `}>
-                                                                        <i className={`fas ${isVisible ? 'fa-check' : 'fa-eye-slash'} text-[10px]`}></i>
-                                                                    </div>
-                                                                    <span className={`text-[12.5px] font-bold tracking-tight ${isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
-                                                                        {labels[view]}
-                                                                    </span>
-                                                                </div>
-                                                                
-                                                                <div className={`
-                                                                    w-8 h-4 rounded-full transition-colors duration-300 flex items-center px-0.5
-                                                                    ${isVisible ? 'bg-red-600' : 'bg-slate-300'}
-                                                                `}>
-                                                                    <div className={`
-                                                                        w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform
-                                                                        ${isVisible ? 'translate-x-4' : 'translate-x-0'}
-                                                                    `}></div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Footer */}
-                                <div className="p-4 sm:p-8 border-t border-slate-100/50 bg-white flex justify-end">
-                                    <button 
-                                        onClick={() => setIsManageTabsModalOpen(false)}
-                                        className="w-full sm:w-auto px-10 py-3.5 bg-slate-900 text-white rounded-2xl text-xs sm:text-sm font-black hover:bg-red-600 transition-all shadow-xl hover:shadow-red-200 active:scale-95"
-                                    >
-                                        LƯU CẤU HÌNH & ĐÓNG
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <ManageTabsSheet
+                        isOpen={isManageTabsModalOpen}
+                        onClose={() => setIsManageTabsModalOpen(false)}
+                        categories={categories}
+                        labels={labels}
+                        hiddenTabs={hiddenTabs}
+                        toggleTabVisibility={toggleTabVisibility}
+                    />
                 </>,
                 document.body
             )}

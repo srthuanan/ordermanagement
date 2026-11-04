@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
+import InlinePolicyPicker from '../ui/InlinePolicyPicker';
 import Button from '../ui/Button';
+import './create-request-sheet.css';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
 import { checkCyberContractStatus, CheckCyberContractResult } from '../../services/api/stockService';
@@ -11,20 +13,20 @@ interface RequestInvoiceModalProps {
     order: Order;
     onClose: () => void;
     onConfirm: (
-        order: Order, 
-        contractFile: File, 
-        proposalFile: File, 
-        policy: string[], 
-        commission: string, 
-        vpoint: string, 
-        aiNote?: string, 
+        order: Order,
+        contractFile: File,
+        proposalFile: File,
+        policy: string[],
+        commission: string,
+        vpoint: string,
+        aiNote?: string,
         preProcessedPayloads?: any,
         xeXangVin?: string,
         xeXangHang?: string,
         xeXangModel?: string,
         maVc?: string
     ) => Promise<any>;
-    stockData?: any[]; 
+    stockData?: any[];
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     /** When true, renders inline inside a parent container (no fixed overlay) */
     inline?: boolean;
@@ -32,74 +34,22 @@ interface RequestInvoiceModalProps {
     compact?: boolean;
 }
 
-const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean, compact?: boolean }> = ({ currentStep, hasVinClub, compact }) => {
-    const steps = ["Thông tin", "Chứng từ", "Xác nhận"];
+const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean, compact?: boolean }> = ({ currentStep, hasVinClub }) => {
+    const steps = ["Thông tin & Chứng từ", "Xác nhận"];
     return (
-        <div className={`flex justify-between items-center ${compact ? 'mb-1 pt-1' : 'mb-6'} relative px-10 md:px-24`}>
-            {/* Connection Segments Container */}
-            <div className="absolute left-[calc(2.5rem+32px)] right-[calc(2.5rem+32px)] md:left-[calc(6rem+40px)] md:right-[calc(6rem+40px)] top-[12px] transform -translate-y-1/2 h-3 -z-10 flex justify-between gap-2">
-                {steps.slice(0, -1).map((_, idx) => {
-                    const isFilled = currentStep > idx + 1 || (currentStep === 3 && idx === 1 && hasVinClub);
-                    const isActive = currentStep === idx + 1 && !isFilled;
-                    
-                    return (
-                        <div key={idx} className="flex-1 h-full flex items-center justify-around px-2">
-                            {/* Energy Chevrons Trail with Vibrant Color Range */}
-                            {[...Array(10)].map((_, i) => {
-                                const colors = isFilled 
-                                    ? ['#34d399', '#10b981', '#059669', '#0d9488', '#065f46', '#0f766e', '#115e59', '#134e4a'] // Emerald/Teal range
-                                    : ['#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a']; // Blue/Indigo range
-                                
-                                const isFuture = !isFilled && !isActive;
-                                
-                                return (
-                                    <div 
-                                        key={i} 
-                                        className={`w-1 h-1 border-t-[1px] border-r-[1px] rotate-45 transition-all duration-700 ${
-                                            isActive ? 'animate-pulse' : ''
-                                        }`}
-                                        style={{ 
-                                            borderColor: isFuture ? '#e5e7eb' : colors[i % colors.length],
-                                            animationDelay: isActive ? `${i * 0.12}s` : '0s',
-                                            opacity: isFilled ? 0.9 : isActive ? 0.5 : 0.05,
-                                            filter: (isFilled || isActive) ? `drop-shadow(0 0 2px ${colors[i % colors.length]}60)` : 'none'
-                                        }}
-                                    />
-                                );
-                            })}
-                        </div>
-                    );
-                })}
-            </div>
-            
+        <div className="request-step-indicator" aria-label={`Bước ${currentStep} trên 2`}>
             {steps.map((label, index) => {
                 const stepNumber = index + 1;
-                const isActive = stepNumber === currentStep && !(stepNumber === 3 && hasVinClub);
-                const isCompleted = stepNumber < currentStep || (stepNumber === 3 && hasVinClub);
-                
+                const isCompleted = stepNumber < currentStep || (stepNumber === 2 && Boolean(hasVinClub));
+                const isActive = stepNumber === currentStep && !isCompleted;
                 return (
-                    <div key={stepNumber} className="flex flex-col items-center relative z-10 w-16 md:w-20 group">
-                        {/* Halo Effect for Active Step */}
-                        {isActive && (
-                            <div className="absolute top-[12px] left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-blue-500/10 rounded-full animate-ping -z-10"></div>
-                        )}
-                        
-                        <div className={`w-6 h-6 flex items-center justify-center font-black text-[9px] rounded-full border-2 transition-all duration-500 relative ${
-                            isCompleted 
-                                ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_8px_rgba(16,185,129,0.3)]' 
-                                : isActive 
-                                    ? 'bg-white border-blue-600 text-blue-600 scale-125 shadow-[0_0_12px_rgba(37,99,235,0.2)] ring-2 ring-blue-50' 
-                                    : 'bg-white border-gray-200 text-gray-300'
-                        }`}>
-                            {isCompleted ? <i className="fas fa-check text-[8px]"></i> : stepNumber}
-                            
-                            {/* Inner Shine for that Pearl Look */}
-                            <div className="absolute top-0.5 left-1 w-1 h-1 bg-white/40 rounded-full"></div>
-                        </div>
-                        <span className={`mt-2 font-black text-[8px] md:text-[9px] uppercase tracking-[0.12em] text-center transition-all duration-300 ${
-                            isCompleted ? 'text-emerald-600' : isActive ? 'text-blue-700 font-black' : 'text-gray-400'
-                        }`}>{label}</span>
-                    </div>
+                    <React.Fragment key={stepNumber}>
+                        <span data-current={isActive} data-complete={isCompleted} aria-current={isActive ? 'step' : undefined}>
+                            <b>{isCompleted ? '✓' : stepNumber}</b>
+                            {label}
+                        </span>
+                        {index < steps.length - 1 && <span className="request-step-line" aria-hidden="true" />}
+                    </React.Fragment>
                 );
             })}
         </div>
@@ -149,7 +99,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     });
     const [vinCheckError, setVinCheckError] = useState('');
     const [isCheckingVin, setIsCheckingVin] = useState(false);
-    
+
     // Cyber contract status warning & Step 3 check
     const [isValidatingContract, setIsValidatingContract] = useState(false);
     const [contractWarning, setContractWarning] = useState<CheckCyberContractResult | null>(null);
@@ -392,47 +342,6 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         }
     };
 
-    // -------------------------------------------------------------
-    // HỆ THỐNG TỰ ĐỘNG TRA LẠI DỮ LIỆU ĐỐI SOÁT TRONG NỀN (BACKGROUND AUTO RE-CHECK)
-    // 1. Tự động kiểm tra ngầm mỗi 6 giây khi phát hiện dữ liệu chưa khớp / HĐ chưa duyệt
-    // 2. Tự động kích hoạt ngay lập tức khi TVBH quay lại tab web (window focus / visibility change)
-    // -------------------------------------------------------------
-    const isDmsPending = dmsVerification.status === 'invalid';
-    const isCyberPending = !cyberContractStatus || !cyberContractStatus.found || !cyberContractStatus.is_approved;
-
-    useEffect(() => {
-        if (!orderNoStr) return;
-
-        // 1. Lắng nghe sự kiện người dùng chuyển tab làm việc (sang CyberSoft / DMS duyệt xong rồi quay lại):
-        const handleWindowActive = () => {
-            if (document.visibilityState === 'visible') {
-                if (!isCheckingDms && !isCheckingCyberContract) {
-                    if (isDmsPending) recheckDmsVerification(false);
-                    if (isCyberPending) recheckCyberContract(false);
-                }
-            }
-        };
-
-        window.addEventListener('focus', handleWindowActive);
-        document.addEventListener('visibilitychange', handleWindowActive);
-
-        // 2. Chu kỳ polling ngầm mỗi 6 giây khi một trong 2 bên chưa khớp:
-        let pollTimer: any = null;
-        if (isDmsPending || isCyberPending) {
-            pollTimer = setInterval(() => {
-                if (document.visibilityState === 'visible' && !isCheckingDms && !isCheckingCyberContract) {
-                    if (isDmsPending) recheckDmsVerification(false);
-                    if (isCyberPending) recheckCyberContract(false);
-                }
-            }, 6000);
-        }
-
-        return () => {
-            window.removeEventListener('focus', handleWindowActive);
-            document.removeEventListener('visibilitychange', handleWindowActive);
-            if (pollTimer) clearInterval(pollTimer);
-        };
-    }, [orderNoStr, isDmsPending, isCyberPending, isCheckingDms, isCheckingCyberContract]);
 
     useEffect(() => {
         const existing = (order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '').trim();
@@ -468,7 +377,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     }, [order?.["Tên khách hàng"], order?.["Số đơn hàng"]]);
 
     useEffect(() => {
-        if (step === 3 && !cyberContractStatus && !isCheckingCyberContract) {
+        if (step === 2 && !cyberContractStatus && !isCheckingCyberContract) {
             recheckCyberContract();
         }
     }, [step]);
@@ -488,12 +397,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             setIsCheckingDms(false);
         }
     }, [policy]);
-    
+
     // Background tracking for Google Drive
     const [capturedImages, setCapturedImages] = useState<any[]>([]);
     const [fileOrigins, setFileOrigins] = useState<number[]>([]);
 
-    const [salesPoliciesOptions, setSalesPoliciesOptions] = useState<{ten_chinh_sach: string, dong_xe: string}[]>([]);
+    const [salesPoliciesOptions, setSalesPoliciesOptions] = useState<{ ten_chinh_sach: string, dong_xe: string }[]>([]);
     const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
 
     useEffect(() => {
@@ -628,7 +537,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         setPolicy(currentSelection => currentSelection.filter(p => p && p.trim() !== ''));
     }, []);
 
-    const [processingStage, setProcessingStage] = useState(0); 
+    const [processingStage, setProcessingStage] = useState(0);
 
     const handleNumberChange = (setter: (value: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setter(formatNumber(e.target.value));
@@ -638,7 +547,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return policy.some(p => {
             const low = p.toLowerCase();
             return (low.includes('xăng') && low.includes('điện')) ||
-                   low.includes('thu cũ đổi mới');
+                low.includes('thu cũ đổi mới');
         });
     }, [policy]);
 
@@ -714,15 +623,15 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const isDmsValid = dmsVerification.status !== 'invalid';
     const isVerificationBlocked = !isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved);
 
-    const isStep1Valid = policy.length > 0 && 
-        isCommissionValid && 
-        isVpointValid && 
-        (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) && 
-        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '') &&
-        !isVerificationBlocked;
-    const isStep2Valid = Boolean(contractFile && proposalFile);
-    const isStep3Valid = vinClubConfirmed;
-    const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid && !isVerificationBlocked;
+    const isStep1InfoValid = policy.length > 0 &&
+        isCommissionValid &&
+        isVpointValid &&
+        (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) &&
+        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '');
+    const isStep1DocsValid = Boolean(contractFile && proposalFile);
+    const isStep1Valid = isStep1InfoValid && isStep1DocsValid && !isVerificationBlocked;
+    const isStep2Valid = vinClubConfirmed;
+    const isFormValid = isStep1Valid && isStep2Valid && !isVerificationBlocked;
 
     useEffect(() => {
         const savedData = sessionStorage.getItem(`invoice_draft_${order["Số đơn hàng"]}`);
@@ -789,7 +698,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         }
     };
 
-    const handleNext = () => setStep((prev: any) => Math.min(prev + 1, 3));
+    const handleNext = () => setStep((prev: any) => Math.min(prev + 1, 2));
     const handleBack = () => setStep((prev: any) => Math.max(prev - 1, 1));
 
     const executeSubmission = async () => {
@@ -801,7 +710,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             setProcessingStage(2);
             await new Promise(r => setTimeout(r, 600));
             setProcessingStage(3);
-            
+
             // Save split images to Supabase in background for Re-Scan functionality
             if (capturedImages.length > 0 && fileOrigins.length > 0) {
                 const triggerArchival = async () => {
@@ -809,14 +718,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         const orderNumber = order["Số đơn hàng"];
                         const customerName = order["Tên khách hàng"] || "KH vãng lai";
                         const contractImgCount = fileOrigins[0] || 0;
-                        
+
                         // 1. Lưu bộ HĐMB trước
                         if (contractImgCount > 0) {
                             const contractImgs = capturedImages.slice(0, contractImgCount);
                             console.log(`[Supabase] Archiving ${contractImgCount} HĐMB images for re-scan...`);
                             await apiService.saveSplitImagesToSupabase(orderNumber, customerName, contractImgs, "HĐMB");
                         }
-                        
+
                         // 2. Sau đó lưu bộ ĐNXHĐ
                         const proposalImgCount = fileOrigins[1] || 0;
                         if (proposalImgCount > 0) {
@@ -824,13 +733,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             console.log(`[Supabase] Archiving ${proposalImgCount} ĐNXHĐ images for re-scan...`);
                             await apiService.saveSplitImagesToSupabase(orderNumber, customerName, proposalImgs, "ĐNXHĐ");
                         }
-                        
+
                         console.log(`✅ [Supabase] Toàn bộ ảnh đã được lưu vào Storage cho đơn hàng ${orderNumber}`);
                     } catch (err) {
                         console.error("❌ [Supabase] Lỗi lưu trữ ảnh quét lại:", err);
                     }
                 };
-                
+
                 // Gọi mà không await để không làm chậm UI chính
                 triggerArchival();
             }
@@ -843,13 +752,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             };
 
             await onConfirm(
-                updatedOrder, 
-                contractFile!, 
-                proposalFile!, 
-                policy, 
-                getRawValue(commission) || '0', 
-                getRawValue(vpoint) || '0', 
-                '', 
+                updatedOrder,
+                contractFile!,
+                proposalFile!,
+                policy,
+                getRawValue(commission) || '0',
+                getRawValue(vpoint) || '0',
+                '',
                 payloadsRef.current,
                 xeXangVin.trim() || undefined,
                 xeXangHang.trim() || undefined,
@@ -957,8 +866,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         // Nếu hợp đồng chưa duyệt: Chặn hoàn toàn không cho xuất hóa đơn
         if (currentStatus && !currentStatus.is_approved) {
             showToast(
-                'Hợp đồng chưa được duyệt', 
-                `Hợp đồng ${currentStatus.so_ct || ''} hiện ở trạng thái '${currentStatus.ten_post || 'Chờ duyệt'}'. Vui lòng liên hệ Quản lý/Giám đốc duyệt hợp đồng trước khi xuất hóa đơn.`, 
+                'Hợp đồng chưa được duyệt',
+                `Hợp đồng ${currentStatus.so_ct || ''} hiện ở trạng thái '${currentStatus.ten_post || 'Chờ duyệt'}'. Vui lòng liên hệ Quản lý/Giám đốc duyệt hợp đồng trước khi xuất hóa đơn.`,
                 'error'
             );
             return;
@@ -1021,13 +930,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         );
     }
 
+    const formatDiagVal = (val?: string) => {
+        if (!val) return '';
+        let s = val.trim();
+        const dupMatch = s.match(/^([A-Z0-9]+)\s*\(([^)]+)\)\s*\(\1\)$/i);
+        if (dupMatch) {
+            s = `${dupMatch[2].trim()} (${dupMatch[1].toUpperCase()})`;
+        }
+        const sameMatch = s.match(/^([^(]+?)\s*\(([^)]+)\)$/);
+        if (sameMatch && sameMatch[1].trim().toLowerCase() === sameMatch[2].trim().toLowerCase()) {
+            s = sameMatch[1].trim();
+        }
+        return s;
+    };
+
     const renderCyberContractStatusCard = () => {
-        // Tự chạy ngầm hoàn toàn - Không hiển thị loading hay khung chờ
         if (!cyberContractStatus) {
             return null;
         }
 
-        // 1. Kiểm tra đối soát cấu hình Mã màu ngoại thất, nội thất và dòng xe giữa HĐ CyberSoft và Xe ghép
         const car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
         const carExtCode = car ? (apiService.getExteriorColorCode(car['Ngoại thất'] || car['Màu ngoại thất'] || '') || (car as any).ma_mau) : '';
         const carIntCode = car ? (apiService.getInteriorColorCode(car['Nội thất'] || car['Màu nội thất'] || '') || (car as any).ma_noi_that) : '';
@@ -1037,24 +958,31 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         const cyberIntCode = (cyberContractStatus.ma_mau_nt || '').trim().toUpperCase();
         const cyberModelCode = apiService.getModelCode(cyberContractStatus.ten_kx || cyberContractStatus.ma_kx || '');
 
-        let configTitle = '';
+        let configLabel = '';
+        let wrongVal = '';
+        let rightVal = '';
         let configGuide = '';
         if (car && cyberContractStatus.found) {
             if (carModelCode && cyberModelCode && carModelCode !== cyberModelCode) {
                 const expShow = carModelCode || car['Dòng xe'];
                 const cybShow = cyberModelCode || cyberContractStatus.ten_kx;
-                configTitle = `Lệch Dòng xe: Xe [${expShow}] ⇄ Cyber [${cybShow}]`;
-                configGuide = `Sửa dòng xe trên Cyber thành [${expShow}] rồi bấm Tra lại.`;
+                configLabel = 'Lệch Dòng xe';
+                wrongVal = cybShow;
+                rightVal = expShow;
+                configGuide = `Sửa dòng xe trên Cyber thành ${expShow} rồi bấm Tra lại.`;
             } else if (carExtCode && cyberExtCode && !apiService.compareExteriorColorCodes(carExtCode, cyberExtCode)) {
-                configTitle = `Lệch Ngoại thất: Xe [${carExtCode}] ⇄ Cyber [${cyberExtCode}]`;
-                configGuide = `Sửa màu trên Cyber thành [${carExtCode}] rồi bấm Tra lại.`;
+                configLabel = 'Lệch Ngoại thất';
+                wrongVal = cyberExtCode;
+                rightVal = carExtCode;
+                configGuide = `Sửa màu ngoại thất trên Cyber thành ${carExtCode} rồi bấm Tra lại.`;
             } else if (carIntCode && cyberIntCode && !apiService.compareInteriorColorCodes(carIntCode, cyberIntCode)) {
-                configTitle = `Lệch Nội thất: Xe [${carIntCode}] ⇄ Cyber [${cyberIntCode}]`;
-                configGuide = `Sửa màu trên Cyber thành [${carIntCode}] rồi bấm Tra lại.`;
+                configLabel = 'Lệch Nội thất';
+                wrongVal = cyberIntCode;
+                rightVal = carIntCode;
+                configGuide = `Sửa màu nội thất trên Cyber thành ${carIntCode} rồi bấm Tra lại.`;
             }
         }
 
-        // 2. Kiểm tra đối soát Tên khách hàng giữa Đơn hàng và HĐ Cyber
         const ordCustomer = (order["Tên khách hàng"] || '').trim();
         const cybCustomer = (cyberContractStatus.ten_kh || '').trim();
         let customerMismatch = false;
@@ -1064,70 +992,69 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             }
         }
 
-        // Trường hợp lệch mã cấu hình hoặc lệch tên khách hàng với HĐ Cyber
-        if (configTitle || customerMismatch) {
-            const displayTitle = customerMismatch 
-                ? `Lệch Tên KH: Đơn [${ordCustomer}] ⇄ Cyber [${cybCustomer}]` 
-                : configTitle;
-            const displayGuide = customerMismatch 
-                ? `Sửa tên khách hàng trên HĐ Cyber đúng với Đơn hàng rồi bấm Tra lại.` 
+        if (configLabel || customerMismatch) {
+            const label = customerMismatch ? 'Lệch Tên KH' : configLabel;
+            const currentWrong = formatDiagVal(customerMismatch ? cybCustomer : wrongVal);
+            const targetRight = formatDiagVal(customerMismatch ? ordCustomer : rightVal);
+            const targetLabel = customerMismatch ? 'Đơn' : 'Xe';
+            const displayGuide = customerMismatch
+                ? `Sửa tên khách hàng trên HĐ Cyber thành ${ordCustomer} rồi bấm Tra lại.`
                 : configGuide;
 
             return (
-                <div className="relative p-2 px-3 rounded-xl border border-rose-300 bg-rose-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <i className={`fas ${customerMismatch ? 'fa-user-xmark' : 'fa-triangle-exclamation'} text-rose-600 text-xs flex-shrink-0`}></i>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-bold text-rose-950 truncate">
-                                {displayTitle}
-                            </p>
-                            <p className="text-[10px] text-rose-700 truncate">
-                                {displayGuide}
-                            </p>
+                <div className="invoice-diag-card" data-tone="red">
+                    <div className="invoice-diag-body">
+                        <div className="invoice-diag-head">
+                            <span className="invoice-diag-badge"><i />Cyber</span>
+                            <p className="invoice-diag-title">{label}</p>
+                            <div className="invoice-diag-diff">
+                                <span className="invoice-diag-chip" data-side="wrong" title={currentWrong}>
+                                    <small>Cyber:</small> {currentWrong}
+                                </span>
+                                <span className="invoice-diag-swap">⇄</span>
+                                <span className="invoice-diag-chip" data-side="right" title={targetRight}>
+                                    <small>{targetLabel}:</small> {targetRight}
+                                </span>
+                            </div>
                         </div>
+                        <p className="invoice-diag-guide">{displayGuide}</p>
                     </div>
-                    <button 
-                        type="button" 
-                        onClick={(e) => { e.stopPropagation(); recheckCyberContract(true); }} 
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); recheckCyberContract(true); }}
                         title="Kiểm tra lại hợp đồng Cyber"
-                        className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                        className="invoice-diag-btn"
                     >
-                        <i className={`fas fa-arrows-rotate text-[8px] ${isCheckingCyberContract ? 'animate-spin' : ''}`}></i>
+                        <i className={`fas fa-arrows-rotate text-[9px] ${isCheckingCyberContract ? 'animate-spin' : ''}`}></i>
                         <span>Tra lại</span>
                     </button>
                 </div>
             );
         }
 
-        // Nếu hợp đồng đã duyệt và KHÔNG có lỗi cấu hình: Ẩn đi để giao diện gọn gàng
         if (cyberContractStatus.is_approved) {
             return null;
         }
 
-        // Trường hợp chưa duyệt hoặc chưa có HĐ: Cảnh báo ngắn gọn
         const unapprovedTitle = cyberContractStatus.found ? 'HĐ Cyber chưa duyệt' : 'Chưa có HĐ trên Cyber';
         const unapprovedGuide = cyberContractStatus.found ? 'Duyệt HĐ trên Cyber rồi bấm Tra lại.' : 'Tạo HĐ trên Cyber rồi bấm Tra lại.';
 
         return (
-            <div className="relative p-2 px-3 rounded-xl border border-amber-300 bg-amber-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <i className="fas fa-clock text-amber-600 text-xs flex-shrink-0"></i>
-                    <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-bold text-amber-950 truncate">
-                            {unapprovedTitle}
-                        </p>
-                        <p className="text-[10px] text-amber-700 truncate">
-                            {unapprovedGuide}
-                        </p>
+            <div className="invoice-diag-card">
+                <div className="invoice-diag-body">
+                    <div className="invoice-diag-head">
+                        <span className="invoice-diag-badge"><i />Cyber</span>
+                        <p className="invoice-diag-title">{unapprovedTitle}</p>
                     </div>
+                    <p className="invoice-diag-guide">{unapprovedGuide}</p>
                 </div>
-                <button 
-                    type="button" 
-                    onClick={(e) => { e.stopPropagation(); recheckCyberContract(true); }} 
+                <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); recheckCyberContract(true); }}
                     title="Kiểm tra lại trạng thái hợp đồng"
-                    className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                    className="invoice-diag-btn"
                 >
-                    <i className={`fas fa-arrows-rotate text-[8px] ${isCheckingCyberContract ? 'animate-spin' : ''}`}></i>
+                    <i className={`fas fa-arrows-rotate text-[9px] ${isCheckingCyberContract ? 'animate-spin' : ''}`}></i>
                     <span>Tra lại</span>
                 </button>
             </div>
@@ -1135,7 +1062,6 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     const renderDmsVerificationCard = () => {
-        // Chỉ ẩn khi cấu hình DMS đã khớp hoàn toàn hoặc chưa có thông tin
         if (dmsVerification.status === 'valid' || (dmsVerification.status === 'idle' && !isCheckingDms)) {
             return null;
         }
@@ -1146,71 +1072,101 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
             let title = 'Lỗi cấu hình DMS';
             let guide = 'Kiểm tra lại trên DMS rồi bấm Tra lại.';
+            let wrongVal = '';
+            let rightVal = '';
+            let rightLabel = 'Xe';
 
             const errorType = dmsVerification.errorType;
             const expectedVal = dmsVerification.expectedVal;
             const dmsVal = dmsVerification.dmsVal;
 
-            // Rút gọn tối đa: Lỗi sai nào cần sửa thành gì thì note ngắn gọn sửa lại thành cái gì cho đúng
             if (errorType === 'customer' || norm.includes('ten khach hang') || norm.includes('khach hang')) {
-                const exp = (expectedVal || '').trim();
-                const dms = (dmsVal || '').trim();
-                title = `Lệch Tên KH: DMS [${dms}] ⇄ Đơn [${exp}]`;
-                guide = `Sửa tên khách hàng trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                const exp = formatDiagVal(expectedVal);
+                const dms = formatDiagVal(dmsVal);
+                title = 'Lệch Tên KH';
+                wrongVal = dms;
+                rightVal = exp;
+                rightLabel = 'Đơn';
+                guide = `Sửa tên khách hàng trên DMS thành ${exp} rồi bấm Tra lại.`;
             } else if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel') || norm.includes('void')) {
-                title = 'VSO trên DMS đã bị HỦY';
+                title = 'VSO trên DMS đã bị hủy';
                 guide = 'Đổi sang số VSO đang Mở rồi bấm Tra lại.';
             } else if (errorType === 'invoiced' || norm.includes('hoa don') || norm.includes('invoiced') || norm.includes('da xuat')) {
-                title = 'VSO trên DMS đã xuất Hóa đơn (Đã đóng)';
+                title = 'VSO trên DMS đã xuất hóa đơn';
                 guide = 'Đổi sang số VSO đang Mở rồi bấm Tra lại.';
             } else if (errorType === 'not_found' || norm.includes('khong tim thay')) {
                 title = 'Không tìm thấy VSO trên DMS';
                 guide = 'Kiểm tra lại số VSO trên DMS rồi bấm Tra lại.';
             } else if (errorType === 'exterior' || norm.includes('ngoai that')) {
-                const exp = apiService.getExteriorColorCode(expectedVal || '') || expectedVal || '';
-                const dms = apiService.getExteriorColorCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Ngoại thất: DMS [${dms}] ⇄ Xe [${exp}]`;
-                guide = `Sửa màu ngoại thất trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                const exp = formatDiagVal(apiService.getExteriorColorCode(expectedVal || '') || expectedVal || '');
+                const dms = formatDiagVal(apiService.getExteriorColorCode(dmsVal || '') || dmsVal || '');
+                title = 'Lệch Ngoại thất';
+                wrongVal = dms;
+                rightVal = exp;
+                guide = `Sửa màu ngoại thất trên DMS thành ${exp} rồi bấm Tra lại.`;
             } else if (errorType === 'interior' || norm.includes('noi that')) {
-                const exp = apiService.getInteriorColorCode(expectedVal || '') || expectedVal || '';
-                const dms = apiService.getInteriorColorCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Nội thất: DMS [${dms}] ⇄ Xe [${exp}]`;
-                guide = `Sửa màu nội thất trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                const exp = formatDiagVal(apiService.getInteriorColorCode(expectedVal || '') || expectedVal || '');
+                const dms = formatDiagVal(apiService.getInteriorColorCode(dmsVal || '') || dmsVal || '');
+                title = 'Lệch Nội thất';
+                wrongVal = dms;
+                rightVal = exp;
+                guide = `Sửa màu nội thất trên DMS thành ${exp} rồi bấm Tra lại.`;
             } else if (errorType === 'model' || norm.includes('dong xe') || norm.includes('model')) {
-                const exp = apiService.getModelCode(expectedVal || '') || expectedVal || '';
-                const dms = apiService.getModelCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Dòng xe: DMS [${dms}] ⇄ Xe [${exp}]`;
-                guide = `Sửa dòng xe trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                const exp = formatDiagVal(apiService.getModelCode(expectedVal || '') || expectedVal || '');
+                const dms = formatDiagVal(apiService.getModelCode(dmsVal || '') || dmsVal || '');
+                title = 'Lệch Dòng xe';
+                wrongVal = dms;
+                rightVal = exp;
+                guide = `Sửa dòng xe trên DMS thành ${exp} rồi bấm Tra lại.`;
             } else if (errorType === 'version' || norm.includes('phien ban') || norm.includes('version')) {
-                const exp = (expectedVal || '').trim();
-                const dms = (dmsVal || '').trim();
-                title = `Lệch Phiên bản: DMS [${dms}] ⇄ Xe [${exp}]`;
-                guide = `Sửa phiên bản trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                const car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
+                const rawCarMaPb = (car?.ma_phien_ban || car?.['Mã phiên bản'] || '').trim().toUpperCase();
+                const vinVerCode = apiService.resolveMaterialVersionCode(
+                    car?.['Dòng xe'] || car?.dong_xe || expectedConfig.dong_xe,
+                    car?.['Phiên bản'] || car?.phien_ban || expectedConfig.phien_ban,
+                    rawCarMaPb || expectedVal
+                ) || formatDiagVal(expectedVal);
+                const dmsVerCode = apiService.resolveMaterialVersionCode(
+                    car?.['Dòng xe'] || car?.dong_xe || expectedConfig.dong_xe,
+                    dmsVal,
+                    dmsVal
+                ) || formatDiagVal(dmsVal);
+                title = 'Lệch Phiên bản';
+                wrongVal = dmsVerCode;
+                rightVal = vinVerCode;
+                guide = `Đổi mã phiên bản thành ${vinVerCode}`;
             } else if (raw) {
                 title = 'Cấu hình chưa khớp DMS';
                 guide = 'Kiểm tra lại trên DMS rồi bấm Tra lại.';
             }
 
             return (
-                <div className="relative p-2 px-3 rounded-xl border border-rose-300 bg-rose-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <i className="fas fa-triangle-exclamation text-rose-600 text-xs flex-shrink-0"></i>
-                        <div className="min-w-0 flex-1">
-                            <p className="text-[11px] font-bold text-rose-950 truncate">
-                                {title}
-                            </p>
-                            <p className="text-[10px] text-rose-700 truncate">
-                                {guide}
-                            </p>
+                <div className="invoice-diag-card" data-tone="red">
+                    <div className="invoice-diag-body">
+                        <div className="invoice-diag-head">
+                            <span className="invoice-diag-badge"><i />DMS</span>
+                            <p className="invoice-diag-title">{title}</p>
+                            {wrongVal && rightVal && (
+                                <div className="invoice-diag-diff">
+                                    <span className="invoice-diag-chip" data-side="wrong" title={wrongVal}>
+                                        <small>DMS:</small> {wrongVal}
+                                    </span>
+                                    <span className="invoice-diag-swap">⇄</span>
+                                    <span className="invoice-diag-chip" data-side="right" title={rightVal}>
+                                        <small>{rightLabel}:</small> {rightVal}
+                                    </span>
+                                </div>
+                            )}
                         </div>
+                        <p className="invoice-diag-guide">{guide}</p>
                     </div>
-                    <button 
-                        type="button" 
-                        onClick={(e) => { e.stopPropagation(); recheckDmsVerification(true); }} 
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); recheckDmsVerification(true); }}
                         title="Kiểm tra lại trạng thái DMS"
-                        className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                        className="invoice-diag-btn"
                     >
-                        <i className={`fas fa-arrows-rotate text-[8px] ${isCheckingDms ? 'animate-spin' : ''}`}></i>
+                        <i className={`fas fa-arrows-rotate text-[9px] ${isCheckingDms ? 'animate-spin' : ''}`}></i>
                         <span>Tra lại</span>
                     </button>
                 </div>
@@ -1220,471 +1176,565 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return null;
     };
 
+    const currentStepComplete = step === 1 ? isStep1Valid : isFormValid;
+    const modelStr = String(expectedConfig.dong_xe || order["Dòng xe"] || order.dong_xe || '').trim();
+    const versionStr = String(expectedConfig.phien_ban || order["Phiên bản"] || (order as any).phien_ban || '').trim();
+    const matVersionCode = String(expectedConfig.ma_phien_ban || apiService.resolveMaterialVersionCode(modelStr, versionStr, '') || '').trim();
+    const extColorStr = String(expectedConfig.ngoai_that || order["Ngoại thất"] || (order as any).ngoai_that || '').trim() || '---';
+    const intColorStr = String(expectedConfig.noi_that || order["Nội thất"] || (order as any).noi_that || '').trim() || '---';
+    const engineNoStr = String(car?.so_may || car?.['Số máy'] || (order as any)?.so_may || (order as any)?.['Số máy'] || '').trim() || '---';
+    const displayVehicle = modelStr
+        ? (versionStr && versionStr.toLowerCase() !== modelStr.toLowerCase() ? `${modelStr} · ${versionStr}` : modelStr)
+        : '---';
+    const displayColors = extColorStr !== '---' || intColorStr !== '---'
+        ? `${extColorStr} / ${intColorStr}`
+        : '---';
+
     // Shared inner content (header + steps + form)
     const innerContent = (
-        <>
-            <header className={compact ? 'hidden' : 'flex-shrink-0'}>
-                {inline ? (
-                    <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1 h-5 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">Xuất Hóa Đơn</h3>
-                        </div>
-                        <button onClick={onClose} className="px-3 py-1.5 text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs">
-                            <i className="fas fa-arrow-left text-[9px]"></i> Quay lại
-                        </button>
+        <div className={compact ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : 'invoice-sheet-root'}>
+            {!compact && (
+                <header className="invoice-sheet-header">
+                    <Stepper currentStep={step} hasVinClub={vinClubConfirmed} />
+                    <div className="invoice-sheet-header-right">
+                        <span className="request-step-counter">Bước {step}/2</span>
+                        {!inline && (
+                            <button type="button" onClick={onClose} className="invoice-sheet-back" title="Quay lại" aria-label="Quay lại">
+                                <i className="fas fa-arrow-left text-xs"></i>
+                            </button>
+                        )}
                     </div>
-                ) : (
-                    <div className="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-4 md:p-5 border-b border-blue-200/30 shadow-sm relative overflow-hidden group">
-                        <div className="flex items-center justify-between relative z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-1.5 h-10 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full shadow-sm"></div>
-                                <div className="flex flex-col">
-                                    <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
-                                        YÊU CẦU <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">XUẤT HÓA ĐƠN</span>
-                                    </h1>
-                                    <p className="text-[10px] md:text-xs text-text-secondary font-bold uppercase tracking-wider mt-0.5">Cung cấp chứng từ để tiến hành xuất hóa đơn</p>
+                </header>
+            )}
+
+            <main className={compact ? 'flex-1 overflow-y-auto p-2.5 flex flex-col gap-2.5' : 'invoice-sheet-body custom-scrollbar'}>
+                {step === 1 && (
+                    <div className="invoice-summary-strip" data-inline={inline ? 'true' : 'false'}>
+                        {!compact && !inline && (
+                            <div className="invoice-summary-item">
+                                <span className="invoice-summary-label">Số đơn hàng</span>
+                                <div className="invoice-summary-value">
+                                    <span className="invoice-summary-text" data-mono="true" data-tone="blue" title={order["Số đơn hàng"]}>{order["Số đơn hàng"]}</span>
                                 </div>
                             </div>
-                            <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 transition-all hover:rotate-90 hover:scale-110 shadow-sm border border-gray-100">
-                                <i className="fas fa-times text-xl"></i>
-                            </button>
+                        )}
+                        {!compact && !inline && (
+                            <div className="invoice-summary-item">
+                                <span className="invoice-summary-label">Khách hàng</span>
+                                <div className="invoice-summary-value">
+                                    <span className="invoice-summary-text" title={order["Tên khách hàng"]}>{order["Tên khách hàng"]}</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="invoice-summary-item">
+                            <span className="invoice-summary-label">Mã HĐ Cyber</span>
+                            <div className="invoice-summary-value">
+                                {maHdCyber ? (
+                                    <span className="invoice-summary-text" data-mono="true" data-tone="emerald" title={maHdCyber}>
+                                        {maHdCyber}
+                                    </span>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={maHdCyber}
+                                        onChange={(e) => setMaHdCyber(e.target.value.toUpperCase())}
+                                        onBlur={() => setMaHdCyber(prev => cleanCyberContractCode(prev))}
+                                        placeholder="Nhập mã HĐ..."
+                                        className="invoice-input"
+                                        style={{ height: 26, fontSize: 11, padding: '0 8px' }}
+                                        data-mono="true"
+                                    />
+                                )}
+                            </div>
                         </div>
+                        <div className="invoice-summary-item">
+                            <span className="invoice-summary-label">Số VIN</span>
+                            <div className="invoice-summary-value">
+                                <span className="invoice-summary-text" data-mono="true" title={order.VIN}>{order.VIN || '---'}</span>
+                            </div>
+                        </div>
+                        <div className="invoice-summary-item">
+                            <span className="invoice-summary-label">Dòng xe</span>
+                            <div className="invoice-summary-value">
+                                <span className="invoice-summary-text" title={`${displayVehicle}${matVersionCode ? ` (${matVersionCode})` : ''}`}>
+                                    {displayVehicle}{matVersionCode ? ` (${matVersionCode})` : ''}
+                                </span>
+                            </div>
+                        </div>
+                        {!compact && (
+                            <div className="invoice-summary-item">
+                                <span className="invoice-summary-label">Ngoại / Nội thất</span>
+                                <div className="invoice-summary-value">
+                                    <span className="invoice-summary-text" title={displayColors}>
+                                        {displayColors}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
-            </header>
 
-                    <main className={`flex-grow min-h-0 flex flex-col relative z-10 ${compact ? 'overflow-y-auto p-2.5' : 'overflow-hidden p-3 md:p-5'}`}>
-                        <div className={`flex flex-col ${compact ? 'mb-2 space-y-1.5' : 'mb-3 space-y-1.5 md:space-y-2'}`}>
-                            {!compact && <Stepper currentStep={step} hasVinClub={vinClubConfirmed} />}
-                            <div className={`bg-white rounded-[10px] border-l-4 border-l-blue-500 border-y border-r border-gray-200 ${compact ? 'p-2' : 'p-2.5 md:p-3'} shadow-sm flex-shrink-0 bg-gradient-to-r from-blue-50/40 to-white`}>
-                                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 relative z-10 items-center">
-                                    <div className={`flex flex-col ${compact ? 'hidden' : ''}`}>
-                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Số đơn hàng</span>
-                                        <div className="flex items-center gap-1.5 text-blue-700">
-                                            <i className="fas fa-barcode opacity-60 text-[10px]"></i>
-                                            <span className="font-bold font-mono tracking-tight text-[13px]">{order["Số đơn hàng"]}</span>
-                                        </div>
+                {/* BARS: KIỂM TRA DUYỆT HĐ CYBER & ĐỐI SOÁT CẤU HÌNH VINFAST DMS */}
+                {(() => {
+                    const cyberCard = renderCyberContractStatusCard();
+                    const dmsCard = renderDmsVerificationCard();
+                    if (!cyberCard && !dmsCard) return null;
+                    return (
+                        <div className="invoice-diag-row">
+                            {cyberCard}
+                            {dmsCard}
+                        </div>
+                    );
+                })()}
+
+                {/* STEP 1 */}
+                <div style={{ display: step === 1 ? 'grid' : 'none' }} className="invoice-step1-grid">
+                    {/* Cột trái: Danh sách chính sách bán hàng để chọn */}
+                    <div className="invoice-step1-col">
+                        <div className="invoice-step1-policy-wrap">
+                            <label className="invoice-field-label">
+                                <span>Chính sách bán hàng áp dụng <span className="req">*</span></span>
+                                <span className="invoice-field-hint">
+                                    {policy.length > 0 ? `Đã chọn ${policy.length} chính sách` : 'Chọn 1 hoặc nhiều chính sách'}
+                                </span>
+                            </label>
+                            <div className="invoice-policy-list-box">
+                                {isLoadingPolicies ? (
+                                    <div className="text-[11px] text-slate-400 py-4 px-2 flex items-center gap-2">
+                                        <i className="fas fa-spinner fa-spin text-blue-500"></i>
+                                        <span>Đang tải danh sách chính sách...</span>
                                     </div>
-                                    <div className={`flex flex-col md:border-l md:border-gray-200 md:pl-3 ${compact ? 'hidden' : ''}`}>
-                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Khách hàng</span>
-                                        <div className="flex items-center gap-1.5 text-text-primary">
-                                            <i className="fas fa-user text-blue-600 opacity-60 text-[10px]"></i>
-                                            <span className="font-semibold truncate text-[13px]">{order["Tên khách hàng"]}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
-                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Mã HĐ Cyber</span>
-                                        <div className="flex items-center gap-1.5 text-emerald-700">
-                                            <i className="fas fa-file-contract opacity-60 text-[10px]"></i>
-                                            {maHdCyber ? (
-                                                <span className="font-semibold font-mono tracking-tight text-[13px] truncate" title={maHdCyber}>
-                                                    {maHdCyber}
+                                ) : filteredSalesPolicies.length > 0 ? (
+                                    filteredSalesPolicies.map((policyName) => {
+                                        const isSelected = policy.includes(policyName);
+                                        return (
+                                            <button
+                                                key={policyName}
+                                                type="button"
+                                                className="invoice-policy-chip"
+                                                data-selected={isSelected}
+                                                onClick={() => {
+                                                    setPolicy(prev =>
+                                                        prev.includes(policyName)
+                                                            ? prev.filter(p => p !== policyName)
+                                                            : [...prev, policyName]
+                                                    );
+                                                }}
+                                            >
+                                                <span className="invoice-policy-chip-dot">
+                                                    {isSelected && <i className="fas fa-check"></i>}
                                                 </span>
-                                            ) : (
-                                                <input 
-                                                    type="text" 
-                                                    value={maHdCyber} 
-                                                    onChange={(e) => setMaHdCyber(e.target.value.toUpperCase())} 
-                                                    onBlur={() => setMaHdCyber(prev => cleanCyberContractCode(prev))}
-                                                    placeholder="Nhập mã HĐ..." 
-                                                    className="bg-white border border-emerald-300 text-emerald-800 text-[11px] font-mono font-semibold rounded px-1.5 py-0.5 w-28 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-2xs" 
-                                                />
-                                            )}
-                                        </div>
+                                                <span>{policyName}</span>
+                                            </button>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="text-[11px] text-slate-400 py-3 px-2">
+                                        Không có chính sách khả dụng cho dòng xe này.
                                     </div>
-                                    <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
-                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Số VIN</span>
-                                        <div className="flex items-center gap-1.5 text-text-primary">
-                                            <i className="fas fa-car text-blue-600 opacity-60 text-[10px]"></i>
-                                            <span className="font-semibold font-mono tracking-tight text-[13px]">{order.VIN || '---'}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
-                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Dòng xe</span>
-                                        <div className="flex items-center gap-1.5 text-text-primary">
-                                            <i className="fas fa-car-side text-blue-600 opacity-60 text-[10px]"></i>
-                                            <span className="font-semibold tracking-tight text-[13px] truncate" title={`${order["Dòng xe"] || ''} ${order["Phiên bản"] || ''}`}>
-                                                {order["Dòng xe"] ? `${order["Dòng xe"]}${order["Phiên bản"] ? ` · ${order["Phiên bản"]}` : ''}` : (order.dong_xe || '---')}
-                                            </span>
-                                        </div>
-                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Cột phải: Các ô nhập liệu & Hồ sơ chứng từ đính kèm (Chỉ nhận PDF) */}
+                    <div className="invoice-step1-col invoice-step1-docs-col">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="invoice-field-label">
+                                    <span>Hoa hồng ứng trước</span>
+                                </label>
+                                <div className="invoice-input-wrap">
+                                    <input
+                                        type="text"
+                                        value={commission}
+                                        onChange={handleNumberChange(setCommission)}
+                                        className="invoice-input"
+                                        placeholder="0"
+                                    />
+                                    <span className="invoice-input-unit">VNĐ</span>
                                 </div>
                             </div>
 
-                            {/* BARS: KIỂM TRA DUYỆT HĐ CYBER & ĐỐI SOÁT CẤU HÌNH VINFAST DMS (CHỈ HIỆN KHI CÓ LỖI HOẶC ĐANG TRA CỨU) */}
-                            {(() => {
-                                const cyberCard = renderCyberContractStatusCard();
-                                const dmsCard = renderDmsVerificationCard();
-                                if (!cyberCard && !dmsCard) return null;
-                                return (
-                                    <div className={`grid grid-cols-1 ${cyberCard && dmsCard ? 'md:grid-cols-2' : ''} gap-2 pt-1`}>
-                                        {cyberCard && <div>{cyberCard}</div>}
-                                        {dmsCard && <div>{dmsCard}</div>}
-                                    </div>
-                                );
-                            })()}
+                            <div>
+                                <label className="invoice-field-label">
+                                    <span>Điểm Vpoint sử dụng</span>
+                                </label>
+                                <div className="invoice-input-wrap">
+                                    <input
+                                        type="text"
+                                        value={vpoint}
+                                        onChange={handleNumberChange(setVpoint)}
+                                        className="invoice-input"
+                                        placeholder="0"
+                                    />
+                                    <span className="invoice-input-unit">ĐIỂM</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className={`flex-grow flex flex-col ${compact ? '' : 'overflow-hidden'}`}>
-                            {/* STEP 1 */}
-                            <div style={{ display: step === 1 ? 'flex' : 'none' }} className={`flex-col ${compact ? '' : 'h-full overflow-hidden'}`}>
-                                <div className={`flex flex-col bg-white/60 ${compact ? 'p-3 rounded-xl' : 'p-5 md:p-8 rounded-2xl overflow-y-auto custom-scrollbar'} border border-gray-200/60 shadow-sm flex-grow`}>
-                                    <div className={`flex flex-col min-h-full ${compact ? 'gap-3' : 'gap-4'}`}>
-                                        <div className="flex flex-col">
-                                            <label className={`block font-bold text-text-primary uppercase tracking-wider ${compact ? 'text-[11px] mb-1.5' : 'text-sm mb-3'}`}>
-                                                Chính sách bán hàng áp dụng <span className="text-danger">*</span>
-                                            </label>
-                                            <div className={`${compact ? 'p-2' : 'p-3'} bg-surface-ground rounded-xl border border-border-primary shadow-inner max-h-[220px] overflow-y-auto custom-scrollbar`}>
-                                                {isLoadingPolicies ? (
-                                                    <div className="flex items-center justify-center py-6 text-text-secondary">
-                                                        <i className="fas fa-spinner fa-spin mr-3 text-xl"></i>
-                                                        <span className="font-medium">Đang tải danh sách chính sách...</span>
-                                                    </div>
-                                                ) : filteredSalesPolicies.filter(p => p && p.trim() !== '').length === 0 ? (
-                                                    <div className="p-4 text-center text-text-secondary text-xs font-medium">
-                                                        Chưa có danh sách chính sách nào cho dòng xe này. Vui lòng liên hệ Admin.
-                                                    </div>
-                                                ) : (
-                                                    <div className={compact ? 'grid grid-cols-2 gap-1.5' : 'flex flex-wrap gap-2'}>
-                                                        {filteredSalesPolicies.filter(p => p && p.trim() !== '').map(option => (
-                                                            <button 
-                                                                key={option} 
-                                                                type="button" 
-                                                                onClick={() => {
-                                                                    setPolicy(prev => prev.includes(option) ? prev.filter(p => p !== option) : [...prev, option]);
-                                                                }} 
-                                                                className={`${compact ? 'px-2 py-1.5 text-[10px] border w-full text-left' : 'px-3 py-1.5 text-[11px] border-2'} font-semibold rounded-lg transition-all duration-200 shadow-sm flex items-center gap-1.5 ${
-                                                                    policy.includes(option) 
-                                                                        ? 'bg-blue-50 border-blue-500 text-blue-700' 
-                                                                        : 'bg-white border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'
-                                                                }`}
-                                                            >
-                                                                <i className={`fas ${policy.includes(option) ? 'fa-check-circle text-blue-500' : 'fa-circle opacity-20'} text-[9px] flex-shrink-0`}></i>
-                                                                <span className="truncate">{option}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
+                        {isVinFastGasCarAppreciationPolicy && (
+                            <div className="animate-fade-in">
+                                <label className="invoice-field-label">
+                                    <span>Mã VC (Voucher) <span className="req">*</span></span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={maVc}
+                                    onChange={(e) => setMaVc(e.target.value.toUpperCase())}
+                                    className="invoice-input"
+                                    placeholder="Nhập mã VC..."
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        {isGasToElectricPolicy && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in">
+                                <div>
+                                    <label className="invoice-field-label">
+                                        <span>
+                                            Số VIN xe xăng <span className="req">*</span>
+                                            {isCheckingVin && <i className="fas fa-spinner fa-spin ml-1.5 text-blue-500"></i>}
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={xeXangVin}
+                                        onChange={(e) => setXeXangVin(e.target.value.toUpperCase())}
+                                        className="invoice-input"
+                                        data-mono="true"
+                                        style={vinCheckError ? { borderColor: '#f43f5e' } : undefined}
+                                        placeholder="VD: VIN123..."
+                                    />
+                                    {vinCheckError && (
+                                        <p className="text-[10.5px] text-rose-600 font-semibold mt-1 flex items-start gap-1">
+                                            <i className="fas fa-exclamation-triangle mt-0.5 flex-shrink-0"></i>
+                                            <span>{vinCheckError}</span>
+                                        </p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="invoice-field-label">
+                                        <span>Hãng xe xăng <span className="req">*</span></span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={xeXangHang}
+                                        onChange={(e) => setXeXangHang(e.target.value)}
+                                        className="invoice-input"
+                                        placeholder="VD: Toyota"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="invoice-field-label">
+                                        <span>Model xe xăng <span className="req">*</span></span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={xeXangModel}
+                                        onChange={(e) => setXeXangModel(e.target.value)}
+                                        className="invoice-input"
+                                        placeholder="VD: Camry"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="invoice-docs-section">
+                            <label className="invoice-field-label">
+                                <span>Hồ sơ chứng từ đính kèm <span className="req">*</span></span>
+                                <span className="invoice-field-hint">Định dạng PDF</span>
+                            </label>
+                            <div className="invoice-docs-stack">
+                                <SimpleFileUpload
+                                    id="hop_dong_file_input"
+                                    label="Hợp đồng mua bán"
+                                    onFileSelect={handleContractFileSelect}
+                                    required
+                                    accept=".pdf,application/pdf"
+                                    disableCompression={true}
+                                    showPreview={false}
+                                    variant="slot"
+                                />
+                                <SimpleFileUpload
+                                    id="denghi_xhd_file_input"
+                                    label="Đề nghị xuất hóa đơn"
+                                    onFileSelect={handleProposalFileSelect}
+                                    required
+                                    accept=".pdf,application/pdf"
+                                    disableCompression={true}
+                                    showPreview={false}
+                                    variant="slot"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* STEP 2: XÁC NHẬN */}
+                <div style={{ display: step === 2 ? 'flex' : 'none' }} className="invoice-step2-layout">
+                    <div className="invoice-confirm-grid">
+                        {/* Khối 1: Cấu hình xe xuất hóa đơn */}
+                        <div className="invoice-confirm-card">
+                            <div className="invoice-confirm-card-title">
+                                <span>Cấu hình xe xuất hóa đơn</span>
+                                <span className="invoice-confirm-card-hint">
+                                    {matVersionCode ? `Mã PB: ${matVersionCode}` : 'Thông tin xe ghép'}
+                                </span>
+                            </div>
+                            <div className="invoice-confirm-spec-grid">
+                                <div className="invoice-confirm-spec-item">
+                                    <span className="invoice-confirm-spec-label">Dòng xe</span>
+                                    <span className="invoice-confirm-spec-val" title={modelStr || '---'}>
+                                        {modelStr || '---'}
+                                    </span>
+                                </div>
+                                <div className="invoice-confirm-spec-item">
+                                    <span className="invoice-confirm-spec-label">Phiên bản</span>
+                                    <span className="invoice-confirm-spec-val" title={`${versionStr || '---'}${matVersionCode ? ` (${matVersionCode})` : ''}`}>
+                                        {versionStr || '---'}{matVersionCode ? ` (${matVersionCode})` : ''}
+                                    </span>
+                                </div>
+                                <div className="invoice-confirm-spec-item">
+                                    <span className="invoice-confirm-spec-label">Màu ngoại thất</span>
+                                    <span className="invoice-confirm-spec-val" title={extColorStr}>
+                                        {extColorStr}
+                                    </span>
+                                </div>
+                                <div className="invoice-confirm-spec-item">
+                                    <span className="invoice-confirm-spec-label">Màu nội thất</span>
+                                    <span className="invoice-confirm-spec-val" title={intColorStr}>
+                                        {intColorStr}
+                                    </span>
+                                </div>
+                                <div className="invoice-confirm-spec-item">
+                                    <span className="invoice-confirm-spec-label">Số VIN</span>
+                                    <span className="invoice-confirm-spec-val" data-mono="true" data-tone="blue" title={order.VIN || '---'}>
+                                        {order.VIN || '---'}
+                                    </span>
+                                </div>
+                                <div className="invoice-confirm-spec-item">
+                                    <span className="invoice-confirm-spec-label">Số máy</span>
+                                    <span className="invoice-confirm-spec-val" data-mono="true" title={engineNoStr}>
+                                        {engineNoStr}
+                                    </span>
+                                </div>
+                                <div className="invoice-confirm-spec-item" data-span="2">
+                                    <span className="invoice-confirm-spec-label">Mã hợp đồng Cyber</span>
+                                    <span className="invoice-confirm-spec-val" data-mono="true" data-tone="emerald" title={maHdCyber || '---'}>
+                                        {maHdCyber || '---'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Khối 2: Chính sách & Tài chính */}
+                        <div className="invoice-confirm-card">
+                            <div className="invoice-confirm-card-title">
+                                <span>Chính sách & Tài chính</span>
+                                <span className="invoice-confirm-card-hint">Đã chọn {policy.length} chính sách</span>
+                            </div>
+                            <div className="invoice-confirm-policies">
+                                {policy.length > 0 ? policy.map((p, idx) => (
+                                    <div key={idx} className="invoice-policy-chip" data-selected="true">
+                                        <span className="invoice-policy-chip-dot">
+                                            <i className="fas fa-check"></i>
+                                        </span>
+                                        <span>{p}</span>
+                                    </div>
+                                )) : (
+                                    <div className="text-[11px] text-slate-400 py-4 px-2">
+                                        Chưa chọn chính sách
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="invoice-confirm-finance-grid">
+                                <div className="invoice-confirm-finance-box">
+                                    <p className="invoice-confirm-spec-label mb-0.5">Hoa hồng ứng trước</p>
+                                    <p className="text-[12px] font-bold text-blue-600">
+                                        {commission ? `${parseInt(getRawValue(commission)).toLocaleString('vi-VN')} đ` : '0 đ'}
+                                    </p>
+                                </div>
+                                <div className="invoice-confirm-finance-box">
+                                    <p className="invoice-confirm-spec-label mb-0.5">Điểm Vpoint sử dụng</p>
+                                    <p className="text-[12px] font-bold text-indigo-600">
+                                        {vpoint ? `${parseInt(getRawValue(vpoint)).toLocaleString('vi-VN')} điểm` : '0 điểm'}
+                                    </p>
+                                </div>
+                                {isVinFastGasCarAppreciationPolicy && maVc && (
+                                    <div className="invoice-confirm-finance-box" data-span="2">
+                                        <p className="invoice-confirm-spec-label mb-0.5">Mã VC (Voucher)</p>
+                                        <p className="invoice-confirm-spec-val" data-mono="true">{maVc}</p>
+                                    </div>
+                                )}
+                                {isGasToElectricPolicy && xeXangVin && (
+                                    <div className="invoice-confirm-finance-box" data-span="2">
+                                        <p className="invoice-confirm-spec-label mb-0.5">Xe xăng thu cũ đổi mới</p>
+                                        <p className="invoice-confirm-spec-val">
+                                            {xeXangHang} {xeXangModel} · <span className="font-mono text-blue-600">{xeXangVin}</span>
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Khối 3: Hồ sơ chứng từ đính kèm */}
+                        <div className="invoice-confirm-card">
+                            <div className="invoice-confirm-card-title">
+                                <span>Hồ sơ chứng từ đính kèm</span>
+                                <span className="invoice-confirm-card-hint">2 tệp PDF</span>
+                            </div>
+                            <div className="invoice-docs-stack">
+                                {[
+                                    { label: 'Hợp đồng mua bán', file: contractFile },
+                                    { label: 'Đề nghị xuất hóa đơn', file: proposalFile }
+                                ].map((doc, idx) => {
+                                    const sizeText = doc.file
+                                        ? doc.file.size >= 1024 * 1024
+                                            ? `${(doc.file.size / (1024 * 1024)).toFixed(2)} MB`
+                                            : `${(doc.file.size / 1024).toFixed(1)} KB`
+                                        : '';
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="invoice-pdf-slot"
+                                            data-uploaded={Boolean(doc.file)}
+                                            style={{ cursor: 'default' }}
+                                        >
+                                            <div className="invoice-pdf-slot-icon">
+                                                <i className="fas fa-file-pdf"></i>
+                                                {doc.file && (
+                                                    <span className="invoice-pdf-slot-check">
+                                                        <i className="fas fa-check"></i>
+                                                    </span>
                                                 )}
                                             </div>
-                                        </div>
-
-                                        <div className={`grid ${compact ? 'grid-cols-2 gap-2' : 'grid-cols-1 md:grid-cols-2 gap-4'} pt-2 border-t border-gray-100`}>
-                                            <div className="group">
-                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <i className="fas fa-money-bill-wave text-emerald-500"></i>
-                                                    {compact ? 'Hoa hồng (VNĐ)' : 'Hoa hồng ứng trước (VND)'}
-                                                    {!compact && <span className="ml-auto text-[9px] font-normal text-slate-400 lowercase">(để trống = 0đ)</span>}
-                                                </label>
-                                                <div className="relative">
-                                                    <input 
-                                                        type="text" 
-                                                        value={commission} 
-                                                        onChange={handleNumberChange(setCommission)} 
-                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-1.5 px-3 text-sm font-bold text-blue-700 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/10 transition-all outline-none" 
-                                                        placeholder="0" 
-                                                    />
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-gray-400 pointer-events-none uppercase text-[9px]">VNĐ</div>
+                                            <div className="invoice-pdf-slot-body">
+                                                <div className="invoice-pdf-slot-title">
+                                                    <span>{doc.label}</span>
                                                 </div>
-                                            </div>
-                                            <div className="group">
-                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <i className="fas fa-star text-purple-500"></i>
-                                                    {compact ? 'Vpoint' : 'Số điểm Vpoint sử dụng'}
-                                                    {!compact && <span className="ml-auto text-[9px] font-normal text-slate-400 lowercase">(để trống = 0 điểm)</span>}
-                                                </label>
-                                                <div className="relative">
-                                                    <input 
-                                                        type="text" 
-                                                        value={vpoint} 
-                                                        onChange={handleNumberChange(setVpoint)} 
-                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-1.5 px-3 text-sm font-bold text-purple-700 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/10 transition-all outline-none" 
-                                                        placeholder="0" 
-                                                    />
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-gray-400 pointer-events-none uppercase text-[9px]">ĐIỂM</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {isVinFastGasCarAppreciationPolicy && (
-                                            <div className="pt-2 border-t border-gray-100 mt-0 animate-fade-in">
-                                                <div className="group">
-                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
-                                                        <i className="fas fa-ticket-alt text-amber-500"></i>
-                                                        Mã VC (Voucher) *
-                                                    </label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={maVc} 
-                                                        onChange={(e) => setMaVc(e.target.value.toUpperCase())} 
-                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 text-sm font-bold text-slate-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400" 
-                                                        placeholder="Nhập mã VC..." 
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {isGasToElectricPolicy && (
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-100 mt-1 animate-fade-in">
-                                                <div className="group relative">
-                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider">
-                                                        <i className="fas fa-barcode text-amber-500 mr-1"></i> Số VIN xe xăng *
-                                                        {isCheckingVin && <i className="fas fa-spinner fa-spin ml-2 text-blue-500"></i>}
-                                                    </label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={xeXangVin} 
-                                                        onChange={(e) => setXeXangVin(e.target.value.toUpperCase())} 
-                                                        className={`w-full bg-surface-ground border rounded-lg p-2 text-sm font-bold text-slate-800 outline-none focus:ring-1 transition-all font-mono tracking-tight placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400 ${
-                                                            vinCheckError 
-                                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' 
-                                                                : 'border-border-primary focus:border-amber-500 focus:ring-amber-500/30'
-                                                        }`}
-                                                        placeholder="VD: VIN123..." 
-                                                    />
-                                                    {vinCheckError && (
-                                                        <p className="text-[10px] text-red-600 font-bold mt-1 leading-normal flex items-start gap-1">
-                                                            <i className="fas fa-exclamation-triangle mt-0.5 flex-shrink-0"></i>
-                                                            <span>{vinCheckError}</span>
-                                                        </p>
+                                                <div className="invoice-pdf-slot-meta">
+                                                    {doc.file ? (
+                                                        <>
+                                                            <span className="invoice-pdf-slot-filename" title={doc.file.name}>{doc.file.name}</span>
+                                                            <span className="invoice-pdf-slot-dot">·</span>
+                                                            <span className="invoice-pdf-slot-size">{sizeText}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span>Chưa tải lên</span>
                                                     )}
                                                 </div>
-                                                <div className="group">
-                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider">
-                                                        <i className="fas fa-car text-amber-500 mr-1"></i> Hãng xe xăng *
-                                                    </label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={xeXangHang} 
-                                                        onChange={(e) => setXeXangHang(e.target.value)} 
-                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400" 
-                                                        placeholder="VD: Toyota" 
-                                                    />
-                                                </div>
-                                                <div className="group">
-                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider">
-                                                        <i className="fas fa-cog text-amber-500 mr-1"></i> Model xe xăng *
-                                                    </label>
-                                                    <input 
-                                                        type="text" 
-                                                        value={xeXangModel} 
-                                                        onChange={(e) => setXeXangModel(e.target.value)} 
-                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400" 
-                                                        placeholder="VD: Camry" 
-                                                    />
-                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* STEP 2 */}
-                            <div style={{ display: step === 2 ? 'flex' : 'none' }} className={`flex-col ${compact ? '' : 'h-full overflow-hidden'}`}>
-                                <div className={`flex flex-col bg-white/60 ${compact ? 'p-3 rounded-xl' : 'p-5 md:p-8 rounded-2xl overflow-hidden'} border border-gray-200/60 shadow-sm flex-grow`}>
-                                    <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-3' : 'gap-8'} flex-grow`}>
-                                        <SimpleFileUpload 
-                                            id="hop_dong_file_input" 
-                                            label="Hợp đồng mua bán" 
-                                            onFileSelect={handleContractFileSelect} 
-                                            required 
-                                            accept=".pdf,image/*" 
-                                            disableCompression={true} 
-                                            showPreview={false}
-                                            className="flex flex-col h-full"
-                                        />
-                                        <SimpleFileUpload 
-                                            id="denghi_xhd_file_input" 
-                                            label="Đề nghị xuất hóa đơn" 
-                                            onFileSelect={handleProposalFileSelect} 
-                                            required 
-                                            accept=".pdf,image/*" 
-                                            disableCompression={true} 
-                                            showPreview={false}
-                                            className="flex flex-col h-full"
-                                        />
-                                    </div>
-                                    <div className={`${compact ? 'hidden' : 'mt-8 p-5'} bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 text-[13px] text-blue-700 shadow-sm flex-shrink-0`}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                                                <i className="fas fa-info-circle text-lg"></i>
-                                            </div>
-                                            <p className="font-medium leading-relaxed">
-                                                Vui lòng tải lên bản scan hoặc ảnh chụp rõ nét của HĐMB và Đề nghị xuất hóa đơn. <br/>
-                                                Hệ thống sẽ tự động đối soát thông tin sau khi anh chị nhấn gửi yêu cầu.
-                                            </p>
+                                            {doc.file && (
+                                                <div className="invoice-pdf-slot-actions">
+                                                    <span className="invoice-pdf-slot-badge">Đã tải lên</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* STEP 3 */}
-                            <div style={{ display: step === 3 ? 'flex' : 'none' }} className={`flex-col ${compact ? '' : 'h-full overflow-hidden'}`}>
-                                <div className={`flex flex-col bg-white/60 ${compact ? 'p-2.5 rounded-xl' : 'p-5 md:p-6 rounded-2xl overflow-hidden'} border border-gray-200/60 shadow-sm flex-grow`}>
-                                    <div className={`flex flex-col h-full ${compact ? 'gap-2.5' : 'gap-5'}`}>
-                                        <div className={`grid grid-cols-1 md:grid-cols-2 ${compact ? 'gap-2.5' : 'gap-5 overflow-hidden'} flex-grow`}>
-                                            {/* Left Card: Documents & Financials */}
-                                            <div className={`flex flex-col h-full ${compact ? 'gap-2' : 'gap-4'}`}>
-                                                <div className={`bg-surface-ground ${compact ? 'p-3 rounded-xl' : 'p-5 rounded-2xl overflow-hidden'} border border-border-primary flex-grow flex flex-col`}>
-                                                    <p className="text-[10px] text-text-secondary mb-3 font-black uppercase tracking-[0.2em] border-b border-border-secondary pb-2">Hồ sơ & Tài chính</p>
-                                                    
-                                                    <div className={compact ? 'space-y-2 mb-3' : 'space-y-3 mb-6'}>
-                                                        <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-border-secondary shadow-sm">
-                                                            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
-                                                                <i className="fas fa-file-contract text-sm"></i>
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-[9px] font-black text-gray-400 uppercase">Hợp đồng mua bán</p>
-                                                                <p className="text-[11px] font-bold text-text-primary truncate">{contractFile?.name || 'Chưa tải lên'}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-border-secondary shadow-sm">
-                                                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                                                                <i className="fas fa-file-invoice text-sm"></i>
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-[9px] font-black text-gray-400 uppercase">Đề nghị xuất hóa đơn</p>
-                                                                <p className="text-[11px] font-bold text-text-primary truncate">{proposalFile?.name || 'Chưa tải lên'}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="mt-auto pt-4 border-t border-dashed border-gray-200">
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div>
-                                                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Hoa hồng ứng</p>
-                                                                <p className="text-sm font-black text-blue-600">{commission ? `${parseInt(getRawValue(commission)).toLocaleString('vi-VN')} đ` : '0 đ'}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Vpoint</p>
-                                                                <p className="text-sm font-black text-purple-600">{vpoint ? `${parseInt(getRawValue(vpoint)).toLocaleString('vi-VN')} điểm` : '0 điểm'}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Right Card: Policies List */}
-                                            <div className="flex flex-col h-full gap-4">
-                                                <div className={`bg-gradient-to-br from-blue-50/50 to-indigo-50/50 ${compact ? 'p-3 rounded-xl' : 'p-5 rounded-2xl'} border border-blue-100 flex-grow flex flex-col overflow-hidden shadow-sm`}>
-                                                    <p className="text-[10px] text-blue-500 mb-3 font-black uppercase tracking-[0.2em] border-b border-blue-200/30 pb-2">Danh sách chính sách áp dụng</p>
-                                                    <div className="flex-grow overflow-y-auto custom-scrollbar pr-2">
-                                                        <div className="space-y-2">
-                                                            {policy.length > 0 ? policy.map((p, idx) => (
-                                                                <div key={idx} className="flex items-start gap-3 p-3 bg-white/80 rounded-xl border border-blue-50 shadow-sm group hover:border-blue-300 transition-colors">
-                                                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 mt-0.5">
-                                                                        <span className="text-[10px] font-black">{idx + 1}</span>
-                                                                    </div>
-                                                                    <p className="text-[11px] font-bold text-slate-700 leading-relaxed">{p}</p>
-                                                                </div>
-                                                            )) : (
-                                                                <div className="flex flex-col items-center justify-center h-full py-10 text-gray-400 opacity-50">
-                                                                    <i className="fas fa-clipboard-list text-4xl mb-2"></i>
-                                                                    <p className="text-xs font-bold uppercase tracking-widest">Chưa chọn chính sách</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Row 2: Vinclub Confirm */}
-                                        <div className="flex-shrink-0">
-                                            <div className="relative p-3.5 rounded-xl border-2 border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors cursor-pointer group flex items-center min-h-[58px]" onClick={() => setVinClubConfirmed(!vinClubConfirmed)}>
-                                                <div className="flex items-center gap-3.5">
-                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${vinClubConfirmed ? 'bg-accent-primary border-accent-primary text-white scale-110' : 'bg-white border-gray-300'}`}>
-                                                        {vinClubConfirmed && <i className="fas fa-check text-[10px]"></i>}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-text-primary uppercase tracking-wider text-[11px]">Tôi xác nhận khách hàng đã tạo tài khoản Vinclub.</p>
-                                                        <p className="text-[9px] text-accent-primary font-bold opacity-80">Điều kiện bắt buộc để tiếp tục xử lý hồ sơ.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
                         </div>
-                    </main>
+                    </div>
 
-                    <footer className={`flex-shrink-0 ${compact ? 'px-3 py-2' : 'p-4'} border-t border-gray-100 bg-white flex justify-between items-center`}>
-                        {step > 1 ? (
-                            <Button onClick={handleBack} disabled={isSubmitting} variant="secondary" size="sm" leftIcon={<i className="fas fa-arrow-left"></i>}>Quay lại</Button>
-                        ) : (
-                            <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="sm">Hủy</Button>
-                        )}
+                    <div
+                        className="invoice-vinclub-box"
+                        data-checked={vinClubConfirmed}
+                        onClick={() => setVinClubConfirmed(!vinClubConfirmed)}
+                    >
+                        <div className="invoice-vinclub-check">
+                            {vinClubConfirmed && <i className="fas fa-check text-[9px]"></i>}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[11.5px] font-semibold text-slate-800">Tôi xác nhận khách hàng đã tạo tài khoản VinClub</p>
+                            <p className="text-[10px] text-slate-500">Điều kiện bắt buộc để tiếp tục gửi yêu cầu xuất hóa đơn</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
 
-                        {step < 3 ? (
-                            <Button 
-                                onClick={() => {
-                                    if (isVerificationBlocked) {
-                                        if (!isDmsValid) {
-                                            showToast('Chặn xuất hóa đơn', dmsVerification.message || 'Cấu hình xe chưa khớp với DMS.', 'error');
-                                        } else if (hasCyberMismatch) {
-                                            showToast('Chặn xuất hóa đơn', 'Cấu hình xe không khớp với Hợp đồng Cyber. Vui lòng kiểm tra lại.', 'error');
-                                        } else if (cyberContractStatus && !cyberContractStatus.is_approved) {
-                                            showToast('Hợp đồng chưa duyệt', 'Hợp đồng Cyber chưa được duyệt. Vui lòng liên hệ Giám đốc duyệt hợp đồng.', 'warning');
-                                        }
-                                        return;
-                                    }
-                                    if (step === 1 && !isStep1Valid) {
-                                        if (policy.length === 0) {
-                                            showToast('Chưa chọn chính sách', 'Vui lòng chọn ít nhất 1 chính sách bán hàng áp dụng.', 'warning');
-                                        } else if (isGasToElectricPolicy && (!xeXangVin.trim() || !xeXangHang.trim() || !xeXangModel.trim() || vinCheckError)) {
-                                            showToast('Thông tin xe xăng cũ', vinCheckError || 'Vui lòng nhập đầy đủ VIN, hãng và model xe xăng thu cũ đổi mới.', 'warning');
-                                        } else if (isVinFastGasCarAppreciationPolicy && !maVc.trim()) {
-                                            showToast('Thiếu mã Voucher', 'Vui lòng nhập mã Voucher tri ân xe xăng.', 'warning');
-                                        }
-                                        return;
-                                    }
-                                    if (step === 2 && !isStep2Valid) {
-                                        showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên cả Hợp đồng mua bán và Đề nghị xuất hóa đơn.', 'warning');
-                                        return;
-                                    }
-                                    handleNext();
-                                }} 
-                                disabled={isSubmitting || (step === 1 && !isStep1Valid)} 
-                                variant="primary" 
-                                size="sm" 
-                                rightIcon={<i className="fas fa-arrow-right"></i>}
-                            >
-                                Tiếp theo
-                            </Button>
-                        ) : (
-                            <Button 
-                                onClick={handleSubmit} 
-                                disabled={isSubmitting || isValidatingContract || !isFormValid} 
-                                variant="success" 
-                                size="sm" 
-                                isLoading={isSubmitting || isValidatingContract} 
-                                leftIcon={<i className="fas fa-paper-plane"></i>}
-                            >
-                                {isValidatingContract ? 'Đang kiểm tra hợp đồng...' : 'Gửi Yêu Cầu'}
-                            </Button>
-                        )}
-                    </footer>
-        </>
+            <footer className="invoice-sheet-footer">
+                {step > 1 ? (
+                    <button type="button" onClick={handleBack} disabled={isSubmitting} className="btn-secondary">
+                        Quay lại
+                    </button>
+                ) : (
+                    <button type="button" onClick={onClose} disabled={isSubmitting} className="btn-secondary">
+                        Hủy
+                    </button>
+                )}
+
+                {step < 2 ? (
+                    <button
+                        type="button"
+                        data-complete={currentStepComplete}
+                        onClick={() => {
+                            if (isVerificationBlocked) {
+                                if (!isDmsValid) {
+                                    showToast('Chặn xuất hóa đơn', dmsVerification.message || 'Cấu hình xe chưa khớp với DMS.', 'error');
+                                } else if (hasCyberMismatch) {
+                                    showToast('Chặn xuất hóa đơn', 'Cấu hình xe không khớp với Hợp đồng Cyber. Vui lòng kiểm tra lại.', 'error');
+                                } else if (cyberContractStatus && !cyberContractStatus.is_approved) {
+                                    showToast('Hợp đồng chưa duyệt', 'Hợp đồng Cyber chưa được duyệt. Vui lòng liên hệ Giám đốc duyệt hợp đồng.', 'warning');
+                                }
+                                return;
+                            }
+                            if (!isStep1InfoValid) {
+                                if (policy.length === 0) {
+                                    showToast('Chưa chọn chính sách', 'Vui lòng chọn ít nhất 1 chính sách bán hàng áp dụng.', 'warning');
+                                } else if (isGasToElectricPolicy && (!xeXangVin.trim() || !xeXangHang.trim() || !xeXangModel.trim() || vinCheckError)) {
+                                    showToast('Thông tin xe xăng cũ', vinCheckError || 'Vui lòng nhập đầy đủ VIN, hãng và model xe xăng thu cũ đổi mới.', 'warning');
+                                } else if (isVinFastGasCarAppreciationPolicy && !maVc.trim()) {
+                                    showToast('Thiếu mã Voucher', 'Vui lòng nhập mã Voucher tri ân xe xăng.', 'warning');
+                                }
+                                return;
+                            }
+                            if (!isStep1DocsValid) {
+                                showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên cả Hợp đồng mua bán và Đề nghị xuất hóa đơn.', 'warning');
+                                return;
+                            }
+                            handleNext();
+                        }}
+                        disabled={isSubmitting}
+                        className="btn-primary"
+                    >
+                        <span>Tiếp theo</span>
+                        <i className="fas fa-arrow-right text-[9px]"></i>
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        data-complete={isFormValid}
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || isValidatingContract || !isFormValid}
+                        className="btn-primary"
+                    >
+                        <i className={`fas ${isSubmitting || isValidatingContract ? 'fa-spinner fa-spin' : 'fa-check'} text-[9.5px]`}></i>
+                        <span>{isValidatingContract ? 'Đang kiểm tra...' : 'Gửi yêu cầu'}</span>
+                    </button>
+                )}
+            </footer>
+        </div>
     );
 
     const contractWarningModal = contractWarning && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 animate-fade-in">
             {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-slate-900/65 backdrop-blur-md transition-opacity" 
-                onClick={() => setContractWarning(null)} 
+            <div
+                className="absolute inset-0 bg-slate-900/65 backdrop-blur-md transition-opacity"
+                onClick={() => setContractWarning(null)}
             />
-            
+
             {/* Dialog Container */}
-            <div 
+            <div
                 className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-amber-200/80 overflow-hidden animate-fade-in-scale-up"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Accent Top Gradient */}
                 <div className="h-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
-                
+
                 <div className="p-6 md:p-7">
                     {/* Header */}
                     <div className="flex items-start gap-4 mb-5">
@@ -1726,11 +1776,10 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
                         <div className="flex justify-between items-center pt-0.5">
                             <span className="text-slate-500 font-medium">Trạng thái hợp đồng:</span>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
-                                contractWarning.found 
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${contractWarning.found
                                     ? 'bg-amber-100 text-amber-900 border border-amber-300'
                                     : 'bg-rose-100 text-rose-900 border border-rose-300'
-                            }`}>
+                                }`}>
                                 <i className={`fas ${contractWarning.found ? 'fa-clock' : 'fa-circle-xmark'} text-[10px]`}></i>
                                 {contractWarning.ten_post || (contractWarning.found ? 'Hợp đồng chờ duyệt' : 'Chưa có hợp đồng')}
                             </span>

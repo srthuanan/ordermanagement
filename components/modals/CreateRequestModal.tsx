@@ -1,6 +1,10 @@
-import React from 'react';
-import RequestForm from '../RequestForm';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { CarFront, X } from 'lucide-react';
+export const preloadRequestForm = () => import('../RequestForm');
+const RequestForm = React.lazy(preloadRequestForm);
 import { AnalyticsData, Order, StockVehicle } from '../../types';
+import './create-request-sheet.css';
 
 interface ImageSource {
     src: string;
@@ -22,51 +26,69 @@ interface CreateRequestModalProps {
 }
 
 const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose, onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
+    const sheetRef = useRef<HTMLElement>(null);
+    const layerRef = useRef<HTMLDivElement>(null);
+    const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [closing, setClosing] = useState(false);
+    const requestClose = useCallback(() => {
+        if (closeTimer.current) return;
+        setClosing(true);
+        closeTimer.current = setTimeout(onClose, 180);
+    }, [onClose]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setClosing(false);
+        const previousFocus = document.activeElement as HTMLElement | null;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        sheetRef.current?.focus();
+        return () => {
+            if (closeTimer.current) clearTimeout(closeTimer.current);
+            closeTimer.current = null;
+            document.body.style.overflow = previousOverflow;
+            if (previousFocus?.isConnected) previousFocus.focus();
+        };
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    return (
-        <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden"
-            onClick={onClose}
-        >
-            {/* Simple dark overlay */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-
-            {/* Floating Content Container */}
-            <div
-                className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none"
-            >
-                <div
-                    className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
-                    >
-                        <i className="fas fa-times text-lg"></i>
-                    </button>
-                <main className="flex-1 min-h-0 overflow-hidden relative">
-                    <div className="h-full bg-white rounded-xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col relative">
-                        {/* Content Area */}
-                        <div className="flex-1 min-h-0 overflow-hidden relative z-10 bg-slate-50/30">
-                            <RequestForm
-                                onSuccess={onSuccess}
-                                showToast={showToast}
-                                hideToast={hideToast}
-                                existingOrderNumbers={existingOrderNumbers}
-                                initialVehicle={initialVehicle}
-                                currentUser={currentUser}
-                                vehicleAnalyticsData={vehicleAnalyticsData}
-                                onOpenImagePreview={onOpenImagePreview}
-                            />
-                        </div>
-                    </div>
-                </main>
+    return createPortal(
+        <div ref={layerRef} className="create-request-sheet-layer fixed" data-closing={closing}>
+            <div className="create-request-sheet-backdrop" onClick={() => { window.dispatchEvent(new CustomEvent('close-all-sheets')); requestClose(); }} aria-hidden="true" />
+            <section ref={sheetRef} className="create-request-sheet" role="dialog" aria-modal="true" aria-labelledby="create-request-sheet-title" tabIndex={-1} onKeyDown={event => {
+                const nested = (event.target as HTMLElement).closest('.fixed');
+                if (event.key === 'Escape') {
+                    event.stopPropagation();
+                    if (nested === layerRef.current) { event.preventDefault(); requestClose(); }
+                    return;
+                }
+                if (event.key !== 'Tab') return;
+                const scope = nested && nested !== layerRef.current ? nested : sheetRef.current;
+                const buttons = Array.from(scope?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])') || []).filter(node => node.offsetParent !== null);
+                const first = buttons[0], last = buttons[buttons.length - 1];
+                if (!first) { event.preventDefault(); return; }
+                if (event.shiftKey && (document.activeElement === first || document.activeElement === sheetRef.current)) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            }}>
+                <header className="create-request-sheet-heading"><div className="create-request-sheet-heading-copy"><span className="create-request-sheet-icon"><CarFront size={18} strokeWidth={1.7} /></span><div><h2 id="create-request-sheet-title">Yêu cầu ghép xe</h2><p>Chọn cấu hình và hoàn tất thông tin đơn hàng</p></div></div><button type="button" className="create-request-sheet-close" onClick={requestClose} aria-label="Đóng yêu cầu ghép xe"><X size={16} /></button></header>
+                <div className="create-request-sheet-body">
+                    <React.Suspense fallback={<div role="status" style={{ padding: 24, color: '#7b879a', fontSize: 13 }}>Đang tải biểu mẫu…</div>}>
+                    <RequestForm
+                        onSuccess={onSuccess}
+                        showToast={showToast}
+                        hideToast={hideToast}
+                        existingOrderNumbers={existingOrderNumbers}
+                        initialVehicle={initialVehicle}
+                        currentUser={currentUser}
+                        vehicleAnalyticsData={vehicleAnalyticsData}
+                        onOpenImagePreview={onOpenImagePreview}
+                    />
+                    </React.Suspense>
                 </div>
-            </div>
-        </div>
+                <div className="create-request-sheet-grip" aria-hidden="true"><span /></div>
+            </section>
+        </div>, document.body
     );
 };
 

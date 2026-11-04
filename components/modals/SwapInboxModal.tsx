@@ -44,6 +44,15 @@ export const SwapInboxModal: React.FC<SwapInboxModalProps> = ({
         loadData();
     }, [loadData]);
 
+    useEffect(() => {
+        if (embedded || !onClose) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [embedded, onClose]);
+
     const handleTvbhAccept = async (id: string) => {
         setProcessingId(id);
         try {
@@ -124,41 +133,39 @@ export const SwapInboxModal: React.FC<SwapInboxModalProps> = ({
         switch (status) {
             case 'pending_tvbh2':
                 return (
-                    <span className="px-3 py-1 bg-amber-50 text-amber-700 font-extrabold text-[11px] rounded-full border border-amber-200 shadow-2xs flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span className="swp-badge is-warning">
+                        <span className="swp-dot" />
                         Chờ TVBH 2 đồng ý
                     </span>
                 );
             case 'waiting_admin':
                 return (
-                    <span className="px-3 py-1 bg-blue-50 text-blue-700 font-extrabold text-[11px] rounded-full border border-blue-200 shadow-2xs flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                    <span className="swp-badge is-info">
+                        <span className="swp-dot" />
                         Chờ Admin phê duyệt
                     </span>
                 );
             case 'approved':
                 return (
-                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-extrabold text-[11px] rounded-full border border-emerald-200 shadow-2xs flex items-center gap-1.5">
-                        <i className="fa-solid fa-circle-check text-emerald-500"></i>
+                    <span className="swp-badge is-success">
                         Đã hoàn tất tráo VIN
                     </span>
                 );
             case 'rejected':
                 return (
-                    <span className="px-3 py-1 bg-rose-50 text-rose-700 font-extrabold text-[11px] rounded-full border border-rose-200 shadow-2xs flex items-center gap-1.5">
-                        <i className="fa-solid fa-circle-xmark text-rose-500"></i>
+                    <span className="swp-badge is-danger">
                         Đã từ chối
                     </span>
                 );
             case 'cancelled':
                 return (
-                    <span className="px-3 py-1 bg-slate-100 text-slate-600 font-extrabold text-[11px] rounded-full border border-slate-200 shadow-2xs">
+                    <span className="swp-badge is-muted">
                         Đã hủy
                     </span>
                 );
             case 'expired':
                 return (
-                    <span className="px-3 py-1 bg-gray-100 text-gray-500 font-extrabold text-[11px] rounded-full border border-gray-200 shadow-2xs">
+                    <span className="swp-badge is-muted">
                         Hết hạn (24h)
                     </span>
                 );
@@ -167,278 +174,633 @@ export const SwapInboxModal: React.FC<SwapInboxModalProps> = ({
         }
     };
 
+    const styles = (
+        <style>{`
+            .swp-sheet {
+                position: fixed;
+                inset: 0 0 0 64px;
+                width: calc(100vw - 64px);
+                height: 100dvh;
+                z-index: 1005;
+                display: flex;
+                align-items: stretch;
+                justify-content: flex-start;
+                background: rgba(15, 23, 42, 0.08);
+                overflow: hidden;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            }
+            @media (max-width: 768px) {
+                .swp-sheet {
+                    inset: 0;
+                    width: 100vw;
+                }
+            }
+            .swp-sheet-panel {
+                width: clamp(460px, 46vw, 680px);
+                max-width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                background: #ffffff;
+                color: #17263b;
+                border-right: 1px solid #e2e8f0;
+                box-shadow: 18px 0 42px -14px rgba(20, 34, 54, 0.16);
+                animation: swpSlideInLeft 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+            .swp-embedded-panel {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                background: #ffffff;
+                color: #17263b;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            @keyframes swpSlideInLeft {
+                from { transform: translateX(-100%); }
+                to { transform: translateX(0); }
+            }
+            .swp-header {
+                padding: 22px 24px 14px;
+                border-bottom: 1px solid #e9edf2;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 12px;
+                flex-shrink: 0;
+            }
+            .swp-title {
+                margin: 0;
+                color: #17263b;
+                font-size: 20px;
+                font-weight: 650;
+                letter-spacing: -0.5px;
+                line-height: 1.25;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .swp-role-tag {
+                padding: 2px 7px;
+                border-radius: 5px;
+                background: #eff6ff;
+                color: #2563eb;
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 0;
+            }
+            .swp-subtitle {
+                margin: 4px 0 0;
+                color: #7b879a;
+                font-size: 11px;
+                line-height: 1.45;
+            }
+            .swp-header-actions {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .swp-icon-btn {
+                width: 28px;
+                height: 28px;
+                border: 0;
+                border-radius: 6px;
+                background: transparent;
+                color: #7b879a;
+                display: grid;
+                place-items: center;
+                cursor: pointer;
+                transition: background 0.15s, color 0.15s;
+            }
+            .swp-icon-btn:hover {
+                background: #edf1f6;
+                color: #17263b;
+            }
+            .swp-tabs {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 10px 24px;
+                background: #f8fafc;
+                border-bottom: 1px solid #e9edf2;
+                flex-shrink: 0;
+            }
+            .swp-tab {
+                height: 30px;
+                padding: 0 12px;
+                border-radius: 7px;
+                border: 1px solid transparent;
+                background: transparent;
+                color: #64748b;
+                font-size: 11.5px;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .swp-tab:hover {
+                color: #17263b;
+                background: #edf1f6;
+            }
+            .swp-tab.is-active {
+                background: #ffffff;
+                color: #17263b;
+                font-weight: 600;
+                border-color: #dbe3ee;
+                box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            }
+            .swp-tab-count {
+                padding: 1px 6px;
+                border-radius: 999px;
+                background: #eff6ff;
+                color: #2563eb;
+                font-size: 10px;
+                font-weight: 600;
+            }
+            .swp-body {
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+                padding: 18px 24px 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+            .swp-empty {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 64px 20px;
+                text-align: center;
+                color: #94a3b8;
+                gap: 6px;
+            }
+            .swp-empty-icon {
+                width: 44px;
+                height: 44px;
+                border-radius: 10px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                display: grid;
+                place-items: center;
+                color: #64748b;
+                margin-bottom: 6px;
+            }
+            .swp-empty strong {
+                color: #17263b;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            .swp-empty p {
+                margin: 0;
+                color: #7b879a;
+                font-size: 11.5px;
+            }
+            .swp-card {
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                background: #ffffff;
+                padding: 14px 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .swp-card-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: 11px;
+                color: #64748b;
+            }
+            .swp-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 2px 8px;
+                border-radius: 6px;
+                font-size: 10.5px;
+                font-weight: 600;
+            }
+            .swp-badge .swp-dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+            .swp-badge.is-warning {
+                background: #fffbeb;
+                color: #b45309;
+                border: 1px solid #fde68a;
+            }
+            .swp-badge.is-info {
+                background: #eff6ff;
+                color: #2563eb;
+                border: 1px solid #bfdbfe;
+            }
+            .swp-badge.is-success {
+                background: #ecfdf5;
+                color: #059669;
+                border: 1px solid #a7f3d0;
+            }
+            .swp-badge.is-danger {
+                background: #fef2f2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+            }
+            .swp-badge.is-muted {
+                background: #f8fafc;
+                color: #64748b;
+                border: 1px solid #e2e8f0;
+            }
+            .swp-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+            @media (max-width: 560px) {
+                .swp-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .swp-party {
+                padding: 10px 12px;
+                border-radius: 8px;
+                border: 1px solid #e9edf2;
+                background: #f8fafc;
+                font-size: 11.5px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .swp-party-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 6px;
+                font-size: 11px;
+                color: #64748b;
+                font-weight: 500;
+                margin-bottom: 2px;
+            }
+            .swp-party-head strong {
+                color: #17263b;
+                font-weight: 600;
+            }
+            .swp-kv {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                color: #64748b;
+                font-size: 11px;
+            }
+            .swp-kv code {
+                font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 11px;
+                font-weight: 600;
+                color: #17263b;
+            }
+            .swp-meta-box {
+                padding: 9px 12px;
+                border-radius: 8px;
+                border: 1px solid #e9edf2;
+                background: #ffffff;
+                font-size: 11.5px;
+                color: #475569;
+                line-height: 1.5;
+            }
+            .swp-meta-box strong {
+                color: #17263b;
+                font-weight: 600;
+            }
+            .swp-actions {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 8px;
+                padding-top: 10px;
+                border-top: 1px solid #f1f5f9;
+            }
+            .swp-btn-secondary {
+                height: 32px;
+                padding: 0 12px;
+                border-radius: 7px;
+                border: 1px solid #e2e8f0;
+                background: #ffffff;
+                color: #475569;
+                font-size: 11.5px;
+                font-weight: 500;
+                cursor: pointer;
+            }
+            .swp-btn-secondary:hover:not(:disabled) {
+                background: #f8fafc;
+                color: #17263b;
+            }
+            .swp-btn-danger {
+                height: 32px;
+                padding: 0 12px;
+                border-radius: 7px;
+                border: 1px solid #fecaca;
+                background: #fef2f2;
+                color: #dc2626;
+                font-size: 11.5px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+            .swp-btn-danger:hover:not(:disabled) {
+                background: #fee2e2;
+            }
+            .swp-btn-primary {
+                height: 32px;
+                padding: 0 14px;
+                border-radius: 7px;
+                border: 0;
+                background: #17263b;
+                color: #ffffff;
+                font-size: 11.5px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+            .swp-btn-primary:hover:not(:disabled) {
+                background: #0f172a;
+            }
+            .swp-input {
+                width: 100%;
+                height: 34px;
+                padding: 0 11px;
+                border: 1px solid #cbd5e1;
+                border-radius: 7px;
+                font-size: 12px;
+                color: #17263b;
+                outline: none;
+            }
+            .swp-input:focus {
+                border-color: #2563eb;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+            }
+        `}</style>
+    );
+
     const innerContent = (
-        <div className={embedded ? "bg-white rounded-2xl w-full h-full flex flex-col overflow-hidden border border-slate-200 shadow-sm" : "bg-white rounded-3xl shadow-[0_30px_90px_-15px_rgba(0,0,0,0.3)] max-w-4xl w-full h-[88vh] flex flex-col overflow-hidden border border-slate-200/80"}>
-            {/* Header Premium Gradient */}
-            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between flex-shrink-0 border-b border-white/10 relative">
-                <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-lg shadow-lg shadow-orange-500/30">
-                        <i className="fa-solid fa-right-left"></i>
-                    </div>
-                    <div>
-                        <h3 className="font-extrabold text-lg leading-tight tracking-tight text-white flex items-center gap-2">
-                            Quản Lý Trao Đổi Xe
-                            <span className="text-[9px] uppercase font-black tracking-widest px-2 py-0.5 bg-white/10 text-amber-300 rounded-md border border-white/10">
-                                Admin Dashboard
-                            </span>
-                        </h3>
-                        <p className="text-[11px] text-slate-300 font-medium">Theo dõi, phê duyệt và quản lý luồng tráo VIN giữa các TVBH</p>
-                    </div>
+        <div className={embedded ? 'swp-embedded-panel' : 'swp-sheet-panel'}>
+            <header className="swp-header">
+                <div>
+                    <h2 className="swp-title">
+                        <span>Hộp thư đổi xe</span>
+                        {isAdmin && <span className="swp-role-tag">Admin</span>}
+                    </h2>
+                    <p className="swp-subtitle">Theo dõi, phê duyệt và quản lý luồng tráo VIN giữa các TVBH</p>
                 </div>
-                {onClose && (
+                <div className="swp-header-actions">
                     <button
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-white/10"
+                        type="button"
+                        onClick={loadData}
+                        className="swp-icon-btn"
+                        title="Làm mới danh sách"
+                        aria-label="Làm mới danh sách"
                     >
-                        <i className="fa-solid fa-xmark text-base"></i>
+                        <i className={`fas fa-rotate-right text-[12px] ${isLoading ? 'fa-spin' : ''}`} />
+                    </button>
+                    {onClose && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="swp-icon-btn"
+                            aria-label="Đóng"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+            </header>
+
+            <div className="swp-tabs">
+                {!isAdmin && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('received')}
+                            className={`swp-tab ${activeTab === 'received' ? 'is-active' : ''}`}
+                        >
+                            <span>Đề nghị nhận được</span>
+                            {receivedRequests.filter(r => r.status === 'pending_tvbh2').length > 0 && (
+                                <span className="swp-tab-count">
+                                    {receivedRequests.filter(r => r.status === 'pending_tvbh2').length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('sent')}
+                            className={`swp-tab ${activeTab === 'sent' ? 'is-active' : ''}`}
+                        >
+                            <span>Đề nghị đã gửi</span>
+                            <span className="swp-tab-count">{sentRequests.length}</span>
+                        </button>
+                    </>
+                )}
+                {isAdmin && (
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('admin')}
+                        className={`swp-tab ${activeTab === 'admin' ? 'is-active' : ''}`}
+                    >
+                        <span>Tất cả yêu cầu tráo xe</span>
+                        <span className="swp-tab-count">{adminWaitingRequests.length}</span>
                     </button>
                 )}
             </div>
 
-                {/* Tabs Navigation */}
-                <div className="px-6 pt-4 bg-slate-50 border-b border-slate-200/80 flex items-center gap-3 flex-shrink-0">
-                    {!isAdmin && (
-                        <>
-                            <button
-                                onClick={() => setActiveTab('received')}
-                                className={`px-5 py-3 text-xs font-extrabold rounded-t-2xl transition-all flex items-center gap-2.5 ${
-                                    activeTab === 'received'
-                                        ? 'bg-white text-indigo-600 border-t-2 border-indigo-600 shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
-                                }`}
-                            >
-                                <i className="fa-solid fa-inbox text-sm"></i>
-                                <span>Đề nghị nhận được</span>
-                                {receivedRequests.filter(r => r.status === 'pending_tvbh2').length > 0 && (
-                                    <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black rounded-full shadow-2xs">
-                                        {receivedRequests.filter(r => r.status === 'pending_tvbh2').length}
-                                    </span>
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('sent')}
-                                className={`px-5 py-3 text-xs font-extrabold rounded-t-2xl transition-all flex items-center gap-2.5 ${
-                                    activeTab === 'sent'
-                                        ? 'bg-white text-indigo-600 border-t-2 border-indigo-600 shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
-                                }`}
-                            >
-                                <i className="fa-solid fa-paper-plane text-sm"></i>
-                                <span>Đề nghị đã gửi</span>
-                                <span className="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-black rounded-full">
-                                    {sentRequests.length}
-                                </span>
-                            </button>
-                        </>
-                    )}
-                    {isAdmin && (
-                        <button
-                            onClick={() => setActiveTab('admin')}
-                            className={`px-5 py-3 text-xs font-extrabold rounded-t-2xl transition-all flex items-center gap-2.5 ${
-                                activeTab === 'admin'
-                                    ? 'bg-white text-indigo-600 border-t-2 border-indigo-600 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
-                            }`}
-                        >
-                            <i className="fa-solid fa-user-shield text-sm"></i>
-                            <span>Tất cả yêu cầu tráo xe</span>
-                            {adminWaitingRequests.length > 0 && (
-                                <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black rounded-full shadow-2xs">
-                                    {adminWaitingRequests.length}
-                                </span>
-                            )}
-                        </button>
-                    )}
-                </div>
-
-                {/* Body Content */}
-                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4 bg-slate-100/60">
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
-                            <i className="fa-solid fa-spinner fa-spin text-3xl text-indigo-500"></i>
-                            <span className="text-sm font-semibold">Đang tải hộp thư tráo đổi xe...</span>
+            <div className="swp-body">
+                {isLoading ? (
+                    <div className="swp-empty">
+                        <i className="fas fa-spinner fa-spin text-lg text-slate-400" />
+                        <p>Đang tải hộp thư trao đổi xe...</p>
+                    </div>
+                ) : displayedRequests.length === 0 ? (
+                    <div className="swp-empty">
+                        <div className="swp-empty-icon">
+                            <i className="fas fa-right-left text-sm" />
                         </div>
-                    ) : displayedRequests.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-slate-400">
-                            <div className="w-16 h-16 rounded-full bg-slate-200/60 flex items-center justify-center text-3xl mb-3 text-slate-400">
-                                📭
+                        <strong>Không có yêu cầu đổi xe nào trong danh sách</strong>
+                        <p>Các đề nghị đổi xe sẽ xuất hiện tại đây khi được khởi tạo.</p>
+                    </div>
+                ) : (
+                    displayedRequests.map((item) => (
+                        <div key={item.id} className="swp-card">
+                            <div className="swp-card-top">
+                                <span>{new Date(item.createdAt).toLocaleString('vi-VN')}</span>
+                                {getStatusBadge(item.status)}
                             </div>
-                            <p className="font-extrabold text-base text-slate-700">Không có yêu cầu đổi xe nào trong danh sách!</p>
-                            <p className="text-xs text-slate-500 mt-1">Các đề nghị đổi xe sẽ xuất hiện tại đây khi được khởi tạo.</p>
-                        </div>
-                    ) : (
-                        displayedRequests.map((item) => (
-                            <div
-                                key={item.id}
-                                className="p-5 bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all space-y-4"
-                            >
-                                {/* Top Item Row */}
-                                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                                    <div className="flex items-center gap-2.5 text-xs text-slate-500 font-semibold">
-                                        <i className="fa-regular fa-clock text-slate-400"></i>
-                                        <span>{new Date(item.createdAt).toLocaleString('vi-VN')}</span>
-                                    </div>
-                                    <div>{getStatusBadge(item.status)}</div>
-                                </div>
 
-                                {/* Comparison Details Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                    {/* TVBH A (Đề nghị) */}
-                                    <div className="p-3.5 bg-indigo-50/50 rounded-2xl border border-indigo-100/80 space-y-1.5">
-                                        <div className="font-extrabold text-indigo-900 flex items-center justify-between">
-                                            <span className="flex items-center gap-1.5">
-                                                <i className="fa-solid fa-user-gear text-indigo-600"></i>
-                                                TVBH 1 (Bên đề nghị):
-                                            </span>
-                                            <span className="px-2 py-0.5 bg-indigo-200/60 text-indigo-900 rounded-md font-bold">
-                                                {item.tvbhA}
-                                            </span>
-                                        </div>
-                                        <div className="text-slate-600">
-                                            Đơn hàng: <span className="font-mono font-bold text-slate-900">{item.orderA}</span>
-                                        </div>
-                                        <div className="text-slate-600">
-                                            VIN hiện tại: <span className="font-mono font-bold text-indigo-700">{item.vinA || 'Chưa ghép (Chờ xe)'}</span>
-                                        </div>
+                            <div className="swp-grid">
+                                <div className="swp-party">
+                                    <div className="swp-party-head">
+                                        <span>TVBH 1 (Bên đề nghị)</span>
+                                        <strong>{item.tvbhA}</strong>
                                     </div>
-
-                                    {/* TVBH B (Nhận) */}
-                                    <div className="p-3.5 bg-amber-50/50 rounded-2xl border border-amber-100/80 space-y-1.5">
-                                        <div className="font-extrabold text-amber-900 flex items-center justify-between">
-                                            <span className="flex items-center gap-1.5">
-                                                <i className="fa-solid fa-user-check text-amber-600"></i>
-                                                TVBH 2 (Bên sở hữu xe):
-                                            </span>
-                                            <span className="px-2 py-0.5 bg-amber-200/60 text-amber-900 rounded-md font-bold">
-                                                {item.tvbhB}
-                                            </span>
-                                        </div>
-                                        <div className="text-slate-600">
-                                            Đơn hàng: <span className="font-mono font-bold text-slate-900">{item.orderB || 'Tự động chọn'}</span>
-                                        </div>
-                                        <div className="text-slate-600">
-                                            VIN đề nghị đổi: <span className="font-mono font-bold text-amber-700">{item.vinB}</span>
-                                        </div>
+                                    <div className="swp-kv">
+                                        <span>Đơn hàng</span>
+                                        <code>{item.orderA}</code>
+                                    </div>
+                                    <div className="swp-kv">
+                                        <span>VIN hiện tại</span>
+                                        <code>{item.vinA || 'Chưa ghép'}</code>
                                     </div>
                                 </div>
 
-                                {/* Configuration details */}
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center gap-2 text-xs">
-                                    <i className="fa-solid fa-sliders text-indigo-500"></i>
-                                    <span className="font-bold text-slate-700">Cấu hình xe khớp 100%:</span>
-                                    <span className="font-semibold text-slate-900">
-                                        {item.config.dong_xe} - {item.config.phien_ban} | Ngoại thất: <span className="text-indigo-600 font-bold">{item.config.ngoai_that}</span> | Nội thất: <span className="text-indigo-600 font-bold">{item.config.noi_that}</span>
-                                    </span>
-                                </div>
-
-                                {/* Lý do */}
-                                <div className="text-xs text-slate-700 bg-amber-50/30 p-3 rounded-xl border border-amber-100">
-                                    <span className="font-extrabold text-amber-900">Lý do đề nghị:</span> {item.reason}
-                                </div>
-
-                                {item.rejectReason && (
-                                    <div className="text-xs text-rose-700 bg-rose-50 p-3 rounded-xl border border-rose-200">
-                                        <span className="font-extrabold text-rose-900">Lý do từ chối:</span> {item.rejectReason}
+                                <div className="swp-party">
+                                    <div className="swp-party-head">
+                                        <span>TVBH 2 (Bên sở hữu xe)</span>
+                                        <strong>{item.tvbhB}</strong>
                                     </div>
-                                )}
-
-                                {/* Reject Input Box if toggled */}
-                                {showRejectInput[item.id] && (
-                                    <div className="space-y-2 pt-2">
-                                        <input
-                                            type="text"
-                                            value={rejectReasonText[item.id] || ''}
-                                            onChange={(e) => setRejectReasonText(prev => ({ ...prev, [item.id]: e.target.value }))}
-                                            placeholder="Nhập lý do từ chối trao đổi xe..."
-                                            className="w-full px-3 py-2 border border-rose-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-rose-500 focus:outline-hidden"
-                                        />
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowRejectInput(prev => ({ ...prev, [item.id]: false }))}
-                                                className="px-3 py-1 text-xs text-slate-600 hover:bg-slate-100 rounded-lg font-semibold"
-                                            >
-                                                Hủy
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleReject(item.id)}
-                                                className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-xs"
-                                            >
-                                                Xác nhận Từ Chối
-                                            </button>
-                                        </div>
+                                    <div className="swp-kv">
+                                        <span>Đơn hàng</span>
+                                        <code>{item.orderB || 'Tự động chọn'}</code>
                                     </div>
-                                )}
+                                    <div className="swp-kv">
+                                        <span>VIN đề nghị đổi</span>
+                                        <code>{item.vinB}</code>
+                                    </div>
+                                </div>
+                            </div>
 
-                                {/* Action Buttons Footer */}
-                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                                    {/* Actions for TVBH 2 (Received Pending) */}
+                            <div className="swp-meta-box">
+                                <strong>Cấu hình xe:</strong>{' '}
+                                {item.config.dong_xe} · {item.config.phien_ban} · Ngoại thất {item.config.ngoai_that} · Nội thất {item.config.noi_that}
+                            </div>
+
+                            <div className="swp-meta-box">
+                                <strong>Lý do đề nghị:</strong> {item.reason || 'Không có ghi chú'}
+                            </div>
+
+                            {item.rejectReason && (
+                                <div className="swp-meta-box" style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#b91c1c' }}>
+                                    <strong style={{ color: '#991b1b' }}>Lý do từ chối:</strong> {item.rejectReason}
+                                </div>
+                            )}
+
+                            {showRejectInput[item.id] && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <input
+                                        type="text"
+                                        value={rejectReasonText[item.id] || ''}
+                                        onChange={(e) => setRejectReasonText(prev => ({ ...prev, [item.id]: e.target.value }))}
+                                        placeholder="Nhập lý do từ chối trao đổi xe..."
+                                        className="swp-input"
+                                    />
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRejectInput(prev => ({ ...prev, [item.id]: false }))}
+                                            className="swp-btn-secondary"
+                                        >
+                                            Hủy
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleReject(item.id)}
+                                            className="swp-btn-danger"
+                                        >
+                                            Xác nhận từ chối
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {((activeTab === 'received' && item.status === 'pending_tvbh2' && !showRejectInput[item.id]) ||
+                              (activeTab === 'sent' && (item.status === 'pending_tvbh2' || item.status === 'waiting_admin')) ||
+                              (isAdmin && (item.status === 'waiting_admin' || item.status === 'pending_tvbh2') && !showRejectInput[item.id])) && (
+                                <div className="swp-actions">
                                     {activeTab === 'received' && item.status === 'pending_tvbh2' && !showRejectInput[item.id] && (
                                         <>
                                             <button
+                                                type="button"
                                                 onClick={() => setShowRejectInput(prev => ({ ...prev, [item.id]: true }))}
                                                 disabled={processingId === item.id}
-                                                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all active:scale-95 flex items-center gap-1.5"
+                                                className="swp-btn-danger"
                                             >
-                                                <i className="fa-solid fa-xmark"></i> Từ Chối
+                                                Từ chối
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleTvbhAccept(item.id)}
                                                 disabled={processingId === item.id}
-                                                className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
+                                                className="swp-btn-primary"
                                             >
-                                                {processingId === item.id ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-check-double"></i>}
-                                                Đồng Ý Trao Đổi
+                                                {processingId === item.id ? 'Đang xử lý...' : 'Đồng ý trao đổi'}
                                             </button>
                                         </>
                                     )}
 
-                                    {/* Actions for TVBH 1 (Cancel Request) */}
                                     {activeTab === 'sent' && (item.status === 'pending_tvbh2' || item.status === 'waiting_admin') && (
                                         <button
+                                            type="button"
                                             onClick={() => handleCancel(item.id)}
                                             disabled={processingId === item.id}
-                                            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all active:scale-95 flex items-center gap-1.5"
+                                            className="swp-btn-secondary"
                                         >
-                                            <i className="fa-solid fa-ban"></i> Hủy Đề Nghị
+                                            Hủy đề nghị
                                         </button>
                                     )}
 
-                                    {/* Actions for Admin */}
                                     {isAdmin && (item.status === 'waiting_admin' || item.status === 'pending_tvbh2') && !showRejectInput[item.id] && (
                                         <>
                                             <button
+                                                type="button"
                                                 onClick={() => setShowRejectInput(prev => ({ ...prev, [item.id]: true }))}
                                                 disabled={processingId === item.id}
-                                                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all active:scale-95 flex items-center gap-1.5"
+                                                className="swp-btn-danger"
                                             >
-                                                <i className="fa-solid fa-xmark"></i> Từ Chối
+                                                Từ chối
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleAdminApprove(item.id)}
                                                 disabled={processingId === item.id}
-                                                className="px-5 py-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-xs rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
+                                                className="swp-btn-primary"
                                             >
-                                                {processingId === item.id ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-user-shield"></i>}
-                                                Admin Phê Duyệt Ngay
+                                                {processingId === item.id ? 'Đang xử lý...' : 'Phê duyệt tráo VIN'}
                                             </button>
                                         </>
                                     )}
                                 </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 
     if (embedded) {
-        return innerContent;
+        return (
+            <>
+                {styles}
+                {innerContent}
+            </>
+        );
     }
 
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fadeIn">
+        <div
+            className="swp-sheet"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                    window.dispatchEvent(new CustomEvent('close-all-sheets'));
+                    if (onClose) onClose();
+                }
+            }}
+        >
+            {styles}
             {innerContent}
         </div>,
         document.body

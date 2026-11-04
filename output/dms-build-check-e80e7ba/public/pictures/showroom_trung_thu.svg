@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 750" width="100%" height="100%">
+  <defs>
+    <!-- Bầu trời đêm trăng rằm hoàng hôn -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0B132B"/>
+      <stop offset="40%" stop-color="#1E293B"/>
+      <stop offset="70%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#78593F"/>
+    </linearGradient>
+
+    <!-- Ánh trăng Rằm rực rỡ -->
+    <radialGradient id="moonGrad" cx="38%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#FFFDF5"/>
+      <stop offset="35%" stop-color="#FEF3C7"/>
+      <stop offset="75%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </radialGradient>
+
+    <!-- Quầng hào quang trăng tròn -->
+    <radialGradient id="moonHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.45"/>
+      <stop offset="45%" stop-color="#FDE047" stop-opacity="0.2"/>
+      <stop offset="75%" stop-color="#F59E0B" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Mặt sàn cẩm thạch Showroom bóng gương -->
+    <linearGradient id="floorGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="30%" stop-color="#334155"/>
+      <stop offset="70%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0B1120"/>
+    </linearGradient>
+
+    <!-- Bục tròn đá cẩm thạch trắng trưng bày xe (Podium Top) -->
+    <radialGradient id="podiumTop" cx="48%" cy="42%" r="58%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="65%" stop-color="#F1F5F9"/>
+      <stop offset="90%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#CBD5E1"/>
+    </radialGradient>
+
+    <!-- Viền bên của bục tròn (Podium Rim) -->
+    <linearGradient id="podiumSide" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="40%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <!-- Vòng LED Neon vàng hoàng kim quanh bục -->
+    <linearGradient id="neonRing" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="30%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- Đèn lồng Hội An truyền thống màu đỏ ruby -->
+    <radialGradient id="lanternRed" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FECDD3"/>
+      <stop offset="35%" stop-color="#F43F5E"/>
+      <stop offset="75%" stop-color="#E11D48"/>
+      <stop offset="100%" stop-color="#9F1239"/>
+    </radialGradient>
+
+    <!-- Đèn lồng vàng hoàng yến -->
+    <radialGradient id="lanternYellow" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FEF9C3"/>
+      <stop offset="35%" stop-color="#FDE047"/>
+      <stop offset="75%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#A16207"/>
+    </radialGradient>
+
+    <!-- Ánh sáng đèn lồng tỏa ra -->
+    <radialGradient id="lanternGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#FDE047" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Hào quang bóng trăng dưới mặt sàn cẩm thạch -->
+    <radialGradient id="floorMoonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.4"/>
+      <stop offset="45%" stop-color="#FDE047" stop-opacity="0.18"/>
+      <stop offset="85%" stop-color="#0F172A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ==================== 1. KHUNG KÍNH PANORAMA & BẦU TRỜI ĐÊM RẰM ==================== -->
+  <g id="sky-and-nature">
+    <!-- Nền trời đêm Trung Thu -->
+    <rect x="0" y="0" width="600" height="430" fill="url(#skyGrad)"/>
+
+    <!-- Núi mờ ảo phương xa -->
+    <path d="M0 370 Q120 330 250 355 T500 340 L600 365 L600 430 L0 430 Z" fill="#172554" opacity="0.45"/>
+    <path d="M0 395 Q160 360 360 385 T600 395 L600 430 L0 430 Z" fill="#0F172A" opacity="0.65"/>
+
+    <!-- Quầng hào quang vầng trăng đại nguyệt -->
+    <circle cx="460" cy="180" r="160" fill="url(#moonHalo)"/>
+    <circle cx="460" cy="180" r="95" fill="url(#moonHalo)" opacity="0.8"/>
+
+    <!-- Vầng Trăng Rằm tròn vành vạnh -->
+    <circle cx="460" cy="180" r="68" fill="url(#moonGrad)"/>
+
+    <!-- Chi tiết bề mặt trăng mờ nhẹ -->
+    <ellipse cx="445" cy="170" rx="25" ry="16" fill="#F59E0B" opacity="0.18"/>
+    <ellipse cx="480" cy="190" rx="20" ry="12" fill="#F59E0B" opacity="0.15"/>
+    <ellipse cx="455" cy="198" rx="15" ry="10" fill="#D97706" opacity="0.14"/>
+
+    <!-- Dải mây ngũ sắc lững lờ dưới bóng trăng -->
+    <path d="M340 220 Q420 205 500 215 T590 210 Q520 230 440 225 T340 220 Z" fill="#FEF3C7" opacity="0.35"/>
+    <path d="M380 248 Q460 235 540 242 T600 240 Q530 258 460 252 T380 248 Z" fill="#FDE68A" opacity="0.25"/>
+
+    <!-- Hoa đăng bay xa xa trên nền trời -->
+    <g id="sky-lanterns" opacity="0.85">
+      <ellipse cx="320" cy="230" rx="4" ry="5.5" fill="#FDE047"/>
+      <ellipse cx="360" cy="190" rx="3.5" ry="5" fill="#FDE047" opacity="0.7"/>
+      <ellipse cx="550" cy="150" rx="4" ry="6" fill="#FBBF24"/>
+      <ellipse cx="575" cy="200" rx="3.5" ry="5" fill="#FDE047" opacity="0.8"/>
+      <ellipse cx="395" cy="265" rx="3.5" ry="5" fill="#FBBF24" opacity="0.75"/>
+    </g>
+  </g>
+
+  <!-- ==================== 2. KHUNG KÍNH KIẾN TRÚC SHOWROOM HIỆN ĐẠI ==================== -->
+  <g id="architectural-glass-frame">
+    <!-- Khung kính dọc chia ô panorama cao cấp -->
+    <line x1="200" y1="0" x2="200" y2="420" stroke="#334155" stroke-width="2.5" opacity="0.5"/>
+    <line x1="400" y1="0" x2="400" y2="420" stroke="#334155" stroke-width="2.5" opacity="0.5"/>
+
+    <!-- Xà ngang khung kính chân tường -->
+    <line x1="0" y1="418" x2="600" y2="418" stroke="#1E293B" stroke-width="4"/>
+  </g>
+
+  <!-- ==================== 3. TRẦN NHÀ & DẢI ĐÈN SANG TRỌNG ==================== -->
+  <g id="ceiling-and-interior">
+    <!-- Trần nhà kiến trúc -->
+    <rect x="0" y="0" width="600" height="55" fill="#0F172A"/>
+    <!-- Dải LED âm trần vàng champagne sang trọng -->
+    <line x1="0" y1="54" x2="600" y2="54" stroke="#FDE047" stroke-width="2.5" opacity="0.9"/>
+    <line x1="0" y1="54" x2="600" y2="54" stroke="#FFFFFF" stroke-width="1.0" opacity="0.95"/>
+
+    <!-- Đèn rọi trần (Ceiling Spotlights) -->
+    <circle cx="210" cy="52" r="3" fill="#FEF08A"/>
+    <polygon points="204,52 216,52 245,240 175,240" fill="#FEF08A" opacity="0.04"/>
+
+    <circle cx="340" cy="52" r="3" fill="#FEF08A"/>
+    <polygon points="334,52 346,52 375,240 305,240" fill="#FEF08A" opacity="0.04"/>
+
+    <circle cx="490" cy="52" r="3" fill="#FEF08A"/>
+    <polygon points="484,52 496,52 525,240 455,240" fill="#FEF08A" opacity="0.04"/>
+  </g>
+
+  <!-- ==================== 4. HỆ THỐNG ĐÈN LỒNG TRUNG THU TREO THẢ ==================== -->
+  <g id="hanging-lanterns">
+    <!-- Đèn Lồng 1 (x=210, Đèn quả trám vàng hoàng yến) -->
+    <g transform="translate(210, 55)">
+      <line x1="0" y1="0" x2="0" y2="55" stroke="#CBD5E1" stroke-width="1"/>
+      <circle cx="0" cy="80" r="34" fill="url(#lanternGlow)" opacity="0.75"/>
+      <!-- Quả cầu đèn lồng -->
+      <ellipse cx="0" cy="80" rx="17" ry="22" fill="url(#lanternYellow)"/>
+      <ellipse cx="0" cy="80" rx="11" ry="22" fill="none" stroke="#CA8A04" stroke-width="0.8"/>
+      <ellipse cx="0" cy="80" rx="5" ry="22" fill="none" stroke="#CA8A04" stroke-width="0.6"/>
+      <!-- Nắp vàng & Tua rua đỏ -->
+      <rect x="-8" y="56" width="16" height="3" rx="1.5" fill="#D97706"/>
+      <rect x="-8" y="101" width="16" height="3" rx="1.5" fill="#D97706"/>
+      <line x1="0" y1="104" x2="0" y2="128" stroke="#DC2626" stroke-width="2"/>
+      <circle cx="0" cy="130" r="2" fill="#FBBF24"/>
+    </g>
+
+    <!-- Đèn Lồng 2 (x=335, Đèn tròn đỏ ruby Hội An) -->
+    <g transform="translate(335, 55)">
+      <line x1="0" y1="0" x2="0" y2="40" stroke="#CBD5E1" stroke-width="1"/>
+      <circle cx="0" cy="62" r="30" fill="url(#lanternGlow)" opacity="0.6"/>
+      <!-- Thân đèn -->
+      <circle cx="0" cy="62" r="19" fill="url(#lanternRed)"/>
+      <ellipse cx="0" cy="62" rx="12" ry="19" fill="none" stroke="#BE123C" stroke-width="0.8"/>
+      <ellipse cx="0" cy="62" rx="5.5" ry="19" fill="none" stroke="#BE123C" stroke-width="0.6"/>
+      <!-- Khung viền vàng -->
+      <rect x="-6" y="41" width="12" height="2.5" rx="1.2" fill="#FBBF24"/>
+      <rect x="-6" y="80" width="12" height="2.5" rx="1.2" fill="#FBBF24"/>
+      <line x1="0" y1="82" x2="0" y2="108" stroke="#FDE047" stroke-width="1.6"/>
+    </g>
+
+    <!-- Đèn Lồng 3 (x=535, Đèn Ngôi Sao Trung Thu hiện đại) -->
+    <g transform="translate(535, 55)">
+      <line x1="0" y1="0" x2="0" y2="65" stroke="#CBD5E1" stroke-width="1"/>
+      <circle cx="0" cy="88" r="32" fill="url(#lanternGlow)" opacity="0.7"/>
+      <!-- Ngôi sao 5 cánh -->
+      <polygon points="0,68 6,81 20,83 10,93 12,107 0,100 -12,107 -10,93 -20,83 -6,81" fill="url(#lanternYellow)"/>
+      <circle cx="0" cy="88" r="5" fill="#FFFFFF" opacity="0.9"/>
+      <line x1="0" y1="107" x2="0" y2="128" stroke="#DC2626" stroke-width="1.6"/>
+    </g>
+  </g>
+
+  <!-- ==================== 5. SÀN CẨM THẠCH ĐÁ BÓNG GƯƠNG (SHOWROOM FLOOR) ==================== -->
+  <g id="marble-floor">
+    <!-- Mặt sàn kéo từ chân vách kính y=418 xuống đáy y=750 -->
+    <polygon points="0,418 600,418 600,750 0,750" fill="url(#floorGrad)"/>
+
+    <!-- Các đường roăn gạch sàn đá cẩm thạch chạy phối cảnh chuẩn (Perspective Grid Lines) -->
+    <g stroke="#64748B" stroke-width="0.8" opacity="0.35">
+      <line x1="300" y1="418" x2="300" y2="750"/>
+      <line x1="300" y1="418" x2="40" y2="750"/>
+      <line x1="300" y1="418" x2="-220" y2="750"/>
+      <line x1="300" y1="418" x2="560" y2="750"/>
+      <line x1="300" y1="418" x2="820" y2="750"/>
+      <!-- Đường ngang phân cách gạch -->
+      <line x1="0" y1="475" x2="600" y2="475" stroke-width="0.5" opacity="0.3"/>
+      <line x1="0" y1="545" x2="600" y2="545" stroke-width="0.6" opacity="0.35"/>
+      <line x1="0" y1="630" x2="600" y2="630" stroke-width="0.8" opacity="0.4"/>
+      <line x1="0" y1="710" x2="600" y2="710" stroke-width="1.0" opacity="0.45"/>
+    </g>
+
+    <!-- BÓNG GƯƠNG VẦNG TRĂNG RẰM PHẢN CHIẾU XUỐNG MẶT SÀN (Moon Floor Reflection) -->
+    <ellipse cx="460" cy="500" rx="90" ry="28" fill="url(#floorMoonGlow)"/>
+    <ellipse cx="460" cy="500" rx="50" ry="14" fill="#FDE047" opacity="0.3"/>
+    <ellipse cx="460" cy="500" rx="28" ry="8" fill="#FFFFFF" opacity="0.4"/>
+
+    <!-- Bóng gương đèn lồng phản chiếu nhẹ trên sàn -->
+    <ellipse cx="210" cy="485" rx="16" ry="5" fill="#FDE047" opacity="0.22"/>
+    <ellipse cx="335" cy="475" rx="14" ry="4" fill="#F43F5E" opacity="0.18"/>
+  </g>
+
+  <!-- ==================== 6. BỤC TRÒN TRƯNG BÀY XE CHUẨN ĐẸP (AUTOMOTIVE PODIUM) ==================== -->
+  <g id="car-podium">
+    <!-- Bóng đổ của bục tròn lên mặt sàn chính -->
+    <ellipse cx="300" cy="600" rx="265" ry="68" fill="#000000" opacity="0.65"/>
+    <ellipse cx="300" cy="600" rx="245" ry="60" fill="#000000" opacity="0.4"/>
+
+    <!-- THÀNH DÀY BỤC TRÒN (Podium Base Side Wall, dày 18px) -->
+    <path d="M 40 575
+             A 260 62 0 0 0 560 575
+             L 560 592
+             A 260 62 0 0 1 40 592
+             Z" fill="url(#podiumSide)"/>
+
+    <!-- VÒNG ĐÈN LED NEON PHÁT SÁNG QUANH CHÂN BỤC -->
+    <path d="M 40 590
+             A 260 62 0 0 0 560 590"
+          fill="none" stroke="url(#neonRing)" stroke-width="5" opacity="0.95"/>
+    <path d="M 40 590
+             A 260 62 0 0 0 560 590"
+          fill="none" stroke="#FFFFFF" stroke-width="1.8" opacity="0.9"/>
+
+    <!-- MẶT BỤC TRÒN ĐÁ CẨM THẠCH TRẮNG (Podium Top Surface) -->
+    <ellipse cx="300" cy="575" rx="260" ry="62" fill="url(#podiumTop)"/>
+
+    <!-- Viền kim loại mạ vàng xung quanh mép bục -->
+    <ellipse cx="300" cy="575" rx="260" ry="62" fill="none" stroke="#FDE047" stroke-width="1.8" opacity="0.85"/>
+    <ellipse cx="300" cy="575" rx="257" ry="60" fill="none" stroke="#FFFFFF" stroke-width="1.0" opacity="0.9"/>
+
+    <!-- Vân đá cẩm thạch xám nhạt tự nhiên trên mặt bục -->
+    <path d="M 120 555 Q 200 575 290 560 T 450 578" fill="none" stroke="#CBD5E1" stroke-width="1.8" opacity="0.5"/>
+    <path d="M 180 590 Q 280 570 380 592" fill="none" stroke="#CBD5E1" stroke-width="1.5" opacity="0.4"/>
+
+    <!-- Vòng tròn trang trí nội vi trên bục đá (Inner Luxury Accent Ring) -->
+    <ellipse cx="300" cy="575" rx="205" ry="48" fill="none" stroke="#FDE047" stroke-width="1.2" opacity="0.6"/>
+    <ellipse cx="300" cy="575" rx="202" ry="46" fill="none" stroke="#F59E0B" stroke-width="0.7" opacity="0.4"/>
+
+    <!-- Vệt sáng phản quang vầng trăng lên mặt đá bục tròn -->
+    <ellipse cx="410" cy="570" rx="70" ry="20" fill="#FFFFFF" opacity="0.35"/>
+    <ellipse cx="410" cy="570" rx="38" ry="10" fill="#FFFFFF" opacity="0.55"/>
+  </g>
+</svg>

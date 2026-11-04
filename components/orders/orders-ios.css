@@ -1,0 +1,76 @@
+.orders-ios-workspace {
+    --orders-blue: #347fe3;
+    --orders-border: #e5ecf5;
+    --orders-text: #4d637f;
+    --orders-muted: #91a1b7;
+    background: #f4f7fc;
+    color: var(--orders-text);
+    padding: 6px;
+    gap: 9px;
+}
+.orders-ios-workspace .ios-orders-filterbar { border-color: var(--orders-border); border-radius: 13px; background: #fcfdff; box-shadow: none; padding: 6px; backdrop-filter: none; }
+.orders-ios-workspace .ios-orders-model-track { border-color: transparent; background: #f3f6fb; border-radius: 10px; }
+.orders-ios-workspace .ios-orders-model-track button { min-height: 25px; border-radius: 8px; font-weight: 500; font-size: 10px; color: #8294ae; transform: none; box-shadow: none; }
+.orders-ios-workspace .ios-orders-model-track [data-model-active="true"] { background: #e5efff; color: #3375cb; box-shadow: inset 0 0 0 1px #d0e1f9; }
+.orders-ios-workspace .ios-orders-model-track [data-model-active="true"] > span:last-child { background: #d8e7fc; color: #5984bd; }
+.orders-ios-workspace .ios-orders-model-track [data-model-active="false"] > span:last-child { background: #eaf0f7; color: #95a5bb; }
+.orders-ios-workspace .ios-orders-filterbar input { color: #607590; font-weight: 450; }
+.orders-ios-workspace .ios-orders-filterbar input::placeholder { color: #a0aec2; }
+.orders-ios-workspace .ios-orders-filterbar button { font-weight: 500; }
+.orders-ios-workspace .ios-orders-filterbar button:focus-visible { outline: 2px solid #8ab4ec; outline-offset: 2px; }
+.orders-ios-workspace > div:last-child > div { background: #f4f7fc; border-color: var(--orders-border); box-shadow: none; border-radius: 18px; }
+.orders-ios-workspace .ios-order-card { border-color: #e5ecf5; background: #fff; border-radius: 12px; box-shadow: none; transform: none; }
+.orders-ios-workspace .ios-order-card:hover { border-color: #cdddf3; background: #f9fbff; box-shadow: none; transform: none; }
+.orders-ios-workspace .ios-order-card[data-selected="true"] { border-color: #c8dcf9; background: #eaf2ff; box-shadow: inset 0 0 0 .5px #c8dcf9; }
+.orders-ios-workspace .ios-order-card > div:first-child { width: 3px; box-shadow: none; }
+.orders-ios-workspace .ios-order-card .font-bold { font-weight: 600; }
+.orders-ios-workspace .order-status-badge { border-radius: 7px; height: 22px; padding-inline: 8px; border: 1px solid #e4eaf3; background: #f0f3f8; color: #7e8fa7; box-shadow: none; transform: none; }
+.orders-ios-workspace .order-status-badge > img { display: none; }
+.orders-ios-workspace .order-status-badge > span { font-size: 9px; font-weight: 550; letter-spacing: 0; }
+.orders-ios-workspace .order-status-badge[data-tone="blue"] { background: #eaf2ff; border-color: #d5e4fa; color: #5b85be; }
+.orders-ios-workspace .order-status-badge[data-tone="green"] { background: #edf7f2; border-color: #d6ebdf; color: #59967c; }
+.orders-ios-workspace .order-status-badge[data-tone="amber"] { background: #fff6e9; border-color: #f2e4cb; color: #b18c50; }
+.orders-ios-workspace .order-status-badge[data-tone="red"] { background: #fceff0; border-color: #f2dfe2; color: #bb7f8a; }
+.orders-ios-workspace .ios-order-detail { border-radius: 18px; border-color: var(--orders-border); background: #fff; box-shadow: none; }
+.orders-ios-workspace .ios-order-detail > header { min-height: 49px; background: #fcfdff !important; border-color: #e9eef6; padding: 11px 18px; box-shadow: none; }
+.orders-ios-workspace .ios-order-detail > header > div:first-child > div:first-child { display: none; }
+.orders-ios-workspace .ios-order-detail > header > div:first-child > span { font-size: 12px; font-weight: 550; color: #60738d; }
+.orders-ios-workspace .ios-order-detail > header button { background: #edf2f9; border-radius: 50%; color: #93a5bd; }
+.orders-ios-workspace .ios-order-detail-main { background: #f4f7fc; }
+.orders-ios-workspace .ios-order-detail-body { padding: 11px; gap: 12px; }
+.orders-ios-workspace .ios-order-detail-studio { background: #fafcff; border-color: #e5ecf5 !important; border-radius: 15px; box-shadow: none !important; }
+.orders-ios-workspace .ios-order-detail-studio > .absolute.inset-0 { display: none; }
+.orders-ios-workspace .ios-order-vehicle-label { background: #eef4fd; border: 1px solid #dce7f7 !important; border-radius: 9px; padding: 7px 10px; box-shadow: none; backdrop-filter: none; }
+.orders-ios-workspace .ios-order-vehicle-label .text-white { color: #527fb7; font-size: 10px; font-weight: 600; letter-spacing: 0; }
+.orders-ios-workspace .ios-order-vehicle-label .text-slate-300 { color: #869cb9; font-size: 10px; font-weight: 450; }
+.orders-ios-workspace .ios-order-vehicle-label > span:first-child { width: 5px; height: 5px; box-shadow: none !important; animation: none; }
+.orders-ios-workspace .ios-order-detail-studio > div:last-child { border-color: #e5ecf5; box-shadow: none; border-radius: 11px; }
+.orders-ios-workspace .ios-order-detail-studio > div:last-child .font-extrabold { font-weight: 550; }
+.orders-ios-workspace .ios-order-detail-operations { border: 1px solid #e5ecf5; border-radius: 15px; background: #fff; box-shadow: none; padding: 10px; gap: 10px; }
+.orders-ios-workspace #vin-hero-card { padding: 16px; border-radius: 12px; background: #f2f6fd; border: 1px solid #e1eaf7; color: #526b8e; box-shadow: none; }
+.orders-ios-workspace #vin-hero-card > .absolute { display: none; }
+.orders-ios-workspace #vin-hero-card .text-white { color: #405e88; }
+.orders-ios-workspace #vin-hero-card .text-sky-400 { color: #7a9cc8; }
+.orders-ios-workspace #vin-hero-card .text-sky-300 { color: #5b89c2; }
+.orders-ios-workspace #vin-hero-card .text-slate-400 { color: #95a7bf; }
+.orders-ios-workspace #vin-hero-card .text-emerald-300 { color: #5f9c85; }
+.orders-ios-workspace #vin-hero-card .text-amber-300 { color: #ae8c55; }
+.orders-ios-workspace #vin-hero-card .font-black, .orders-ios-workspace #vin-hero-card .font-extrabold { font-weight: 600; }
+.orders-ios-workspace #vin-hero-card p.font-mono { font-size: clamp(16px, 1.6vw, 24px); font-weight: 550; letter-spacing: .055em; filter: none; overflow-wrap: anywhere; white-space: normal; }
+.orders-ios-workspace #vin-hero-card .border-t { border-color: #e0e8f4; }
+.orders-ios-workspace #vin-hero-card [class*="bg-white/5"] { background: #ffffffbd; border-color: #e2eaf5; }
+.orders-ios-workspace #vin-hero-card [class*="bg-sky-500/10"] { background: #e6eefb; border-color: #d6e3f7; }
+.orders-ios-workspace .ios-order-detail-tabs-panel { border-color: #e7edf6; border-radius: 12px; box-shadow: none; }
+.orders-ios-workspace .ios-order-detail-tabs { background: #f2f5fa; border-radius: 10px; padding: 3px; }
+.orders-ios-workspace .ios-order-detail-tabs button { font-size: 10px; font-weight: 500; border-radius: 8px; padding: 6px 9px; color: #91a1b7; }
+.orders-ios-workspace .ios-order-detail-tabs [data-tab-active="true"] { background: #fff; color: #5c83b7; box-shadow: 0 1px 3px #345e8c0c; }
+.orders-ios-workspace .ios-order-detail-tabs i { color: #85a2c9; }
+.orders-ios-workspace .ios-order-detail-tabs-panel h3 { font-size: 9px; font-weight: 550; letter-spacing: .025em; color: #879ab5; }
+.orders-ios-workspace .ios-order-detail-tabs-panel .font-extrabold { font-weight: 550; }
+.orders-ios-workspace .ios-order-detail-tabs-panel .shadow-sm { box-shadow: none; }
+.orders-ios-workspace .ios-order-detail-footer { min-height: 51px; border-color: #e9eef6; background: #fcfdff; padding-block: 10px; }
+.orders-ios-workspace .ios-order-detail-footer button { border-radius: 9px; font-size: 11px; font-weight: 500; }
+.orders-ios-workspace .ios-order-detail-footer .shadow-xs { box-shadow: none; }
+.orders-ios-workspace button:focus-visible { outline: 2px solid #8ab4ec; outline-offset: 2px; }
+@media (max-width: 1100px) { .orders-ios-workspace .ios-order-detail-body { padding: 7px; gap: 7px; } .orders-ios-workspace #vin-hero-card { padding: 12px; } .orders-ios-workspace .ios-order-detail-operations { padding: 7px; } }
+@media (prefers-reduced-motion: reduce) { .orders-ios-workspace .ios-order-card, .orders-ios-workspace .order-status-badge, .orders-ios-workspace .ios-orders-model-track button { transition: none; } }

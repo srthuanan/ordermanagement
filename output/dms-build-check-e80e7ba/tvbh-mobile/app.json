@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "VF Thuận An TVBH",
+    "slug": "tvbh-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vinfastthuanan.tvbh",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Ứng dụng cần quyền Camera để chụp ảnh Hợp đồng, CCCD và Ủy nhiệm chi khi tạo yêu cầu xuất hóa đơn.",
+        "NSPhotoLibraryUsageDescription": "Ứng dụng cần quyền truy cập thư viện ảnh để đính kèm hồ sơ đơn hàng.",
+        "NSFaceIDUsageDescription": "Cho phép ứng dụng sử dụng Face ID để đăng nhập nhanh vào tài khoản TVBH."
+      }
+    },
+    "android": {
+      "package": "com.vinfastthuanan.tvbh",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.USE_BIOMETRIC"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Cho phép ứng dụng sử dụng Face ID để đăng nhập nhanh vào tài khoản TVBH."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép ứng dụng chụp ảnh hồ sơ và giấy tờ đề nghị xuất hóa đơn."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép ứng dụng chọn ảnh hồ sơ từ bộ sưu tập."
+        }
+      ]
+    ]
+  }
+}
