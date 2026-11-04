@@ -48,13 +48,42 @@ def get_dms_lookup_name(item, field):
     val = item.get(field)
     return str(val) if val is not None else ""
 
+def get_vso_candidates(clean_no):
+    candidates = set()
+    clean = (clean_no or "").strip().upper().replace("-VS0-", "-VSO-").replace("VS0", "VSO")
+    candidates.add(clean)
+    no_hyphen = clean.replace("-", "")
+    candidates.add(no_hyphen)
+    
+    import re
+    m = re.match(r'^(N[0-9]{5})-?VSO-?([0-9]{2})-?([0-9]{2})-?([0-9]{3,4})$', clean, re.I)
+    if m:
+        dealer, yy, mm, seq = m.groups()
+        try:
+            seqNum = int(seq)
+            s3 = f"{seqNum:03d}"
+            s4 = f"{seqNum:04d}"
+            candidates.add(f"{dealer}VSO{yy}{mm}{s3}")
+            candidates.add(f"{dealer}VSO{yy}{mm}{s4}")
+            candidates.add(f"{dealer}-VSO-{yy}-{mm}-{s3}")
+            candidates.add(f"{dealer}-VSO-{yy}-{mm}-{s4}")
+        except Exception:
+            pass
+    return list(candidates)
+
 def lookup_dms_vso(vso_raw):
-    clean_no = (vso_raw or "").strip().upper().replace("-VS0-", "-VSO-")
+    clean_no = (vso_raw or "").strip().upper().replace("-VS0-", "-VSO-").replace("VS0", "VSO")
     if not clean_no:
         return {"success": False, "found": False, "error": "Thiếu mã đơn hàng VSO"}
     
     dealers = get_dealers_list()
-    d_code = clean_no.split("-")[0].strip().upper() if "-" in clean_no else ""
+    # Nhận diện mã showroom từ 6 ký tự đầu (N31913...) hoặc tách dấu gạch ngang
+    d_code = ""
+    if clean_no.startswith("N") and len(clean_no) >= 6 and clean_no[1:6].isdigit():
+        d_code = clean_no[:6]
+    elif "-" in clean_no:
+        d_code = clean_no.split("-")[0].strip().upper()
+
     target_dealer = next((x for x in dealers if (x.get("dealer_code") or "").upper() == d_code and x.get("cookie")), None)
     if not target_dealer:
         target_dealer = next((x for x in dealers if x.get("cookie")), None)
@@ -74,7 +103,9 @@ def lookup_dms_vso(vso_raw):
         "Prefer": 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
     }
     
-    query_url = f"https://vinfastdms.crm5.dynamics.com/api/data/v9.2/xts_newvehiclesalesorders?$filter=xts_newvehiclesalesordernumber eq '{quote(clean_no)}'"
+    vso_candidates = get_vso_candidates(clean_no)
+    filter_clauses = " or ".join([f"xts_newvehiclesalesordernumber eq '{quote(c)}'" for c in vso_candidates])
+    query_url = f"https://vinfastdms.crm5.dynamics.com/api/data/v9.2/xts_newvehiclesalesorders?$filter={filter_clauses}"
     try:
         res = requests.get(query_url, headers=headers, timeout=20)
         if res.status_code == 401:

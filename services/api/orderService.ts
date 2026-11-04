@@ -4,7 +4,7 @@ import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase,
 import { createNotification } from './notificationService';
 import { autoSyncDmsRadarIfNeeded } from './stockService';
 import { Order } from '../../types';
-import { cleanCyberContractCode, cleanCustomerName, checkCustomerNameMatch } from '../../utils/stringUtils';
+import { cleanCyberContractCode, cleanCustomerName, checkCustomerNameMatch, getDmsOrderCandidates } from '../../utils/stringUtils';
 
 export { cleanCustomerName, checkCustomerNameMatch };
 
@@ -717,12 +717,14 @@ export const verifyDmsVso = async (
             }
         }
 
-        // 1. Nếu chưa có từ Live, kiểm tra trong bảng donhanghienhuu
+        const orderCandidates = getDmsOrderCandidates(cleanNo);
+
+        // 1. Nếu chưa có từ Live, kiểm tra trong bảng donhanghienhuu với tất cả các biến thể định dạng (mới & cũ)
         if (!dmsRecord) {
             const { data: dmsList, error } = await supabase
                 .from('donhanghienhuu')
                 .select('*')
-                .ilike('so_don_hang_ban', cleanNo)
+                .in('so_don_hang_ban', orderCandidates)
                 .limit(1);
 
             if (error) {
@@ -732,13 +734,18 @@ export const verifyDmsVso = async (
             dmsRecord = dmsList && dmsList.length > 0 ? dmsList[0] : null;
 
             if (!dmsRecord) {
-                const { data: fallbackList } = await supabase
-                    .from('donhanghienhuu')
-                    .select('*')
-                    .or(`so_don_hang_ban.ilike.%${cleanNo}%`)
-                    .limit(1);
-                if (fallbackList && fallbackList.length > 0) {
-                    dmsRecord = fallbackList[0];
+                // Thử khớp theo chuỗi số (ví dụ 2611003 hoặc 003)
+                const tailDigits = cleanNo.replace(/[^0-9]/g, '');
+                const searchTail = tailDigits.length >= 6 ? tailDigits.slice(-7) : tailDigits;
+                if (searchTail) {
+                    const { data: fallbackList } = await supabase
+                        .from('donhanghienhuu')
+                        .select('*')
+                        .ilike('so_don_hang_ban', `%${searchTail}%`)
+                        .limit(1);
+                    if (fallbackList && fallbackList.length > 0) {
+                        dmsRecord = fallbackList[0];
+                    }
                 }
             }
         }

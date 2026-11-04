@@ -312,3 +312,53 @@ export const checkCustomerNameMatch = (name1: string | undefined | null, name2: 
         return false;
     }
 };
+
+/**
+ * Biểu thức Regex kiểm tra Số đơn hàng VinFast DMS:
+ * Hỗ trợ song song cả 2 định dạng:
+ * 1. Định dạng MỚI: N31913VSO2611003 (16-17 ký tự viết liền, không dấu gạch)
+ * 2. Định dạng CŨ: N31913-VSO-26-11-0003 hoặc N31913-VSO-26-11-003 (có dấu gạch ngang)
+ */
+export const DMS_ORDER_NUMBER_REGEX = /^(N[0-9]{5}VSO[0-9]{7,8}|N[0-9]{5}-VSO-[0-9]{2}-[0-9]{2}-[0-9]{3,4})$/i;
+
+export const isValidDmsOrderNumber = (orderNo: string | undefined | null): boolean => {
+    if (!orderNo) return false;
+    const clean = orderNo.trim().toUpperCase().replace(/VS0/g, 'VSO');
+    return DMS_ORDER_NUMBER_REGEX.test(clean);
+};
+
+/**
+ * Trích xuất các biến thể của Số đơn hàng DMS (dạng mới không gạch, dạng cũ có gạch, 3 số đuôi, 4 số đuôi)
+ * để đối soát chéo chính xác 100% trong cơ sở dữ liệu và API VinFast DMS.
+ */
+export const getDmsOrderCandidates = (orderNo: string | undefined | null): string[] => {
+    if (!orderNo) return [];
+    const clean = orderNo.trim().toUpperCase().replace(/VS0/g, 'VSO');
+    const candidates = new Set<string>();
+    candidates.add(clean);
+
+    // Chuẩn hóa bỏ hết dấu gạch ngang: N31913-VSO-26-11-0003 -> N31913VSO26110003
+    const noHyphen = clean.replace(/-/g, '');
+    candidates.add(noHyphen);
+
+    // Phân tích thành các thành phần: Mã showroom (6 ký tự) + VSO + Năm + Tháng + Thứ tự
+    const match = clean.match(/^(N[0-9]{5})-?VSO-?([0-9]{2})-?([0-9]{2})-?([0-9]{3,4})$/i);
+    if (match) {
+        const [, dealer, yy, mm, seq] = match;
+        const seqNum = parseInt(seq, 10);
+        if (!isNaN(seqNum)) {
+            const seq3 = String(seqNum).padStart(3, '0');
+            const seq4 = String(seqNum).padStart(4, '0');
+
+            // Định dạng mới (compact): N31913VSO2611003 / N31913VSO26110003
+            candidates.add(`${dealer}VSO${yy}${mm}${seq3}`);
+            candidates.add(`${dealer}VSO${yy}${mm}${seq4}`);
+
+            // Định dạng cũ (hyphenated): N31913-VSO-26-11-003 / N31913-VSO-26-11-0003
+            candidates.add(`${dealer}-VSO-${yy}-${mm}-${seq3}`);
+            candidates.add(`${dealer}-VSO-${yy}-${mm}-${seq4}`);
+        }
+    }
+
+    return Array.from(candidates);
+};

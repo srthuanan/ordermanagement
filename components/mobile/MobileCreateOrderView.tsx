@@ -14,7 +14,7 @@ import {
 import { Order, StockVehicle } from '../../types';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
-import { cleanCyberContractCode } from '../../utils/stringUtils';
+import { cleanCyberContractCode, isValidDmsOrderNumber } from '../../utils/stringUtils';
 import { getExteriorSwatchColor, getCarImage } from '../../utils/styleUtils';
 import SelectPolicyModal from '../modals/SelectPolicyModal';
 
@@ -364,13 +364,12 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
       showToast('Thiếu SĐH', 'Vui lòng nhập Số đơn hàng VinFast DMS.', 'warning', 3000);
       return;
     }
-    const pattern = new RegExp('^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$');
-    if (!pattern.test(so_don_hang.trim())) {
+    if (!isValidDmsOrderNumber(so_don_hang.trim())) {
       showToast(
         'Sai định dạng SĐH',
-        'Số đơn hàng phải chuẩn định dạng DMS: Nxxxxx-VSO-xx-xx-xxxx.',
+        'Số đơn hàng phải theo định dạng DMS mới (N31913VSO2611003) hoặc cũ (N31913-VSO-26-11-xxxx).',
         'warning',
-        4000
+        4500
       );
       return;
     }
@@ -779,7 +778,7 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
                 </label>
                 <input
                   type="text"
-                  placeholder="N31913-VSO-26-04-0001"
+                  placeholder="N31913VSO2611003 hoặc N31913-VSO-26-11-xxxx"
                   value={formData.so_don_hang}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -789,7 +788,7 @@ export const MobileCreateOrderView: React.FC<MobileCreateOrderViewProps> = ({
                   }
                   className="w-full h-9 px-3 rounded-xl bg-slate-50/80 border border-slate-200 text-[12px] font-mono font-semibold text-slate-900 placeholder:text-slate-400 uppercase focus:bg-white focus:outline-none focus:border-slate-400 transition-colors"
                 />
-                <p className="text-[9.5px] text-slate-400 mt-1">Định dạng chuẩn: Nxxxxx-VSO-xx-xx-xxxx</p>
+                <p className="text-[9.5px] text-slate-400 mt-1">Định dạng mới: N31913VSO2611003 hoặc cũ: N31913-VSO-26-11-xxxx</p>
               </div>
 
               {/* Mã HĐ Cyber */}

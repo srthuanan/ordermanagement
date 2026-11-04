@@ -6,7 +6,7 @@ import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
 import InlinePolicyPicker from './ui/InlinePolicyPicker';
-import { cleanCyberContractCode } from '../utils/stringUtils';
+import { cleanCyberContractCode, isValidDmsOrderNumber } from '../utils/stringUtils';
 interface ImageSource {
     src: string;
     originalUrl?: string;
@@ -113,9 +113,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         }
 
         const orderNo = (formData.so_don_hang || '').trim().toUpperCase();
-        const pattern = new RegExp("^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$");
 
-        if (!pattern.test(orderNo) || (!initialVehicle && !formData.dong_xe)) {
+        if (!isValidDmsOrderNumber(orderNo) || (!initialVehicle && !formData.dong_xe)) {
             setDmsConfigCheck({ isChecking: false, status: 'idle' });
             return;
         }
@@ -471,8 +470,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
             }
             return; 
         }
-        const pattern = new RegExp("^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$");
-        if (!pattern.test(formData.so_don_hang)) { showToast('Sai Định Dạng', 'Số đơn hàng không đúng định dạng DMS (Nxxxxx-VSO-xx-xx-xxxx).', 'warning', 4000); return; }
+        if (!isValidDmsOrderNumber(formData.so_don_hang)) {
+            showToast('Sai Định Dạng', 'Số đơn hàng phải theo định dạng DMS mới (N31913VSO2611003) hoặc cũ (N31913-VSO-26-11-xxxx).', 'warning', 4500);
+            return;
+        }
         if (existingOrderNumbers.includes(formData.so_don_hang)) { showToast('Trùng Lặp', 'Số đơn hàng đã tồn tại trên hệ thống.', 'error', 4000); return; }
 
         // [CHỐNG GIAN LẬN]: Chặn cứng khi mã DMS không khớp với 6 ký tự đầu SĐH
@@ -1036,8 +1037,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                         value={formData.so_don_hang}
                                                         onChange={handleInputChange}
                                                         required
-                                                        pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
-                                                        title="Định dạng: Nxxxxx-VSO-yy-mm-zzzz"
+                                                        pattern="^(N[0-9]{5}VSO[0-9]{7,8}|N[0-9]{5}-VSO-[0-9]{2}-[0-9]{2}-[0-9]{3,4})$"
+                                                        title="Định dạng mới: N31913VSO2611003 hoặc cũ: N31913-VSO-26-11-xxxx"
                                                         onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Sai định dạng.')}
                                                         onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                                                         className={`${inputClass} !py-2.5 font-mono uppercase ${
@@ -1047,7 +1048,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                                     ? 'border-amber-300 bg-amber-50/15 focus:border-amber-400 focus:ring-amber-100 pr-9'
                                                                     : ''
                                                         }`}
-                                                        placeholder="VD: N31923-VSO-26-10-xxxx"
+                                                        placeholder="VD: N31913VSO2611003 hoặc N31913-VSO-26-11-xxxx"
                                                     />
                                                     {dmsConfigCheck.status === 'warning' && (
                                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 pointer-events-none" title={dmsConfigCheck.message}>
