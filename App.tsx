@@ -653,11 +653,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         document.title = 'VinFast Thuận An';
     }, [activeView]);
 
-    useEffect(() => {
-        if (isCurrentUserAdmin) {
-            setActiveView('admin');
-        }
-    }, [isCurrentUserAdmin, setActiveView]);
+// Removed auto-force admin view redirect
 
     // Record user presence on login and when tab becomes active
     useEffect(() => {
