@@ -47,6 +47,10 @@ export interface Order {
   "Số CT TD4"?: string;
   "Ngày COC về"?: string;
   ngay_coc_ve?: string;
+  vtlx_hang_xe?: string;
+  vtlx_so_khung?: string;
+  url_cam_ket_vtlx?: string;
+  url_cavet_vtlx?: string;
   // other potential fields from components
   [key: string]: any; // Allow for other properties
 }

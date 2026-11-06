@@ -14,9 +14,11 @@ interface SimpleFileUploadProps {
   showScan?: boolean; // Legacy prop, can be removed or ignored
   className?: string;
   variant?: 'default' | 'slot';
+  buttonText?: string;
+  placeholderText?: string;
 }
 
-const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept, disableCompression = false, showPreview = true, compact = false, className = "", variant = 'default' }) => {
+const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept, disableCompression = false, showPreview = true, compact = false, className = "", variant = 'default', buttonText, placeholderText }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +149,11 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
         : `${(selectedFile.size / 1024).toFixed(1)} KB`
       : '';
 
+    const allowsImage = Boolean(accept && (accept.includes('image') || accept.includes('.jpg') || accept.includes('.png') || accept.includes('.webp')));
+    const isImageFile = Boolean(selectedFile && (selectedFile.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(selectedFile.name)));
+    const defaultBtnText = allowsImage ? 'Chọn tệp (PDF/Ảnh)' : 'Chọn tệp PDF';
+    const defaultPlaceholder = allowsImage ? 'Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh' : 'Kéo thả hoặc bấm để đính kèm tệp PDF';
+
     return (
       <div
         onDragEnter={handleDrag}
@@ -164,7 +171,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
             <i className="fas fa-spinner fa-spin"></i>
           ) : (
             <>
-              <i className="fas fa-file-pdf"></i>
+              <i className={`fas ${isImageFile ? 'fa-file-image text-emerald-600' : allowsImage ? 'fa-file-alt' : 'fa-file-pdf'}`}></i>
               {selectedFile && (
                 <span className="invoice-pdf-slot-check">
                   <i className="fas fa-check"></i>
@@ -181,7 +188,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
           </div>
           <div className="invoice-pdf-slot-meta">
             {isProcessing ? (
-              <span className="text-blue-600 font-medium">{processingStatus || 'Đang xử lý tệp PDF...'}</span>
+              <span className="text-blue-600 font-medium">{processingStatus || 'Đang xử lý tệp...'}</span>
             ) : selectedFile ? (
               <>
                 <span className="invoice-pdf-slot-filename" title={selectedFile.name}>{selectedFile.name}</span>
@@ -189,7 +196,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
                 <span className="invoice-pdf-slot-size">{fileSizeText}</span>
               </>
             ) : (
-              <span>Kéo thả hoặc bấm để đính kèm tệp PDF</span>
+              <span>{placeholderText || defaultPlaceholder}</span>
             )}
           </div>
         </div>
@@ -210,7 +217,7 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
           ) : (
             <span className="invoice-pdf-slot-btn">
               <i className="fas fa-cloud-upload-alt"></i>
-              <span>Chọn tệp PDF</span>
+              <span>{buttonText || defaultBtnText}</span>
             </span>
           )}
         </div>

@@ -203,7 +203,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [policySearchQuery, setPolicySearchQuery] = useState('');
     const [policyFilterModelOnly, setPolicyFilterModelOnly] = useState(true);
     const [isSplitView, setIsSplitView] = useState(true);
-    const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat' | 'CyberDKBH'>('LinkDeNghiXHD');
+    const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat' | 'CyberDKBH' | 'url_cam_ket_vtlx' | 'url_cavet_vtlx'>('LinkDeNghiXHD');
     const [cyberDkbhUrls, setCyberDkbhUrls] = useState<Record<string, string>>({});
     const [isLoadingCyberDkbh, setIsLoadingCyberDkbh] = useState(false);
     const [cyberDkbhError, setCyberDkbhError] = useState<string | null>(null);
@@ -1424,7 +1424,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
                                                     { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
                                                     { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
-                                                    { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' }
+                                                    { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' },
+                                                    ...((selectedOrder?.url_cam_ket_vtlx || (selectedOrder as any)?.url_cam_ket_vtlx) ? [{ key: 'url_cam_ket_vtlx', label: 'Cam kết VTLX', icon: 'fa-leaf' }] : []),
+                                                    ...((selectedOrder?.url_cavet_vtlx || (selectedOrder as any)?.url_cavet_vtlx) ? [{ key: 'url_cavet_vtlx', label: 'Cà vẹt xe cũ', icon: 'fa-id-card' }] : [])
                                                 ].map(doc => (
                                                     <button 
                                                         key={doc.key}
@@ -1446,12 +1448,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     const orderKey = selectedOrder ? (selectedOrder['Số đơn hàng'] || selectedOrder.id || '') : '';
                                                     const currentDocUrl = activeDocKey === 'CyberDKBH'
                                                         ? (cyberDkbhUrls[orderKey] || '')
-                                                        : (selectedOrder ? (selectedOrder[activeDocKey] as string || '') : '');
+                                                        : (selectedOrder ? (selectedOrder[activeDocKey] as string || (selectedOrder as any)?.[activeDocKey] || '') : '');
                                                     const docLabels: any = {
                                                         LinkDeNghiXHD: 'Đề nghị XHĐ',
                                                         LinkHopDong: 'Hợp đồng MB',
                                                         LinkHoaDonDaXuat: 'Hóa Đơn Red',
-                                                        CyberDKBH: 'Đề nghị ĐK Bán Hàng'
+                                                        CyberDKBH: 'Đề nghị ĐK Bán Hàng',
+                                                        url_cam_ket_vtlx: 'Cam kết chuyển đổi xanh',
+                                                        url_cavet_vtlx: 'Cà vẹt xe cũ (VTLX)'
                                                     };
 
                                                     if (!currentDocUrl) return null;
@@ -1963,6 +1967,32 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         </div>
                                                     </div>
                                                 )}
+
+                                                {((selectedOrder as any)?.vtlx_so_khung || selectedOrder?.['VTLX Số khung'] || (selectedOrder as any)?.vtlx_hang_xe) && (
+                                                    <div className="mt-1 pt-1 border-t border-dashed border-emerald-200 bg-emerald-50/60 rounded-lg px-2 pb-1 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <i className="fas fa-leaf text-emerald-600 text-[10px]"></i>
+                                                                <span className="text-[9px] font-semibold text-emerald-800 uppercase tracking-wider">Xe cũ chính sách VTLX</span>
+                                                            </div>
+                                                            <span className="text-[8.5px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded">VTLX</span>
+                                                        </div>
+                                                        <div className="space-y-0.5">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Hãng xe cũ</span>
+                                                                <span className="text-[10px] font-medium text-gray-800">
+                                                                    {(selectedOrder as any)?.vtlx_hang_xe || selectedOrder?.['VTLX Hãng xe'] || '—'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center border-t border-emerald-100/50 pt-0.5 mt-0.5">
+                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Số khung cũ</span>
+                                                                <div className="text-[10px] font-semibold text-emerald-900 font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 shadow-sm">
+                                                                    <CopyableField text={(selectedOrder as any)?.vtlx_so_khung || selectedOrder?.['VTLX Số khung'] || ''} showToast={showToast} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -2185,12 +2215,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
                                                         { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
                                                         { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
-                                                        { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' }
+                                                        { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' },
+                                                        ...((selectedOrder?.url_cam_ket_vtlx || (selectedOrder as any)?.url_cam_ket_vtlx) ? [{ key: 'url_cam_ket_vtlx', label: 'Cam kết VTLX', icon: 'fa-leaf' }] : []),
+                                                        ...((selectedOrder?.url_cavet_vtlx || (selectedOrder as any)?.url_cavet_vtlx) ? [{ key: 'url_cavet_vtlx', label: 'Cà vẹt xe cũ', icon: 'fa-id-card' }] : [])
                                                     ].map(file => {
                                                         const orderKey = selectedOrder['Số đơn hàng'] || selectedOrder.id || '';
                                                         const url = file.key === 'CyberDKBH' 
                                                             ? (cyberDkbhUrls[orderKey] || undefined)
-                                                            : (selectedOrder[file.key] as string | undefined);
+                                                            : (selectedOrder[file.key] as string || (selectedOrder as any)?.[file.key] || undefined);
                                                         return (
                                                             <div key={file.key} className="h-48 lg:h-full flex-none lg:flex-1 lg:min-w-[200px]">
                                                                 <DocumentThumbnail

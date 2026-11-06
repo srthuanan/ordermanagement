@@ -9,21 +9,27 @@ export const requestInvoice = async (
     aiNote?: string,
     xeXangVin?: string, xeXangHang?: string, xeXangModel?: string,
     _preProcessedPayloads?: { contract: any, proposal: any },
-    maVc?: string
+    maVc?: string,
+    vtlxData?: {
+        hangXe?: string;
+        soKhung?: string;
+        camKetFile?: File | null;
+        cavetFile?: File | null;
+    }
 ) => {
     const requestedBy = getStorageItem("currentConsultant") || "Unknown User";
     const now = new Date().toISOString();
     const timestamp = Date.now();
 
-    if (xeXangVin) {
-        const cleanGasVin = xeXangVin.trim().toUpperCase();
+    const gasVinToCheck = (xeXangVin || vtlxData?.soKhung || '').trim().toUpperCase();
+    if (gasVinToCheck) {
         const { data: existingGasCar } = await supabase.from('yeucauxhd')
-            .select('xe_xang_vin, so_don_hang')
-            .ilike('xe_xang_vin', cleanGasVin);
+            .select('xe_xang_vin, vtlx_so_khung, so_don_hang')
+            .or(`xe_xang_vin.ilike.${gasVinToCheck},vtlx_so_khung.ilike.${gasVinToCheck}`);
 
         const { data: existingArchivedGasCar } = await supabase.from('archived_orders')
-            .select('xe_xang_vin, so_don_hang')
-            .ilike('xe_xang_vin', cleanGasVin);
+            .select('xe_xang_vin, vtlx_so_khung, so_don_hang')
+            .or(`xe_xang_vin.ilike.${gasVinToCheck},vtlx_so_khung.ilike.${gasVinToCheck}`);
 
         const matchY = !!(existingGasCar && existingGasCar.length > 0);
         const matchA = !!(existingArchivedGasCar && existingArchivedGasCar.length > 0);
@@ -31,7 +37,7 @@ export const requestInvoice = async (
         if (matchY || matchA) {
             const matched = matchY && existingGasCar ? existingGasCar[0] : (existingArchivedGasCar ? existingArchivedGasCar[0] : null);
             if (matched) {
-                throw new Error(`Xe xăng có số VIN ${cleanGasVin} đã được sử dụng trước đó trong yêu cầu xuất hóa đơn ${matched.so_don_hang}.`);
+                throw new Error(`Số khung/VIN xe cũ ${gasVinToCheck} đã được sử dụng trước đó trong yêu cầu xuất hóa đơn ${matched.so_don_hang}.`);
             }
         }
     }
@@ -59,10 +65,50 @@ export const requestInvoice = async (
         }
     }
 
-    const [cUp, pUp] = await Promise.all([
+    const uploadTasks: Promise<any>[] = [
         supabase.storage.from('yeucauxhd-files').upload(cPath, uploadContract, { upsert: true }),
         supabase.storage.from('yeucauxhd-files').upload(pPath, uploadProposal, { upsert: true })
-    ]);
+    ];
+
+    let camKetPath = '';
+    let cavetPath = '';
+
+    if (vtlxData?.camKetFile) {
+        let uploadCamKet = vtlxData.camKetFile;
+        if (uploadCamKet.size > 4 * 1024 * 1024) {
+            try {
+                const { compressFileIfNeeded } = await import('../ocrService');
+                uploadCamKet = await compressFileIfNeeded(uploadCamKet);
+            } catch (e) {
+                console.warn('[requestInvoice] Nén Cam kết VTLX fallback lỗi:', e);
+            }
+        }
+        camKetPath = `${orderNumber}/CAMKET_VTLX_${custSafe}_${timestamp}.${uploadCamKet.name.split('.').pop()}`;
+        uploadTasks.push(
+            supabase.storage.from('yeucauxhd-files').upload(camKetPath, uploadCamKet, { upsert: true })
+        );
+    }
+
+    if (vtlxData?.cavetFile) {
+        let uploadCavet = vtlxData.cavetFile;
+        if (uploadCavet.size > 4 * 1024 * 1024) {
+            try {
+                const { compressFileIfNeeded } = await import('../ocrService');
+                uploadCavet = await compressFileIfNeeded(uploadCavet);
+            } catch (e) {
+                console.warn('[requestInvoice] Nén Cà vẹt xe cũ fallback lỗi:', e);
+            }
+        }
+        cavetPath = `${orderNumber}/CAVET_VTLX_${custSafe}_${timestamp}.${uploadCavet.name.split('.').pop()}`;
+        uploadTasks.push(
+            supabase.storage.from('yeucauxhd-files').upload(cavetPath, uploadCavet, { upsert: true })
+        );
+    }
+
+    const uploadResults = await Promise.all(uploadTasks);
+    const cUp = uploadResults[0];
+    const pUp = uploadResults[1];
+
     if (cUp.error) {
         const isExceeded = cUp.error.message?.includes('exceeded the maximum allowed size');
         throw new Error(isExceeded
@@ -75,6 +121,29 @@ export const requestInvoice = async (
             ? `File Đề nghị XHĐ (${(uploadProposal.size / (1024 * 1024)).toFixed(1)}MB) quá lớn so với giới hạn máy chủ. Vui lòng nén file PDF xuống dưới 5MB rồi thử lại.`
             : `Lỗi upload Đề nghị XHĐ: ${pUp.error.message}`);
     }
+
+    let camKetUrl = '';
+    let cavetUrl = '';
+    let uploadIdx = 2;
+
+    if (vtlxData?.camKetFile) {
+        const ckUp = uploadResults[uploadIdx++];
+        if (ckUp?.error) {
+            throw new Error(`Lỗi upload Cam kết chuyển đổi xanh: ${ckUp.error.message}`);
+        }
+        const { data: ckData } = supabase.storage.from('yeucauxhd-files').getPublicUrl(camKetPath);
+        camKetUrl = ckData.publicUrl;
+    }
+
+    if (vtlxData?.cavetFile) {
+        const cvUp = uploadResults[uploadIdx++];
+        if (cvUp?.error) {
+            throw new Error(`Lỗi upload Cà vẹt xe cũ: ${cvUp.error.message}`);
+        }
+        const { data: cvData } = supabase.storage.from('yeucauxhd-files').getPublicUrl(cavetPath);
+        cavetUrl = cvData.publicUrl;
+    }
+
     const { data: cUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(cPath);
     const { data: pUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(pPath);
     
@@ -125,10 +194,14 @@ export const requestInvoice = async (
         url_hoa_don_da_xuat: '', 
         trang_thai_vc: '', 
         ghi_chu_ai: aiNote || '', 
-        xe_xang_vin: xeXangVin || '', 
-        xe_xang_hang: xeXangHang || '', 
+        xe_xang_vin: xeXangVin || vtlxData?.soKhung || '', 
+        xe_xang_hang: xeXangHang || vtlxData?.hangXe || '', 
         xe_xang_model: xeXangModel || '', 
-        ma_vc: maVc || '' 
+        ma_vc: maVc || '',
+        vtlx_hang_xe: vtlxData?.hangXe || '',
+        vtlx_so_khung: vtlxData?.soKhung || '',
+        url_cam_ket_vtlx: camKetUrl || '',
+        url_cavet_vtlx: cavetUrl || ''
     };
     const { error: insErr } = await supabaseAdmin.from('yeucauxhd').insert([row]);
     if (insErr) throw new Error(`Lỗi lưu Supabase: ${insErr.message}`);
@@ -136,14 +209,18 @@ export const requestInvoice = async (
     const updateDonHangPayload: any = { 
         ket_qua: 'Chờ phê duyệt',
         chinh_sach: policy || '',
-        ma_vc: maVc || ''
+        ma_vc: maVc || '',
+        vtlx_hang_xe: vtlxData?.hangXe || '',
+        vtlx_so_khung: vtlxData?.soKhung || '',
+        url_cam_ket_vtlx: camKetUrl || '',
+        url_cavet_vtlx: cavetUrl || ''
     };
     if (maHdCyber) {
         updateDonHangPayload.ma_hd_cyber = maHdCyber;
     }
     await supabaseAdmin.from('donhang').update(updateDonHangPayload).eq('so_don_hang', orderNumber);
 
-    await logAction('REQUEST_INVOICE', { orderNumber, ma_hd_cyber: maHdCyber, policy, commission, vpoint, aiNote, xeXangVin, xeXangHang, xeXangModel }, orderNumber, 'order');
+    await logAction('REQUEST_INVOICE', { orderNumber, ma_hd_cyber: maHdCyber, policy, commission, vpoint, aiNote, xeXangVin, xeXangHang, xeXangModel, vtlxData: vtlxData ? { hangXe: vtlxData.hangXe, soKhung: vtlxData.soKhung } : undefined }, orderNumber, 'order');
     if (vinLookup) await supabaseAdmin.from('khoxe').delete().eq('vin', vinLookup);
     
     const cyberSuffix = maHdCyber ? ` (Mã HĐ Cyber: ${maHdCyber})` : '';

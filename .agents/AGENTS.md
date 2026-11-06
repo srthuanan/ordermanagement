@@ -122,6 +122,36 @@
      - Cột `VF 8 New`: Đếm các xe `VF 8` có phiên bản chứa `'*New*'` (hoặc `dong_xe` ghi rõ `VF 8 New`).
   3. **Kỷ Luật Đẩy Code Apps Script Qua Clasp**: Bất kỳ khi nào chỉnh sửa code trong `backend-gas/` hoặc `gas-showroom/`, sau khi sửa file cục bộ, AI Agent **BẮT BUỘC PHẢI CHẠY NGAY LỆNH `npx --yes @google/clasp push -f`** trong thư mục tương ứng để đẩy code trực tiếp lên Google Cloud của Google Sheets, tránh tình trạng Google Sheets vẫn chạy code cũ.
 
+- **Quy Chuẩn Đồng Bộ Đơn Hàng Mở Từ DMS Mới Vào Supabase (New DMS Sales Orders to donhanghienhuu Protocol)**:
+  1. **Nguồn Dữ Liệu DMS Mới**: Trang Đơn hàng Ô tô (`https://dealer-portal.vinfast.com/dealer/sales/sales-orders/cars`) gọi API `/api/orders?orderType=1`.
+  2. **Phạm Vi Đại Lý**: Chỉ đồng bộ các đơn hàng thuộc khối đại lý `N319*` (N31901 - N31925, bao gồm Thuận An N31913, Tây Ninh N31911, Bình Dương N31920, Hòa Bình N31923,...). Bỏ qua hoàn toàn các đơn ngoài N319.
+  3. **Lọc Đơn Hàng Mở**: Chỉ nạp các đơn hàng đang xử lý (Mới `New`, Đã cọc `Deposit`, Đã ghép `Matched`, Phê duyệt `Approved`/`Waiting For Approval`). Tự động loại trừ các đơn đã xuất hóa đơn (`Invoiced`), đã giao xe (`Delivered`) hoặc đã hủy (`Cancelled`).
+  4. **Cơ Chế Bắt Dữ Liệu Hai Chiều**:
+     - **Bắt trực tiếp khi duyệt web (Real-time Live Interception)**: Khi TVBH mở tab hoặc duyệt danh sách Đơn hàng Ô tô, tiện ích mở rộng tự động bắt dữ liệu response của `/orders` lưu ngay lập tức vào bảng `donhanghienhuu` (theo khóa duy nhất `so_don_hang_ban`).
+     - **Quét tự động toàn hệ thống (Active Bulk Sync)**: Khi load trang DMS hoặc bấm nút `🛰️ Đồng bộ Kho xe & Đơn hàng`, hệ thống quét qua API `/orders?orderType=1` gom toàn bộ đơn hàng mở của các đại lý N319 nạp vào Supabase.
+
+- **Quy Chuẩn Ánh Xạ & Tra Cứu Mã Đơn Yana Sang DMS Mới (Yana to New DMS Order Mapping Protocol)**:
+  1. **Cấu Trúc Định Danh**:
+     - Mã Yana cũ: `{Mã_Đại_Lý}-VSO-{Năm}-{Tháng}-{STT_Yana}` (VD: `N31913-VSO-26-08-0103`).
+     - Mã DMS Mới (Dealer Portal): `{Mã_Đại_Lý}VSO{Năm}{Tháng}{STT_Mới}` (VD: `N31913VSO2608051`).
+     - Trường đối ứng trên DMS Mới: Nằm tại mục **"Mã đơn của Yana"** (`orderInfo.yanaOrderNumber`).
+  2. **Quy Luật Ánh Xạ Tịnh Tiến & Điểm Mốc (Anchor-Based Interpolation)**:
+     - Khi đồng bộ từ hệ thống Yana cũ sang Dealer Portal, các đơn hàng mở được cấp số thứ tự mới tăng dần liên tục.
+     - **Cơ chế tính toán**: Sử dụng các mốc đã xác nhận trong cùng đại lý / cùng tháng để tính toán độ lệch:
+       - Tại `N31913` (Tháng 08/2026, cụm đơn VF 2 Minh Đạo Phát):
+         - `0098` $\leftrightarrow$ `046` (độ lệch $\Delta = 52$)
+         - `0102` $\leftrightarrow$ `050` (độ lệch $\Delta = 52$)
+         - `0103` $\leftrightarrow$ `051` (độ lệch $\Delta = 52$)
+         - `0104` $\leftrightarrow$ `052` (độ lệch $\Delta = 52$)
+         - $\rightarrow$ Công thức: $\text{STT}_{\text{Mới}} = \text{STT}_{\text{Yana}} - 52$.
+       - Tại `N31923` (Tháng 06/2026):
+         - `0287` $\leftrightarrow$ `248`
+         - `0299` $\leftrightarrow$ `259` ($\text{STT}_{\text{Mới}} = \text{STT}_{\text{Yana}} - 40$).
+  3. **3 Phương Pháp Tra Cứu Khi Người Dùng Yêu Cầu Tìm Mã**:
+     - **Cách 1 (Nội suy mốc kề bên - Nhanh nhất)**: Tìm 2 mốc đơn gần nhất đã mở kiểm tra trước đó, cộng/trừ số đơn tịnh tiến trực tiếp.
+     - **Cách 2 (Tra cứu tự động qua Supabase `donhanghienhuu`)**: Truy vấn `don_hang_goc = 'Mã_Yana'` để lấy ra `so_don_hang_ban` mới.
+     - **Cách 3 (Tìm kiếm theo Tên khách hàng / Mã online)**: Tra tên khách hàng hoặc mã đơn online (VD: `MINH ĐẠO PHÁT`, `VF2_309686`) trên thanh tìm kiếm của trang Đơn hàng Ô tô.
+
 - **Quy Chuẩn Phân Loại Phiếu Điều Chuyển & Ứng Dụng Cyber Mobile Cho Bảo Vệ (GD9 Exclusion in Guard App)**:
   1. **Phân Biệt Bản Chất Mã GD 4 và Mã GD 9 trên CyberSoft**:
      - **Mã GD = 4 (Xuất điều chuyển nội bộ/kho)** hoặc **Phiếu TD4 (Giấy ra cổng)**: Là thủ tục xuất xe vật lý thực tế rời bãi/showroom (xe chạy qua cổng), **BẢO VỆ BẮT BUỘC PHẢI KIỂM TRA VÀ KÝ DUYỆT CHO XE RA CỔNG**.
@@ -226,3 +256,13 @@
 - **Đóng Sheet Khi Bấm Bên Ngoài**:
   1. Bấm vùng nền ngoài sheet (Thông báo, cài đặt, yêu cầu ghép xe...) phải đóng sheet; bấm nội dung bên trong không tự đóng hoặc bấm xuyên xuống màn hình phía sau.
   2. Callback đóng phải đặt trạng thái đóng rõ ràng, không đảo trạng thái bằng toggle; nhiều lệnh đóng trong cùng sự kiện không được làm sheet mở lại.
+
+
+- **Quy Chuẩn Tiện Ích Đồng Bộ DMS (`dms-radar-extension`)**:
+  1. Hỗ trợ đồng thời cả **DMS Mới (`https://dealer-portal.vinfast.com/`)** và **DMS Cũ (`*.dynamics.com`)**.
+  2. **Tự động cập nhật mới ngay khi load trang DMS**: Bỏ giãn cách chờ 15 phút (`COOLDOWN_MINUTES`); bất cứ khi nào người dùng mở hoặc tải lại (`F5`) trang DMS, tiện ích phải tự động chạy quét cập nhật ngay lập tức.
+  3. **Nạp toàn bộ xe chưa XHĐ vào `thongtinxe`**: Khi đồng bộ trên DMS, ngoài việc cập nhật `so_may`, `ma_dms`, `ma_phien_ban` cho bảng `khoxe`, bắt buộc phải quét toàn bộ 100% xe chưa xuất hóa đơn (`isSold=false`) và nạp đầy đủ vào bảng `thongtinxe` (`rpc_sync_thongtinxe`) để sẵn sàng tra cứu tự động khi nhập xe mới.
+
+- **Quy Chuẩn Đồng Bộ Bảng `thongtinxe` (N319-Only Protocol)**:
+  1. Bảng `thongtinxe` **CHỈ LƯU VÀ THEO DÕI XE THUỘC CÁC ĐẠI LÝ `N319`** (từ `N31901` đến `N31925`, bao gồm Thuận An `N31913`, Tây Ninh `N31911`, Bình Dương `N31920`, Hòa Bình `N31923`...).
+  2. Tuyệt đối **KHÔNG nạp xe của các đại lý ngoài hệ thống `N319`** (như `C00201`, `N00801`, `S46601`, `S11501`...) vào bảng `thongtinxe`. Mọi luồng API và tiện ích đồng bộ DMS phải lọc điều kiện `dealerCodes` và `khu_vuc ilike 'N319%'` ngay tại nguồn.

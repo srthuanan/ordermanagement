@@ -194,7 +194,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, 
         aiNote?: string, _preProcessedPayloads?: { contract: any, proposal: any },
         xeXangVin?: string, xeXangHang?: string, xeXangModel?: string,
-        maVc?: string
+        maVc?: string,
+        vtlxData?: {
+            hangXe?: string;
+            soKhung?: string;
+            camKetFile?: File | null;
+            cavetFile?: File | null;
+        }
     ) => {
         if (checkReference()) return;
         setProcessingOrder(order["Số đơn hàng"]);
@@ -225,7 +231,8 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                 xeXangHang,
                 xeXangModel,
                 _preProcessedPayloads,
-                maVc
+                maVc,
+                vtlxData
             );
             await refetchHistory();
             hideToast();

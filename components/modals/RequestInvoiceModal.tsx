@@ -22,7 +22,13 @@ interface RequestInvoiceModalProps {
         xeXangVin?: string,
         xeXangHang?: string,
         xeXangModel?: string,
-        maVc?: string
+        maVc?: string,
+        vtlxData?: {
+            hangXe?: string;
+            soKhung?: string;
+            camKetFile?: File | null;
+            cavetFile?: File | null;
+        }
     ) => Promise<any>;
     stockData?: any[];
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -93,6 +99,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [xeXangVin, setXeXangVin] = useState('');
     const [xeXangHang, setXeXangHang] = useState('');
     const [xeXangModel, setXeXangModel] = useState('');
+    const [vtlxHangXe, setVtlxHangXe] = useState('');
+    const [vtlxSoKhung, setVtlxSoKhung] = useState('');
+    const [camKetChuyenDoiXanhFile, setCamKetChuyenDoiXanhFile] = useState<File | null>(null);
+    const [cavetXeCuFile, setCavetXeCuFile] = useState<File | null>(null);
+    const [vtlxVinCheckError, setVtlxVinCheckError] = useState('');
+    const [isCheckingVtlxVin, setIsCheckingVtlxVin] = useState(false);
     const [maVc, setMaVc] = useState('');
     const [maHdCyber, setMaHdCyber] = useState<string>(() => {
         return cleanCyberContractCode(order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '');
@@ -588,6 +600,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         });
     }, [policy]);
 
+    const isVtlxPolicy = useMemo(() => {
+        return policy.some(p => {
+            const up = p.toUpperCase();
+            const low = p.toLowerCase();
+            return up.includes('VTLX') || low.includes('vì tương lai xanh') || low.includes('vi tuong lai xanh');
+        });
+    }, [policy]);
+
     const isVinFastGasCarAppreciationPolicy = useMemo(() => {
         const targetPolicies = [
             'Tri ân khách hàng xe xăng [Fadil] - 30Tr',
@@ -636,6 +656,45 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return () => clearTimeout(timeoutId);
     }, [xeXangVin, isGasToElectricPolicy]);
 
+    useEffect(() => {
+        if (!isVtlxPolicy || !vtlxSoKhung.trim()) {
+            setVtlxVinCheckError('');
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            try {
+                setIsCheckingVtlxVin(true);
+                setVtlxVinCheckError('');
+                const cleanVin = vtlxSoKhung.trim().toUpperCase();
+
+                const { data: existingY } = await apiService.supabase.from('yeucauxhd')
+                    .select('vtlx_so_khung, xe_xang_vin, so_don_hang')
+                    .or(`vtlx_so_khung.ilike.${cleanVin},xe_xang_vin.ilike.${cleanVin}`);
+
+                const { data: existingA } = await apiService.supabase.from('archived_orders')
+                    .select('vtlx_so_khung, xe_xang_vin, so_don_hang')
+                    .or(`vtlx_so_khung.ilike.${cleanVin},xe_xang_vin.ilike.${cleanVin}`);
+
+                const matchY = !!(existingY && existingY.length > 0);
+                const matchA = !!(existingA && existingA.length > 0);
+
+                if (matchY || matchA) {
+                    const matched = matchY && existingY ? existingY[0] : (existingA ? existingA[0] : null);
+                    if (matched) {
+                        setVtlxVinCheckError(`Số khung ${cleanVin} đã được sử dụng trong yêu cầu ${matched.so_don_hang}.`);
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking duplicate VTLX VIN:', err);
+            } finally {
+                setIsCheckingVtlxVin(false);
+            }
+        }, 400);
+
+        return () => clearTimeout(timeoutId);
+    }, [vtlxSoKhung, isVtlxPolicy]);
+
     const rawCommission = getRawValue(commission);
     const rawVpoint = getRawValue(vpoint);
     const isCommissionValid = rawCommission === '' || (!isNaN(Number(rawCommission)) && Number(rawCommission) >= 0);
@@ -660,12 +719,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const isDmsValid = !isDmsEnabled || dmsVerification.status !== 'invalid';
     const isVerificationBlocked = !isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved);
 
+    const isVtlxInfoValid = !isVtlxPolicy || (vtlxHangXe.trim() !== '' && vtlxSoKhung.trim() !== '' && !vtlxVinCheckError);
+    const isVtlxDocsValid = !isVtlxPolicy || Boolean(camKetChuyenDoiXanhFile && cavetXeCuFile);
+
     const isStep1InfoValid = policy.length > 0 &&
         isCommissionValid &&
         isVpointValid &&
         (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) &&
-        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '');
-    const isStep1DocsValid = Boolean(contractFile && proposalFile);
+        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '') &&
+        isVtlxInfoValid;
+    const isStep1DocsValid = Boolean(contractFile && proposalFile) && isVtlxDocsValid;
     const isStep1Valid = isStep1InfoValid && isStep1DocsValid && !isVerificationBlocked;
     const isStep2Valid = vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && !isVerificationBlocked;
@@ -679,14 +742,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 if (parsed.commission !== undefined && parsed.commission !== null) setCommission(parsed.commission);
                 if (parsed.vpoint !== undefined && parsed.vpoint !== null) setVpoint(parsed.vpoint);
                 if (parsed.maVc) setMaVc(parsed.maVc);
+                if (parsed.vtlxHangXe) setVtlxHangXe(parsed.vtlxHangXe);
+                if (parsed.vtlxSoKhung) setVtlxSoKhung(parsed.vtlxSoKhung);
             } catch (e) { console.error(e); }
         }
     }, [order]);
 
     useEffect(() => {
-        const dataToSave = { policy, commission, vpoint, maVc };
+        const dataToSave = { policy, commission, vpoint, maVc, vtlxHangXe, vtlxSoKhung };
         sessionStorage.setItem(`invoice_draft_${order["Số đơn hàng"]}`, JSON.stringify(dataToSave));
-    }, [policy, commission, vpoint, maVc, order]);
+    }, [policy, commission, vpoint, maVc, vtlxHangXe, vtlxSoKhung, order]);
 
     const payloadsRef = useRef<{ contract: any, proposal: any }>({ contract: null, proposal: null });
 
@@ -800,7 +865,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 xeXangVin.trim() || undefined,
                 xeXangHang.trim() || undefined,
                 xeXangModel.trim() || undefined,
-                maVc.trim() || undefined
+                maVc.trim() || undefined,
+                isVtlxPolicy ? {
+                    hangXe: vtlxHangXe.trim(),
+                    soKhung: vtlxSoKhung.trim().toUpperCase(),
+                    camKetFile: camKetChuyenDoiXanhFile,
+                    cavetFile: cavetXeCuFile
+                } : undefined
             );
             sessionStorage.removeItem(`invoice_draft_${order["Số đơn hàng"]}`);
             setProcessingStage(4);
@@ -1100,22 +1171,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     const renderDmsVerificationCard = () => {
         if (!isDmsEnabled) {
-            return (
-                <div className="invoice-diag-card bg-slate-50 border border-slate-200 text-slate-700 py-2.5 px-3 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-7 h-7 rounded-lg bg-slate-200/80 text-slate-600 flex items-center justify-center flex-shrink-0 text-xs">
-                            <i className="fas fa-shield-halved" />
-                        </span>
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-bold text-slate-800 uppercase tracking-tight">Đối Soát DMS: Đang Tắt</span>
-                                <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 font-semibold">Admin Miễn Kiểm Soát</span>
-                            </div>
-                            <p className="text-[10px] text-slate-500 truncate mt-0.5">Admin đã tạm tắt kiểm soát đối soát cấu hình với VinFast DMS. TVBH có thể gửi yêu cầu xuất hóa đơn bình thường.</p>
-                        </div>
-                    </div>
-                </div>
-            );
+            return null;
         }
 
         if (dmsVerification.status === 'valid' || (dmsVerification.status === 'idle' && !isCheckingDms)) {
@@ -1497,6 +1553,93 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
                         )}
 
+                        {isVtlxPolicy && (
+                            <div className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-2.5 animate-fade-in shadow-2xs">
+                                <div className="flex items-center justify-between pb-1.5 border-b border-emerald-200/50">
+                                    <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
+                                        <i className="fas fa-leaf text-emerald-600"></i>
+                                        <span>Chính Sách Vì Tương Lai Xanh (VTLX)</span>
+                                    </div>
+                                    <span className="text-[9.5px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold border border-emerald-200">
+                                        Bắt buộc xe cũ & chứng từ
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="invoice-field-label">
+                                            <span>Hãng xe (xăng hoặc điện cũ) <span className="req">*</span></span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={vtlxHangXe}
+                                            onChange={(e) => setVtlxHangXe(e.target.value)}
+                                            className="invoice-input"
+                                            placeholder="VD: Honda, Toyota, VinFast..."
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="invoice-field-label">
+                                            <span>
+                                                Số khung (xăng hoặc điện cũ) <span className="req">*</span>
+                                                {isCheckingVtlxVin && <i className="fas fa-spinner fa-spin ml-1.5 text-emerald-600"></i>}
+                                            </span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={vtlxSoKhung}
+                                            onChange={(e) => setVtlxSoKhung(e.target.value.toUpperCase())}
+                                            className="invoice-input"
+                                            data-mono="true"
+                                            style={vtlxVinCheckError ? { borderColor: '#f43f5e' } : undefined}
+                                            placeholder="VD: RL4XXXXXXXXXXXXXX"
+                                            required
+                                        />
+                                        {vtlxVinCheckError && (
+                                            <p className="text-[10.5px] text-rose-600 font-semibold mt-1 flex items-start gap-1">
+                                                <i className="fas fa-exclamation-triangle mt-0.5 flex-shrink-0"></i>
+                                                <span>{vtlxVinCheckError}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-emerald-200/50">
+                                    <label className="invoice-field-label">
+                                        <span>Hồ sơ VTLX đính kèm <span className="req">*</span></span>
+                                        <span className="invoice-field-hint">PDF hoặc Ảnh (JPG, PNG...)</span>
+                                    </label>
+                                    <div className="invoice-docs-stack">
+                                        <SimpleFileUpload
+                                            id="cam_ket_vtlx_file_input"
+                                            label="Cam kết chuyển đổi xanh"
+                                            onFileSelect={(file) => setCamKetChuyenDoiXanhFile(file)}
+                                            required
+                                            accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
+                                            buttonText="Chọn PDF / Ảnh"
+                                            placeholderText="Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh"
+                                            disableCompression={false}
+                                            showPreview={false}
+                                            variant="slot"
+                                        />
+                                        <SimpleFileUpload
+                                            id="cavet_vtlx_file_input"
+                                            label="Cà vẹt xe điện hoặc xăng cũ"
+                                            onFileSelect={(file) => setCavetXeCuFile(file)}
+                                            required
+                                            accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
+                                            buttonText="Chọn PDF / Ảnh"
+                                            placeholderText="Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh"
+                                            disableCompression={false}
+                                            showPreview={false}
+                                            variant="slot"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="invoice-docs-section">
                             <label className="invoice-field-label">
                                 <span>Hồ sơ chứng từ đính kèm <span className="req">*</span></span>
@@ -1633,6 +1776,17 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                         </p>
                                     </div>
                                 )}
+                                {isVtlxPolicy && vtlxSoKhung && (
+                                    <div className="invoice-confirm-finance-box" data-span="2">
+                                        <p className="invoice-confirm-spec-label mb-0.5 text-emerald-800 font-semibold flex items-center gap-1">
+                                            <i className="fas fa-leaf text-emerald-600"></i>
+                                            <span>Xe cũ Vì Tương Lai Xanh (VTLX)</span>
+                                        </p>
+                                        <p className="invoice-confirm-spec-val">
+                                            {vtlxHangXe || 'Xe cũ'} · <span className="font-mono text-emerald-700 font-bold">{vtlxSoKhung}</span>
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -1640,18 +1794,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         <div className="invoice-confirm-card">
                             <div className="invoice-confirm-card-title">
                                 <span>Hồ sơ chứng từ đính kèm</span>
-                                <span className="invoice-confirm-card-hint">2 tệp PDF</span>
+                                <span className="invoice-confirm-card-hint">
+                                    {isVtlxPolicy ? '4 tệp (PDF / Ảnh)' : '2 tệp PDF'}
+                                </span>
                             </div>
                             <div className="invoice-docs-stack">
                                 {[
                                     { label: 'Hợp đồng mua bán', file: contractFile },
-                                    { label: 'Đề nghị xuất hóa đơn', file: proposalFile }
+                                    { label: 'Đề nghị xuất hóa đơn', file: proposalFile },
+                                    ...(isVtlxPolicy ? [
+                                        { label: 'Cam kết chuyển đổi xanh', file: camKetChuyenDoiXanhFile },
+                                        { label: 'Cà vẹt xe điện hoặc xăng cũ', file: cavetXeCuFile }
+                                    ] : [])
                                 ].map((doc, idx) => {
                                     const sizeText = doc.file
                                         ? doc.file.size >= 1024 * 1024
-                                            ? `${(doc.file.size / (1024 * 1024)).toFixed(2)} MB`
+                                             ? `${(doc.file.size / (1024 * 1024)).toFixed(2)} MB`
                                             : `${(doc.file.size / 1024).toFixed(1)} KB`
                                         : '';
+                                    const isImg = doc.file && (doc.file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(doc.file.name));
                                     return (
                                         <div
                                             key={idx}
@@ -1660,7 +1821,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             style={{ cursor: 'default' }}
                                         >
                                             <div className="invoice-pdf-slot-icon">
-                                                <i className="fas fa-file-pdf"></i>
+                                                <i className={`fas ${isImg ? 'fa-file-image text-emerald-600' : 'fa-file-pdf text-rose-500'}`}></i>
                                                 {doc.file && (
                                                     <span className="invoice-pdf-slot-check">
                                                         <i className="fas fa-check"></i>
@@ -1744,11 +1905,19 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     showToast('Thông tin xe xăng cũ', vinCheckError || 'Vui lòng nhập đầy đủ VIN, hãng và model xe xăng thu cũ đổi mới.', 'warning');
                                 } else if (isVinFastGasCarAppreciationPolicy && !maVc.trim()) {
                                     showToast('Thiếu mã Voucher', 'Vui lòng nhập mã Voucher tri ân xe xăng.', 'warning');
+                                } else if (isVtlxPolicy && (!vtlxHangXe.trim() || !vtlxSoKhung.trim() || vtlxVinCheckError)) {
+                                    showToast('Thông tin xe cũ VTLX', vtlxVinCheckError || 'Vui lòng nhập đầy đủ hãng xe và số khung xe cũ (xăng hoặc điện).', 'warning');
                                 }
                                 return;
                             }
                             if (!isStep1DocsValid) {
-                                showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên cả Hợp đồng mua bán và Đề nghị xuất hóa đơn.', 'warning');
+                                if (!contractFile || !proposalFile) {
+                                    showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên cả Hợp đồng mua bán và Đề nghị xuất hóa đơn.', 'warning');
+                                } else if (isVtlxPolicy && (!camKetChuyenDoiXanhFile || !cavetXeCuFile)) {
+                                    showToast('Thiếu hồ sơ VTLX', 'Vui lòng tải lên cả file Cam kết chuyển đổi xanh và Cà vẹt xe cũ (PDF hoặc Ảnh).', 'warning');
+                                } else {
+                                    showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên đầy đủ các chứng từ bắt buộc.', 'warning');
+                                }
                                 return;
                             }
                             handleNext();
