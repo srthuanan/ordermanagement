@@ -83,7 +83,13 @@ export interface OrderDetailViewProps {
     onInvoiceConfirm?: (
         order: Order, contractFile: File, proposalFile: File, policy: string[],
         commission: string, vpoint: string, aiNote?: string, preProcessedPayloads?: any,
-        xeXangVin?: string, xeXangHang?: string, xeXangModel?: string, maVc?: string
+        xeXangVin?: string, xeXangHang?: string, xeXangModel?: string, maVc?: string,
+        vtlxData?: {
+            hangXe?: string;
+            soKhung?: string;
+            camKetFile?: File | null;
+            cavetFile?: File | null;
+        }
     ) => Promise<any>;
     showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     stockData?: any[];
