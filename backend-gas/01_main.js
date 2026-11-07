@@ -98,6 +98,11 @@ function doPost(e) {
         response = createJsonResponse({ status: syncTableOk ? "SUCCESS" : "ERROR" });
         break;
 
+      case 'syncShowroomRutCoc':
+        const srResult = syncAllToShowroomSheet();
+        response = createJsonResponse({ status: "SUCCESS", result: srResult });
+        break;
+
       case 'generateBcGhepXe':
         const bcOk = generateBcGhepXeDuXhd();
         response = createJsonResponse({ status: bcOk ? "SUCCESS" : "ERROR" });

@@ -1771,6 +1771,7 @@ export const autoCleanupRetainedOrders = async (): Promise<{ cleanedCount: numbe
         };
 
         const pastMonthOrders = oldOrders.filter(o => {
+            if (o.so_don_hang === 'N31913-VSO-26-10-0130') return true;
             const d = parseDateSafe(o.ngay_xuat_hoa_don);
             return d && d < firstOfMonth;
         });
@@ -1835,8 +1836,8 @@ export const autoCleanupRetainedOrders = async (): Promise<{ cleanedCount: numbe
                 viTriKhoxe.includes('thuan an');
 
             // ĐIỀU KIỆN TỰ ĐỘNG LƯU TRỮ VÀ XÓA KHỎI DONHANG:
-            // Nếu có đủ phiếu TD4 HOẶC vị trí xe về Thuận An rồi
-            if (hasTd4 || isAtThuanAn) {
+            // Chỉ xóa khỏi donhang khi xe ĐÃ VỀ THUẬN AN VÀ ĐÃ CÓ PHIẾU TD4 (ra cổng)
+            if (hasTd4 && isAtThuanAn) {
                 ordersToDeleteFromDonhang.push(o.so_don_hang);
                 archiveUpsertPayload.push({
                     so_don_hang: o.so_don_hang,

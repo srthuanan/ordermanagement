@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
   "name": "VinFast DMS Auto Silent Sync",
-  "version": "1.5.0",
-  "description": "Tự động chạy ngầm đồng bộ Kho xe, tọa độ GPS Live, Đơn hàng hiện hữu (donhanghienhuu) & nạp thongtinxe từ VinFast DMS về Supabase",
+  "version": "2.1.0",
+  "description": "Tự động chạy ngầm đồng bộ Số máy, Mã DMS đa đại lý, Kho xe, thongtinxe & donhanghienhuu trên cả DMS Mới (dealer-portal.vinfast.com) và DMS Cũ (Dynamics)",
   "content_scripts": [
     {
       "matches": [
+        "https://dealer-portal.vinfast.com/*",
+        "https://*.vinfast.com/*",
         "https://*.dynamics.com/*",
         "https://*.crm.dynamics.com/*",
         "https://*.crm4.dynamics.com/*",

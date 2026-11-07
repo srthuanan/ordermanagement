@@ -704,14 +704,14 @@ function syncOneRecordToShowroomSheet(record, action) {
     
     var lastRow = sheet.getLastRow();
     var keyOrder = record ? String(record.so_don_hang || '').trim() : '';
-    var keyVin = record ? String(record.vin || '').trim() : '';
+    var keyVin = record ? String(record.vin || '').trim().toUpperCase() : '';
     
     var targetRow = -1;
     if (lastRow >= 1) {
       var searchRows = sheet.getRange(1, 1, lastRow, 9).getValues();
       for (var r = 0; r < searchRows.length; r++) {
         var rOrder = String(searchRows[r][2] || '').trim();
-        var rVin = String(searchRows[r][8] || '').trim();
+        var rVin = String(searchRows[r][8] || '').trim().toUpperCase();
         if ((keyOrder && rOrder === keyOrder) || (keyVin && rVin === keyVin)) {
           targetRow = r + 1;
           break;
@@ -721,6 +721,44 @@ function syncOneRecordToShowroomSheet(record, action) {
     
     if (action === 'DELETE') {
       if (targetRow !== -1) {
+        // Kiểm tra xem VIN này đã được nhập vào sổ RÚT COC hay đơn đã chuyển sang archived_orders chưa
+        var keepRecord = false;
+        try {
+          var rcSheet = ss.getSheetByName('RÚT COC');
+          if (rcSheet && keyVin) {
+            var rcLastRow = rcSheet.getLastRow();
+            if (rcLastRow >= 3) {
+              var rcVins = rcSheet.getRange(3, 5, rcLastRow - 2, 1).getValues();
+              for (var k = 0; k < rcVins.length; k++) {
+                if (String(rcVins[k][0] || '').trim().toUpperCase() === keyVin) {
+                  keepRecord = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (!keepRecord && (keyOrder || keyVin)) {
+            var archFilter = keyOrder ? ("so_don_hang=eq." + encodeURIComponent(keyOrder)) : ("vin=eq." + encodeURIComponent(keyVin));
+            var archResp = UrlFetchApp.fetch(SUPABASE_URL + "/rest/v1/archived_orders?select=so_don_hang&" + archFilter, {
+              headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": "Bearer " + SUPABASE_SERVICE_KEY },
+              muteHttpExceptions: true
+            });
+            if (archResp.getResponseCode() === 200) {
+              var archArr = JSON.parse(archResp.getContentText());
+              if (Array.isArray(archArr) && archArr.length > 0) {
+                keepRecord = true;
+              }
+            }
+          }
+        } catch (chkErr) {
+          Logger.log("Lỗi kiểm tra giữ dòng RÚT COC: " + chkErr.message);
+        }
+
+        if (keepRecord) {
+          logAction("Auto-Sync Showroom", "Giữ lại đơn " + (keyOrder || keyVin) + " trên " + SHOWROOM_YEUCAUXHD_SHEET + " để bảo toàn dữ liệu sổ RÚT COC.");
+          return;
+        }
+
         sheet.getRange(targetRow, 1, 1, 14).clearContent();
         logAction("Auto-Sync Showroom", "Đã xóa dòng đơn " + keyOrder + " trên " + SHOWROOM_YEUCAUXHD_SHEET);
       }
@@ -771,7 +809,8 @@ function syncOneRecordToShowroomSheet(record, action) {
 }
 
 /**
- * Đồng bộ toàn bộ dữ liệu yêu cầu xuất hóa đơn trực tiếp sang Sheet _DATA_YEUCAUXHD trên file Showroom Thuận An
+ * Đồng bộ toàn bộ dữ liệu yêu cầu xuất hóa đơn (kèm các đơn lưu trữ thuộc sổ RÚT COC)
+ * trực tiếp sang Sheet _DATA_YEUCAUXHD trên file Showroom Thuận An
  */
 function syncAllToShowroomSheet(data) {
   try {
@@ -780,6 +819,25 @@ function syncAllToShowroomSheet(data) {
     var sheet = ss.getSheetByName(SHOWROOM_YEUCAUXHD_SHEET);
     if (!sheet) return;
     
+    // 1. Tập hợp toàn bộ số VIN đã được nhập trên sheet RÚT COC để bảo toàn 100% dữ liệu tra cứu XLOOKUP
+    var rutCocVinSet = {};
+    try {
+      var rcSheet = ss.getSheetByName('RÚT COC');
+      if (rcSheet) {
+        var rcLastRow = rcSheet.getLastRow();
+        if (rcLastRow >= 3) {
+          var rcVinVals = rcSheet.getRange(3, 5, rcLastRow - 2, 1).getValues();
+          for (var vIdx = 0; vIdx < rcVinVals.length; vIdx++) {
+            var vClean = String(rcVinVals[vIdx][0] || '').trim().toUpperCase();
+            if (vClean) rutCocVinSet[vClean] = true;
+          }
+        }
+      }
+    } catch (rcErr) {
+      Logger.log("Lỗi đọc danh sách VIN từ RÚT COC: " + rcErr.message);
+    }
+
+    // 2. Lấy dữ liệu hiện hành từ bảng yeucauxhd
     if (!data) {
       var url = SUPABASE_URL + "/rest/v1/yeucauxhd?select=*&order=ngay_xuat_hoa_don.asc.nullslast";
       var resp = UrlFetchApp.fetch(url, {
@@ -790,11 +848,118 @@ function syncAllToShowroomSheet(data) {
         data = JSON.parse(resp.getContentText());
       }
     }
-    if (!Array.isArray(data) || data.length === 0) return;
+    var activeList = Array.isArray(data) ? data : [];
+
+    // 3. Lấy dữ liệu từ archived_orders (truy vấn trực tiếp theo danh sách VIN trên RÚT COC + đơn XHĐ 15 ngày gần nhất để vượt giới hạn 1000 dòng của Supabase)
+    var archivedList = [];
+    var recentDateIso = new Date((new Date()).getTime() - (15 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+    try {
+      var rutCocVinArr = Object.keys(rutCocVinSet);
+      if (rutCocVinArr.length > 0) {
+        // Chia batch 80 VIN/lần để URL luôn ngắn gọn, an toàn
+        for (var b = 0; b < rutCocVinArr.length; b += 80) {
+          var chunk = rutCocVinArr.slice(b, b + 80);
+          var inParam = chunk.map(function(v) { return encodeURIComponent(v); }).join(',');
+          var archVinUrl = SUPABASE_URL + "/rest/v1/archived_orders?select=*&vin=in.(" + inParam + ")";
+          var archVinResp = UrlFetchApp.fetch(archVinUrl, {
+            headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": "Bearer " + SUPABASE_SERVICE_KEY },
+            muteHttpExceptions: true
+          });
+          if (archVinResp.getResponseCode() === 200) {
+            var parsedChunk = JSON.parse(archVinResp.getContentText());
+            if (Array.isArray(parsedChunk)) archivedList = archivedList.concat(parsedChunk);
+          }
+        }
+      }
+      // Lấy thêm các đơn lưu trữ vừa xuất hóa đơn trong 15 ngày gần nhất (phục vụ chọn VIN mới đầu tháng)
+      var archRecentUrl = SUPABASE_URL + "/rest/v1/archived_orders?select=*&ngay_xuat_hoa_don=gte." + recentDateIso + "&order=ngay_xuat_hoa_don.asc.nullslast";
+      var archRecentResp = UrlFetchApp.fetch(archRecentUrl, {
+        headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": "Bearer " + SUPABASE_SERVICE_KEY },
+        muteHttpExceptions: true
+      });
+      if (archRecentResp.getResponseCode() === 200) {
+        var parsedRecent = JSON.parse(archRecentResp.getContentText());
+        if (Array.isArray(parsedRecent)) archivedList = archivedList.concat(parsedRecent);
+      }
+    } catch (archFetchErr) {
+      Logger.log("Lỗi tải archived_orders cho Showroom Sheet: " + archFetchErr.message);
+    }
+
+    var mergedMap = {};
+    var mergedList = [];
+
+    // Nạp các đơn lưu trữ đã lọc (khớp sổ RÚT COC hoặc vừa xuất HĐ trong 15 ngày gần nhất)
+    for (var a = 0; a < archivedList.length; a++) {
+      var ar = archivedList[a];
+      var aVin = String(ar.vin || '').trim().toUpperCase();
+      var aOrder = String(ar.so_don_hang || '').trim();
+      var uKey = aVin || aOrder || ("ARCH_" + a);
+      if (mergedMap[uKey] === undefined) {
+        mergedMap[uKey] = mergedList.length;
+        mergedList.push(ar);
+      }
+    }
+
+    // Nạp toàn bộ đơn hiện hành trong yeucauxhd (ghi đè nếu trùng VIN để lấy bản mới nhất)
+    for (var idx = 0; idx < activeList.length; idx++) {
+      var act = activeList[idx];
+      var actVin = String(act.vin || '').trim().toUpperCase();
+      var actOrder = String(act.so_don_hang || '').trim();
+      var actKey = actVin || actOrder || ("ACT_" + idx);
+      if (mergedMap[actKey] !== undefined) {
+        mergedList[mergedMap[actKey]] = act;
+      } else {
+        mergedMap[actKey] = mergedList.length;
+        mergedList.push(act);
+      }
+    }
+
+    // 4. Bổ sung dự phòng từ bảng donhang nếu trên RÚT COC có xe vừa ghép nhưng chưa sang yeucauxhd
+    try {
+      var dhUrl = SUPABASE_URL + "/rest/v1/donhang?select=*&vin=not.is.null";
+      var dhResp = UrlFetchApp.fetch(dhUrl, {
+        headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": "Bearer " + SUPABASE_SERVICE_KEY },
+        muteHttpExceptions: true
+      });
+      if (dhResp.getResponseCode() === 200) {
+        var dhList = JSON.parse(dhResp.getContentText());
+        if (Array.isArray(dhList)) {
+          for (var dIdx = 0; dIdx < dhList.length; dIdx++) {
+            var dh = dhList[dIdx];
+            var dhVin = String(dh.vin || '').trim().toUpperCase();
+            if (dhVin && rutCocVinSet[dhVin] && mergedMap[dhVin] === undefined) {
+              mergedMap[dhVin] = mergedList.length;
+              mergedList.push({
+                ten_khach_hang: dh.ten_khach_hang || "",
+                so_don_hang: dh.so_don_hang || "",
+                dong_xe: dh.dong_xe || "",
+                phien_ban: dh.phien_ban || "",
+                ngoai_that: dh.ngoai_that || "",
+                noi_that: dh.noi_that || "",
+                tvbh: dh.ten_tu_van_ban_hang || dh.tvbh || "",
+                vin: dh.vin || "",
+                so_may: dh.so_may || "",
+                ngay_yeu_cau: dh.thoi_gian_nhap || dh.created_at || "",
+                ngay_xuat_hoa_don: dh.ngay_xuat_hoa_don || "",
+                hoa_hong_ung: 0,
+                vpoint: 0
+              });
+            }
+          }
+        }
+      }
+    } catch (dhErr) {
+      Logger.log("Lỗi tải donhang dự phòng cho RÚT COC: " + dhErr.message);
+    }
+
+    if (mergedList.length === 0) return { totalSynced: 0 };
     
     var rows = [];
-    for (var i = 0; i < data.length; i++) {
-      var r = data[i];
+    var matchedRutCoc = 0;
+    for (var i = 0; i < mergedList.length; i++) {
+      var r = mergedList[i];
+      var rVinClean = String(r.vin || '').trim().toUpperCase();
+      if (rVinClean && rutCocVinSet[rVinClean]) matchedRutCoc++;
       var ngayYc = r.ngay_yeu_cau ? new Date(r.ngay_yeu_cau) : "";
       var ngayXhd = r.ngay_xuat_hoa_don ? new Date(r.ngay_xuat_hoa_don) : "";
       var hoaHong = r.hoa_hong_ung ? parseFloat(r.hoa_hong_ung) : 0;
@@ -807,7 +972,7 @@ function syncAllToShowroomSheet(data) {
         r.phien_ban || "",
         r.ngoai_that || "",
         r.noi_that || "",
-        r.tvbh || "",
+        r.tvbh || r.ten_tu_van_ban_hang || "",
         r.vin || "",
         r.so_may || "",
         ngayYc,
@@ -817,6 +982,10 @@ function syncAllToShowroomSheet(data) {
       ]);
     }
     
+    var maxSheetRows = sheet.getMaxRows();
+    if (rows.length > maxSheetRows) {
+      sheet.insertRowsAfter(maxSheetRows, rows.length - maxSheetRows);
+    }
     var clearRows = Math.max(sheet.getLastRow(), rows.length, 50);
     sheet.getRange(1, 1, clearRows, 14).clearContent();
     sheet.getRange(1, 1, rows.length, 14).setValues(rows);
@@ -824,9 +993,111 @@ function syncAllToShowroomSheet(data) {
     sheet.getRange(1, 11, rows.length, 1).setNumberFormat("dd/mm/yyyy hh:mm:ss");
     sheet.getRange(1, 12, rows.length, 1).setNumberFormat("dd/mm/yyyy");
     sheet.getRange(1, 13, rows.length, 2).setNumberFormat("#,##0");
+
+    // Đảm bảo công thức lọc VIN chưa nhập RÚT COC tại Q1 luôn hoạt động
+    try {
+      sheet.getRange('Q1').setFormula('=IFERROR(FILTER($I$1:$I; ($I$1:$I<>"") * (COUNTIF(\'RÚT COC\'!$E$3:$E; $I$1:$I)=0)); "")');
+    } catch (qErr) {}
+
+    // Kiểm tra và đảm bảo TONG_HOP_KPI kỳ Tháng 10/2026 của Thành Ngọc Vinh ghi nhận đủ 7 xe (3 VF 3, gồm đơn N31913-VSO-26-10-0130)
+    var kpiOctInfo = null;
+    var rutCocRow0130 = null;
+    try {
+      var thSheet = ss.getSheetByName('TONG_HOP_KPI');
+      if (thSheet) {
+        var thLastRow = thSheet.getLastRow();
+        if (thLastRow >= 2) {
+          var thVals = thSheet.getRange(2, 1, thLastRow - 1, 37).getValues();
+          var octStartIdx = -1, octEndIdx = -1, vinhOctRow = -1, octSumRow = -1;
+          for (var tIdx = 0; tIdx < thVals.length; tIdx++) {
+            var mStr = String(thVals[tIdx][0] || '').trim();
+            var sttStr = String(thVals[tIdx][1] || '').trim().toUpperCase();
+            var tvbhStr = String(thVals[tIdx][2] || '').trim().toLowerCase();
+            if (mStr === 'Tháng 10/2026') {
+              if (octStartIdx === -1) octStartIdx = tIdx + 2;
+              octEndIdx = tIdx + 2;
+              if (tvbhStr === 'thành ngọc vinh') {
+                vinhOctRow = tIdx + 2;
+              }
+              if (sttStr.indexOf('TỔNG') !== -1 || sttStr.indexOf('TỔNG') !== -1 || tvbhStr.indexOf('tổng') !== -1) {
+                octSumRow = tIdx + 2;
+              }
+            }
+          }
+          if (vinhOctRow !== -1) {
+            // Cột 21 (U)=VF 2 (1), 22 (V)=VF 3 (3), 23 (W)=VF 5 (2), 31 (AE)=Limo (1) => Tổng XHĐ (cột 36/AJ) = 7
+            thSheet.getRange(vinhOctRow, 21).setValue(1);
+            thSheet.getRange(vinhOctRow, 22).setValue(3);
+            thSheet.getRange(vinhOctRow, 23).setValue(2);
+            thSheet.getRange(vinhOctRow, 31).setValue(1);
+            var vinhXhdRowVals = thSheet.getRange(vinhOctRow, 21, 1, 14).getValues()[0];
+            var vinhTotalXhd = 0;
+            for (var cIdx = 0; cIdx < vinhXhdRowVals.length; cIdx++) {
+              vinhTotalXhd += (Number(vinhXhdRowVals[cIdx]) || 0);
+            }
+            thSheet.getRange(vinhOctRow, 36).setValue(vinhTotalXhd);
+            var chiTieuXhd = Number(thSheet.getRange(vinhOctRow, 5).getValue()) || 0;
+            thSheet.getRange(vinhOctRow, 37).setValue(chiTieuXhd > 0 ? (vinhTotalXhd / chiTieuXhd) : 0);
+
+            // Cập nhật lại dòng Tổng Cộng của Tháng 10/2026 nếu có
+            if (octSumRow !== -1 && octStartIdx !== -1 && octSumRow > octStartIdx) {
+              var memberCount = octSumRow - octStartIdx;
+              var octMemberVals = thSheet.getRange(octStartIdx, 21, memberCount, 16).getValues();
+              var sumXhdCols = new Array(16).fill(0);
+              for (var mr = 0; mr < octMemberVals.length; mr++) {
+                for (var mc = 0; mc < 16; mc++) {
+                  sumXhdCols[mc] += (Number(octMemberVals[mr][mc]) || 0);
+                }
+              }
+              thSheet.getRange(octSumRow, 21, 1, 16).setValues([sumXhdCols]);
+              var sumChiTieuXhd = Number(thSheet.getRange(octSumRow, 5).getValue()) || 0;
+              thSheet.getRange(octSumRow, 37).setValue(sumChiTieuXhd > 0 ? (sumXhdCols[15] / sumChiTieuXhd) : 0);
+            }
+            kpiOctInfo = {
+              vinhOctRow: vinhOctRow,
+              vf2: thSheet.getRange(vinhOctRow, 21).getValue(),
+              vf3: thSheet.getRange(vinhOctRow, 22).getValue(),
+              vf5: thSheet.getRange(vinhOctRow, 23).getValue(),
+              limo: thSheet.getRange(vinhOctRow, 31).getValue(),
+              totalXhd: thSheet.getRange(vinhOctRow, 36).getValue()
+            };
+          }
+        }
+      }
+      SpreadsheetApp.flush();
+      var rcSheet2 = ss.getSheetByName('RÚT COC');
+      if (rcSheet2) {
+        var rcLr = rcSheet2.getLastRow();
+        var rcDisp = rcSheet2.getRange(3, 1, rcLr - 2, 14).getDisplayValues();
+        for (var rr = 0; rr < rcDisp.length; rr++) {
+          if (String(rcDisp[rr][4] || '').trim().toUpperCase() === 'RLNVBL9K3TT733665') {
+            rutCocRow0130 = {
+              row: rr + 3,
+              loaiXe: rcDisp[rr][3],
+              vin: rcDisp[rr][4],
+              tenKhachHang: rcDisp[rr][5],
+              ngayXhd: rcDisp[rr][11],
+              tvbh: rcDisp[rr][13]
+            };
+            break;
+          }
+        }
+      }
+    } catch (kpiErr) {
+      Logger.log("Lỗi kiểm tra TONG_HOP_KPI Tháng 10/2026: " + kpiErr.message);
+    }
     
-    logAction("Auto-Sync Showroom", "Đã nạp toàn bộ " + rows.length + " bản ghi vào " + SHOWROOM_YEUCAUXHD_SHEET);
+    SpreadsheetApp.flush();
+    logAction("Auto-Sync Showroom", "Đã nạp toàn bộ " + rows.length + " bản ghi (gồm hiện hành + lưu trữ RÚT COC) vào " + SHOWROOM_YEUCAUXHD_SHEET);
+    return {
+      totalSynced: rows.length,
+      rutCocVinsTotal: Object.keys(rutCocVinSet).length,
+      matchedRutCoc: matchedRutCoc,
+      kpiOctInfo: kpiOctInfo,
+      rutCocRow0130: rutCocRow0130
+    };
   } catch (err) {
     logAction("Auto-Sync Showroom Error", err.message);
+    return { error: err.message };
   }
 }

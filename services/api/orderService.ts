@@ -1187,6 +1187,206 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
     }
 };
 
+/**
+ * [MỚI] Admin đổi xe / gán lại xe khác cho Đơn hàng của TVBH
+ * - Nếu đơn hàng đã có VIN cũ: Giải phóng VIN cũ về kho ('Chưa ghép', nguoi_giu_xe = null)
+ * - Gán VIN mới cho đơn hàng: cập nhật donhang, yeucauxhd, khoxe (nguoi_giu_xe = TVBH sở hữu đơn)
+ * - Gửi thông báo Realtime & Email cho TVBH
+ */
+export const adminChangeOrderVehicle = async (payload: {
+    orderNumber: string;
+    newVin: string;
+    reason?: string;
+}): Promise<ApiResult> => {
+    try {
+        const { orderNumber, newVin, reason } = payload;
+        if (!orderNumber || !newVin) {
+            return { status: 'ERROR', message: 'Vui lòng cung cấp mã đơn hàng và số VIN mới!' };
+        }
+
+        const adminUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "Admin";
+        const nowISO = new Date().toISOString();
+
+        // 1. Kiểm tra đơn hàng hiện tại
+        const { data: orderData, error: orderErr } = await supabaseAdmin
+            .from('donhang')
+            .select('*')
+            .eq('so_don_hang', orderNumber)
+            .maybeSingle();
+
+        if (orderErr || !orderData) {
+            return { status: 'ERROR', message: `Không tìm thấy đơn hàng ${orderNumber}!` };
+        }
+
+        const orderStatus = (orderData.ket_qua || '').toLowerCase().trim().normalize('NFC');
+        if (orderStatus === 'đã xuất hóa đơn') {
+            return { status: 'ERROR', message: 'Đơn hàng này đã xuất hóa đơn, không thể thay đổi thông tin xe.' };
+        }
+        if (orderStatus.startsWith('đã hủy')) {
+            return { status: 'ERROR', message: 'Đơn hàng này đã bị hủy, không thể đổi xe.' };
+        }
+
+        const oldVin = orderData.vin || null;
+        if (oldVin && oldVin.trim().toUpperCase() === newVin.trim().toUpperCase()) {
+            return { status: 'ERROR', message: `Xe có số VIN ${newVin} hiện đang được ghép cho đơn hàng này rồi.` };
+        }
+
+        const tvbh = orderData.ten_tu_van_ban_hang;
+
+        // 2. Tra cứu thông tin xe mới trong kho
+        const { data: newCarData, error: carErr } = await supabaseAdmin
+            .from('khoxe')
+            .select('*')
+            .eq('vin', newVin.trim())
+            .maybeSingle();
+
+        if (carErr || !newCarData) {
+            return { status: 'ERROR', message: `Không tìm thấy xe VIN ${newVin} trong kho xe!` };
+        }
+
+        // Kiểm tra tiền tố mã đại lý DMS nếu có
+        if (newCarData.ma_dms) {
+            const orderPrefix = orderNumber.substring(0, 6).toUpperCase();
+            if (orderPrefix !== newCarData.ma_dms.toUpperCase()) {
+                return { status: 'ERROR', message: `Mã DMS của xe (${newCarData.ma_dms.toUpperCase()}) không khớp với tiền tố đơn hàng (${orderPrefix}).` };
+            }
+        }
+
+        // Kiểm tra xem VIN mới có đang bị gán cho đơn hàng khác đang hoạt động hay không
+        const { data: conflictingOrder } = await supabaseAdmin
+            .from('donhang')
+            .select('so_don_hang, ten_tu_van_ban_hang, ket_qua')
+            .eq('vin', newVin.trim())
+            .neq('so_don_hang', orderNumber)
+            .not('ket_qua', 'ilike', 'Đã hủy%')
+            .maybeSingle();
+
+        if (conflictingOrder) {
+            return { 
+                status: 'ERROR', 
+                message: `Số VIN ${newVin} đang được ghép cho đơn hàng ${conflictingOrder.so_don_hang} (TVBH: ${conflictingOrder.ten_tu_van_ban_hang}). Vui lòng dùng tính năng "Hoán đổi với Đơn hàng khác" để tráo đổi giữa 2 đơn.` 
+            };
+        }
+
+        // Lấy số máy của xe mới
+        let newSoMay = newCarData.so_may;
+        if (!newSoMay) {
+            const { data: ttxData } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', newVin.trim()).maybeSingle();
+            newSoMay = ttxData?.so_may || null;
+        }
+
+        // 3. Giải phóng VIN cũ nếu đơn hàng trước đó đã có VIN
+        if (oldVin) {
+            await supabaseAdmin.from('khoxe').update({
+                trang_thai: 'Chưa ghép',
+                nguoi_giu_xe: null,
+                thoi_gian_het_han_giu: null,
+                is_extension_requested: false
+            }).eq('vin', oldVin);
+
+            await supabaseAdmin.from('car_hold_activities').update({
+                status: 'unmatched',
+                reason: `Admin ${adminUser} đổi sang VIN ${newVin}. Lý do: ${reason || 'Admin điều phối'}`,
+                updated_at: nowISO
+            }).eq('vin', oldVin).eq('status', 'matched');
+        }
+
+        // 4. Cập nhật Đơn hàng với VIN mới
+        const { error: updateDonHangErr } = await supabaseAdmin.from('donhang').update({
+            vin: newVin.trim(),
+            so_may: newSoMay,
+            ket_qua: 'Đã ghép',
+            thoi_gian_ghep: nowISO
+        }).eq('so_don_hang', orderNumber);
+
+        if (updateDonHangErr) throw updateDonHangErr;
+
+        // Cập nhật yeucauxhd nếu đơn đã có yêu cầu XHĐ
+        await supabaseAdmin.from('yeucauxhd').update({
+            vin: newVin.trim(),
+            so_may: newSoMay
+        }).eq('so_don_hang', orderNumber);
+
+        // 5. Cập nhật Kho xe cho VIN mới
+        await supabaseAdmin.from('khoxe').update({
+            trang_thai: 'Đã ghép',
+            nguoi_giu_xe: tvbh,
+            thoi_gian_het_han_giu: 'Vô thời hạn',
+            is_extension_requested: false
+        }).eq('vin', newVin.trim());
+
+        // Cập nhật car_hold_activities cho VIN mới
+        const { data: activeHoldNewCar } = await supabaseAdmin.from('car_hold_activities').select('id').eq('vin', newVin.trim()).eq('status', 'active').maybeSingle();
+        if (activeHoldNewCar) {
+            await supabaseAdmin.from('car_hold_activities').update({ updated_at: nowISO, status: 'matched' }).eq('id', activeHoldNewCar.id);
+        } else {
+            await supabaseAdmin.from('car_hold_activities').insert({
+                vin: newVin.trim(),
+                username: tvbh,
+                tvbh_name: tvbh,
+                type: 'HOLD',
+                status: 'matched',
+                created_at: nowISO,
+                updated_at: nowISO,
+                reason: `Admin đổi gán xe cho ĐH ${orderNumber}`
+            });
+        }
+        await supabaseAdmin.from('car_hold_activities').delete().eq('vin', newVin.trim()).eq('type', 'QUEUE');
+
+        // 6. Ghi Audit Log
+        await logAction('ADMIN_CHANGE_ORDER_VEHICLE', {
+            orderNumber,
+            oldVin,
+            newVin: newVin.trim(),
+            tvbh,
+            adminUser,
+            reason: reason || 'Admin đổi ghép xe'
+        }, orderNumber, 'order');
+
+        // 7. Gửi thông báo Realtime cho TVBH
+        if (tvbh) {
+            await createNotification({
+                message: `Admin đã ĐỔI XE cho đơn hàng ${orderNumber} của bạn: VIN mới ${newVin.trim()}${oldVin ? ` (thay thế VIN cũ ${oldVin})` : ''}.`,
+                type: 'success',
+                recipient: tvbh,
+                targetView: 'orders',
+                targetId: orderNumber
+            });
+        }
+
+        // 8. Kích hoạt gửi email thông báo match_success cho TVBH
+        try {
+            const { data: fullUpdatedOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
+            if (fullUpdatedOrder) {
+                supabaseAdmin.functions.invoke('send-email', {
+                    body: { 
+                        actionId: 'match_success', 
+                        record: fullUpdatedOrder,
+                        targetTvbh: tvbh,
+                        oldVin: oldVin,
+                        isReassigned: Boolean(oldVin),
+                        note: reason || `Admin đã điều phối đổi sang số VIN ${newVin.trim()}${oldVin ? ` (thay thế cho VIN cũ ${oldVin})` : ''}`,
+                        reason: reason || 'Admin điều phối đổi xe showroom'
+                    }
+                }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail adminChangeOrderVehicle:', error) });
+            }
+        } catch(e) {}
+
+        // Kích hoạt quét ngầm DMS Radar theo quy định khi ghép xe
+        autoSyncDmsRadarIfNeeded(false, true).catch(e => console.warn('[DmsSync] adminChangeOrderVehicle trigger error:', e));
+
+        return { 
+            status: 'SUCCESS', 
+            message: `Đã đổi xe thành công sang VIN ${newVin.trim()} cho đơn hàng ${orderNumber}!`,
+            newVin: newVin.trim(),
+            oldVin
+        };
+    } catch (e: any) {
+        console.error("Lỗi adminChangeOrderVehicle:", e);
+        return { status: 'ERROR', message: e.message || 'Lỗi khi thực hiện đổi xe' };
+    }
+};
+
 export const cancelRequest = async (orderNumber: string, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)', _thoiGianCanXe?: string) => {
     try {
         const currentUser = getStorageItem("currentConsultant") || "Unknown";

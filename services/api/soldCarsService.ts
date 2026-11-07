@@ -3,6 +3,11 @@ import { getStorageItem, mapOrderDbToUi, ApiResult, SOLD_CARS_API_URL, getApi } 
 import { MONTHS } from '../../constants';
 import axios from 'axios';
 
+// Danh sách đơn hàng ghi nhận doanh số sang tháng khác nhưng vẫn giữ nguyên Ngày xuất hóa đơn thực tế
+const SALES_MONTH_OVERRIDES: Record<string, { year: number; monthIndex: number }> = {
+    'N31913-VSO-26-10-0130': { year: 2026, monthIndex: 9 } // Tính doanh số Tháng 10/2026 (0-based = 9), Ngày XHĐ thực tế: 03/11/2026
+};
+
 const getSoldDataForMonth = async (month: string, year: number): Promise<any[]> => {
     const sheetName = `${month} ${year}`;
     const url = `${SOLD_CARS_API_URL}?sheet=${sheetName}`;
@@ -110,12 +115,30 @@ export const getSoldCarsDataByMonth = async (month: string, year: number): Promi
         const { data: archivedData, error: err2 } = await queryArchived;
         if (err2) console.warn("Archived query issue:", err2);
 
+        // Bổ sung các đơn hàng được chỉ định ghi nhận doanh số vào tháng (year, m) dù ngày xuất HĐ thực tế ở tháng khác
+        const overrideOrderNumbersForTargetMonth = Object.entries(SALES_MONTH_OVERRIDES)
+            .filter(([_, target]) => target.year === year && target.monthIndex === m)
+            .map(([orderNo]) => orderNo);
+
+        let overrideArchivedData: any[] = [];
+        if (overrideOrderNumbersForTargetMonth.length > 0) {
+            const { data: extraArchived } = await supabase
+                .from('archived_orders')
+                .select('*')
+                .in('so_don_hang', overrideOrderNumbersForTargetMonth);
+            if (extraArchived) overrideArchivedData = extraArchived;
+        }
+
         // Cả 2 bảng này đều có cột tvbh thay vì ten_tu_van_ban_hang, cần map lại.
         // Khử trùng lặp theo so_don_hang (ưu tiên dữ liệu mới nhất từ yeucauxhd)
         const dedupMap = new Map<string, any>();
-        [...(archivedData || []), ...(yeucauData || [])].forEach(row => {
+        [...(archivedData || []), ...overrideArchivedData, ...(yeucauData || [])].forEach(row => {
             const key = (row.so_don_hang || row.id || '').trim();
             if (key) {
+                const override = SALES_MONTH_OVERRIDES[key];
+                if (override && (override.year !== year || override.monthIndex !== m)) {
+                    return; // Không tính vào tháng này vì đã ghi nhận doanh số ở tháng chỉ định
+                }
                 dedupMap.set(key, row);
             }
         });

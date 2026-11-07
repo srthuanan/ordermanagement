@@ -43,6 +43,159 @@ function onOpen() {
 //=================================================================================
 // HÀM TỰ ĐỘNG KHÔI PHỤC CÔNG THỨC & DROPDOWN CHO SỔ RÚT COC
 //=================================================================================
+function dongBoDataYeuCauXhdChoRutCoc(ss, rc, dSheet) {
+  try {
+    var sbUrl = (typeof SB_URL !== 'undefined' && SB_URL) ? SB_URL : "https://jwvgxqrkjlbewvpkvucj.supabase.co";
+    var sbKey = (typeof SB_SERVICE !== 'undefined' && SB_SERVICE) ? SB_SERVICE : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU";
+    
+    var rutCocVinSet = {};
+    var rcLastRow = rc.getLastRow();
+    if (rcLastRow >= 3) {
+      var rcVinVals = rc.getRange(3, 5, rcLastRow - 2, 1).getValues();
+      for (var vIdx = 0; vIdx < rcVinVals.length; vIdx++) {
+        var vClean = String(rcVinVals[vIdx][0] || '').trim().toUpperCase();
+        if (vClean) rutCocVinSet[vClean] = true;
+      }
+    }
+
+    var activeList = [];
+    var respAct = UrlFetchApp.fetch(sbUrl + "/rest/v1/yeucauxhd?select=*&order=ngay_xuat_hoa_don.asc.nullslast", {
+      headers: { "apikey": sbKey, "Authorization": "Bearer " + sbKey },
+      muteHttpExceptions: true
+    });
+    if (respAct.getResponseCode() === 200) {
+      var parsedAct = JSON.parse(respAct.getContentText());
+      if (Array.isArray(parsedAct)) activeList = parsedAct;
+    }
+
+    var archivedList = [];
+    var recentDateIso = new Date((new Date()).getTime() - (15 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+    var rutCocVinArr = Object.keys(rutCocVinSet);
+    if (rutCocVinArr.length > 0) {
+      for (var b = 0; b < rutCocVinArr.length; b += 80) {
+        var chunk = rutCocVinArr.slice(b, b + 80);
+        var inParam = chunk.map(function(v) { return encodeURIComponent(v); }).join(',');
+        var respArchVin = UrlFetchApp.fetch(sbUrl + "/rest/v1/archived_orders?select=*&vin=in.(" + inParam + ")", {
+          headers: { "apikey": sbKey, "Authorization": "Bearer " + sbKey },
+          muteHttpExceptions: true
+        });
+        if (respArchVin.getResponseCode() === 200) {
+          var parsedChunk = JSON.parse(respArchVin.getContentText());
+          if (Array.isArray(parsedChunk)) archivedList = archivedList.concat(parsedChunk);
+        }
+      }
+    }
+    var respArchRecent = UrlFetchApp.fetch(sbUrl + "/rest/v1/archived_orders?select=*&ngay_xuat_hoa_don=gte." + recentDateIso + "&order=ngay_xuat_hoa_don.asc.nullslast", {
+      headers: { "apikey": sbKey, "Authorization": "Bearer " + sbKey },
+      muteHttpExceptions: true
+    });
+    if (respArchRecent.getResponseCode() === 200) {
+      var parsedRecent = JSON.parse(respArchRecent.getContentText());
+      if (Array.isArray(parsedRecent)) archivedList = archivedList.concat(parsedRecent);
+    }
+
+    var mergedMap = {};
+    var mergedList = [];
+
+    for (var a = 0; a < archivedList.length; a++) {
+      var ar = archivedList[a];
+      var aVin = String(ar.vin || '').trim().toUpperCase();
+      var aOrder = String(ar.so_don_hang || '').trim();
+      var uKey = aVin || aOrder || ("ARCH_" + a);
+      if (mergedMap[uKey] === undefined) {
+        mergedMap[uKey] = mergedList.length;
+        mergedList.push(ar);
+      }
+    }
+
+    for (var idx = 0; idx < activeList.length; idx++) {
+      var act = activeList[idx];
+      var actVin = String(act.vin || '').trim().toUpperCase();
+      var actOrder = String(act.so_don_hang || '').trim();
+      var actKey = actVin || actOrder || ("ACT_" + idx);
+      if (mergedMap[actKey] !== undefined) {
+        mergedList[mergedMap[actKey]] = act;
+      } else {
+        mergedMap[actKey] = mergedList.length;
+        mergedList.push(act);
+      }
+    }
+
+    try {
+      var respDh = UrlFetchApp.fetch(sbUrl + "/rest/v1/donhang?select=*&vin=not.is.null", {
+        headers: { "apikey": sbKey, "Authorization": "Bearer " + sbKey },
+        muteHttpExceptions: true
+      });
+      if (respDh.getResponseCode() === 200) {
+        var dhList = JSON.parse(respDh.getContentText());
+        if (Array.isArray(dhList)) {
+          for (var dIdx = 0; dIdx < dhList.length; dIdx++) {
+            var dh = dhList[dIdx];
+            var dhVin = String(dh.vin || '').trim().toUpperCase();
+            if (dhVin && rutCocVinSet[dhVin] && mergedMap[dhVin] === undefined) {
+              mergedMap[dhVin] = mergedList.length;
+              mergedList.push({
+                ten_khach_hang: dh.ten_khach_hang || "",
+                so_don_hang: dh.so_don_hang || "",
+                dong_xe: dh.dong_xe || "",
+                phien_ban: dh.phien_ban || "",
+                ngoai_that: dh.ngoai_that || "",
+                noi_that: dh.noi_that || "",
+                tvbh: dh.ten_tu_van_ban_hang || dh.tvbh || "",
+                vin: dh.vin || "",
+                so_may: dh.so_may || "",
+                ngay_yeu_cau: dh.thoi_gian_nhap || dh.created_at || "",
+                ngay_xuat_hoa_don: dh.ngay_xuat_hoa_don || "",
+                hoa_hong_ung: 0,
+                vpoint: 0
+              });
+            }
+          }
+        }
+      }
+    } catch (eDh) {}
+
+    if (mergedList.length > 0) {
+      var rows = [];
+      for (var i = 0; i < mergedList.length; i++) {
+        var r = mergedList[i];
+        var ngayYc = r.ngay_yeu_cau ? new Date(r.ngay_yeu_cau) : "";
+        var ngayXhd = r.ngay_xuat_hoa_don ? new Date(r.ngay_xuat_hoa_don) : "";
+        var hoaHong = r.hoa_hong_ung ? parseFloat(r.hoa_hong_ung) : 0;
+        var vpoint = r.vpoint ? parseFloat(r.vpoint) : 0;
+        rows.push([
+          i + 1,
+          r.ten_khach_hang || "",
+          r.so_don_hang || "",
+          r.dong_xe || "",
+          r.phien_ban || "",
+          r.ngoai_that || "",
+          r.noi_that || "",
+          r.tvbh || r.ten_tu_van_ban_hang || "",
+          r.vin || "",
+          r.so_may || "",
+          ngayYc,
+          ngayXhd,
+          hoaHong,
+          vpoint
+        ]);
+      }
+      var maxSheetRows = dSheet.getMaxRows();
+      if (rows.length > maxSheetRows) {
+        dSheet.insertRowsAfter(maxSheetRows, rows.length - maxSheetRows);
+      }
+      var clearRows = Math.max(dSheet.getLastRow(), rows.length, 50);
+      dSheet.getRange(1, 1, clearRows, 14).clearContent();
+      dSheet.getRange(1, 1, rows.length, 14).setValues(rows);
+      dSheet.getRange(1, 11, rows.length, 1).setNumberFormat("dd/mm/yyyy hh:mm:ss");
+      dSheet.getRange(1, 12, rows.length, 1).setNumberFormat("dd/mm/yyyy");
+      dSheet.getRange(1, 13, rows.length, 2).setNumberFormat("#,##0");
+    }
+  } catch (eSync) {
+    Logger.log("Lỗi dongBoDataYeuCauXhdChoRutCoc: " + eSync);
+  }
+}
+
 function phucHoiCongThucRutCoc() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var rc = ss.getSheetByName('RÚT COC');
@@ -51,6 +204,9 @@ function phucHoiCongThucRutCoc() {
     SpreadsheetApp.getActiveSpreadsheet().toast('❌ Không tìm thấy sheet RÚT COC hoặc _DATA_YEUCAUXHD!', 'LỖI', 5);
     return;
   }
+
+  // 0. Đồng bộ dữ liệu từ yeucauxhd + archived_orders vào _DATA_YEUCAUXHD
+  dongBoDataYeuCauXhdChoRutCoc(ss, rc, dSheet);
 
   // 1. Khôi phục công thức lọc VIN chưa rút tại Cột Q của _DATA_YEUCAUXHD
   dSheet.getRange('Q1').setFormula('=IFERROR(FILTER($I$1:$I; ($I$1:$I<>"") * (COUNTIF(\'RÚT COC\'!$E$3:$E; $I$1:$I)=0)); "")');

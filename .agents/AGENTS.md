@@ -1,5 +1,13 @@
 # Agent Rules
 
+- **Quy Chuẩn Nghiệp Vụ Đổi Ghép Xe Cho Admin (Admin Order Car Re-assignment & Swap Protocol)**:
+  1. **Quyền Hạn**: Chỉ tài khoản Admin mới có quyền truy cập nút "Đổi Xe" trên giao diện chi tiết đơn hàng (`OrderDetailView`), áp dụng cho các đơn hàng chưa xuất hóa đơn và chưa bị hủy.
+  2. **2 Cơ Chế Đổi Xe**:
+     - *Cơ chế 1 (Đổi xe từ Kho)*: Admin chọn một xe đang rảnh (`Chưa ghép`) trong `khoxe`. Hệ thống tự động giải phóng VIN cũ về kho (`Chưa ghép`, `nguoi_giu_xe = null`), gán số VIN mới + số máy mới vào `donhang` & `yeucauxhd`, và cập nhật `khoxe` sang `Đã ghép` với người giữ xe là chính TVBH sở hữu đơn hàng.
+     - *Cơ chế 2 (Hoán đổi với Đơn khác)*: Admin chọn 1 đơn hàng đối ứng cùng cấu hình để tráo đổi chéo VIN trực tiếp giữa 2 đơn.
+  3. **Đồng Bộ & Thông Báo**: Ghi nhận Audit Log hành động `ADMIN_CHANGE_ORDER_VEHICLE`, phát thông báo Realtime và gửi email thông báo cho TVBH sở hữu đơn hàng tức thì.
+  4. **Giao Diện Dạng Sheet Popover Neo Trực Tiếp (Inline Popover Sheet)**: Không dùng modal ở giữa màn hình có lớp phủ nền tối. Giao diện Đổi xe phải là dạng sheet popover (`.inline-policy-panel`) neo trực tiếp ngay phía trên nút "Đổi Xe" ở thanh công cụ dưới chân trang hoặc chuyển tiếp tức thì khi bấm nút "Đổi xe" trong sheet "Chỉnh sửa đơn hàng", hỗ trợ nút mũi tên quay lại Chỉnh sửa đơn hàng nhanh chóng.
+
 - **Tốc độ mở sheet ghép xe**: Khung sheet phải hiện ngay khi bấm, không chờ tải form; tải trước form khi vào Kho xe và khởi tạo sẵn cấu hình/step 2 khi ghép VIN cụ thể.
 
 - **Gia hạn giữ xe trong 20 phút cuối**: Chỉ hiện nút Gia hạn cho chính người đang giữ khi 0 < thời gian còn lại <= 20 phút. Ẩn khi còn hơn 20 phút, đã hết hạn, thiếu hạn hoặc vô thời hạn; tự cập nhật khi trang đang mở.
@@ -123,12 +131,16 @@
   3. **Kỷ Luật Đẩy Code Apps Script Qua Clasp**: Bất kỳ khi nào chỉnh sửa code trong `backend-gas/` hoặc `gas-showroom/`, sau khi sửa file cục bộ, AI Agent **BẮT BUỘC PHẢI CHẠY NGAY LỆNH `npx --yes @google/clasp push -f`** trong thư mục tương ứng để đẩy code trực tiếp lên Google Cloud của Google Sheets, tránh tình trạng Google Sheets vẫn chạy code cũ.
 
 - **Quy Chuẩn Đồng Bộ Đơn Hàng Mở Từ DMS Mới Vào Supabase (New DMS Sales Orders to donhanghienhuu Protocol)**:
-  1. **Nguồn Dữ Liệu DMS Mới**: Trang Đơn hàng Ô tô (`https://dealer-portal.vinfast.com/dealer/sales/sales-orders/cars`) gọi API `/api/orders?orderType=1`.
-  2. **Phạm Vi Đại Lý**: Chỉ đồng bộ các đơn hàng thuộc khối đại lý `N319*` (N31901 - N31925, bao gồm Thuận An N31913, Tây Ninh N31911, Bình Dương N31920, Hòa Bình N31923,...). Bỏ qua hoàn toàn các đơn ngoài N319.
-  3. **Lọc Đơn Hàng Mở**: Chỉ nạp các đơn hàng đang xử lý (Mới `New`, Đã cọc `Deposit`, Đã ghép `Matched`, Phê duyệt `Approved`/`Waiting For Approval`). Tự động loại trừ các đơn đã xuất hóa đơn (`Invoiced`), đã giao xe (`Delivered`) hoặc đã hủy (`Cancelled`).
+  1. **Nguồn Dữ Liệu & Cú Pháp API DMS Mới**:
+     - Trang Đơn hàng Ô tô (`https://dealer-portal.vinfast.com/dealer/sales/sales-orders/cars`) gọi API `https://dealer-portal-api.vinfast.com/api/orders?orderType=1`.
+     - **Cú pháp lọc mã đại lý chuẩn**: Bắt buộc dùng tham số số ít **`dealerCode={Mã}`** (VD: `dealerCode=N31913`). Tuyệt đối KHÔNG dùng `dealerCodes=` (lặp lại) hoặc `search=` vì máy chủ VinFast sẽ từ chối với mã lỗi `HTTP 400 Bad Request`.
+     - **Giải mã xác thực**: Chuỗi `accessToken` trong `localStorage` sau khi giải mã XOR với key `'ndp-fe-storage'` là chuỗi JWT. Phải tách lấy phần thứ 2 (`jwt.split('.')[1]`) decode Base64 để trích xuất quyền và thông tin tài khoản.
+     - **Header bắt buộc**: `x-market: VN` và `x-active-capability: capability:vhkd_01` (hoặc lấy từ Cookie `activeCapability`) để tránh lỗi `403 Forbidden`.
+  2. **Phạm Vi Đại Lý**: Quét tuần tự theo danh sách đại lý khối `N319*` ưu tiên: `N31913` (Thuận An, ~1.140 đơn), `N31920` (Bình Dương), `N31911` (Tây Ninh), `N31923` (Hòa Bình)... mở rộng đầy đủ từ `N31901` đến `N31930` (bao gồm cả showroom mới `N31926`). Bỏ qua hoàn toàn các đơn ngoài khối N319.
+  3. **Lưu Đầy Đủ Trạng Thái Đơn Hàng**: Lưu toàn bộ các đơn hàng (`Mới`, `Đã cọc`, `Đã ghép`, `Phê duyệt`, `Đã xuất hóa đơn`, `Đã giao xe`) vào bảng `donhanghienhuu` để TVBH và kế toán có đầy đủ dữ liệu tra cứu mã Yana cũ (`don_hang_goc`), số VIN, giá trị và thông tin đối soát. Chỉ loại trừ các đơn bị Hủy (`CANCELLED`, `VOID`).
   4. **Cơ Chế Bắt Dữ Liệu Hai Chiều**:
      - **Bắt trực tiếp khi duyệt web (Real-time Live Interception)**: Khi TVBH mở tab hoặc duyệt danh sách Đơn hàng Ô tô, tiện ích mở rộng tự động bắt dữ liệu response của `/orders` lưu ngay lập tức vào bảng `donhanghienhuu` (theo khóa duy nhất `so_don_hang_ban`).
-     - **Quét tự động toàn hệ thống (Active Bulk Sync)**: Khi load trang DMS hoặc bấm nút `🛰️ Đồng bộ Kho xe & Đơn hàng`, hệ thống quét qua API `/orders?orderType=1` gom toàn bộ đơn hàng mở của các đại lý N319 nạp vào Supabase.
+     - **Quét tự động toàn hệ thống (Active Bulk Sync)**: Khi load trang DMS hoặc bấm nút `🛰️ Đồng bộ Kho xe & Đơn hàng`, hệ thống quét qua API `/orders?orderType=1&dealerCode=...` gom toàn bộ đơn hàng N319 nạp vào Supabase qua RPC `rpc_sync_donhanghienhuu`.
 
 - **Quy Chuẩn Ánh Xạ & Tra Cứu Mã Đơn Yana Sang DMS Mới (Yana to New DMS Order Mapping Protocol)**:
   1. **Cấu Trúc Định Danh**:

@@ -432,7 +432,11 @@ Deno.serve(async (req: Request) => {
     // 1. GHÉP XE THÀNH CÔNG (match_success)
     // ============================================================
     if (actionId === 'match_success') {
-      subject = `[THÔNG BÁO] V/v Ghép xe thành công cho Đơn hàng ${record.so_don_hang}`;
+      const isCarReassigned = Boolean(payload.oldVin || payload.isReassigned);
+      subject = isCarReassigned
+        ? `[THÔNG BÁO] V/v Điều chỉnh Đổi xe / Ghép VIN mới cho Đơn hàng ${record.so_don_hang}`
+        : `[THÔNG BÁO] V/v Ghép xe thành công cho Đơn hàng ${record.so_don_hang}`;
+
       const details: Record<string, string> = {
         "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
         "Tên khách hàng": record.ten_khach_hang || "N/A",
@@ -442,9 +446,27 @@ Deno.serve(async (req: Request) => {
         "Nội thất": record.noi_that || "N/A",
         "Ngày cọc": formatDate(record.ngay_coc),
         "Thời gian ghép": formatDate(record.thoi_gian_ghep || new Date().toISOString()),
-        "VIN": record.vin || "N/A",
+        "VIN MỚI": `<b style="color: #16a34a; font-family: monospace; font-size: 14px;">${record.vin || "N/A"}</b>`,
       };
-      htmlBody = buildHtml("Đơn hàng của Anh/Chị đã được ghép VIN thành công:", tenTVBH, details, "Vui lòng kiểm tra và xác nhận thông tin. File Thông báo sẵn sàng giao xe (Word) đã được đính kèm để Anh/Chị hoàn tất số tiền cọc/hạn thanh toán và gửi khách hàng.", "#1e3a8a");
+
+      if (payload.oldVin) {
+        details["VIN cũ (giải phóng)"] = `<span style="color: #dc2626; text-decoration: line-through; font-family: monospace;">${payload.oldVin}</span>`;
+      }
+      if (payload.note || payload.reason) {
+        details["Lý do điều phối"] = `<b>${payload.note || payload.reason}</b>`;
+      }
+
+      const greetingMessage = isCarReassigned
+        ? "Đơn hàng của Anh/Chị đã được Admin điều phối đổi sang số VIN mới thành công:"
+        : "Đơn hàng của Anh/Chị đã được ghép VIN thành công:";
+
+      htmlBody = buildHtml(
+        greetingMessage,
+        tenTVBH,
+        details,
+        "Vui lòng kiểm tra và xác nhận thông tin. File Thông báo sẵn sàng giao xe (Word) mới nhất đã được đính kèm để Anh/Chị hoàn tất số tiền cọc/hạn thanh toán và gửi khách hàng.",
+        isCarReassigned ? "#d97706" : "#1e3a8a"
+      );
 
       // Tự động tạo và đính kèm file Thông báo sẵn sàng giao xe (.docx)
       try {

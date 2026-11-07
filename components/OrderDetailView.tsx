@@ -18,6 +18,7 @@ import { supabase } from '../services/supabaseClient';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './admin/CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './admin/CyberTd4PrintModal';
 import { CyberVoucherTicketItem } from '../services/api/stockService';
+import { AdminChangeCarSheetInline } from './admin/AdminChangeCarSheetInline';
 import MarqueeText from './ui/MarqueeText';
 import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
 import { formatShortWarehouseName, cleanCyberContractCode, formatShortExteriorColor } from '../utils/stringUtils';
@@ -116,6 +117,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     stockData,
 }) => {
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+    const [isChangeCarModalOpen, setIsChangeCarModalOpen] = useState(false);
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
 
     // Vehicle config hook for inline edit dropdowns
@@ -123,9 +125,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     // Inline Action States
     const [inlineMode, setInlineMode] = useState<'VIEW' | 'POLICY' | 'CANCEL' | 'INVOICE' | 'EDIT' | 'TRANSFER'>('VIEW');
-    const [activeFooterPopover, setActiveFooterPopover] = useState<'EDIT' | 'CANCEL' | 'TRANSFER' | null>(null);
+    const [activeFooterPopover, setActiveFooterPopover] = useState<'EDIT' | 'CANCEL' | 'TRANSFER' | 'CHANGE_CAR' | null>(null);
     const [footerPopoverPlacement, setFooterPopoverPlacement] = useState<React.CSSProperties>({ visibility: 'hidden' });
     const editBtnRef = useRef<HTMLButtonElement>(null);
+    const changeCarBtnRef = useRef<HTMLButtonElement>(null);
     const cancelBtnRef = useRef<HTMLButtonElement>(null);
     const transferBtnRef = useRef<HTMLButtonElement>(null);
     const footerPopoverRef = useRef<HTMLDivElement>(null);
@@ -471,10 +474,16 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     useLayoutEffect(() => {
         if (!activeFooterPopover) return;
         const update = () => {
-            const anchor = activeFooterPopover === 'EDIT' ? editBtnRef.current : activeFooterPopover === 'CANCEL' ? cancelBtnRef.current : transferBtnRef.current;
+            const anchor = activeFooterPopover === 'EDIT'
+                ? editBtnRef.current
+                : activeFooterPopover === 'CHANGE_CAR'
+                ? (changeCarBtnRef.current || editBtnRef.current)
+                : activeFooterPopover === 'CANCEL'
+                ? cancelBtnRef.current
+                : transferBtnRef.current;
             if (!anchor) return;
             const rect = anchor.getBoundingClientRect();
-            const targetWidth = activeFooterPopover === 'EDIT' ? 370 : activeFooterPopover === 'TRANSFER' ? 350 : 330;
+            const targetWidth = activeFooterPopover === 'CHANGE_CAR' ? 440 : activeFooterPopover === 'EDIT' ? 370 : activeFooterPopover === 'TRANSFER' ? 350 : 330;
             const width = Math.min(targetWidth, window.innerWidth - 24);
             const left = Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12));
             const above = rect.top - 16;
@@ -492,7 +501,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         };
         const outside = (event: PointerEvent) => {
             const target = event.target as Node;
-            const anchor = activeFooterPopover === 'EDIT' ? editBtnRef.current : activeFooterPopover === 'CANCEL' ? cancelBtnRef.current : transferBtnRef.current;
+            const anchor = activeFooterPopover === 'EDIT'
+                ? editBtnRef.current
+                : activeFooterPopover === 'CHANGE_CAR'
+                ? (changeCarBtnRef.current || editBtnRef.current)
+                : activeFooterPopover === 'CANCEL'
+                ? cancelBtnRef.current
+                : transferBtnRef.current;
             if (!anchor?.contains(target) && !footerPopoverRef.current?.contains(target)) {
                 setActiveFooterPopover(null);
             }
@@ -1319,6 +1334,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const canRequestInvoice = generalStatus === 'đã ghép';
     const canAddSupplement = (isSupplementRequested || isRescanRequested) && !isCancelled;
     const canEdit = !!onEdit && ['chưa ghép', 'đã ghép'].includes(generalStatus);
+    const canChangeCar = isAdmin && !isReferenceAccount && !generalStatus.includes('xuất hóa đơn') && !isCancelled;
 
     const invoiceDateStr = resolvedOrder["Ngày xuất hóa đơn"];
     const isDateValidForVC = !invoiceDateStr || (() => {
@@ -2600,6 +2616,17 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 <span className="text-[9px] font-bold text-sky-400 uppercase tracking-[0.25em] flex items-center gap-1.5">
                                                     <i className="fas fa-barcode text-[11px] text-sky-400"></i> SỐ KHUNG (VIN)
                                                 </span>
+                                                {canChangeCar && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); setActiveFooterPopover(prev => prev === 'CHANGE_CAR' ? null : 'CHANGE_CAR'); }}
+                                                        className="px-2 py-0.5 rounded-full text-[8.5px] font-bold flex items-center gap-1 bg-amber-500/20 hover:bg-amber-500/35 text-amber-300 border border-amber-400/30 transition-all cursor-pointer active:scale-95"
+                                                        title="Admin đổi ghép xe khác từ kho hoặc hoán đổi đơn cho TVBH"
+                                                    >
+                                                        <i className="fa-solid fa-arrows-rotate text-[8px]"></i>
+                                                        <span>Đổi Xe</span>
+                                                    </button>
+                                                )}
                                                 {resolvedOrder?.VIN && currentCarLocation && (
                                                     <span className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-bold flex items-center gap-1.5 border transition-all ${
                                                         isCarInTransit 
@@ -3489,6 +3516,22 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 <span>Chỉnh Sửa</span>
                             </button>
                         )}
+                        {canChangeCar && (
+                            <button
+                                ref={changeCarBtnRef}
+                                type="button"
+                                onClick={() => setActiveFooterPopover(prev => prev === 'CHANGE_CAR' ? null : 'CHANGE_CAR')}
+                                className={`h-8 px-3 inline-flex items-center gap-1.5 font-medium text-xs transition-colors cursor-pointer shrink-0 ${
+                                    activeFooterPopover === 'CHANGE_CAR'
+                                        ? 'bg-amber-100 text-amber-900 font-semibold'
+                                        : 'text-amber-700 hover:text-amber-900 hover:bg-amber-50/80'
+                                }`}
+                                title="Admin đổi ghép xe khác từ kho hoặc hoán đổi đơn cho TVBH"
+                            >
+                                <i className="fa-solid fa-arrows-rotate text-[10px] text-amber-500"></i>
+                                <span>Đổi Xe</span>
+                            </button>
+                        )}
                         {canCancel && !isReferenceAccount && (
                             <button
                                 ref={cancelBtnRef}
@@ -3679,11 +3722,42 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <small>{resolvedOrder['Số đơn hàng']}</small>
                                 </div>
                                 <div className="inline-action-body">
-                                    {resolvedOrder.VIN && (
-                                        <div className="inline-action-note" data-tone="amber">
-                                            <i className="fas fa-lock mr-1.5"></i>
-                                            <strong>Đã ghép VIN ({resolvedOrder.VIN}):</strong> Đổi cấu hình xe sẽ giải phóng VIN.
+                                    {resolvedOrder.VIN ? (
+                                        <div className="inline-action-note flex items-center justify-between gap-2" data-tone="amber">
+                                            <div className="min-w-0">
+                                                <i className="fas fa-lock mr-1.5"></i>
+                                                <strong>Đã ghép VIN ({resolvedOrder.VIN}):</strong> Đổi cấu hình xe sẽ giải phóng VIN.
+                                            </div>
+                                            {canChangeCar && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveFooterPopover('CHANGE_CAR')}
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-200/80 hover:bg-amber-300 text-amber-900 font-semibold text-[10.5px] transition-colors cursor-pointer shrink-0"
+                                                    title="Admin đổi ghép xe khác từ kho hoặc hoán đổi đơn cho TVBH"
+                                                >
+                                                    <i className="fa-solid fa-arrows-rotate text-[9px]"></i>
+                                                    <span>Đổi xe</span>
+                                                </button>
+                                            )}
                                         </div>
+                                    ) : (
+                                        canChangeCar && (
+                                            <div className="inline-action-note flex items-center justify-between gap-2" data-tone="blue">
+                                                <div className="min-w-0 text-slate-600">
+                                                    <i className="fa-solid fa-car-side mr-1.5 text-sky-500"></i>
+                                                    <span>Đơn hàng chưa ghép xe.</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveFooterPopover('CHANGE_CAR')}
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-sky-100 hover:bg-sky-200 text-sky-900 font-semibold text-[10.5px] transition-colors cursor-pointer shrink-0"
+                                                    title="Ghép xe từ kho cho đơn hàng"
+                                                >
+                                                    <i className="fa-solid fa-plus text-[9px]"></i>
+                                                    <span>Ghép xe</span>
+                                                </button>
+                                            </div>
+                                        )
                                     )}
                                     {editErrorMessage && (
                                         <div className="inline-action-note" data-tone="red">
@@ -3964,6 +4038,26 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 )}
                             </div>
                         </>
+                    )}
+                    {activeFooterPopover === 'CHANGE_CAR' && resolvedOrder && (
+                        <AdminChangeCarSheetInline
+                            order={resolvedOrder}
+                            stockData={stockData}
+                            allOrders={orderList}
+                            onClose={() => setActiveFooterPopover(null)}
+                            onBackToEdit={() => setActiveFooterPopover('EDIT')}
+                            showToast={showToast}
+                            onSuccess={(newVin) => {
+                                if (newVin && onEdit) {
+                                    onEdit({
+                                        ...resolvedOrder,
+                                        VIN: newVin,
+                                        'Kết quả': 'Đã ghép',
+                                        ket_qua: 'Đã ghép'
+                                    });
+                                }
+                            }}
+                        />
                     )}
                 </div>,
                 document.body
