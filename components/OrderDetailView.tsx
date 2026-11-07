@@ -117,7 +117,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     stockData,
 }) => {
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
-    const [isChangeCarModalOpen, setIsChangeCarModalOpen] = useState(false);
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
 
     // Vehicle config hook for inline edit dropdowns

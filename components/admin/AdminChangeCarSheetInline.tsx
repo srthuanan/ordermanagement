@@ -254,7 +254,7 @@ export const AdminChangeCarSheetInline: React.FC<AdminChangeCarSheetInlineProps>
                             )}
                         </div>
                         <span className="text-[10px] opacity-75">
-                            TVBH: <strong>{tvbhName}</strong>
+                            KH: <strong>{customerName}</strong> • TVBH: <strong>{tvbhName}</strong>
                         </span>
                     </div>
                     <div className="text-[10px] mt-0.5 opacity-80 truncate">
