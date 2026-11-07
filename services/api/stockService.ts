@@ -376,7 +376,33 @@ export const autoReleaseExpiredHolds = async () => {
  */
 export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: string, phien_ban: string, ngoai_that: string, noi_that: string }): Promise<boolean> => {
     try {
-        console.log(`[tryAutoMatchWaitingOrder] Tìm đơn hàng chờ cho VIN: ${vin}`, config);
+        const cleanVin = (vin || '').trim().toUpperCase();
+        console.log(`[tryAutoMatchWaitingOrder] Tìm đơn hàng chờ cho VIN: ${cleanVin}`, config);
+
+        // 0. Chặn trùng: Không ghép tự động nếu xe đã được gán cho một đơn hàng còn hoạt động
+        const { data: activeOrderWithVin } = await supabaseAdmin
+            .from('donhang')
+            .select('so_don_hang, ten_tu_van_ban_hang, ket_qua')
+            .eq('vin', cleanVin)
+            .not('ket_qua', 'ilike', 'Đã hủy%')
+            .maybeSingle();
+
+        if (activeOrderWithVin) {
+            console.warn(`[tryAutoMatchWaitingOrder] Bỏ qua VIN ${cleanVin} vì đang được ghép cho ĐH ${activeOrderWithVin.so_don_hang} (TVBH: ${activeOrderWithVin.ten_tu_van_ban_hang}).`);
+            return false;
+        }
+
+        // Kiểm tra kho xe: Xe phải có trạng thái Chưa ghép
+        const { data: carInStock } = await supabaseAdmin
+            .from('khoxe')
+            .select('trang_thai, nguoi_giu_xe, so_may')
+            .eq('vin', cleanVin)
+            .maybeSingle();
+
+        if (carInStock && carInStock.trang_thai === 'Đã ghép' && carInStock.nguoi_giu_xe) {
+            console.warn(`[tryAutoMatchWaitingOrder] Bỏ qua VIN ${cleanVin} vì kho xe báo Đã ghép (người giữ: ${carInStock.nguoi_giu_xe}).`);
+            return false;
+        }
         
         // 1. Tìm đơn hàng "Chưa ghép" có cấu hình khớp tuyệt đối
         const { data: waitingOrders, error } = await supabaseAdmin.from('donhang')
@@ -408,21 +434,36 @@ export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: s
                 trang_thai: 'Đã ghép',
                 nguoi_giu_xe: tvbh,
                 thoi_gian_het_han_giu: 'Vô thời hạn'
-            }).eq('vin', vin);
+            }).eq('vin', cleanVin);
             if (khoxeError) throw khoxeError;
 
             // 3. Cập nhật trạng thái Đơn hàng
+            const autoPairedTime = new Date().toISOString();
             const { error: orderError } = await supabaseAdmin.from('donhang').update({
-                vin: vin,
+                vin: cleanVin,
                 ket_qua: 'Đã ghép',
-                thoi_gian_ghep: new Date().toISOString()
+                so_may: carInStock?.so_may || bestMatch.so_may || null,
+                thoi_gian_ghep: autoPairedTime
             }).eq('so_don_hang', orderNumber);
-            if (orderError) throw orderError;
+
+            if (orderError) {
+                if (orderError.code === '23505') {
+                    console.warn(`[tryAutoMatchWaitingOrder] Xảy ra trùng VIN ${cleanVin} khi cập nhật ĐH ${orderNumber}, đã tự động huỷ bỏ.`);
+                    return false;
+                }
+                throw orderError;
+            }
+
+            // Đồng bộ yeucauxhd nếu có
+            await supabaseAdmin.from('yeucauxhd').update({
+                vin: cleanVin,
+                so_may: carInStock?.so_may || null
+            }).eq('so_don_hang', orderNumber);
 
             // 4. Gửi thông báo & Email
             if (tvbh) {
                 await createNotification({
-                    message: `Hệ thống tự động ghép xe dự phòng (VIN: ${vin}) cho đơn hàng ${orderNumber} của bạn.`,
+                    message: `Hệ thống tự động ghép xe dự phòng (VIN: ${cleanVin}) cho đơn hàng ${orderNumber} của bạn.`,
                     type: 'success',
                     recipient: tvbh,
                     targetView: 'orders',

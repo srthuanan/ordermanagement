@@ -1,5 +1,11 @@
 # Agent Rules
 
+- **Quy Chuẩn Chặn Ghép Trùng Xe (Anti-Duplicate Vehicle Assignment Protocol)**:
+  1. **Nguyên Tắc Bất Di Bất Dịch**: Tại mọi thời điểm, một số VIN chỉ được phép gán cho duy nhất 1 đơn hàng đang hoạt động (`ket_qua NOT ILIKE 'Đã hủy%'`). Tuyệt đối không để xảy ra tình trạng 2 đơn hàng mở cùng mang một số VIN.
+  2. **Bảo Vệ Đa Tầng (Multi-Layer Enforcement)**:
+     - *Tầng Database (Khóa cứng cấp cơ sở dữ liệu)*: Đã áp dụng chỉ mục duy nhất có điều kiện `uq_donhang_active_vin` trên `donhang (vin)` loại trừ các đơn hủy và vin rỗng. Postgres sẽ tự động từ chối (HTTP 409, mã lỗi 23505) mọi hành vi ghi đè trùng số VIN.
+     - *Tầng Nghiệp Vụ Frontend & Backend*: Toàn bộ các luồng gán ghép xe (`manualMatchCar`, `pairVinToOrder`, `adminChangeOrderVehicle`, `addRequest`, `superUpdateOrderDetails`, `changeOrderConfiguration`, `tryAutoMatchWaitingOrder`) đều kiểm tra đối soát trước khi cập nhật. Khi phát hiện xung đột, hệ thống lập tức từ chối và báo rõ mã đơn hàng cùng TVBH đang sở hữu số VIN đó.
+
 - **Quy Chuẩn Nghiệp Vụ Đổi Ghép Xe Cho Admin (Admin Order Car Re-assignment & Swap Protocol)**:
   1. **Quyền Hạn**: Chỉ tài khoản Admin mới có quyền truy cập nút "Đổi Xe" trên giao diện chi tiết đơn hàng (`OrderDetailView`), áp dụng cho các đơn hàng chưa xuất hóa đơn và chưa bị hủy.
   2. **2 Cơ Chế Đổi Xe**:

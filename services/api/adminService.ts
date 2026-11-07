@@ -800,7 +800,41 @@ export const performAdminAction = async (action: string, params: Record<string, 
             return { status: 'SUCCESS', message: 'Đã cập nhật thông tin hóa đơn.' };
         }
         if (action === 'manualMatchCar') {
-            const tr = params.orderNumber; const vin = params.vin;
+            const tr = (params.orderNumber || '').trim();
+            const vin = (params.vin || '').trim().toUpperCase();
+            if (!tr || !vin) return { status: 'ERROR', message: 'Vui lòng cung cấp mã đơn hàng và số VIN.' };
+
+            // 1. Kiểm tra chặn trùng: VIN này có đang được ghép cho đơn hàng nào khác còn hoạt động không
+            const { data: conflictingOrder } = await supabaseAdmin
+                .from('donhang')
+                .select('so_don_hang, ten_tu_van_ban_hang, ket_qua')
+                .eq('vin', vin)
+                .neq('so_don_hang', tr)
+                .not('ket_qua', 'ilike', 'Đã hủy%')
+                .maybeSingle();
+
+            if (conflictingOrder) {
+                return {
+                    status: 'ERROR',
+                    message: `Xe (VIN: ${vin}) hiện đang được ghép cho ĐH ${conflictingOrder.so_don_hang} (TVBH: ${conflictingOrder.ten_tu_van_ban_hang}). Không thể ghép trùng! Hãy hủy ghép hoặc dùng chức năng Đổi xe.`
+                };
+            }
+
+            // Kiểm tra kho lưu trữ
+            const { data: archivedConflict } = await supabaseAdmin
+                .from('archived_orders')
+                .select('so_don_hang, tvbh')
+                .eq('vin', vin)
+                .neq('so_don_hang', tr)
+                .maybeSingle();
+
+            if (archivedConflict) {
+                return {
+                    status: 'ERROR',
+                    message: `Xe (VIN: ${vin}) đã được xuất hóa đơn cho ĐH ${archivedConflict.so_don_hang} (TVBH: ${archivedConflict.tvbh}) trong kho lưu trữ.`
+                };
+            }
+
             const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang').eq('so_don_hang', tr).limit(1).maybeSingle();
             await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: currentUser, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', vin);
             const { data: cInfo } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', vin).maybeSingle();
@@ -809,8 +843,20 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 const { data: kInfo } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', vin).maybeSingle();
                 matchedSoMay = kInfo?.so_may;
             }
-            await supabaseAdmin.from('donhang').update({ vin, so_may: matchedSoMay || null, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', tr);
+            const { error: matchErr } = await supabaseAdmin.from('donhang').update({ vin, so_may: matchedSoMay || null, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', tr);
+            if (matchErr) {
+                if (matchErr.code === '23505') {
+                    return {
+                        status: 'ERROR',
+                        message: `Số VIN ${vin} đã bị đơn hàng khác ghép trước. Không thể ghép trùng xe!`
+                    };
+                }
+                throw matchErr;
+            }
             
+            // Cập nhật yeucauxhd nếu đơn đã có yêu cầu XHĐ
+            await supabaseAdmin.from('yeucauxhd').update({ vin, so_may: matchedSoMay || null }).eq('so_don_hang', tr);
+
             // Thêm ghi nhận uy tín cho TVBH (tính như khớp xe)
             const tvbh = o && (o as any).ten_tu_van_ban_hang;
             if (tvbh) {

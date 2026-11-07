@@ -1055,25 +1055,61 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
     let pairedTime = null;
 
     if (payloadData.vin) {
+        const cleanVin = payloadData.vin.trim().toUpperCase();
+        // Kiểm tra chặn trùng: VIN này có đang được ghép cho đơn hàng nào khác còn hoạt động không
+        const { data: conflictOrder } = await supabaseAdmin
+            .from('donhang')
+            .select('so_don_hang, ten_tu_van_ban_hang, ket_qua')
+            .eq('vin', cleanVin)
+            .neq('so_don_hang', payloadData.so_don_hang)
+            .not('ket_qua', 'ilike', 'Đã hủy%')
+            .maybeSingle();
+
+        if (conflictOrder) {
+            return {
+                status: 'ERROR',
+                message: `Số VIN ${cleanVin} hiện đang được ghép cho đơn hàng ${conflictOrder.so_don_hang} (TVBH: ${conflictOrder.ten_tu_van_ban_hang}). Không thể chọn xe này!`
+            };
+        }
+
+        const { data: archivedConflict } = await supabaseAdmin
+            .from('archived_orders')
+            .select('so_don_hang, tvbh')
+            .eq('vin', cleanVin)
+            .neq('so_don_hang', payloadData.so_don_hang)
+            .maybeSingle();
+
+        if (archivedConflict) {
+            return {
+                status: 'ERROR',
+                message: `Số VIN ${cleanVin} đã được xuất hóa đơn cho ĐH ${archivedConflict.so_don_hang} trong kho lưu trữ.`
+            };
+        }
+
         try {
-            const { data: carData } = await supabase.from('khoxe').select('ma_dms').eq('vin', payloadData.vin).single();
+            const { data: carData } = await supabase.from('khoxe').select('ma_dms').eq('vin', cleanVin).single();
             if (carData && carData.ma_dms) {
                 const orderPrefix = payloadData.so_don_hang.substring(0, 6).toUpperCase();
                 const dmsUpperNode = carData.ma_dms.toUpperCase();
                 if (orderPrefix !== dmsUpperNode) return { status: 'ERROR', message: `Mã DMS của xe (${dmsUpperNode}) không khớp với 6 ký tự đầu của Số đơn hàng (${orderPrefix}). Vui lòng kiểm tra lại.` };
             }
         } catch (dmsErr) {}
-        vinDk = payloadData.vin; ketQua = "Đã ghép"; pairedTime = new Date().toISOString();
+        vinDk = cleanVin; ketQua = "Đã ghép"; pairedTime = new Date().toISOString();
         delete payloadData.vin;
     } else {
         try {
             // Tầng 1: Khớp tuyệt đối màu chính
             const { data: availableCars } = await supabase.from('khoxe').select('vin, ngoai_that, noi_that, ma_dms').eq('trang_thai', 'Chưa ghép').eq('dong_xe', payloadData.dong_xe).eq('phien_ban', payloadData.phien_ban).eq('ngoai_that', payloadData.ngoai_that).order('ngay_nhap', { ascending: true });
             if (availableCars && availableCars.length > 0) {
+                // Lọc bỏ những xe đã bị dính vào đơn hàng active khác (phòng ngừa xe chưa cập nhật trạng thái kho)
+                const { data: allActiveAssignedVins } = await supabaseAdmin.from('donhang').select('vin').not('vin', 'is', null).not('ket_qua', 'ilike', 'Đã hủy%');
+                const busyVinSet = new Set((allActiveAssignedVins || []).map((o: any) => (o.vin || '').trim().toUpperCase()));
+                const freeCars = availableCars.filter(car => car.vin && !busyVinSet.has(car.vin.trim().toUpperCase()));
+
                 const normalize = (str?: string) => (str || '').toLowerCase().trim().normalize('NFC');
                 const orderNoiThat = normalize(payloadData.noi_that);
                 const orderPrefix = payloadData.so_don_hang.substring(0, 6).toUpperCase();
-                const matchedCar = availableCars.find(car => {
+                const matchedCar = freeCars.find(car => {
                     const carNoiThat = normalize(car.noi_that);
                     const carDms = (car.ma_dms || '').toUpperCase();
                     return (orderNoiThat.includes(carNoiThat) || carNoiThat.includes(orderNoiThat)) && carDms === orderPrefix;
@@ -1135,36 +1171,77 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
 export const pairVinToOrder = async (orderNumber: string, vin: string) => {
     const pairedBy = getStorageItem("currentConsultant") || "Unknown";
     const pairedTime = new Date().toISOString();
+    const cleanVin = (vin || '').trim().toUpperCase();
     try {
         const { data: orderData } = await supabase.from('donhang').select('ket_qua, ten_tu_van_ban_hang').eq('so_don_hang', orderNumber).single();
         if (orderData && (orderData.ket_qua || '').toLowerCase().trim().normalize('NFC') === 'đã xuất hóa đơn') {
             throw new Error("Đơn hàng này đã xuất hóa đơn, không thể thay đổi thông tin ghép xe.");
         }
 
-        const { data: carData } = await supabase.from('khoxe').select('ma_dms, so_may').eq('vin', vin).maybeSingle();
+        // 1. Kiểm tra chặn trùng: VIN này có đang được ghép cho đơn hàng nào khác còn hoạt động không
+        const { data: conflictingOrder } = await supabaseAdmin
+            .from('donhang')
+            .select('so_don_hang, ten_tu_van_ban_hang, ket_qua')
+            .eq('vin', cleanVin)
+            .neq('so_don_hang', orderNumber)
+            .not('ket_qua', 'ilike', 'Đã hủy%')
+            .maybeSingle();
+
+        if (conflictingOrder) {
+            return {
+                status: 'ERROR',
+                message: `Số VIN ${cleanVin} hiện đang được ghép cho đơn hàng ${conflictingOrder.so_don_hang} (TVBH: ${conflictingOrder.ten_tu_van_ban_hang}). Không thể ghép trùng xe!`
+            };
+        }
+
+        // Kiểm tra kho lưu trữ
+        const { data: archivedConflict } = await supabaseAdmin
+            .from('archived_orders')
+            .select('so_don_hang, tvbh')
+            .eq('vin', cleanVin)
+            .neq('so_don_hang', orderNumber)
+            .maybeSingle();
+
+        if (archivedConflict) {
+            return {
+                status: 'ERROR',
+                message: `Số VIN ${cleanVin} đã được xuất hóa đơn cho ĐH ${archivedConflict.so_don_hang} (TVBH: ${archivedConflict.tvbh}) trong kho lưu trữ.`
+            };
+        }
+
+        const { data: carData } = await supabase.from('khoxe').select('ma_dms, so_may').eq('vin', cleanVin).maybeSingle();
         if (carData && carData.ma_dms) {
             const orderPrefix = orderNumber.substring(0, 6).toUpperCase();
             if (orderPrefix !== carData.ma_dms.toUpperCase()) return { status: 'ERROR', message: `Mã DMS của xe (${carData.ma_dms.toUpperCase()}) không khớp với 6 ký tự đầu của Số đơn hàng (${orderPrefix}).` };
         }
         let matchedSoMay = carData?.so_may;
         if (!matchedSoMay) {
-            const { data: ttxData } = await supabase.from('thongtinxe').select('so_may').eq('vin', vin).maybeSingle();
+            const { data: ttxData } = await supabase.from('thongtinxe').select('so_may').eq('vin', cleanVin).maybeSingle();
             matchedSoMay = ttxData?.so_may;
         }
-        await supabase.from('donhang').update({ ket_qua: 'Đã ghép', vin: vin, so_may: matchedSoMay || null, thoi_gian_ghep: pairedTime }).eq('so_don_hang', orderNumber);
-        await supabase.from('yeucauxhd').update({ vin: vin, so_may: matchedSoMay || null }).eq('so_don_hang', orderNumber);
+        const { error: updateDonhangErr } = await supabase.from('donhang').update({ ket_qua: 'Đã ghép', vin: cleanVin, so_may: matchedSoMay || null, thoi_gian_ghep: pairedTime }).eq('so_don_hang', orderNumber);
+        if (updateDonhangErr) {
+            if (updateDonhangErr.code === '23505') {
+                return {
+                    status: 'ERROR',
+                    message: `Số VIN ${cleanVin} đã bị đơn hàng khác ghép trước. Không thể ghép trùng xe!`
+                };
+            }
+            throw updateDonhangErr;
+        }
+        await supabase.from('yeucauxhd').update({ vin: cleanVin, so_may: matchedSoMay || null }).eq('so_don_hang', orderNumber);
         
         if (orderData?.ten_tu_van_ban_hang) {
-            const { data: activeHold } = await supabase.from('car_hold_activities').select('id').eq('vin', vin).eq('status', 'active').single();
+            const { data: activeHold } = await supabase.from('car_hold_activities').select('id').eq('vin', cleanVin).eq('status', 'active').single();
             if (activeHold) await supabase.from('car_hold_activities').update({ updated_at: pairedTime, status: 'matched' }).eq('id', activeHold.id);
-            else await supabase.from('car_hold_activities').insert({ vin: vin, username: orderData.ten_tu_van_ban_hang, tvbh_name: orderData.ten_tu_van_ban_hang, type: 'HOLD', status: 'matched', created_at: pairedTime, updated_at: pairedTime });
+            else await supabase.from('car_hold_activities').insert({ vin: cleanVin, username: orderData.ten_tu_van_ban_hang, tvbh_name: orderData.ten_tu_van_ban_hang, type: 'HOLD', status: 'matched', created_at: pairedTime, updated_at: pairedTime });
         }
-        await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: pairedBy, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', vin);
-        await supabase.from('car_hold_activities').delete().eq('vin', vin).eq('type', 'QUEUE');
-        await logAction('PAIR_VIN', { orderNumber, vin }, orderNumber, 'order');
+        await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: pairedBy, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', cleanVin);
+        await supabase.from('car_hold_activities').delete().eq('vin', cleanVin).eq('type', 'QUEUE');
+        await logAction('PAIR_VIN', { orderNumber, vin: cleanVin }, orderNumber, 'order');
         
         try {
-            await createNotification({ message: `TVBH ${pairedBy} đã ghép xe ${vin} cho ĐH ${orderNumber}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
+            await createNotification({ message: `TVBH ${pairedBy} đã ghép xe ${cleanVin} cho ĐH ${orderNumber}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
             
             // GỬI EMAIL THÔNG BÁO (match_success)
             const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
@@ -1448,8 +1525,13 @@ export const updateOrderDetails = async (orderNumber: string, details: Partial<O
                 const phienBan = details["Phiên bản"] || order.phien_ban;
                 const ngoaiThat = details["Ngoại thất"] || order.ngoai_that;
                 const noiThat = details["Nội thất"] || order.noi_that;
-                const { data: matchedCars } = await supabase.from('khoxe').select('vin').eq('trang_thai', 'Chưa ghép').eq('dong_xe', dongXe).eq('phien_ban', phienBan).eq('ngoai_that', ngoaiThat).eq('noi_that', noiThat).order('ngay_nhap', { ascending: true }).limit(1);
-                if (matchedCars && matchedCars.length > 0) matchedVin = matchedCars[0].vin;
+                const { data: matchedCars } = await supabase.from('khoxe').select('vin').eq('trang_thai', 'Chưa ghép').eq('dong_xe', dongXe).eq('phien_ban', phienBan).eq('ngoai_that', ngoaiThat).eq('noi_that', noiThat).order('ngay_nhap', { ascending: true });
+                if (matchedCars && matchedCars.length > 0) {
+                    const { data: allActiveAssignedVins } = await supabaseAdmin.from('donhang').select('vin').not('vin', 'is', null).not('ket_qua', 'ilike', 'Đã hủy%');
+                    const busyVinSet = new Set((allActiveAssignedVins || []).map((o: any) => (o.vin || '').trim().toUpperCase()));
+                    const freeCar = matchedCars.find(c => c.vin && !busyVinSet.has(c.vin.trim().toUpperCase()));
+                    if (freeCar) matchedVin = freeCar.vin;
+                }
             }
         }
         const updateData: any = {};
@@ -1509,6 +1591,21 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
         const oldVin = currentOrder?.vin;
         const newVin = details['VIN'] || details['vin'];
         const isVinChanged = newVin !== undefined && newVin !== oldVin;
+        
+        if (isVinChanged && newVin && typeof newVin === 'string' && newVin.trim() !== '' && newVin !== 'N/A') {
+            const cleanNewVin = newVin.trim().toUpperCase();
+            const { data: conflictOrder } = await supabaseAdmin
+                .from('donhang')
+                .select('so_don_hang, ten_tu_van_ban_hang, ket_qua')
+                .eq('vin', cleanNewVin)
+                .neq('so_don_hang', oldOrderNumber)
+                .not('ket_qua', 'ilike', 'Đã hủy%')
+                .maybeSingle();
+
+            if (conflictOrder) {
+                throw new Error(`Số VIN ${cleanNewVin} đang được ghép cho ĐH ${conflictOrder.so_don_hang} (TVBH: ${conflictOrder.ten_tu_van_ban_hang}). Không thể chỉnh sửa trùng VIN!`);
+            }
+        }
         
         const mappings = {
             donhang: {
@@ -1666,22 +1763,30 @@ export const changeOrderConfiguration = async (orderNumber: string, newConfig: P
         const { error: updateErr } = await supabase.from('donhang').update(updateData).eq('so_don_hang', orderNumber);
         if (updateErr) throw updateErr;
         await supabase.from('yeucauxhd').update({ dong_xe: updateData.dong_xe, phien_ban: updateData.phien_ban, ngoai_that: updateData.ngoai_that, noi_that: updateData.noi_that, vin: null, so_may: null }).eq('so_don_hang', orderNumber);
-        const { data: matchedCars } = await supabase.from('khoxe').select('vin').eq('trang_thai', 'Chưa ghép').eq('dong_xe', updateData.dong_xe).eq('phien_ban', updateData.phien_ban).eq('ngoai_that', updateData.ngoai_that).eq('noi_that', updateData.noi_that).order('ngay_nhap', { ascending: true }).limit(1);
+        const { data: matchedCars } = await supabase.from('khoxe').select('vin').eq('trang_thai', 'Chưa ghép').eq('dong_xe', updateData.dong_xe).eq('phien_ban', updateData.phien_ban).eq('ngoai_that', updateData.ngoai_that).eq('noi_that', updateData.noi_that).order('ngay_nhap', { ascending: true });
         let finalMessage = "Đã thay đổi cấu hình xe thành công.";
         let autoMatched = false, finalVin = null;
         if (matchedCars && matchedCars.length > 0) {
-            finalVin = matchedCars[0].vin;
-            const { data: cInfo } = await supabase.from('thongtinxe').select('so_may').eq('vin', finalVin).maybeSingle();
-            let autoSoMay = cInfo?.so_may;
-            if (!autoSoMay) {
-                const { data: kInfo } = await supabase.from('khoxe').select('so_may').eq('vin', finalVin).maybeSingle();
-                autoSoMay = kInfo?.so_may;
+            const { data: allActiveAssignedVins } = await supabaseAdmin.from('donhang').select('vin').not('vin', 'is', null).not('ket_qua', 'ilike', 'Đã hủy%');
+            const busyVinSet = new Set((allActiveAssignedVins || []).map((o: any) => (o.vin || '').trim().toUpperCase()));
+            const availableCar = matchedCars.find(c => c.vin && !busyVinSet.has(c.vin.trim().toUpperCase()));
+
+            if (availableCar) {
+                finalVin = availableCar.vin;
+                const { data: cInfo } = await supabase.from('thongtinxe').select('so_may').eq('vin', finalVin).maybeSingle();
+                let autoSoMay = cInfo?.so_may;
+                if (!autoSoMay) {
+                    const { data: kInfo } = await supabase.from('khoxe').select('so_may').eq('vin', finalVin).maybeSingle();
+                    autoSoMay = kInfo?.so_may;
+                }
+                const { error: autoPairErr } = await supabase.from('donhang').update({ vin: finalVin, so_may: autoSoMay || null, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', orderNumber);
+                if (!autoPairErr) {
+                    await supabase.from('yeucauxhd').update({ vin: finalVin, so_may: autoSoMay || null }).eq('so_don_hang', orderNumber);
+                    await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép' }).eq('vin', finalVin);
+                    await supabase.from('car_hold_activities').delete().eq('vin', finalVin).eq('type', 'QUEUE');
+                    finalMessage += ` Hệ thống đã tự động ghép với xe mới (VIN: ${finalVin})`; autoMatched = true;
+                }
             }
-            await supabase.from('donhang').update({ vin: finalVin, so_may: autoSoMay || null, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', orderNumber);
-            await supabase.from('yeucauxhd').update({ vin: finalVin, so_may: autoSoMay || null }).eq('so_don_hang', orderNumber);
-            await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép' }).eq('vin', finalVin);
-            await supabase.from('car_hold_activities').delete().eq('vin', finalVin).eq('type', 'QUEUE');
-            finalMessage += ` Hệ thống đã tự động ghép với xe mới (VIN: ${finalVin})`; autoMatched = true;
         }
         const { data: updatedOrder } = await supabase.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
         await logAction('CHANGE_CONFIG', { orderNumber, oldConfig: { dong_xe: order.dong_xe, phien_ban: order.phien_ban, color: order.ngoai_that }, newConfig }, orderNumber, 'order');
