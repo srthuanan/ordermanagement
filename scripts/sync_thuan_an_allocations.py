@@ -414,7 +414,11 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
     if not vins_clean:
         return {}
 
-    vin_list_str = ','.join([repr(v) for v in vins_clean])
+    def _s(val) -> str:
+        return str(val).strip() if val is not None else ""
+
+    ph = "%s" if is_pymssql else "?"
+    ph_list = ",".join([ph] * len(vins_clean))
 
     # 1. Truy vấn sổ kho CT70BEX của các VIN (Ma_Post >= '9')
     sql_bex = f"""
@@ -422,24 +426,25 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
             b.So_Khung, b.ma_kho, k.Ten_kho, b.nxt, b.Ngay_Ct, b.stt_rec, b.so_ct, b.ma_ct, b.so_luong
         FROM CT70BEX b WITH (NOLOCK)
         LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
-        WHERE b.Ma_Post >= '9' AND b.So_Khung IN ({vin_list_str})
+        WHERE b.Ma_Post >= '9' AND b.So_Khung IN ({ph_list})
         ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC
     """
-    c.execute(sql_bex)
+    c.execute(sql_bex, tuple(vins_clean))
     bex_rows = c.fetchall()
 
     vin_bex_map = {}
     for r in bex_rows:
         is_dict = isinstance(r, dict)
-        v = (r.get('So_Khung') or r.get('so_khung') if is_dict else r[0] or "").strip().upper()
-        mk = (r.get('ma_kho') or r.get('Ma_kho') if is_dict else r[1] or "").strip()
-        tk = (r.get('Ten_kho') or r.get('ten_kho') if is_dict else r[2] or "").strip()
-        nxt = str(r.get('nxt') if is_dict else r[3] or "").strip()
-        ngay = str(r.get('Ngay_Ct') or r.get('ngay_ct') if is_dict else r[4] or "")[:10]
-        stt = str(r.get('stt_rec') if is_dict else r[5] or "")
-        so_ct = str(r.get('so_ct') if is_dict else r[6] or "")
-        ma_ct = str(r.get('ma_ct') if is_dict else r[7] or "")
-        sl = float(r.get('so_luong') if is_dict else r[8] or 0)
+        v = _s((r.get('So_Khung') or r.get('so_khung')) if is_dict else r[0]).upper()
+        mk = _s((r.get('ma_kho') or r.get('Ma_kho')) if is_dict else r[1])
+        tk = _s((r.get('Ten_kho') or r.get('ten_kho')) if is_dict else r[2])
+        nxt = _s(r.get('nxt') if is_dict else r[3])
+        ngay = _s((r.get('Ngay_Ct') or r.get('ngay_ct')) if is_dict else r[4])[:10]
+        stt = _s(r.get('stt_rec') if is_dict else r[5])
+        so_ct = _s(r.get('so_ct') if is_dict else r[6])
+        ma_ct = _s(r.get('ma_ct') if is_dict else r[7])
+        raw_sl = (r.get('so_luong') if r.get('so_luong') is not None else r.get('So_Luong')) if is_dict else r[8]
+        sl = float(raw_sl or 0)
 
         if v not in vin_bex_map:
             vin_bex_map[v] = []
@@ -471,26 +476,26 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
             JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
             LEFT JOIN Dmkho kxuat WITH (NOLOCK) ON ISNULL(c.ma_kho_i, p.Ma_kho) = kxuat.Ma_kho
             LEFT JOIN Dmkho knhan WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = knhan.Ma_kho
-            WHERE c.so_khung IN ({vin_list_str})
+            WHERE c.so_khung IN ({ph_list})
         )
         SELECT so_khung, so_ct, ngay_ct, stt_rec, ma_kho_xuat, ten_kho_xuat, ma_kho_nhan, ten_kho_nhan
         FROM RankedDNX
         WHERE rn = 1
     """
-    c.execute(sql_dnx)
+    c.execute(sql_dnx, tuple(vins_clean))
     dnx_rows = c.fetchall()
     vin_dnx_map = {}
     for r in dnx_rows:
         is_dict = isinstance(r, dict)
-        v = (r.get('so_khung') or r.get('So_khung') if is_dict else r[0] or "").strip().upper()
+        v = _s((r.get('so_khung') or r.get('So_khung')) if is_dict else r[0]).upper()
         vin_dnx_map[v] = {
-            "so_ct": (r.get('so_ct') if is_dict else r[1] or "").strip(),
-            "ngay_ct": str(r.get('ngay_ct') or r.get('Ngay_ct') if is_dict else r[2] or "")[:10],
-            "stt_rec": (r.get('stt_rec') if is_dict else r[3] or "").strip(),
-            "ma_kho_xuat": (r.get('ma_kho_xuat') if is_dict else r[4] or "").strip(),
-            "ten_kho_xuat": (r.get('ten_kho_xuat') if is_dict else r[5] or "").strip(),
-            "ma_kho_nhan": (r.get('ma_kho_nhan') if is_dict else r[6] or "").strip(),
-            "ten_kho_nhan": (r.get('ten_kho_nhan') if is_dict else r[7] or "").strip(),
+            "so_ct": _s(r.get('so_ct') if is_dict else r[1]),
+            "ngay_ct": _s((r.get('ngay_ct') or r.get('Ngay_ct')) if is_dict else r[2])[:10],
+            "stt_rec": _s(r.get('stt_rec') if is_dict else r[3]),
+            "ma_kho_xuat": _s(r.get('ma_kho_xuat') if is_dict else r[4]),
+            "ten_kho_xuat": _s(r.get('ten_kho_xuat') if is_dict else r[5]),
+            "ma_kho_nhan": _s(r.get('ma_kho_nhan') if is_dict else r[6]),
+            "ten_kho_nhan": _s(r.get('ten_kho_nhan') if is_dict else r[7]),
         }
 
     # 3. Thuật toán phân giải kho thông minh cho từng xe
@@ -3101,6 +3106,10 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
     vins_clean = [v.strip().upper() for v in vins if v and len(v.strip()) >= 8]
 
     try:
+        def _s(val) -> str:
+            return str(val).strip() if val is not None else ""
+
+        conn = None
         is_pymssql = True
         try:
             import pymssql
@@ -3112,246 +3121,278 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 database='CyberAppGolden_VanDao',
                 timeout=15,
                 appname='CyberAppGolden',
+                autocommit=True,
             )
         except Exception:
             import pyodbc
-            conn = pyodbc.connect(CYBER_CONN, timeout=15)
+            conn = pyodbc.connect(CYBER_CONN, timeout=15, autocommit=True)
             is_pymssql = False
 
-        c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
-
-        # 1. Luôn truy vấn danh mục kho xe thực tế từ Dmkho trên Cyber
-        cyber_warehouses = []
         try:
-            sql_wh = """
-                SELECT RTRIM(LTRIM(ma_kho)) as ma_kho, RTRIM(LTRIM(ten_kho)) as ten_kho
-                FROM Dmkho WITH (NOLOCK)
-                WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','K103','K106','K58','K65','K66','K36','K91'))
-                  AND Ma_Kho != 'K39'
-                  AND Ten_kho NOT LIKE N'%phụ tùng%'
-                  AND Ten_kho NOT LIKE N'%phụ kiện%'
-                  AND Ten_kho NOT LIKE N'%phụ kiên%'
-                  AND Ten_kho NOT LIKE N'%vật tư%'
-                  AND Ten_kho NOT LIKE N'%sạc%'
-                  AND Ten_kho NOT LIKE N'%voucher%'
-                  AND Ten_kho NOT LIKE N'%công cụ%'
-                  AND Ten_kho NOT LIKE N'%thùng%'
-                  AND Ten_kho NOT LIKE N'%xe máy%'
-                  AND Ten_kho NOT LIKE N'%lazang%'
-                  AND Ten_kho NOT LIKE N'%cơ khí%'
-                  AND Ten_kho NOT LIKE N'%pin%'
-                  AND Ten_kho NOT LIKE N'%khách sạn%'
-                ORDER BY 
-                  CASE 
-                    WHEN ma_kho = 'K83' THEN 1
-                    WHEN ma_kho = 'K87' THEN 2
-                    WHEN ma_kho = 'K86' THEN 3
-                    WHEN ma_kho = 'K85' THEN 4
-                    WHEN ma_kho = 'KHCM.PVD' THEN 5
-                    WHEN ma_kho = 'K106' THEN 6
-                    WHEN ma_kho = 'K91' THEN 7
-                    ELSE 10 
-                  END, ma_kho
-            """
-            c.execute(sql_wh)
-            wh_rows = c.fetchall()
-            for r in wh_rows:
-                mk = (r.get('ma_kho') if is_pymssql else r[0] or '').strip()
-                tk = (r.get('ten_kho') if is_pymssql else r[1] or '').strip()
-                if mk:
-                    clean_tk = clean_location_name(tk or mk)
-                    cyber_warehouses.append({"ma_kho": mk, "ten_kho": clean_tk, "raw_ten_kho": tk, "label": clean_tk})
-        except Exception as e_wh:
-            print(f"[Warehouse lookup warning] {e_wh}", file=sys.stderr)
+            c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
+            c.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;")
 
-        if not vins_clean:
-            conn.close()
-            return {
-                "success": True,
-                "found": False,
-                "ma_kho": "",
-                "ten_kho": "",
-                "total_vins": 0,
-                "found_count": 0,
-                "cars": [],
-                "warehouses": cyber_warehouses
-            }
+            # 1. Luôn truy vấn danh mục kho xe thực tế từ Dmkho trên Cyber
+            cyber_warehouses = []
+            try:
+                sql_wh = """
+                    SELECT RTRIM(LTRIM(ma_kho)) as ma_kho, RTRIM(LTRIM(ten_kho)) as ten_kho
+                    FROM Dmkho WITH (NOLOCK)
+                    WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','K103','K106','K58','K65','K66','K36','K91'))
+                      AND Ma_Kho != 'K39'
+                      AND Ten_kho NOT LIKE N'%phụ tùng%'
+                      AND Ten_kho NOT LIKE N'%phụ kiện%'
+                      AND Ten_kho NOT LIKE N'%phụ kiên%'
+                      AND Ten_kho NOT LIKE N'%vật tư%'
+                      AND Ten_kho NOT LIKE N'%sạc%'
+                      AND Ten_kho NOT LIKE N'%voucher%'
+                      AND Ten_kho NOT LIKE N'%công cụ%'
+                      AND Ten_kho NOT LIKE N'%thùng%'
+                      AND Ten_kho NOT LIKE N'%xe máy%'
+                      AND Ten_kho NOT LIKE N'%lazang%'
+                      AND Ten_kho NOT LIKE N'%cơ khí%'
+                      AND Ten_kho NOT LIKE N'%pin%'
+                      AND Ten_kho NOT LIKE N'%khách sạn%'
+                    ORDER BY 
+                      CASE 
+                        WHEN ma_kho = 'K83' THEN 1
+                        WHEN ma_kho = 'K87' THEN 2
+                        WHEN ma_kho = 'K86' THEN 3
+                        WHEN ma_kho = 'K85' THEN 4
+                        WHEN ma_kho = 'KHCM.PVD' THEN 5
+                        WHEN ma_kho = 'K106' THEN 6
+                        WHEN ma_kho = 'K91' THEN 7
+                        ELSE 10 
+                      END, ma_kho
+                """
+                c.execute(sql_wh)
+                wh_rows = c.fetchall()
+                for r in wh_rows:
+                    mk = _s(r.get('ma_kho') if is_pymssql else r[0])
+                    tk = _s(r.get('ten_kho') if is_pymssql else r[1])
+                    if mk:
+                        clean_tk = clean_location_name(tk or mk)
+                        cyber_warehouses.append({"ma_kho": mk, "ten_kho": clean_tk, "raw_ten_kho": tk, "label": clean_tk})
+            except Exception as e_wh:
+                print(f"[Warehouse lookup warning] {e_wh}", file=sys.stderr)
 
-        vin_list_str = ','.join([repr(v) for v in vins_clean])
+            if not vins_clean:
+                return {
+                    "success": True,
+                    "found": False,
+                    "ma_kho": "",
+                    "ten_kho": "",
+                    "total_vins": 0,
+                    "found_count": 0,
+                    "cars": [],
+                    "warehouses": cyber_warehouses
+                }
 
-        # 2. Tra cứu kho tồn thực tế và nhận diện thông minh từ CT70BEX & CTDNX
-        stock_map = resolve_physical_warehouses_from_cyber(c, vins_clean, is_pymssql=is_pymssql)
+            ph = "%s" if is_pymssql else "?"
+            ph_list = ",".join([ph] * len(vins_clean))
+            vin_params = tuple(vins_clean)
 
-        # 3. Tra cứu chi tiết xe từ CT70BEX & CTKH kết hợp danh mục DmKx & Dmmauxe (đầy đủ tên tiếng Việt)
-        sql_info = f"""
-            WITH BexInfo AS (
+            # 2. Tra cứu kho tồn thực tế và nhận diện thông minh từ CT70BEX & CTDNX
+            stock_map = resolve_physical_warehouses_from_cyber(c, vins_clean, is_pymssql=is_pymssql)
+
+            # 3. Tra cứu chi tiết xe từ CT70BEX, CTKH & DMSOKHUNG (chỉ lọc đúng danh sách VIN cần tra, tránh quét toàn bảng CTKH)
+            sql_info = f"""
+                WITH BexInfo AS (
+                    SELECT 
+                        LTRIM(RTRIM(b.So_Khung)) AS So_Khung, b.So_May, b.Ma_Kx, b.Ma_Mau, b.Ma_Kho,
+                        ROW_NUMBER() OVER(PARTITION BY LTRIM(RTRIM(b.So_Khung)) ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
+                    FROM CT70BEX b WITH (NOLOCK)
+                    WHERE b.So_Khung IN ({ph_list})
+                ),
+                CtkhInfo AS (
+                    SELECT 
+                        LTRIM(RTRIM(k.So_khung)) AS So_khung, k.So_May, k.Ma_Kx, k.Ma_Mau, k.Ma_Vitri,
+                        ROW_NUMBER() OVER(PARTITION BY LTRIM(RTRIM(k.So_khung)) ORDER BY k.ngay_ct DESC, k.stt_rec DESC) AS rn
+                    FROM CTKH k WITH (NOLOCK)
+                    WHERE k.So_khung IN ({ph_list})
+                ),
+                SkInfo AS (
+                    SELECT
+                        LTRIM(RTRIM(s.So_khung)) AS So_khung, s.So_May, s.Ma_Kx, s.Ma_Mau, s.ten_kx, s.Ten_mau,
+                        ROW_NUMBER() OVER(PARTITION BY LTRIM(RTRIM(s.So_khung)) ORDER BY s.So_khung) AS rn
+                    FROM DMSOKHUNG s WITH (NOLOCK)
+                    WHERE s.So_khung IN ({ph_list})
+                )
                 SELECT 
-                    b.So_Khung, b.So_May, b.Ma_Kx, b.Ma_Mau, b.Ma_Kho,
-                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
+                    vlist.So_Khung AS so_khung,
+                    COALESCE(NULLIF(LTRIM(RTRIM(b.So_May)), ''), NULLIF(LTRIM(RTRIM(k.So_May)), ''), NULLIF(LTRIM(RTRIM(s.So_May)), ''), '') AS so_may,
+                    COALESCE(NULLIF(LTRIM(RTRIM(b.Ma_Kx)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Kx)), ''), NULLIF(LTRIM(RTRIM(s.Ma_Kx)), ''), '') AS ma_kx,
+                    COALESCE(NULLIF(LTRIM(RTRIM(kx.Ten_Kx)), ''), NULLIF(LTRIM(RTRIM(kx2.Ten_Kx)), ''), NULLIF(LTRIM(RTRIM(s.ten_kx)), ''), NULLIF(LTRIM(RTRIM(b.Ma_Kx)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Kx)), ''), '') AS ten_kx,
+                    COALESCE(NULLIF(LTRIM(RTRIM(b.Ma_Mau)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Mau)), ''), NULLIF(LTRIM(RTRIM(s.Ma_Mau)), ''), '') AS ma_mau,
+                    COALESCE(NULLIF(LTRIM(RTRIM(mx.Ten_mau)), ''), NULLIF(LTRIM(RTRIM(mx2.Ten_mau)), ''), NULLIF(LTRIM(RTRIM(s.Ten_mau)), ''), NULLIF(LTRIM(RTRIM(b.Ma_Mau)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Mau)), ''), '') AS ten_mau,
+                    COALESCE(NULLIF(LTRIM(RTRIM(b.Ma_Kho)), ''), NULLIF(LTRIM(RTRIM(kho.Ma_kho)), ''), '') AS ctkh_ma_kho,
+                    COALESCE(NULLIF(LTRIM(RTRIM(kho_b.Ten_kho)), ''), NULLIF(LTRIM(RTRIM(kho.Ten_kho)), ''), '') AS ctkh_ten_kho
+                FROM (
+                    SELECT So_Khung FROM BexInfo WHERE rn = 1
+                    UNION
+                    SELECT So_khung AS So_Khung FROM CtkhInfo WHERE rn = 1
+                    UNION
+                    SELECT So_khung AS So_Khung FROM SkInfo WHERE rn = 1
+                ) vlist
+                LEFT JOIN BexInfo b ON vlist.So_Khung = b.So_Khung AND b.rn = 1
+                LEFT JOIN CtkhInfo k ON vlist.So_Khung = k.So_khung AND k.rn = 1
+                LEFT JOIN SkInfo s ON vlist.So_Khung = s.So_khung AND s.rn = 1
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON b.Ma_Kx = kx.ma_kx
+                LEFT JOIN DmKx kx2 WITH (NOLOCK) ON k.Ma_Kx = kx2.ma_kx
+                LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON b.Ma_Mau = mx.ma_Mau
+                LEFT JOIN Dmmauxe mx2 WITH (NOLOCK) ON k.Ma_Mau = mx2.ma_Mau
+                LEFT JOIN Dmkho kho_b WITH (NOLOCK) ON b.Ma_Kho = kho_b.Ma_kho
+                LEFT JOIN Dmkho kho WITH (NOLOCK) ON k.Ma_Vitri = kho.Ma_kho
+            """
+            c.execute(sql_info, vin_params + vin_params + vin_params)
+            info_rows = c.fetchall()
+            if not is_pymssql:
+                cols_info = [comp[0].lower() for comp in c.description]
+                info_rows = [dict(zip(cols_info, r)) for r in info_rows]
+
+            # 4. Tra cứu phiếu Đề nghị xuất xe / Điều chuyển xe (DNX) của Showroom Thuận An đã lập trên CyberSoft
+            sql_dnx = f"""
+                SELECT 
+                    c.so_khung,
+                    p.so_ct,
+                    p.stt_rec,
+                    p.ngay_ct,
+                    p.dien_giai,
+                    p.ong_ba AS ten_kh,
+                    p.Ma_Hs_H AS nvkd,
+                    ISNULL(c.ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
+                    kxuat.Ten_kho AS ten_kho_xuat,
+                    ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
+                    knhan.Ten_kho AS ten_kho_nhan,
+                    c.so_may,
+                    c.ma_Kx,
+                    kx.Ten_Kx AS ten_kx,
+                    c.Ma_Mau,
+                    mx.Ten_mau AS ten_mau,
+                    ISNULL(c.Dien_giai_i, p.dien_giai) AS ghi_chu
+                FROM CTDNX c WITH (NOLOCK)
+                JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON c.ma_Kx = kx.ma_kx
+                LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON c.Ma_Mau = mx.ma_Mau
+                LEFT JOIN Dmkho kxuat WITH (NOLOCK) ON ISNULL(c.ma_kho_i, p.Ma_kho) = kxuat.Ma_kho
+                LEFT JOIN Dmkho knhan WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = knhan.Ma_kho
+                WHERE c.so_khung IN ({ph_list})
+                  AND (
+                    p.Ma_TTCP_H = '02.01.08'
+                    OR p.so_ct LIKE '08.DNX%'
+                    OR ISNULL(c.ma_khoN_i, p.Ma_khoN) = 'K83'
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1 
+                      FROM CT70BEX bx WITH (NOLOCK) 
+                      WHERE bx.Stt_recTD4 = p.stt_rec 
+                        AND bx.So_Khung = c.so_khung
+                        AND bx.Ma_Post >= '9'
+                  )
+                ORDER BY p.ngay_ct DESC, p.so_ct DESC
+            """
+            c.execute(sql_dnx, vin_params)
+            dnx_rows = c.fetchall()
+            if is_pymssql:
+                dnx_raw_list = [r for r in dnx_rows]
+            else:
+                cols_dnx = [comp[0].lower() for comp in c.description]
+                dnx_raw_list = [dict(zip(cols_dnx, r)) for r in dnx_rows]
+
+            # 5. Tra cứu phiếu Phiếu Xe Ra / Giấy ra cổng giao xe (TD4) đã lập trên CyberSoft
+            sql_td4 = f"""
+                SELECT 
+                    COALESCE(NULLIF(RTRIM(p.Ma_Xe), ''), bx.So_khung, '') AS so_khung,
+                    p.so_ct,
+                    p.stt_rec,
+                    p.ngay_ct,
+                    ISNULL(p.Gio_CT, '') AS gio_ct,
+                    p.ma_post,
+                    ISNULL(dp.Ten_Post, N'Lập phiếu') AS ten_post,
+                    p.dien_giai,
+                    p.ong_ba AS ten_kh,
+                    p.Ma_Hd_H AS so_hd,
+                    p.so_may,
+                    p.loai_xe,
+                    ISNULL(p.Ghi_chu, '') AS ghi_chu,
+                    ISNULL(p.T_TT, 0) AS tong_tien,
+                    ISNULL(p.T_Da_TT, 0) AS da_thanh_toan,
+                    ISNULL(p.T_CL_TT, 0) AS con_lai,
+                    ISNULL(hs.Ten_Hs, p.Ma_Hs_H) AS nvkd
+                FROM PHTD p WITH (NOLOCK)
+                LEFT JOIN DmPost dp WITH (NOLOCK) ON dp.Ma_Ct = 'TD4' AND dp.Ma_Post = p.Ma_Post
+                LEFT JOIN PHHDX hdx WITH (NOLOCK) ON p.Ma_Hd_H = hdx.so_ct
+                LEFT JOIN DmHs hs WITH (NOLOCK) ON (hdx.Ma_Hs_H = hs.Ma_Hs OR p.Ma_Hs_H = hs.Ma_Hs)
+                LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON RTRIM(p.Ma_Hd_H) = RTRIM(bx.Ma_Hd)
+                WHERE p.Ma_Ct = 'TD4'
+                  AND (
+                    RTRIM(p.Ma_Xe) IN ({ph_list})
+                    OR bx.So_khung IN ({ph_list})
+                  )
+                ORDER BY p.ngay_ct DESC, p.so_ct DESC
+            """
+            c.execute(sql_td4, vin_params + vin_params)
+            td4_rows = c.fetchall()
+            if is_pymssql:
+                td4_raw_list = [r for r in td4_rows]
+            else:
+                cols_td4 = [comp[0].lower() for comp in c.description]
+                td4_raw_list = [dict(zip(cols_td4, r)) for r in td4_rows]
+
+            # 6. Tra cứu hợp đồng xếp xe từ BEXEPXE & PHHDX
+            sql_bx = f"""
+                SELECT 
+                    bx.So_khung, bx.Ma_Hd, bx.Stt_Rec0, bx.Ngay_Xep,
+                    h.ngay_ct AS ngay_hd, h.ong_ba AS ten_kh, h.Dien_Thoai AS dien_thoai
+                FROM BEXEPXE bx WITH (NOLOCK)
+                LEFT JOIN PHHDX h WITH (NOLOCK) ON RTRIM(bx.Ma_Hd) = RTRIM(h.so_ct)
+                WHERE bx.So_khung IN ({ph_list})
+            """
+            c.execute(sql_bx, vin_params)
+            bx_rows = c.fetchall()
+            bx_map = {}
+            for r in bx_rows:
+                v = _s(r.get('So_khung') if is_pymssql else r[0]).upper()
+                if v and v not in bx_map:
+                    ngay_xep = r.get('Ngay_Xep') if is_pymssql else r[3]
+                    bx_map[v] = {
+                        "so_hd": _s(r.get('Ma_Hd') if is_pymssql else r[1]),
+                        "ngay_xep": _s(ngay_xep)[:10] if ngay_xep else "",
+                        "ten_kh": _s(r.get('ten_kh') if is_pymssql else r[5]),
+                        "dien_thoai": _s(r.get('dien_thoai') if is_pymssql else r[6]),
+                        "status": "Đã ghép SK"
+                    }
+
+            # 7. Tra cứu chứng từ xuất kho gần nhất (để biết lý do nếu tồn = 0)
+            sql_exp = f"""
+                SELECT 
+                    b.So_Khung, b.so_ct, b.ngay_ct, b.ma_kho, k.Ten_kho, b.dien_giai, b.ma_ct
                 FROM CT70BEX b WITH (NOLOCK)
-                WHERE b.So_Khung IN ({vin_list_str})
-            )
-            SELECT 
-                COALESCE(b.So_Khung, k.So_khung) AS so_khung,
-                COALESCE(NULLIF(b.So_May, ''), k.So_May, '') AS so_may,
-                COALESCE(NULLIF(b.Ma_Kx, ''), k.Ma_Kx, '') AS ma_kx,
-                COALESCE(NULLIF(kx.Ten_Kx, ''), NULLIF(kx2.Ten_Kx, ''), NULLIF(b.Ma_Kx, ''), k.Ma_Kx, '') AS ten_kx,
-                COALESCE(NULLIF(b.Ma_Mau, ''), k.Ma_Mau, '') AS ma_mau,
-                COALESCE(NULLIF(mx.Ten_mau, ''), NULLIF(mx2.Ten_mau, ''), NULLIF(b.Ma_Mau, ''), k.Ma_Mau, '') AS ten_mau,
-                COALESCE(b.Ma_Kho, kho.Ma_kho, '') AS ctkh_ma_kho,
-                COALESCE(kho_b.Ten_kho, kho.Ten_kho, '') AS ctkh_ten_kho
-            FROM BexInfo b
-            FULL OUTER JOIN CTKH k WITH (NOLOCK) ON b.So_Khung = k.So_khung
-            LEFT JOIN DmKx kx WITH (NOLOCK) ON b.Ma_Kx = kx.ma_kx
-            LEFT JOIN DmKx kx2 WITH (NOLOCK) ON k.Ma_Kx = kx2.ma_kx
-            LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON b.Ma_Mau = mx.ma_Mau
-            LEFT JOIN Dmmauxe mx2 WITH (NOLOCK) ON k.Ma_Mau = mx2.ma_Mau
-            LEFT JOIN Dmkho kho_b WITH (NOLOCK) ON b.Ma_Kho = kho_b.Ma_kho
-            LEFT JOIN Dmkho kho WITH (NOLOCK) ON k.Ma_Vitri = kho.Ma_kho
-            WHERE b.rn = 1 OR b.rn IS NULL
-        """
-        c.execute(sql_info)
-        info_rows = c.fetchall()
-
-        # 4. Tra cứu phiếu Đề nghị xuất xe / Điều chuyển xe (DNX) của Showroom Thuận An đã lập trên CyberSoft
-        sql_dnx = f"""
-            SELECT 
-                c.so_khung,
-                p.so_ct,
-                p.stt_rec,
-                p.ngay_ct,
-                p.dien_giai,
-                p.ong_ba AS ten_kh,
-                p.Ma_Hs_H AS nvkd,
-                ISNULL(c.ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
-                kxuat.Ten_kho AS ten_kho_xuat,
-                ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
-                knhan.Ten_kho AS ten_kho_nhan,
-                c.so_may,
-                c.ma_Kx,
-                kx.Ten_Kx AS ten_kx,
-                c.Ma_Mau,
-                mx.Ten_mau AS ten_mau,
-                ISNULL(c.Dien_giai_i, p.dien_giai) AS ghi_chu
-            FROM CTDNX c WITH (NOLOCK)
-            JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
-            LEFT JOIN DmKx kx WITH (NOLOCK) ON c.ma_Kx = kx.ma_kx
-            LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON c.Ma_Mau = mx.ma_Mau
-            LEFT JOIN Dmkho kxuat WITH (NOLOCK) ON ISNULL(c.ma_kho_i, p.Ma_kho) = kxuat.Ma_kho
-            LEFT JOIN Dmkho knhan WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = knhan.Ma_kho
-            WHERE c.so_khung IN ({vin_list_str})
-              AND (
-                p.Ma_TTCP_H = '02.01.08'
-                OR p.so_ct LIKE '08.DNX%'
-                OR ISNULL(c.ma_khoN_i, p.Ma_khoN) = 'K83'
-              )
-              AND NOT EXISTS (
-                  SELECT 1 
-                  FROM CT70BEX bx WITH (NOLOCK) 
-                  WHERE bx.Stt_recTD4 = p.stt_rec 
-                    AND bx.So_Khung = c.so_khung
-                    AND bx.Ma_Post >= '9'
-              )
-            ORDER BY p.ngay_ct DESC, p.so_ct DESC
-        """
-        c.execute(sql_dnx)
-        dnx_rows = c.fetchall()
-        if is_pymssql:
-            dnx_raw_list = [r for r in dnx_rows]
-        else:
-            cols_dnx = [comp[0].lower() for comp in c.description]
-            dnx_raw_list = [dict(zip(cols_dnx, r)) for r in dnx_rows]
-
-        # 5. Tra cứu phiếu Phiếu Xe Ra / Giấy ra cổng giao xe (TD4) đã lập trên CyberSoft
-        sql_td4 = f"""
-            SELECT 
-                COALESCE(NULLIF(RTRIM(p.Ma_Xe), ''), bx.So_khung, '') AS so_khung,
-                p.so_ct,
-                p.stt_rec,
-                p.ngay_ct,
-                ISNULL(p.Gio_CT, '') AS gio_ct,
-                p.ma_post,
-                ISNULL(dp.Ten_Post, N'Lập phiếu') AS ten_post,
-                p.dien_giai,
-                p.ong_ba AS ten_kh,
-                p.Ma_Hd_H AS so_hd,
-                p.so_may,
-                p.loai_xe,
-                ISNULL(p.Ghi_chu, '') AS ghi_chu,
-                ISNULL(p.T_TT, 0) AS tong_tien,
-                ISNULL(p.T_Da_TT, 0) AS da_thanh_toan,
-                ISNULL(p.T_CL_TT, 0) AS con_lai,
-                ISNULL(hs.Ten_Hs, p.Ma_Hs_H) AS nvkd
-            FROM PHTD p WITH (NOLOCK)
-            LEFT JOIN DmPost dp WITH (NOLOCK) ON dp.Ma_Ct = 'TD4' AND dp.Ma_Post = p.Ma_Post
-            LEFT JOIN PHHDX hdx WITH (NOLOCK) ON p.Ma_Hd_H = hdx.so_ct
-            LEFT JOIN DmHs hs WITH (NOLOCK) ON (hdx.Ma_Hs_H = hs.Ma_Hs OR p.Ma_Hs_H = hs.Ma_Hs)
-            LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON RTRIM(p.Ma_Hd_H) = RTRIM(bx.Ma_Hd)
-            WHERE p.Ma_Ct = 'TD4'
-              AND (
-                RTRIM(p.Ma_Xe) IN ({vin_list_str})
-                OR bx.So_khung IN ({vin_list_str})
-              )
-            ORDER BY p.ngay_ct DESC, p.so_ct DESC
-        """
-        c.execute(sql_td4)
-        td4_rows = c.fetchall()
-        if is_pymssql:
-            td4_raw_list = [r for r in td4_rows]
-        else:
-            cols_td4 = [comp[0].lower() for comp in c.description]
-            td4_raw_list = [dict(zip(cols_td4, r)) for r in td4_rows]
-
-        # 6. Tra cứu hợp đồng xếp xe từ BEXEPXE & PHHDX
-        sql_bx = f"""
-            SELECT 
-                bx.So_khung, bx.Ma_Hd, bx.Stt_Rec0, bx.Ngay_Xep,
-                h.ngay_ct AS ngay_hd, h.ong_ba AS ten_kh, h.Dien_Thoai AS dien_thoai
-            FROM BEXEPXE bx WITH (NOLOCK)
-            LEFT JOIN PHHDX h WITH (NOLOCK) ON RTRIM(bx.Ma_Hd) = RTRIM(h.so_ct)
-            WHERE bx.So_khung IN ({vin_list_str})
-        """
-        c.execute(sql_bx)
-        bx_rows = c.fetchall()
-        bx_map = {}
-        for r in bx_rows:
-            v = (r.get('So_khung') if is_pymssql else r[0] or "").strip().upper()
-            if v and v not in bx_map:
-                ngay_xep = r.get('Ngay_Xep') if is_pymssql else r[3]
-                bx_map[v] = {
-                    "so_hd": (r.get('Ma_Hd') if is_pymssql else r[1] or "").strip(),
-                    "ngay_xep": str(ngay_xep)[:10] if ngay_xep else "",
-                    "ten_kh": (r.get('ten_kh') if is_pymssql else r[5] or "").strip(),
-                    "dien_thoai": (r.get('dien_thoai') if is_pymssql else r[6] or "").strip(),
-                    "status": "Đã ghép SK"
-                }
-
-        # 7. Tra cứu chứng từ xuất kho gần nhất (để biết lý do nếu tồn = 0)
-        sql_exp = f"""
-            SELECT 
-                b.So_Khung, b.so_ct, b.ngay_ct, b.ma_kho, k.Ten_kho, b.dien_giai, b.ma_ct
-            FROM CT70BEX b WITH (NOLOCK)
-            LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
-            WHERE b.nxt = '2' AND b.Ma_Post >= '9' AND b.So_Khung IN ({vin_list_str})
-            ORDER BY b.ngay_ct DESC, b.stt_rec DESC
-        """
-        c.execute(sql_exp)
-        exp_rows = c.fetchall()
-        export_map = {}
-        for r in exp_rows:
-            v = (r.get('So_Khung') if is_pymssql else r[0] or "").strip().upper()
-            if v and v not in export_map:
-                ngay_ct = r.get('ngay_ct') if is_pymssql else r[2]
-                export_map[v] = {
-                    "so_ct": (r.get('so_ct') if is_pymssql else r[1] or "").strip(),
-                    "ngay_ct": str(ngay_ct)[:10] if ngay_ct else "",
-                    "ma_kho": (r.get('ma_kho') if is_pymssql else r[3] or "").strip(),
-                    "ten_kho": (r.get('Ten_kho') if is_pymssql else r[4] or "").strip(),
-                    "dien_giai": (r.get('dien_giai') if is_pymssql else r[5] or "").strip(),
-                    "ma_ct": (r.get('ma_ct') if is_pymssql else r[6] or "").strip()
-                }
-
-        conn.close()
+                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
+                WHERE b.nxt = '2' AND b.Ma_Post >= '9' AND b.So_Khung IN ({ph_list})
+                ORDER BY b.ngay_ct DESC, b.stt_rec DESC
+            """
+            c.execute(sql_exp, vin_params)
+            exp_rows = c.fetchall()
+            export_map = {}
+            for r in exp_rows:
+                v = _s(r.get('So_Khung') if is_pymssql else r[0]).upper()
+                if v and v not in export_map:
+                    ngay_ct = r.get('ngay_ct') if is_pymssql else r[2]
+                    export_map[v] = {
+                        "so_ct": _s(r.get('so_ct') if is_pymssql else r[1]),
+                        "ngay_ct": _s(ngay_ct)[:10] if ngay_ct else "",
+                        "ma_kho": _s(r.get('ma_kho') if is_pymssql else r[3]),
+                        "ten_kho": _s(r.get('Ten_kho') if is_pymssql else r[4]),
+                        "dien_giai": _s(r.get('dien_giai') if is_pymssql else r[5]),
+                        "ma_ct": _s(r.get('ma_ct') if is_pymssql else r[6])
+                    }
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         td4_map = {}
         for r in td4_raw_list:

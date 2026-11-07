@@ -645,6 +645,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
     // Tự động tra cứu kho tồn thực tế trên CyberSoft khi nhập số VIN
     const [isLookingUpVin, setIsLookingUpVin] = useState(false);
+    const [lookupRetryTick, setLookupRetryTick] = useState(0);
     const [detectedWarehouseName, setDetectedWarehouseName] = useState('');
     const [cachedCarDetails, setCachedCarDetails] = useState<Record<string, any>>({});
     const [lookupResultInfo, setLookupResultInfo] = useState<{
@@ -654,6 +655,14 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         carInfo?: string;
         cars?: any[];
         detection_reason?: string;
+        isError?: boolean;
+        latest_export?: {
+            so_ct?: string;
+            ngay_ct?: string;
+            ma_kho?: string;
+            ten_kho?: string;
+            ma_ct?: string;
+        };
         alt_warehouses?: Array<{
             ma_kho: string;
             ten_kho: string;
@@ -672,13 +681,24 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     useEffect(() => {
         if (extractedVins.length === 0) {
             setLookupResultInfo(null);
+            setDetectedWarehouseName('');
             return;
         }
 
         const timer = setTimeout(async () => {
             setIsLookingUpVin(true);
+            setDetectedWarehouseName('');
             try {
                 const res = await lookupCyberVinWarehouse(extractedVins);
+                if (!res.success) {
+                    setDetectedWarehouseName('');
+                    setLookupResultInfo({
+                        found: false,
+                        isError: true,
+                        error: res.error || 'Không thể kết nối tra cứu kho trên CyberSoft ERP'
+                    });
+                    return;
+                }
                 if (res.success && res.found && res.ma_kho) {
                     setDnxMaKhoXuat(res.ma_kho);
                     setDetectedWarehouseName(res.ten_kho || res.ma_kho);
@@ -731,13 +751,17 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         found: false,
                         carInfo: carDesc,
                         cars: res.cars,
-                        error: res.error || 'Xe chưa có tồn kho thực tế hoặc đang vận tải trên Cyber'
+                        error: res.error || 'Xe chưa có tồn kho thực tế hoặc đang vận tải trên Cyber',
+                        isError: false,
+                        detection_reason: res.detection_reason,
+                        latest_export: (res as any).latest_export || firstCar?.latest_export
                     });
                 }
             } catch (err: any) {
                 setLookupResultInfo({
                     found: false,
-                    error: err.message || 'Lỗi tra cứu vị trí kho trên Cyber'
+                    error: err.message || 'Lỗi tra cứu vị trí kho trên Cyber',
+                    isError: true
                 });
             } finally {
                 setIsLookingUpVin(false);
@@ -745,7 +769,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }, 450);
 
         return () => clearTimeout(timer);
-    }, [extractedVins.join(',')]);
+    }, [extractedVins.join(','), lookupRetryTick]);
 
     // Phát hiện phiếu đã tồn tại (DNX hoặc TD4) để ngăn chặn tạo trùng lặp
     const detectedExistingTicket = useMemo(() => {
@@ -4310,6 +4334,11 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 <div className="text-[10.5px] text-emerald-800 flex items-center gap-1">
                                                     <span className="text-slate-400">💡 Cơ sở:</span>
                                                     <span className="font-medium">{lookupResultInfo.detection_reason}</span>
+                                                    {activeMatchingRequest?.fromWarehouse && activeMatchingRequest.fromWarehouse !== lookupResultInfo.ma_kho && (
+                                                        <span className="ml-1 px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px]">
+                                                            ⚡ TVBH báo {activeMatchingRequest.fromWarehouse} ➔ Đã tự chỉnh Kho xuất sang {lookupResultInfo.ma_kho} theo tồn Cyber
+                                                        </span>
+                                                    )}
                                                 </div>
                                             )}
 
@@ -4341,12 +4370,32 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         </div>
                                     )}
 
-                                    {lookupResultInfo && !lookupResultInfo.found && !isLookingUpVin && extractedVins.length > 0 && (
+                                    {lookupResultInfo && lookupResultInfo.isError && !isLookingUpVin && extractedVins.length > 0 && (
+                                        <div className="mt-1 px-2 py-1.5 bg-rose-50 border border-rose-300 rounded-md text-rose-900 text-[11px] flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <i className="fas fa-exclamation-triangle text-rose-600 text-[10px] shrink-0"></i>
+                                                <span className="font-bold text-rose-800 truncate" title={lookupResultInfo.error}>
+                                                    Lỗi tra cứu kho Cyber: {lookupResultInfo.error}
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setLookupRetryTick(t => t + 1)}
+                                                className="text-[9.5px] font-bold px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded shrink-0 cursor-pointer"
+                                            >
+                                                ↻ Tra lại
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {lookupResultInfo && !lookupResultInfo.found && !lookupResultInfo.isError && !isLookingUpVin && extractedVins.length > 0 && (
                                         <div className="mt-1 px-2 py-1 bg-amber-50 border border-amber-300 rounded-md text-amber-900 text-[11px] flex items-center justify-between">
                                             <div className="flex items-center gap-1.5 truncate">
                                                 <i className="fas fa-truck text-amber-600 text-[10px] shrink-0"></i>
                                                 <span className="font-bold text-amber-800">
-                                                    Vị trí: Đang vận tải (Tồn kho = 0)
+                                                    {lookupResultInfo.latest_export?.so_ct
+                                                        ? `Tồn kho = 0 (Đã xuất kho ${lookupResultInfo.latest_export.ma_kho || ''} theo phiếu ${lookupResultInfo.latest_export.so_ct})`
+                                                        : 'Vị trí: Đang vận tải (Tồn kho = 0)'}
                                                 </span>
                                             </div>
                                             <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-200 text-amber-800 rounded shrink-0">
