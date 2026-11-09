@@ -18,15 +18,46 @@ interface RequestWithImageModalProps {
     showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
+const SUPPLEMENT_OPTIONS = [
+    { id: 'HDMB', label: 'Hợp đồng mua bán (HĐMB)', icon: 'fa-file-contract' },
+    { id: 'DNXHD', label: 'Đề nghị xuất hóa đơn', icon: 'fa-file-invoice' },
+    { id: 'CHINH_SACH', label: 'Chính sách bán hàng', icon: 'fa-tags' },
+    { id: 'HOA_HONG', label: 'Hoa hồng ứng trước', icon: 'fa-money-bill-wave' },
+    { id: 'VPOINT', label: 'Điểm Vpoint', icon: 'fa-coins' },
+    { id: 'MA_VC', label: 'Mã Voucher (tri ân xe xăng)', icon: 'fa-ticket-alt' },
+    { id: 'XE_XANG', label: 'Thông tin xe xăng cũ (Thu cũ)', icon: 'fa-car' },
+    { id: 'VTLX', label: 'Hồ sơ Vì Tương Lai Xanh (VTLX)', icon: 'fa-leaf' },
+];
+
+const RESCAN_OPTIONS = [
+    { id: 'HDMB', label: 'Hợp đồng mua bán (HĐMB)', icon: 'fa-file-contract' },
+    { id: 'DNXHD', label: 'Đề nghị xuất hóa đơn (ĐNXHĐ)', icon: 'fa-file-invoice' },
+    { id: 'VTLX', label: 'Hồ sơ Vì Tương Lai Xanh (Cam kết & Cà vẹt)', icon: 'fa-leaf' },
+    { id: 'XE_XANG', label: 'Giấy tờ xe xăng cũ (Thu cũ)', icon: 'fa-car' },
+    { id: 'CHINH_SACH', label: 'Phụ lục chính sách bán hàng', icon: 'fa-tags' },
+    { id: 'HOA_HONG', label: 'Chứng từ hoa hồng ứng', icon: 'fa-money-bill-wave' },
+];
+
 export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ isOpen, onClose, onSubmit, title, orderNumber, reasonLabel, icon, theme, showToast }) => {
+    const isSupplementModal = (title || '').toLowerCase().includes('bổ sung');
+    const isRescanModal = (title || '').toLowerCase().includes('scan lại') || (title || '').toLowerCase().includes('rescan');
+    const isSelectableModal = isSupplementModal || isRescanModal;
+    const activeOptions = isRescanModal ? RESCAN_OPTIONS : SUPPLEMENT_OPTIONS;
+
     const [reason, setReason] = useState('');
+    const [selectedItems, setSelectedItems] = useState<string[]>(['HDMB', 'DNXHD']);
     const [images, setImages] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const bgStyle = useModalBackground();
 
     useEffect(() => {
-        if (isOpen) setIsSubmitting(false);
-    }, [isOpen]);
+        if (isOpen) {
+            setIsSubmitting(false);
+            if (isSelectableModal) {
+                setSelectedItems(['HDMB', 'DNXHD']);
+            }
+        }
+    }, [isOpen, isSelectableModal]);
 
     const handleImagePaste = useCallback(async (event: React.ClipboardEvent<HTMLDivElement>) => {
         const items = event.clipboardData.items;
@@ -37,14 +68,11 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                 if (blob) {
                     const file = new File([blob], "pasted_image.jpg", { type: blob.type });
                     try {
-                        // ADMIN REQUEST: Disable compression for pasted images
-                        // const compressedFile = await compressImage(file);
                         const reader = new FileReader();
                         reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
                         reader.readAsDataURL(file);
                     } catch (err) {
                         console.error("Paste handling failed", err);
-                        // Fallback
                         const reader = new FileReader();
                         reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
                         reader.readAsDataURL(blob);
@@ -59,7 +87,12 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     };
 
     const handleSubmit = async () => {
-        if (!reason.trim() && reasonLabel.includes('bắt buộc')) {
+        if (isSelectableModal && selectedItems.length === 0) {
+            showToast?.('Chưa chọn mục', `Vui lòng tick chọn ít nhất 1 mục cần TVBH ${isRescanModal ? 'scan lại' : 'bổ sung'}.`, 'warning');
+            return;
+        }
+
+        if (!reason.trim() && reasonLabel.includes('bắt buộc') && !isSelectableModal) {
             if (showToast) {
                 showToast('Thông tin không hợp lệ', 'Vui lòng nhập nội dung yêu cầu.', 'warning');
             } else {
@@ -67,8 +100,17 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
             }
             return;
         }
+
+        let finalReason = reason.trim();
+        if (isSelectableModal && selectedItems.length > 0) {
+            const tag = isRescanModal
+                ? `[MỤC CẦN SCAN LẠI: ${selectedItems.join(', ')}]`
+                : `[MỤC CẦN BỔ SUNG: ${selectedItems.join(', ')}]`;
+            finalReason = finalReason ? `${tag} ${finalReason}` : tag;
+        }
+
         setIsSubmitting(true);
-        const success = await onSubmit(reason, images);
+        const success = await onSubmit(finalReason, images);
         if (!success) {
             setIsSubmitting(false);
         }
@@ -85,24 +127,72 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+            <div className="bg-surface-card w-full md:max-w-xl h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className={`h-1.5 rounded-t-none md:rounded-t-2xl ${currentTheme.barBg} flex-shrink-0`}></div>
-                <header className="flex items-start justify-between p-3">
-                    <div className="flex items-start gap-2">
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${currentTheme.iconBg}`}>
-                            <i className={`fas ${icon} text-2xl ${currentTheme.iconText}`}></i>
+                <header className="flex items-start justify-between p-3.5 border-b border-slate-100">
+                    <div className="flex items-start gap-2.5">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${currentTheme.iconBg}`}>
+                            <i className={`fas ${icon} text-xl ${currentTheme.iconText}`}></i>
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-text-primary">{title}</h2>
-                            <p className="text-sm text-text-secondary mt-1">Đang thực hiện cho: <strong className="font-mono text-text-primary">{orderNumber}</strong></p>
+                            <h2 className="text-base font-bold text-text-primary">{title}</h2>
+                            <p className="text-xs text-text-secondary mt-0.5">Đang thực hiện cho đơn hàng: <strong className="font-mono text-text-primary">{orderNumber}</strong></p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
+                    <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times text-xs"></i></button>
                 </header>
-                <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
+                <main className="p-4 md:p-5 space-y-3.5 overflow-y-auto flex-grow min-h-0 custom-scrollbar max-h-[75vh]">
+                    {isSelectableModal && (
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                <i className={`fas ${isRescanModal ? 'fa-camera text-sky-500' : 'fa-list-check text-amber-500'}`}></i>
+                                <span>Tick chọn các mục cần TVBH {isRescanModal ? 'scan lại' : 'bổ sung'}:</span>
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                {activeOptions.map((opt) => {
+                                    const isChecked = selectedItems.includes(opt.id);
+                                    return (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedItems(prev =>
+                                                    prev.includes(opt.id)
+                                                        ? prev.filter(x => x !== opt.id)
+                                                        : [...prev, opt.id]
+                                                );
+                                            }}
+                                            className={`flex items-center gap-2 p-2 rounded-lg text-xs font-semibold border transition-all text-left cursor-pointer ${isChecked
+                                                ? (isRescanModal
+                                                    ? 'bg-sky-50/90 text-sky-950 border-sky-300 shadow-2xs ring-1 ring-sky-300/60'
+                                                    : 'bg-amber-50/90 text-amber-950 border-amber-300 shadow-2xs ring-1 ring-amber-300/60')
+                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] shrink-0 ${isChecked ? (isRescanModal ? 'bg-sky-500 text-white' : 'bg-amber-500 text-white') : 'border border-slate-300 bg-white'}`}>
+                                                {isChecked && <i className="fas fa-check"></i>}
+                                            </span>
+                                            <i className={`fas ${opt.icon} text-slate-400 text-[11px] shrink-0`}></i>
+                                            <span className="truncate">{opt.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     <div>
-                        <label htmlFor="modal-reason-input" className="block text-sm font-medium text-text-primary mb-1.5">{reasonLabel}</label>
-                        <textarea id="modal-reason-input" value={reason} onChange={e => setReason(e.target.value)} rows={3} className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input" />
+                        <label htmlFor="modal-reason-input" className="block text-xs font-bold text-text-primary mb-1">
+                            {reasonLabel} {isSelectableModal && <span className="text-slate-400 font-normal">(tùy chọn chi tiết)</span>}
+                        </label>
+                        <textarea
+                            id="modal-reason-input"
+                            value={reason}
+                            onChange={e => setReason(e.target.value)}
+                            rows={2}
+                            placeholder={isSelectableModal ? (isRescanModal ? "Ghi chú thêm phần cần scan lại (VD: trang 2 mờ, chụp thiếu góc...)" : "Ghi chú thêm yêu cầu cụ thể cho TVBH...") : "Nhập nội dung yêu cầu..."}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 text-xs futuristic-input"
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-text-primary mb-1.5">Dán ảnh minh họa (Tùy chọn)</label>

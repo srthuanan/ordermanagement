@@ -1123,6 +1123,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     onCancel={setOrderToCancel}
                                     onRequestInvoice={setOrderToRequestInvoice}
                                     onSupplement={setOrderToSupplement}
+                                    onSupplementConfirm={handleSupplementFiles}
                                     onRequestVC={setOrderToRequestVC}
                                     onConfirmVC={setOrderToConfirmVC}
                                     onEdit={(updatedOrder) => handleEditSuccess(undefined, updatedOrder)}
@@ -1275,7 +1276,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 <Suspense fallback={null}>
                     {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
                     {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} isDmsCompareEnabled={isDmsCompareXhdEnabled} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
-                    {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
+                    {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} stockData={stockData} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
                     {orderToEdit && (
                         <EditOrderModal
                             isOpen={!!orderToEdit}
@@ -1962,7 +1963,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     )}
                     {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
                     {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} isDmsCompareEnabled={isDmsCompareXhdEnabled} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
-                    {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
+                    {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} stockData={stockData} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
                     {orderToRequestVC && (
                         <RequestVcModal
                             order={orderToRequestVC}

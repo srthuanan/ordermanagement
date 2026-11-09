@@ -208,6 +208,71 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [isLoadingCyberDkbh, setIsLoadingCyberDkbh] = useState(false);
     const [cyberDkbhError, setCyberDkbhError] = useState<string | null>(null);
     const [dmsReportResult, setDmsReportResult] = useState<any>(null);
+    const [vtlxLiveUrls, setVtlxLiveUrls] = useState<{ [orderNo: string]: { camKetUrl?: string; cavetUrl?: string; hangXe?: string; soKhung?: string } }>({});
+
+    // 1. Filter Orders by Folder
+    const filteredOrders = useMemo(() => {
+        const list = orders.filter(order => {
+            const status = (order['Trạng thái xử lý'] || order['Kết quả'] || '').toLowerCase().trim().normalize('NFC');
+            switch (selectedFolder) {
+                case 'pending_approval': return status === 'chờ phê duyệt';
+                case 'approved': return status === 'đã phê duyệt';
+                case 'request_supplement': return status === 'yêu cầu bổ sung';
+                case 'supplemented': return status === 'đã bổ sung';
+                case 'pending_signature': return status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn';
+                case 'completed': return status === 'đã xuất hóa đơn';
+                case 'all': return true;
+                default: return true;
+            }
+        });
+
+        // 2. Sort by Invoice Date (descending), then by Request Date
+        return list.sort((a, b) => {
+            const dateA = a['Ngày xuất hóa đơn'] ? new Date(a['Ngày xuất hóa đơn']).getTime() : 0;
+            const dateB = b['Ngày xuất hóa đơn'] ? new Date(b['Ngày xuất hóa đơn']).getTime() : 0;
+
+            if (dateA !== dateB) return dateB - dateA;
+
+            const timeA = a['Thời gian nhập'] ? new Date(a['Thời gian nhập']).getTime() : 0;
+            const timeB = b['Thời gian nhập'] ? new Date(b['Thời gian nhập']).getTime() : 0;
+            return timeB - timeA;
+        });
+    }, [orders, selectedFolder]);
+
+    const selectedOrder = useMemo(() => orders.find(o => o['Số đơn hàng'] === selectedOrderId), [orders, selectedOrderId]);
+
+    const orderNo = (selectedOrder?.['Số đơn hàng'] || (selectedOrder as any)?.so_don_hang || '').trim();
+    const liveVtlx = vtlxLiveUrls[orderNo] || {};
+    const effectiveCamKetUrl = (selectedOrder?.url_cam_ket_vtlx || (selectedOrder as any)?.['url_cam_ket_vtlx'] || liveVtlx.camKetUrl || '').trim();
+    const effectiveCavetUrl = (selectedOrder?.url_cavet_vtlx || (selectedOrder as any)?.['url_cavet_vtlx'] || liveVtlx.cavetUrl || '').trim();
+    const effectiveHangXe = (selectedOrder?.vtlx_hang_xe || selectedOrder?.['VTLX Hãng xe'] || (selectedOrder as any)?.vtlx_hang_xe || liveVtlx.hangXe || '').trim();
+    const effectiveSoKhung = (selectedOrder?.vtlx_so_khung || selectedOrder?.['VTLX Số khung'] || (selectedOrder as any)?.vtlx_so_khung || liveVtlx.soKhung || '').trim();
+    const isVtlxPolicyOrder = useMemo(() => {
+        if (!selectedOrder) return false;
+        const policyStr = (selectedOrder['CHÍNH SÁCH'] || (selectedOrder as any)?.chinh_sach || '').toUpperCase();
+        return policyStr.includes('VTLX') || policyStr.includes('TƯƠNG LAI XANH') || Boolean(effectiveCamKetUrl) || Boolean(effectiveCavetUrl) || Boolean(effectiveSoKhung);
+    }, [selectedOrder, effectiveCamKetUrl, effectiveCavetUrl, effectiveSoKhung]);
+
+    useEffect(() => {
+        if (!orderNo || vtlxLiveUrls[orderNo]) return;
+        supabase.from('yeucauxhd')
+            .select('url_cam_ket_vtlx, url_cavet_vtlx, vtlx_hang_xe, vtlx_so_khung')
+            .eq('so_don_hang', orderNo)
+            .maybeSingle()
+            .then(({ data }) => {
+                if (data) {
+                    setVtlxLiveUrls(prev => ({
+                        ...prev,
+                        [orderNo]: {
+                            camKetUrl: data.url_cam_ket_vtlx || '',
+                            cavetUrl: data.url_cavet_vtlx || '',
+                            hangXe: data.vtlx_hang_xe || '',
+                            soKhung: data.vtlx_so_khung || '',
+                        }
+                    }));
+                }
+            }, () => {});
+    }, [orderNo]);
 
     const loadCyberDkbhPdf = async (order?: Order | null, force = false) => {
         const targetOrder = order || selectedOrder;
@@ -755,37 +820,6 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             setIsCheckingDms(false);
         }
     };
-
-    // 1. Filter Orders by Folder
-    const filteredOrders = useMemo(() => {
-        const list = orders.filter(order => {
-            const status = (order['Trạng thái xử lý'] || order['Kết quả'] || '').toLowerCase().trim().normalize('NFC');
-            switch (selectedFolder) {
-                case 'pending_approval': return status === 'chờ phê duyệt';
-                case 'approved': return status === 'đã phê duyệt';
-                case 'request_supplement': return status === 'yêu cầu bổ sung';
-                case 'supplemented': return status === 'đã bổ sung';
-                case 'pending_signature': return status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn';
-                case 'completed': return status === 'đã xuất hóa đơn';
-                case 'all': return true;
-                default: return true;
-            }
-        });
-
-        // 2. Sort by Invoice Date (descending), then by Request Date
-        return list.sort((a, b) => {
-            const dateA = a['Ngày xuất hóa đơn'] ? new Date(a['Ngày xuất hóa đơn']).getTime() : 0;
-            const dateB = b['Ngày xuất hóa đơn'] ? new Date(b['Ngày xuất hóa đơn']).getTime() : 0;
-
-            if (dateA !== dateB) return dateB - dateA;
-
-            const timeA = a['Thời gian nhập'] ? new Date(a['Thời gian nhập']).getTime() : 0;
-            const timeB = b['Thời gian nhập'] ? new Date(b['Thời gian nhập']).getTime() : 0;
-            return timeB - timeA;
-        });
-    }, [orders, selectedFolder]);
-
-    const selectedOrder = useMemo(() => orders.find(o => o['Số đơn hàng'] === selectedOrderId), [orders, selectedOrderId]);
 
     // Kiểm tra trạng thái đơn hàng đã được xếp xe trên CyberSoft ERP hay chưa
     const cyberAssignmentStatus = useMemo(() => {
@@ -1418,15 +1452,25 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                 
                                 {isSplitView && (
                                     <div className="hidden lg:flex flex-[2] flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-0 relative">
-                                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-                                            <div className="flex gap-2">
+                                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 flex items-center justify-between gap-2 overflow-hidden">
+                                            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 py-0.5">
                                                 {[
                                                     { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
                                                     { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
                                                     { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
                                                     { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' },
-                                                    ...((selectedOrder?.url_cam_ket_vtlx || (selectedOrder as any)?.url_cam_ket_vtlx) ? [{ key: 'url_cam_ket_vtlx', label: 'Cam kết VTLX', icon: 'fa-leaf' }] : []),
-                                                    ...((selectedOrder?.url_cavet_vtlx || (selectedOrder as any)?.url_cavet_vtlx) ? [{ key: 'url_cavet_vtlx', label: 'Cà vẹt xe cũ', icon: 'fa-id-card' }] : [])
+                                                    ...(isVtlxPolicyOrder || effectiveCamKetUrl ? [{ 
+                                                        key: 'url_cam_ket_vtlx', 
+                                                        label: 'Cam kết VTLX', 
+                                                        icon: 'fa-leaf',
+                                                        hasFile: Boolean(effectiveCamKetUrl)
+                                                    }] : []),
+                                                    ...(isVtlxPolicyOrder || effectiveCavetUrl ? [{ 
+                                                        key: 'url_cavet_vtlx', 
+                                                        label: 'Cà vẹt xe cũ', 
+                                                        icon: 'fa-id-card',
+                                                        hasFile: Boolean(effectiveCavetUrl)
+                                                    }] : [])
                                                 ].map(doc => (
                                                     <button 
                                                         key={doc.key}
@@ -1436,19 +1480,34 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                 loadCyberDkbhPdf(selectedOrder);
                                                             }
                                                         }}
-                                                        className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 ${activeDocKey === doc.key ? 'bg-accent-primary text-white shadow-md' : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'}`}
+                                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 cursor-pointer ${
+                                                            activeDocKey === doc.key 
+                                                                ? (doc.key.includes('vtlx') ? 'bg-emerald-600 text-white shadow-md' : 'bg-accent-primary text-white shadow-md') 
+                                                                : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'
+                                                        }`}
                                                     >
-                                                        <i className={`fas ${doc.icon} ${activeDocKey === doc.key ? 'text-white' : 'text-accent-primary'} opacity-80 text-[9px]`}></i>
-                                                        {doc.label}
+                                                        <i className={`fas ${doc.icon} ${activeDocKey === doc.key ? 'text-white' : (doc.key.includes('vtlx') ? 'text-emerald-600' : 'text-accent-primary')} opacity-80 text-[9px]`}></i>
+                                                        <span className="whitespace-nowrap">{doc.label}</span>
+                                                        {doc.key.includes('vtlx') && !(doc as any).hasFile && (
+                                                            <span className="text-[8px] font-medium opacity-70 ml-0.5 whitespace-nowrap">(Chưa có)</span>
+                                                        )}
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className="flex items-center gap-1.5">
+                                            <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
                                                 {(() => {
                                                     const orderKey = selectedOrder ? (selectedOrder['Số đơn hàng'] || selectedOrder.id || '') : '';
-                                                    const currentDocUrl = activeDocKey === 'CyberDKBH'
-                                                        ? (cyberDkbhUrls[orderKey] || '')
-                                                        : (selectedOrder ? (selectedOrder[activeDocKey] as string || (selectedOrder as any)?.[activeDocKey] || '') : '');
+                                                    let currentDocUrl = '';
+                                                    if (activeDocKey === 'CyberDKBH') {
+                                                        currentDocUrl = cyberDkbhUrls[orderKey] || '';
+                                                    } else if (activeDocKey === 'url_cam_ket_vtlx') {
+                                                        currentDocUrl = effectiveCamKetUrl;
+                                                    } else if (activeDocKey === 'url_cavet_vtlx') {
+                                                        currentDocUrl = effectiveCavetUrl;
+                                                    } else if (selectedOrder) {
+                                                        currentDocUrl = (selectedOrder[activeDocKey] as string) || (selectedOrder as any)?.[activeDocKey] || '';
+                                                    }
+
                                                     const docLabels: any = {
                                                         LinkDeNghiXHD: 'Đề nghị XHĐ',
                                                         LinkHopDong: 'Hợp đồng MB',
@@ -1548,9 +1607,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         <div className="flex-1 bg-slate-100 relative overflow-hidden">
                                             {(() => {
                                                 const orderKey = selectedOrder ? (selectedOrder['Số đơn hàng'] || selectedOrder.id || '') : '';
-                                                const currentDocUrl = activeDocKey === 'CyberDKBH'
-                                                    ? (cyberDkbhUrls[orderKey] || '')
-                                                    : (selectedOrder ? (selectedOrder[activeDocKey] as string || '') : '');
+                                                let currentDocUrl = '';
+                                                if (activeDocKey === 'CyberDKBH') {
+                                                    currentDocUrl = cyberDkbhUrls[orderKey] || '';
+                                                } else if (activeDocKey === 'url_cam_ket_vtlx') {
+                                                    currentDocUrl = effectiveCamKetUrl;
+                                                } else if (activeDocKey === 'url_cavet_vtlx') {
+                                                    currentDocUrl = effectiveCavetUrl;
+                                                } else if (selectedOrder) {
+                                                    currentDocUrl = (selectedOrder[activeDocKey] as string || (selectedOrder as any)?.[activeDocKey] || '');
+                                                }
 
                                                 // Xử lý riêng cho tab CyberDKBH
                                                 if (activeDocKey === 'CyberDKBH') {
@@ -1669,6 +1735,30 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                 }}
                                                                 className="shadow-2xl rounded-sm" 
                                                             />
+                                                        </div>
+                                                    );
+                                                }
+
+                                                if (activeDocKey === 'url_cam_ket_vtlx') {
+                                                    return (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-500 bg-white/50">
+                                                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-3 shadow-2xs">
+                                                                <i className="fas fa-leaf text-xl"></i>
+                                                            </div>
+                                                            <div className="text-xs font-bold text-gray-700 mb-1">Chưa có Cam kết VTLX</div>
+                                                            <div className="text-[10px] text-gray-400 max-w-xs">Tư vấn bán hàng chưa đính kèm tệp Cam kết chuyển đổi xanh cho đơn hàng này.</div>
+                                                        </div>
+                                                    );
+                                                }
+
+                                                if (activeDocKey === 'url_cavet_vtlx') {
+                                                    return (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-500 bg-white/50">
+                                                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-3 shadow-2xs">
+                                                                <i className="fas fa-id-card text-xl"></i>
+                                                            </div>
+                                                            <div className="text-xs font-bold text-gray-700 mb-1">Chưa có Cà vẹt xe cũ (VTLX)</div>
+                                                            <div className="text-[10px] text-gray-400 max-w-xs">Tư vấn bán hàng chưa đính kèm ảnh/PDF Cà vẹt xe cũ cho đơn hàng này.</div>
                                                         </div>
                                                     );
                                                 }
@@ -1945,7 +2035,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 </div>
 
-                                                {selectedOrder['Xe xăng VIN'] && (
+                                                {Boolean(selectedOrder['Xe xăng VIN'] && !isVtlxPolicyOrder && selectedOrder['Xe xăng VIN'] !== effectiveSoKhung) && (
                                                     <div className="mt-1 pt-1 border-t border-dashed border-amber-200 bg-amber-50/60 rounded-lg px-2 pb-1 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
                                                         <div className="flex items-center gap-1.5 mb-1">
                                                             <i className="fas fa-gas-pump text-amber-600 text-[10px]"></i>
@@ -1968,26 +2058,111 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 )}
 
-                                                {((selectedOrder as any)?.vtlx_so_khung || selectedOrder?.['VTLX Số khung'] || (selectedOrder as any)?.vtlx_hang_xe) && (
-                                                    <div className="mt-1 pt-1 border-t border-dashed border-emerald-200 bg-emerald-50/60 rounded-lg px-2 pb-1 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                                                {(isVtlxPolicyOrder || effectiveSoKhung || effectiveHangXe || effectiveCamKetUrl || effectiveCavetUrl) && (
+                                                    <div className="mt-1 pt-1 border-t border-dashed border-emerald-200 bg-emerald-50/70 rounded-lg px-2 pb-1.5 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
                                                         <div className="flex items-center justify-between mb-1">
                                                             <div className="flex items-center gap-1.5">
                                                                 <i className="fas fa-leaf text-emerald-600 text-[10px]"></i>
-                                                                <span className="text-[9px] font-semibold text-emerald-800 uppercase tracking-wider">Xe cũ chính sách VTLX</span>
+                                                                <span className="text-[9px] font-bold text-emerald-800 uppercase tracking-wider">Hồ sơ xe cũ VTLX</span>
                                                             </div>
-                                                            <span className="text-[8.5px] font-bold text-emerald-700 bg-emerald-100 px-1 rounded">VTLX</span>
+                                                            <span className="text-[8.5px] font-bold text-emerald-700 bg-emerald-100/90 px-1.5 py-0.5 rounded border border-emerald-200">VTLX</span>
                                                         </div>
-                                                        <div className="space-y-0.5">
+                                                        <div className="space-y-1">
                                                             <div className="flex justify-between items-center">
-                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Hãng xe cũ</span>
-                                                                <span className="text-[10px] font-medium text-gray-800">
-                                                                    {(selectedOrder as any)?.vtlx_hang_xe || selectedOrder?.['VTLX Hãng xe'] || '—'}
+                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Hãng xe cũ:</span>
+                                                                <span className="text-[10px] font-bold text-gray-800">
+                                                                    {effectiveHangXe || selectedOrder['Xe xăng Hãng'] || '—'}
                                                                 </span>
                                                             </div>
-                                                            <div className="flex justify-between items-center border-t border-emerald-100/50 pt-0.5 mt-0.5">
-                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Số khung cũ</span>
-                                                                <div className="text-[10px] font-semibold text-emerald-900 font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 shadow-sm">
-                                                                    <CopyableField text={(selectedOrder as any)?.vtlx_so_khung || selectedOrder?.['VTLX Số khung'] || ''} showToast={showToast} />
+                                                            <div className="flex justify-between items-center border-t border-emerald-100/50 pt-0.5">
+                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Số khung cũ:</span>
+                                                                <div className="text-[10px] font-semibold text-emerald-900 font-mono bg-white px-1.5 py-0.5 rounded border border-emerald-200 shadow-xs">
+                                                                    {(effectiveSoKhung || selectedOrder['Xe xăng VIN']) ? (
+                                                                        <CopyableField text={effectiveSoKhung || selectedOrder['Xe xăng VIN'] || ''} showToast={showToast} />
+                                                                    ) : (
+                                                                        <span className="text-gray-400 font-normal">Chưa có</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Nút Xem & Tải file VTLX */}
+                                                            <div className="border-t border-emerald-100/60 pt-1 space-y-1">
+                                                                {/* 1. Cam kết VTLX */}
+                                                                <div className="flex items-center justify-between gap-1.5 bg-white/90 px-2 py-1 rounded border border-emerald-200/80">
+                                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                                        <i className="fas fa-file-contract text-emerald-600 text-[10px] flex-shrink-0"></i>
+                                                                        <span className="text-[9px] font-semibold text-gray-700 truncate">Cam kết VTLX</span>
+                                                                    </div>
+                                                                    {effectiveCamKetUrl ? (
+                                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setActiveDocKey('url_cam_ket_vtlx');
+                                                                                    setIsSplitView(true);
+                                                                                }}
+                                                                                className="px-1.5 py-0.5 text-[8.5px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition-all flex items-center gap-1 cursor-pointer"
+                                                                                title="Xem tài liệu Cam kết VTLX"
+                                                                            >
+                                                                                <i className="fas fa-eye text-[8px]"></i>
+                                                                                <span>Xem</span>
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    forceDownload(effectiveCamKetUrl, getSanitizedFilename(selectedOrder['Tên khách hàng'], 'CamKet_VTLX', effectiveCamKetUrl));
+                                                                                }}
+                                                                                className="w-5 h-5 flex items-center justify-center text-[9px] text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-all cursor-pointer border border-transparent hover:border-emerald-200"
+                                                                                title="Tải xuống Cam kết VTLX"
+                                                                            >
+                                                                                <i className="fas fa-download text-[8px]"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-[8px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                                            Chưa tải lên
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* 2. Cà vẹt xe cũ */}
+                                                                <div className="flex items-center justify-between gap-1.5 bg-white/90 px-2 py-1 rounded border border-emerald-200/80">
+                                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                                        <i className="fas fa-id-card text-emerald-600 text-[10px] flex-shrink-0"></i>
+                                                                        <span className="text-[9px] font-semibold text-gray-700 truncate">Cà vẹt xe cũ</span>
+                                                                    </div>
+                                                                    {effectiveCavetUrl ? (
+                                                                        <div className="flex items-center gap-1 flex-shrink-0">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setActiveDocKey('url_cavet_vtlx');
+                                                                                    setIsSplitView(true);
+                                                                                }}
+                                                                                className="px-1.5 py-0.5 text-[8.5px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition-all flex items-center gap-1 cursor-pointer"
+                                                                                title="Xem tài liệu Cà vẹt xe cũ"
+                                                                            >
+                                                                                <i className="fas fa-eye text-[8px]"></i>
+                                                                                <span>Xem</span>
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    forceDownload(effectiveCavetUrl, getSanitizedFilename(selectedOrder['Tên khách hàng'], 'CaVet_VTLX', effectiveCavetUrl));
+                                                                                }}
+                                                                                className="w-5 h-5 flex items-center justify-center text-[9px] text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-all cursor-pointer border border-transparent hover:border-emerald-200"
+                                                                                title="Tải xuống Cà vẹt xe cũ"
+                                                                            >
+                                                                                <i className="fas fa-download text-[8px]"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-[8px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                                            Chưa tải lên
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -2216,13 +2391,20 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
                                                         { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
                                                         { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' },
-                                                        ...((selectedOrder?.url_cam_ket_vtlx || (selectedOrder as any)?.url_cam_ket_vtlx) ? [{ key: 'url_cam_ket_vtlx', label: 'Cam kết VTLX', icon: 'fa-leaf' }] : []),
-                                                        ...((selectedOrder?.url_cavet_vtlx || (selectedOrder as any)?.url_cavet_vtlx) ? [{ key: 'url_cavet_vtlx', label: 'Cà vẹt xe cũ', icon: 'fa-id-card' }] : [])
+                                                        ...(isVtlxPolicyOrder || effectiveCamKetUrl ? [{ key: 'url_cam_ket_vtlx', label: 'Cam kết VTLX', icon: 'fa-leaf' }] : []),
+                                                        ...(isVtlxPolicyOrder || effectiveCavetUrl ? [{ key: 'url_cavet_vtlx', label: 'Cà vẹt xe cũ', icon: 'fa-id-card' }] : [])
                                                     ].map(file => {
                                                         const orderKey = selectedOrder['Số đơn hàng'] || selectedOrder.id || '';
-                                                        const url = file.key === 'CyberDKBH' 
-                                                            ? (cyberDkbhUrls[orderKey] || undefined)
-                                                            : (selectedOrder[file.key] as string || (selectedOrder as any)?.[file.key] || undefined);
+                                                        let url: string | undefined = undefined;
+                                                        if (file.key === 'CyberDKBH') {
+                                                            url = cyberDkbhUrls[orderKey] || undefined;
+                                                        } else if (file.key === 'url_cam_ket_vtlx') {
+                                                            url = effectiveCamKetUrl || undefined;
+                                                        } else if (file.key === 'url_cavet_vtlx') {
+                                                            url = effectiveCavetUrl || undefined;
+                                                        } else {
+                                                            url = (selectedOrder[file.key] as string || (selectedOrder as any)?.[file.key] || undefined);
+                                                        }
                                                         return (
                                                             <div key={file.key} className="h-48 lg:h-full flex-none lg:flex-1 lg:min-w-[200px]">
                                                                 <DocumentThumbnail

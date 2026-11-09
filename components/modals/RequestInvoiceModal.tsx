@@ -12,8 +12,8 @@ interface RequestInvoiceModalProps {
     onClose: () => void;
     onConfirm: (
         order: Order,
-        contractFile: File,
-        proposalFile: File,
+        contractFile: File | null,
+        proposalFile: File | null,
         policy: string[],
         commission: string,
         vpoint: string,
@@ -38,10 +38,12 @@ interface RequestInvoiceModalProps {
     compact?: boolean;
     /** Bật/tắt kiểm soát đối soát với VinFast DMS */
     isDmsCompareEnabled?: boolean;
+    /** 'create' (mặc định: tạo mới XHĐ) hoặc 'supplement' (bổ sung chứng từ / cập nhật XHĐ) */
+    mode?: 'create' | 'supplement';
 }
 
-const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean, compact?: boolean }> = ({ currentStep, hasVinClub }) => {
-    const steps = ["Thông tin & Chứng từ", "Xác nhận"];
+const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean, compact?: boolean, mode?: 'create' | 'supplement' }> = ({ currentStep, hasVinClub, mode }) => {
+    const steps = ["Thông tin & Chứng từ", mode === 'supplement' ? "Xác nhận bổ sung" : "Xác nhận"];
     return (
         <div className="request-step-indicator" aria-label={`Bước ${currentStep} trên 2`}>
             {steps.map((label, index) => {
@@ -71,13 +73,18 @@ const formatNumber = (value: string) => {
 
 const getRawValue = (value: string) => (value || '').replace(/\./g, '');
 
-const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false, compact = false, isDmsCompareEnabled }) => {
+const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false, compact = false, isDmsCompareEnabled, mode = 'create' }) => {
     const [step, setStep] = useState(1);
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
     const [vinClubConfirmed, setVinClubConfirmed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
+    const [existingContractUrl, setExistingContractUrl] = useState<string>('');
+    const [existingProposalUrl, setExistingProposalUrl] = useState<string>('');
+    const [existingCamKetUrl, setExistingCamKetUrl] = useState<string>('');
+    const [existingCavetUrl, setExistingCavetUrl] = useState<string>('');
+    const [existingAdminNotes, setExistingAdminNotes] = useState<string>('');
     const [policy, setPolicy] = useState<string[]>(() => {
         if (order && order["CHÍNH SÁCH"]) {
             return order["CHÍNH SÁCH"].split('; ').filter(Boolean);
@@ -111,6 +118,92 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     });
     const [vinCheckError, setVinCheckError] = useState('');
     const [isCheckingVin, setIsCheckingVin] = useState(false);
+
+    useEffect(() => {
+        const orderNo = (order?.["Số đơn hàng"] || (order as any)?.so_don_hang || '').trim();
+        if (!orderNo) return;
+        supabase.from('yeucauxhd').select('*').eq('so_don_hang', orderNo).maybeSingle().then(({ data }) => {
+            if (data) {
+                if (data.url_hop_dong) setExistingContractUrl(data.url_hop_dong);
+                if (data.url_de_nghi_xhd) setExistingProposalUrl(data.url_de_nghi_xhd);
+                if (data.url_cam_ket_vtlx) setExistingCamKetUrl(data.url_cam_ket_vtlx);
+                if (data.url_cavet_vtlx) setExistingCavetUrl(data.url_cavet_vtlx);
+                if (data.ghi_chu_admin) setExistingAdminNotes(data.ghi_chu_admin);
+                if (mode === 'supplement') {
+                    if ((!policy || policy.length === 0) && data.chinh_sach) {
+                        setPolicy(data.chinh_sach.split('; ').map((s: string) => s.trim()).filter(Boolean));
+                    }
+                    if (!commission && data.hoa_hong_ung) setCommission(formatNumber(String(data.hoa_hong_ung)));
+                    if ((!vpoint || vpoint === '0') && data.vpoint) setVpoint(formatNumber(String(data.vpoint)));
+                    if (!maVc && data.ma_vc) setMaVc(data.ma_vc);
+                    if (!xeXangVin && data.xe_xang_vin) setXeXangVin(data.xe_xang_vin);
+                    if (!xeXangHang && data.xe_xang_hang) setXeXangHang(data.xe_xang_hang);
+                    if (!xeXangModel && data.xe_xang_model) setXeXangModel(data.xe_xang_model);
+                    if (!vtlxHangXe && data.vtlx_hang_xe) setVtlxHangXe(data.vtlx_hang_xe);
+                    if (!vtlxSoKhung && data.vtlx_so_khung) setVtlxSoKhung(data.vtlx_so_khung);
+                }
+            }
+        }, (err: any) => console.warn('Lỗi tải yeucauxhd:', err));
+    }, [order?.["Số đơn hàng"], mode]);
+
+    const parsedSupplementRequirements = useMemo(() => {
+        if (mode !== 'supplement') return null;
+        const notes = (order?.["Ghi chú Admin"] || (order as any)?.ghi_chu_admin || existingAdminNotes || '').toString();
+        const match = notes.match(/\[MỤC CẦN (?:BỔ SUNG|SCAN LẠI):\s*([^\]]+)\]/i);
+        const isRescan = notes.includes('[YÊU CẦU SCAN LẠI]') || notes.toLowerCase().includes('scan lại');
+
+        if (!match) {
+            const lower = notes.toLowerCase();
+            const hasKeyword = lower.includes('hợp đồng') || lower.includes('chính sách') || lower.includes('hoa hồng') || lower.includes('đề nghị') || lower.includes('vpoint') || lower.includes('voucher') || lower.includes('vtlx');
+            const cleanReason = notes.replace(/\[YÊU CẦU SCAN LẠI\]:\s*/gi, '').trim();
+            if (!hasKeyword) {
+                return {
+                    hdmb: true,
+                    dnxhd: true,
+                    chinh_sach: false,
+                    hoa_hong: false,
+                    vpoint: false,
+                    ma_vc: false,
+                    xe_xang: false,
+                    vtlx: false,
+                    hasTag: false,
+                    isRescan,
+                    cleanReason
+                };
+            }
+            return {
+                hdmb: lower.includes('hợp đồng') || lower.includes('hdmb'),
+                dnxhd: lower.includes('đề nghị') || lower.includes('dnxhd') || lower.includes('xhd'),
+                chinh_sach: lower.includes('chính sách') || lower.includes('csbh'),
+                hoa_hong: lower.includes('hoa hồng'),
+                vpoint: lower.includes('vpoint'),
+                ma_vc: lower.includes('voucher') || lower.includes('ma vc'),
+                xe_xang: lower.includes('xe xăng') || lower.includes('thu cũ'),
+                vtlx: lower.includes('vtlx') || lower.includes('tương lai xanh'),
+                hasTag: false,
+                isRescan,
+                cleanReason
+            };
+        }
+        const rawTags = match[1].toUpperCase();
+        const cleanReason = notes
+            .replace(/\[YÊU CẦU SCAN LẠI\]:\s*/gi, '')
+            .replace(match[0], '')
+            .trim();
+        return {
+            hdmb: rawTags.includes('HDMB'),
+            dnxhd: rawTags.includes('DNXHD'),
+            chinh_sach: rawTags.includes('CHINH_SACH'),
+            hoa_hong: rawTags.includes('HOA_HONG'),
+            vpoint: rawTags.includes('VPOINT'),
+            ma_vc: rawTags.includes('MA_VC'),
+            xe_xang: rawTags.includes('XE_XANG'),
+            vtlx: rawTags.includes('VTLX'),
+            hasTag: true,
+            isRescan,
+            cleanReason
+        };
+    }, [mode, order?.["Ghi chú Admin"], (order as any)?.ghi_chu_admin, existingAdminNotes]);
 
     // Cyber contract status warning & Step 3 check
     const [isValidatingContract, setIsValidatingContract] = useState(false);
@@ -343,12 +436,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const currentKey = `${orderNoStr}_${orderVinStr}`;
 
     useEffect(() => {
+        if (mode === 'supplement') return; // Không tra soát đối soát lại khi ở luồng bổ sung
         if (!orderNoStr) return;
         if (checkedKeyRef.current === currentKey) return;
         checkedKeyRef.current = currentKey;
         recheckDmsVerification();
         recheckCyberContract();
-    }, [orderNoStr, orderVinStr]);
+    }, [orderNoStr, orderVinStr, mode]);
 
     const recheckCyberContract = async (isManualClick = false) => {
         setIsCheckingCyberContract(true);
@@ -426,10 +520,11 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     }, [order?.["Tên khách hàng"], order?.["Số đơn hàng"]]);
 
     useEffect(() => {
+        if (mode === 'supplement') return;
         if (step === 2 && !cyberContractStatus && !isCheckingCyberContract) {
             recheckCyberContract();
         }
-    }, [step]);
+    }, [step, mode]);
 
     useEffect(() => {
         if (cyberContractStatus?.so_ct && !maHdCyber) {
@@ -617,6 +712,17 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return policy.some(p => targetPolicies.some(target => p.includes(target)));
     }, [policy]);
 
+    const showPolicyCol = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.chinh_sach);
+    const showHoaHong = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.hoa_hong);
+    const showVpoint = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.vpoint);
+    const showMaVc = isVinFastGasCarAppreciationPolicy && (mode !== 'supplement' || Boolean(parsedSupplementRequirements?.ma_vc));
+    const showXeXang = isGasToElectricPolicy && (mode !== 'supplement' || Boolean(parsedSupplementRequirements?.xe_xang));
+    const showVtlx = isVtlxPolicy && (mode !== 'supplement' || Boolean(parsedSupplementRequirements?.vtlx));
+    const showHdmb = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.hdmb);
+    const showDnxhd = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.dnxhd);
+    const showDocsSection = showHdmb || showDnxhd;
+    const showFinanceRow = showHoaHong || showVpoint;
+
     useEffect(() => {
         if (!isGasToElectricPolicy || !xeXangVin.trim()) {
             setVinCheckError('');
@@ -717,20 +823,37 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     ));
 
     const isDmsValid = !isDmsEnabled || dmsVerification.status !== 'invalid';
-    const isVerificationBlocked = !isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved);
+    const isVerificationBlocked = mode === 'supplement' ? false : (!isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved));
 
-    const isVtlxInfoValid = !isVtlxPolicy || (vtlxHangXe.trim() !== '' && vtlxSoKhung.trim() !== '' && !vtlxVinCheckError);
-    const isVtlxDocsValid = !isVtlxPolicy || Boolean(camKetChuyenDoiXanhFile && cavetXeCuFile);
+    const isSupplementMode = mode === 'supplement';
+    const hasContract = Boolean(contractFile || existingContractUrl);
+    const hasProposal = Boolean(proposalFile || existingProposalUrl);
+    const isVtlxInfoValid = !showVtlx || (vtlxHangXe.trim() !== '' && vtlxSoKhung.trim() !== '' && !vtlxVinCheckError);
+    const isVtlxDocsValid = !showVtlx || (
+        isSupplementMode
+            ? Boolean((camKetChuyenDoiXanhFile || existingCamKetUrl) && (cavetXeCuFile || existingCavetUrl))
+            : Boolean(camKetChuyenDoiXanhFile && cavetXeCuFile)
+    );
 
-    const isStep1InfoValid = policy.length > 0 &&
-        isCommissionValid &&
-        isVpointValid &&
-        (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) &&
-        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '') &&
-        isVtlxInfoValid;
-    const isStep1DocsValid = Boolean(contractFile && proposalFile) && isVtlxDocsValid;
+    const isStep1InfoValid = isSupplementMode
+        ? ((!showPolicyCol || policy.length > 0) &&
+            (!showHoaHong || isCommissionValid) &&
+            (!showVpoint || isVpointValid) &&
+            (!showXeXang || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) &&
+            (!showMaVc || maVc.trim() !== '') &&
+            isVtlxInfoValid)
+        : (policy.length > 0 &&
+            isCommissionValid &&
+            isVpointValid &&
+            (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) &&
+            (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '') &&
+            isVtlxInfoValid);
+
+    const isStep1DocsValid = isSupplementMode
+        ? ((!showHdmb || hasContract) && (!showDnxhd || hasProposal) && isVtlxDocsValid)
+        : (Boolean(contractFile && proposalFile) && isVtlxDocsValid);
     const isStep1Valid = isStep1InfoValid && isStep1DocsValid && !isVerificationBlocked;
-    const isStep2Valid = vinClubConfirmed;
+    const isStep2Valid = isSupplementMode ? true : vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && !isVerificationBlocked;
 
     useEffect(() => {
@@ -855,8 +978,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
             await onConfirm(
                 updatedOrder,
-                contractFile!,
-                proposalFile!,
+                contractFile || null,
+                proposalFile || null,
                 policy,
                 getRawValue(commission) || '0',
                 getRawValue(vpoint) || '0',
@@ -869,8 +992,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 isVtlxPolicy ? {
                     hangXe: vtlxHangXe.trim(),
                     soKhung: vtlxSoKhung.trim().toUpperCase(),
-                    camKetFile: camKetChuyenDoiXanhFile,
-                    cavetFile: cavetXeCuFile
+                    camKetFile: camKetChuyenDoiXanhFile || null,
+                    cavetFile: cavetXeCuFile || null
                 } : undefined
             );
             sessionStorage.removeItem(`invoice_draft_${order["Số đơn hàng"]}`);
@@ -887,6 +1010,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const handleSubmit = async () => {
         if (isSubmittingRef.current || isValidatingContract) return;
 
+        // Nếu ở chế độ nộp bổ sung hồ sơ: Bỏ qua đối soát DMS & Cyber, nộp ngay các mục cần bổ sung
+        if (mode === 'supplement') {
+            if (!isFormValid) {
+                showToast('Thiếu Thông Tin', 'Vui lòng hoàn thành các thông tin hoặc chứng từ cần bổ sung.', 'warning');
+                return;
+            }
+            await executeSubmission();
+            return;
+        }
+
         // 1. Kiểm tra đối soát cấu hình xe trên hệ thống VinFast DMS
         if (dmsVerification.status === 'invalid') {
             showToast('Lỗi Đối Soát DMS', dmsVerification.message || 'Cấu hình xe không khớp với VSO trên VinFast DMS.', 'error', 10000);
@@ -897,7 +1030,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             return;
         }
 
-        if (!isFormValid || !contractFile || !proposalFile) {
+        if (!isFormValid || (!contractFile || !proposalFile)) {
             showToast('Thiếu Thông Tin', "Vui lòng hoàn thành tất cả các bước.", 'warning');
             return;
         }
@@ -1307,14 +1440,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         <div className={compact ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : 'invoice-sheet-root'}>
             {!compact && (
                 <header className="invoice-sheet-header">
-                    <Stepper currentStep={step} hasVinClub={vinClubConfirmed} />
+                    <Stepper currentStep={step} hasVinClub={vinClubConfirmed} mode={mode} />
                     <div className="invoice-sheet-header-right">
                         <span className="request-step-counter">Bước {step}/2</span>
-                        {!inline && (
-                            <button type="button" onClick={onClose} className="invoice-sheet-back" title="Quay lại" aria-label="Quay lại">
-                                <i className="fas fa-arrow-left text-xs"></i>
-                            </button>
-                        )}
+                        <button type="button" onClick={onClose} className="invoice-sheet-back" title="Quay lại" aria-label="Quay lại">
+                            <i className="fas fa-arrow-left text-xs"></i>
+                        </button>
                     </div>
                 </header>
             )}
@@ -1386,8 +1517,39 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     </div>
                 )}
 
-                {/* BARS: KIỂM TRA DUYỆT HĐ CYBER & ĐỐI SOÁT CẤU HÌNH VINFAST DMS */}
-                {(() => {
+                {mode === 'supplement' && step === 1 && (() => {
+                    const isRescan = Boolean(parsedSupplementRequirements?.isRescan);
+                    return (
+                        <div className={`p-3 rounded-xl flex items-start gap-2.5 text-xs shadow-2xs border ${isRescan ? 'bg-sky-50/90 border-sky-200/90 text-sky-950' : 'bg-amber-50/90 border-amber-200/90 text-amber-950'}`}>
+                            <i className={`fas ${isRescan ? 'fa-camera text-sky-600' : 'fa-list-check text-amber-600'} text-sm mt-0.5 shrink-0`}></i>
+                            <div className="text-[12px] leading-relaxed flex-1">
+                                <div className={`font-bold flex items-center gap-1.5 flex-wrap ${isRescan ? 'text-sky-900' : 'text-amber-900'}`}>
+                                    <span>{isRescan ? 'Admin yêu cầu scan lại các mục:' : 'Admin yêu cầu bổ sung các mục:'}</span>
+                                    {parsedSupplementRequirements && (
+                                        <span className="inline-flex items-center gap-1.5 flex-wrap">
+                                            {parsedSupplementRequirements.hdmb && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Hợp đồng mua bán</span>}
+                                            {parsedSupplementRequirements.dnxhd && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Đề nghị XHĐ</span>}
+                                            {parsedSupplementRequirements.chinh_sach && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Chính sách bán hàng</span>}
+                                            {parsedSupplementRequirements.hoa_hong && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Hoa hồng ứng</span>}
+                                            {parsedSupplementRequirements.vpoint && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Điểm Vpoint</span>}
+                                            {parsedSupplementRequirements.ma_vc && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Mã VC</span>}
+                                            {parsedSupplementRequirements.xe_xang && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Xe xăng thu cũ</span>}
+                                            {parsedSupplementRequirements.vtlx && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Hồ sơ VTLX</span>}
+                                        </span>
+                                    )}
+                                </div>
+                                {parsedSupplementRequirements?.cleanReason && (
+                                    <p className={`mt-1.5 font-medium bg-white/70 p-2 rounded-lg border ${isRescan ? 'text-slate-700 border-sky-200/60' : 'text-slate-700 border-amber-200/60'}`}>
+                                        <strong className={isRescan ? 'text-sky-900' : 'text-amber-900'}>Chi tiết từ Admin:</strong> {parsedSupplementRequirements.cleanReason}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* BARS: KIỂM TRA DUYỆT HĐ CYBER & ĐỐI SOÁT CẤU HÌNH VINFAST DMS (Ẩn hoàn toàn khi ở luồng bổ sung) */}
+                {mode !== 'supplement' && (() => {
                     const cyberCard = renderCyberContractStatusCard();
                     const dmsCard = renderDmsVerificationCard();
                     if (!cyberCard && !dmsCard) return null;
@@ -1400,8 +1562,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 })()}
 
                 {/* STEP 1 */}
-                <div style={{ display: step === 1 ? 'grid' : 'none' }} className="invoice-step1-grid">
+                <div style={{ display: step === 1 ? (showPolicyCol ? 'grid' : 'block') : 'none' }} className={showPolicyCol ? "invoice-step1-grid" : "w-full max-w-4xl mx-auto space-y-4"}>
                     {/* Cột trái: Danh sách chính sách bán hàng để chọn */}
+                    {showPolicyCol && (
                     <div className="invoice-step1-col">
                         <div className="invoice-step1-policy-wrap">
                             <label className="invoice-field-label">
@@ -1448,44 +1611,51 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
                         </div>
                     </div>
+                    )}
 
-                    {/* Cột phải: Các ô nhập liệu & Hồ sơ chứng từ đính kèm (Chỉ nhận PDF) */}
-                    <div className="invoice-step1-col invoice-step1-docs-col">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label className="invoice-field-label">
-                                    <span>Hoa hồng ứng trước</span>
-                                </label>
-                                <div className="invoice-input-wrap">
-                                    <input
-                                        type="text"
-                                        value={commission}
-                                        onChange={handleNumberChange(setCommission)}
-                                        className="invoice-input"
-                                        placeholder="0"
-                                    />
-                                    <span className="invoice-input-unit">VNĐ</span>
-                                </div>
+                    {/* Cột phải: Các ô nhập liệu & Hồ sơ chứng từ đính kèm */}
+                    <div className={`invoice-step1-col invoice-step1-docs-col ${!showPolicyCol ? 'w-full max-w-2xl mx-auto' : ''}`}>
+                        {showFinanceRow && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {showHoaHong && (
+                                    <div>
+                                        <label className="invoice-field-label">
+                                            <span>Hoa hồng ứng trước</span>
+                                        </label>
+                                        <div className="invoice-input-wrap">
+                                            <input
+                                                type="text"
+                                                value={commission}
+                                                onChange={handleNumberChange(setCommission)}
+                                                className="invoice-input"
+                                                placeholder="0"
+                                            />
+                                            <span className="invoice-input-unit">VNĐ</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {showVpoint && (
+                                    <div>
+                                        <label className="invoice-field-label">
+                                            <span>Điểm Vpoint sử dụng</span>
+                                        </label>
+                                        <div className="invoice-input-wrap">
+                                            <input
+                                                type="text"
+                                                value={vpoint}
+                                                onChange={handleNumberChange(setVpoint)}
+                                                className="invoice-input"
+                                                placeholder="0"
+                                            />
+                                            <span className="invoice-input-unit">ĐIỂM</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+                        )}
 
-                            <div>
-                                <label className="invoice-field-label">
-                                    <span>Điểm Vpoint sử dụng</span>
-                                </label>
-                                <div className="invoice-input-wrap">
-                                    <input
-                                        type="text"
-                                        value={vpoint}
-                                        onChange={handleNumberChange(setVpoint)}
-                                        className="invoice-input"
-                                        placeholder="0"
-                                    />
-                                    <span className="invoice-input-unit">ĐIỂM</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {isVinFastGasCarAppreciationPolicy && (
+                        {showMaVc && (
                             <div className="animate-fade-in">
                                 <label className="invoice-field-label">
                                     <span>Mã VC (Voucher) <span className="req">*</span></span>
@@ -1501,7 +1671,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
                         )}
 
-                        {isGasToElectricPolicy && (
+                        {showXeXang && (
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in">
                                 <div>
                                     <label className="invoice-field-label">
@@ -1553,7 +1723,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
                         )}
 
-                        {isVtlxPolicy && (
+                        {showVtlx && (
                             <div className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-2.5 animate-fade-in shadow-2xs">
                                 <div className="flex items-center justify-between pb-1.5 border-b border-emerald-200/50">
                                     <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
@@ -1640,34 +1810,44 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             </div>
                         )}
 
-                        <div className="invoice-docs-section">
-                            <label className="invoice-field-label">
-                                <span>Hồ sơ chứng từ đính kèm <span className="req">*</span></span>
-                                <span className="invoice-field-hint">Định dạng PDF</span>
-                            </label>
-                            <div className="invoice-docs-stack">
-                                <SimpleFileUpload
-                                    id="hop_dong_file_input"
-                                    label="Hợp đồng mua bán"
-                                    onFileSelect={handleContractFileSelect}
-                                    required
-                                    accept=".pdf,application/pdf"
-                                    disableCompression={false}
-                                    showPreview={false}
-                                    variant="slot"
-                                />
-                                <SimpleFileUpload
-                                    id="denghi_xhd_file_input"
-                                    label="Đề nghị xuất hóa đơn"
-                                    onFileSelect={handleProposalFileSelect}
-                                    required
-                                    accept=".pdf,application/pdf"
-                                    disableCompression={false}
-                                    showPreview={false}
-                                    variant="slot"
-                                />
+                        {showDocsSection && (
+                            <div className="invoice-docs-section">
+                                <label className="invoice-field-label">
+                                    <span>Hồ sơ chứng từ đính kèm {mode !== 'supplement' && <span className="req">*</span>}</span>
+                                    <span className="invoice-field-hint">PDF hoặc Ảnh</span>
+                                </label>
+                                <div className="invoice-docs-stack">
+                                    {showHdmb && (
+                                        <SimpleFileUpload
+                                            id="hop_dong_file_input"
+                                            label={mode === 'supplement' ? "Hợp đồng mua bán (Mới)" : "Hợp đồng mua bán"}
+                                            onFileSelect={handleContractFileSelect}
+                                            required={mode !== 'supplement' && !existingContractUrl}
+                                            accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
+                                            disableCompression={false}
+                                            showPreview={false}
+                                            variant="slot"
+                                            buttonText="Chọn tệp HĐ"
+                                            placeholderText={mode === 'supplement' && existingContractUrl ? "Đã có tệp cũ trên hệ thống · Bấm để tải file mới thay thế" : "Kéo thả hoặc bấm để đính kèm Hợp đồng"}
+                                        />
+                                    )}
+                                    {showDnxhd && (
+                                        <SimpleFileUpload
+                                            id="denghi_xhd_file_input"
+                                            label={mode === 'supplement' ? "Đề nghị xuất hóa đơn (Mới)" : "Đề nghị xuất hóa đơn"}
+                                            onFileSelect={handleProposalFileSelect}
+                                            required={mode !== 'supplement' && !existingProposalUrl}
+                                            accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
+                                            disableCompression={false}
+                                            showPreview={false}
+                                            variant="slot"
+                                            buttonText="Chọn tệp ĐNXHĐ"
+                                            placeholderText={mode === 'supplement' && existingProposalUrl ? "Đã có tệp cũ trên hệ thống · Bấm để tải file mới thay thế" : "Kéo thả hoặc bấm để đính kèm Đề nghị XHĐ"}
+                                        />
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
 
@@ -1911,9 +2091,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                 return;
                             }
                             if (!isStep1DocsValid) {
-                                if (!contractFile || !proposalFile) {
+                                if (mode !== 'supplement' && (!contractFile || !proposalFile)) {
                                     showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên cả Hợp đồng mua bán và Đề nghị xuất hóa đơn.', 'warning');
-                                } else if (isVtlxPolicy && (!camKetChuyenDoiXanhFile || !cavetXeCuFile)) {
+                                } else if (isVtlxPolicy && (!camKetChuyenDoiXanhFile || !cavetXeCuFile) && !existingCamKetUrl && !existingCavetUrl) {
                                     showToast('Thiếu hồ sơ VTLX', 'Vui lòng tải lên cả file Cam kết chuyển đổi xanh và Cà vẹt xe cũ (PDF hoặc Ảnh).', 'warning');
                                 } else {
                                     showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên đầy đủ các chứng từ bắt buộc.', 'warning');
@@ -1937,7 +2117,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         className="btn-primary"
                     >
                         <i className={`fas ${isSubmitting || isValidatingContract ? 'fa-spinner fa-spin' : 'fa-check'} text-[9.5px]`}></i>
-                        <span>{isValidatingContract ? 'Đang kiểm tra...' : 'Gửi yêu cầu'}</span>
+                        <span>
+                            {isValidatingContract
+                                ? 'Đang kiểm tra...'
+                                : mode === 'supplement'
+                                ? (parsedSupplementRequirements?.isRescan ? 'Xác nhận nộp bản scan lại' : 'Xác nhận nộp bổ sung')
+                                : 'Gửi yêu cầu'}
+                        </span>
                     </button>
                 )}
             </footer>

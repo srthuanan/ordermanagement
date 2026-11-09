@@ -271,6 +271,18 @@ export const MobileInvoiceView: React.FC<MobileInvoiceViewProps> = ({
                 title: 'Hóa Đơn Red (VAT)',
                 url: (selectedOrder.LinkHoaDonDaXuat || (selectedOrder as any).link_hoa_don_da_xuat || (selectedOrder as any).url_hoa_don_da_xuat || '') as string,
                 icon: 'fa-file-invoice-dollar text-emerald-600'
+            },
+            {
+                key: 'url_cam_ket_vtlx',
+                title: 'Cam Kết VTLX',
+                url: (selectedOrder.url_cam_ket_vtlx || (selectedOrder as any).url_cam_ket_vtlx || '') as string,
+                icon: 'fa-leaf text-emerald-600'
+            },
+            {
+                key: 'url_cavet_vtlx',
+                title: 'Cà Vẹt Xe Cũ',
+                url: (selectedOrder.url_cavet_vtlx || (selectedOrder as any).url_cavet_vtlx || '') as string,
+                icon: 'fa-id-card text-teal-600'
             }
         ];
         return docs.filter(d => Boolean(d.url));

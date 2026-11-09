@@ -9,6 +9,7 @@ import { getExteriorColorStyle, getInteriorColorStyle, getExteriorSwatchColor } 
 import SelectPolicyModal from './modals/SelectPolicyModal';
 import InlinePolicyPicker from './ui/InlinePolicyPicker';
 const RequestInvoiceModal = React.lazy(() => import('./modals/RequestInvoiceModal'));
+const SupplementaryFileModal = React.lazy(() => import('./modals/SupplementaryFileModal'));
 import { Policy, policyAdminService } from '../services/api/policyAdminService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import { changeOrderConfiguration, updateOrderDetails, getOrderAuditLogs, OrderAuditLogItem } from '../services/apiService';
@@ -71,6 +72,26 @@ export interface OrderDetailViewProps {
     onCancel?: (order: Order) => void;
     onRequestInvoice?: (order: Order) => void;
     onSupplement?: (order: Order) => void;
+    onSupplementConfirm?: (
+        order: Order,
+        contractFile: File | null,
+        proposalFile: File | null,
+        policy?: string[],
+        commission?: string,
+        vpoint?: string,
+        aiNote?: string,
+        preProcessedPayloads?: any,
+        xeXangVin?: string,
+        xeXangHang?: string,
+        xeXangModel?: string,
+        maVc?: string,
+        vtlxData?: {
+            hangXe?: string;
+            soKhung?: string;
+            camKetFile?: File | null;
+            cavetFile?: File | null;
+        }
+    ) => Promise<any> | void;
     onRequestVC?: (order: Order) => void;
     onConfirmVC?: (order: Order) => void;
     onEdit?: (order: Order) => void;
@@ -82,7 +103,7 @@ export interface OrderDetailViewProps {
     onCancelConfirm?: (order: Order, reason: string, unmatchType: string, thoiGianCanXe?: string) => Promise<void> | void;
     /** For inline invoice: callback when invoice is confirmed */
     onInvoiceConfirm?: (
-        order: Order, contractFile: File, proposalFile: File, policy: string[],
+        order: Order, contractFile: File | null, proposalFile: File | null, policy: string[],
         commission: string, vpoint: string, aiNote?: string, preProcessedPayloads?: any,
         xeXangVin?: string, xeXangHang?: string, xeXangModel?: string, maVc?: string,
         vtlxData?: {
@@ -104,6 +125,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     onCancel,
     onRequestInvoice,
     onSupplement,
+    onSupplementConfirm,
     onRequestVC,
     onConfirmVC,
     onEdit,
@@ -123,7 +145,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors, getMappedExteriors, getMappedInteriors } = useVehicleConfig();
 
     // Inline Action States
-    const [inlineMode, setInlineMode] = useState<'VIEW' | 'POLICY' | 'CANCEL' | 'INVOICE' | 'EDIT' | 'TRANSFER'>('VIEW');
+    const [inlineMode, setInlineMode] = useState<'VIEW' | 'POLICY' | 'CANCEL' | 'INVOICE' | 'EDIT' | 'TRANSFER' | 'SUPPLEMENT'>('VIEW');
     const [activeFooterPopover, setActiveFooterPopover] = useState<'EDIT' | 'CANCEL' | 'TRANSFER' | 'CHANGE_CAR' | null>(null);
     const [footerPopoverPlacement, setFooterPopoverPlacement] = useState<React.CSSProperties>({ visibility: 'hidden' });
     const editBtnRef = useRef<HTMLButtonElement>(null);
@@ -1333,7 +1355,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const canRequestInvoice = generalStatus === 'đã ghép';
     const canAddSupplement = (isSupplementRequested || isRescanRequested) && !isCancelled;
     const canEdit = !!onEdit && ['chưa ghép', 'đã ghép'].includes(generalStatus);
-    const canChangeCar = isAdmin && !isReferenceAccount && !generalStatus.includes('xuất hóa đơn') && !isCancelled;
+    const canChangeCar = isAdmin && !isReferenceAccount && generalStatus === 'đã ghép' && Boolean(resolvedOrder.VIN);
 
     const invoiceDateStr = resolvedOrder["Ngày xuất hóa đơn"];
     const isDateValidForVC = !invoiceDateStr || (() => {
@@ -1636,7 +1658,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     </div>
                 </div>
             </header>}
-            {presentation !== 'workspace' && inlineMode !== 'INVOICE' && (
+            {presentation !== 'workspace' && inlineMode !== 'INVOICE' && inlineMode !== 'SUPPLEMENT' && (
             <header 
                 className="flex-shrink-0 flex items-center justify-between gap-3 px-5 py-2.5 border-b border-slate-200/80 rounded-t-2xl shadow-xs transition-colors duration-500"
                 style={{
@@ -1678,6 +1700,24 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             setInlineMode('VIEW');
                         }}
                         stockData={stockData}
+                        showToast={showToast || ((t, m, type) => console.log(t, m, type))}
+                    />
+                </React.Suspense>
+            ) : inlineMode === 'SUPPLEMENT' ? (
+                <React.Suspense fallback={<div className="flex-1 flex items-center justify-center p-8 text-sm text-gray-500 font-semibold"><i className="fas fa-spinner fa-spin mr-2"></i>Đang tải giao diện bổ sung chứng từ...</div>}>
+                    <SupplementaryFileModal
+                        inline
+                        order={resolvedOrder}
+                        stockData={stockData}
+                        onClose={() => setInlineMode('VIEW')}
+                        onConfirm={async (...args) => {
+                            if (onSupplementConfirm) {
+                                await (onSupplementConfirm as any)(...args);
+                            } else if (onSupplement) {
+                                onSupplement(resolvedOrder);
+                            }
+                            setInlineMode('VIEW');
+                        }}
                         showToast={showToast || ((t, m, type) => console.log(t, m, type))}
                     />
                 </React.Suspense>
@@ -3610,11 +3650,17 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
                         {canAddSupplement && !isReferenceAccount && (
                             <button 
-                                onClick={() => onSupplement!(resolvedOrder)} 
+                                onClick={() => {
+                                    if (onSupplementConfirm || showToast) {
+                                        setInlineMode('SUPPLEMENT');
+                                    } else if (onSupplement) {
+                                        onSupplement(resolvedOrder);
+                                    }
+                                }} 
                                 className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
                             >
-                                <i className="fas fa-file-upload text-[10px] text-slate-400"></i>
-                                <span>Bổ Sung</span>
+                                <i className={`fas ${isRescanRequested ? 'fa-camera text-sky-500' : 'fa-file-upload text-slate-400'} text-[10px]`}></i>
+                                <span>{isRescanRequested ? 'Scan Lại' : 'Bổ Sung'}</span>
                             </button>
                         )}
                         {canRequestVC && !isReferenceAccount && (

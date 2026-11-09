@@ -101,6 +101,14 @@ export const useAdminData = ({
             'LinkDeNghiXHD': row.url_de_nghi_xhd,
             'LinkHoaDonDaXuat': row.url_hoa_don_da_xuat || '',
             'url_hoa_don_da_xuat': row.url_hoa_don_da_xuat || '',
+            'url_hop_dong': row.url_hop_dong,
+            'url_de_nghi_xhd': row.url_de_nghi_xhd,
+            'url_cam_ket_vtlx': row.url_cam_ket_vtlx || '',
+            'url_cavet_vtlx': row.url_cavet_vtlx || '',
+            'vtlx_hang_xe': row.vtlx_hang_xe || '',
+            'vtlx_so_khung': row.vtlx_so_khung || '',
+            'VTLX Hãng xe': row.vtlx_hang_xe || '',
+            'VTLX Số khung': row.vtlx_so_khung || '',
             'Ngày xuất hóa đơn': row.ngay_xuat_hoa_don,
             'SỐ ĐƠN HÀNG': row.so_don_hang,
             'TÊN KHÁCH HÀNG': row.ten_khach_hang,
@@ -183,6 +191,9 @@ export const useAdminData = ({
                 let urlDeNghiTemp = invoice['LinkDeNghiXHD'] || invoice['URL Đề Nghị XHĐ'];
                 if (!isValidUrl(urlDeNghiTemp) && correspondingOrder) urlDeNghiTemp = (correspondingOrder as any)['LinkDeNghiXHD'];
 
+                let urlCamKet = invoice['url_cam_ket_vtlx'] || (correspondingOrder as any)?.['url_cam_ket_vtlx'];
+                let urlCavet = invoice['url_cavet_vtlx'] || (correspondingOrder as any)?.['url_cavet_vtlx'];
+
                 const cyberCode = invoice['Mã HĐ Cyber'] || invoice.ma_hd_cyber || correspondingOrder?.['Mã HĐ Cyber'] || (correspondingOrder as any)?.ma_hd_cyber || '';
                 const mergedOrder: Order = {
                     ...invoice,
@@ -195,6 +206,12 @@ export const useAdminData = ({
                     "LinkHopDong": isValidUrl(urlHopDongTemp) ? urlHopDongTemp : '',
                     "LinkDeNghiXHD": isValidUrl(urlDeNghiTemp) ? urlDeNghiTemp : '',
                     "LinkHoaDonDaXuat": isValidUrl(bestUrl) ? bestUrl : '',
+                    "url_cam_ket_vtlx": isValidUrl(urlCamKet) ? urlCamKet : (urlCamKet || ''),
+                    "url_cavet_vtlx": isValidUrl(urlCavet) ? urlCavet : (urlCavet || ''),
+                    "vtlx_hang_xe": invoice['vtlx_hang_xe'] || (correspondingOrder as any)?.['vtlx_hang_xe'] || '',
+                    "vtlx_so_khung": invoice['vtlx_so_khung'] || (correspondingOrder as any)?.['vtlx_so_khung'] || '',
+                    "VTLX Hãng xe": invoice['vtlx_hang_xe'] || (correspondingOrder as any)?.['vtlx_hang_xe'] || '',
+                    "VTLX Số khung": invoice['vtlx_so_khung'] || (correspondingOrder as any)?.['vtlx_so_khung'] || '',
                     "Kết quả": invoice['Kết quả'] || correspondingOrder?.["Trạng thái VC"] || correspondingOrder?.["Kết quả"] || 'Chờ phê duyệt',
                 };
                 (mergedOrder as any)['Trạng thái xử lý'] = mergedOrder["Kết quả"];

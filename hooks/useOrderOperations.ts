@@ -191,7 +191,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
     const handleRequestInvoice = async (
-        order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, 
+        order: Order, contractFile: File | null, proposalFile: File | null, policy: string[], commission: string, vpoint: string, 
         aiNote?: string, _preProcessedPayloads?: { contract: any, proposal: any },
         xeXangVin?: string, xeXangHang?: string, xeXangModel?: string,
         maVc?: string,
@@ -250,13 +250,48 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
 
-    const handleSupplementFiles = async (order: Order, contractFile: File | null, proposalFile: File | null, aiNote?: string) => {
+    const handleSupplementFiles = async (
+        order: Order,
+        contractFile: File | null,
+        proposalFile: File | null,
+        policy?: string[],
+        commission?: string,
+        vpoint?: string,
+        aiNote?: string,
+        _preProcessedPayloads?: any,
+        xeXangVin?: string,
+        xeXangHang?: string,
+        xeXangModel?: string,
+        maVc?: string,
+        vtlxData?: {
+            hangXe?: string;
+            soKhung?: string;
+            camKetFile?: File | null;
+            cavetFile?: File | null;
+        }
+    ) => {
         if (checkReference()) return;
         setProcessingOrder(order["Số đơn hàng"]);
         try {
-            await apiService.uploadSupplementaryFiles(order["Số đơn hàng"], contractFile, proposalFile, aiNote);
+            await apiService.uploadSupplementaryFiles(
+                order["Số đơn hàng"],
+                contractFile,
+                proposalFile,
+                aiNote,
+                {
+                    policy,
+                    commission,
+                    vpoint,
+                    ma_hd_cyber: order["Mã HĐ Cyber"] || order.ma_hd_cyber,
+                    ma_vc: maVc,
+                    xeXangVin,
+                    xeXangHang,
+                    xeXangModel,
+                    vtlxData
+                }
+            );
             await refetchHistory();
-            showToast('Bổ Sung Thành Công', 'Đã bổ sung hồ sơ thành công.', 'success', 3000);
+            showToast('Bổ Sung Thành Công', 'Đã bổ sung hồ sơ và cập nhật thông tin thành công.', 'success', 3000);
         } catch (error) {
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
             showToast('Bổ Sung Thất Bại', message, 'error', 5000);

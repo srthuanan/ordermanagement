@@ -7,7 +7,7 @@
      - *Tầng Nghiệp Vụ Frontend & Backend*: Toàn bộ các luồng gán ghép xe (`manualMatchCar`, `pairVinToOrder`, `adminChangeOrderVehicle`, `addRequest`, `superUpdateOrderDetails`, `changeOrderConfiguration`, `tryAutoMatchWaitingOrder`) đều kiểm tra đối soát trước khi cập nhật. Khi phát hiện xung đột, hệ thống lập tức từ chối và báo rõ mã đơn hàng cùng TVBH đang sở hữu số VIN đó.
 
 - **Quy Chuẩn Nghiệp Vụ Đổi Ghép Xe Cho Admin (Admin Order Car Re-assignment & Swap Protocol)**:
-  1. **Quyền Hạn**: Chỉ tài khoản Admin mới có quyền truy cập nút "Đổi Xe" trên giao diện chi tiết đơn hàng (`OrderDetailView`), áp dụng cho các đơn hàng chưa xuất hóa đơn và chưa bị hủy.
+  1. **Quyền Hạn & Điều Kiện Hiển Thị**: Chỉ tài khoản Admin mới có quyền truy cập nút "Đổi Xe" trên giao diện chi tiết đơn hàng (`OrderDetailView`), và **CHỈ HIỂN THỊ ĐỐI VỚI ĐƠN HÀNG Ở TRẠNG THÁI 'ĐÃ GHÉP'** (đã có số VIN). Tuyệt đối không hiển thị đối với đơn hàng Chưa ghép, Yêu cầu XHĐ, Chờ duyệt, Đã xuất hóa đơn hoặc Đã hủy.
   2. **2 Cơ Chế Đổi Xe**:
      - *Cơ chế 1 (Đổi xe từ Kho)*: Admin chọn một xe đang rảnh (`Chưa ghép`) trong `khoxe`. Hệ thống tự động giải phóng VIN cũ về kho (`Chưa ghép`, `nguoi_giu_xe = null`), gán số VIN mới + số máy mới vào `donhang` & `yeucauxhd`, và cập nhật `khoxe` sang `Đã ghép` với người giữ xe là chính TVBH sở hữu đơn hàng.
      - *Cơ chế 2 (Hoán đổi với Đơn khác)*: Admin chọn 1 đơn hàng đối ứng cùng cấu hình để tráo đổi chéo VIN trực tiếp giữa 2 đơn.
