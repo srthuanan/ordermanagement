@@ -1696,7 +1696,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         onClose={() => setInlineMode('VIEW')}
                         onConfirm={async (...args) => {
                             if (onInvoiceConfirm) await onInvoiceConfirm(...args);
-                            else if (onRequestInvoice) onRequestInvoice(resolvedOrder);
                             setInlineMode('VIEW');
                         }}
                         stockData={stockData}
@@ -1713,8 +1712,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         onConfirm={async (...args) => {
                             if (onSupplementConfirm) {
                                 await (onSupplementConfirm as any)(...args);
-                            } else if (onSupplement) {
-                                onSupplement(resolvedOrder);
                             }
                             setInlineMode('VIEW');
                         }}
@@ -3651,7 +3648,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         {canAddSupplement && !isReferenceAccount && (
                             <button 
                                 onClick={() => {
-                                    if (onSupplementConfirm || showToast) {
+                                    if (onSupplementConfirm) {
                                         setInlineMode('SUPPLEMENT');
                                     } else if (onSupplement) {
                                         onSupplement(resolvedOrder);

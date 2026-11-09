@@ -42,6 +42,48 @@ const formatDate = (value?: string) => {
 const DesktopOrdersWorkspace: React.FC<Props> = props => {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
+    const [localKeyword, setLocalKeyword] = useState(props.filters.keyword);
+    const debounceTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        setLocalKeyword(props.filters.keyword);
+    }, [props.filters.keyword]);
+
+    const handleKeywordChange = (newVal: string) => {
+        setLocalKeyword(newVal);
+        if (debounceTimerRef.current) {
+            window.clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = window.setTimeout(() => {
+            props.onFilterChange({ keyword: newVal });
+        }, 250);
+    };
+
+    const handleClearKeyword = () => {
+        if (debounceTimerRef.current) {
+            window.clearTimeout(debounceTimerRef.current);
+        }
+        setLocalKeyword('');
+        props.onFilterChange({ keyword: '' });
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            if (debounceTimerRef.current) {
+                window.clearTimeout(debounceTimerRef.current);
+            }
+            props.onFilterChange({ keyword: localKeyword });
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                window.clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     useEffect(() => {
         if (!filtersOpen) return;
         const outside = (event: PointerEvent) => { if (!filterRef.current?.contains(event.target as Node)) setFiltersOpen(false); };
@@ -74,7 +116,7 @@ const DesktopOrdersWorkspace: React.FC<Props> = props => {
     ];
     return <div className="orders-desktop-page">
         <div className="orders-page-heading"><div className="orders-page-title"><h1>Đơn hàng</h1><span>{props.orders.length.toLocaleString('vi-VN')}</span></div>
-            <div className="orders-page-tools"><label className="orders-page-search"><Search size={16} /><input aria-label="Tìm đơn hàng" placeholder="Tìm khách hàng, mã đơn, VIN…" value={props.filters.keyword} onChange={event => props.onFilterChange({ keyword: event.target.value })} />{props.filters.keyword && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => props.onFilterChange({ keyword: '' })}><X size={13} /></button>}</label>
+            <div className="orders-page-tools"><label className="orders-page-search"><Search size={16} /><input aria-label="Tìm đơn hàng" placeholder="Tìm khách hàng, mã đơn, VIN…" value={localKeyword} onChange={event => handleKeywordChange(event.target.value)} onKeyDown={handleKeyDown} />{localKeyword && <button type="button" aria-label="Xóa tìm kiếm" onClick={handleClearKeyword}><X size={13} /></button>}</label>
                 <button type="button" className="orders-page-icon-button" onClick={props.onRefresh} disabled={props.loading} title="Tải lại đơn hàng" aria-label="Tải lại đơn hàng"><RefreshCw size={16} className={props.loading ? 'animate-spin' : ''} /></button>
                 {!props.readOnly && <button type="button" className="orders-page-create" onClick={props.onCreate}><Plus size={16} /> Tạo đơn</button>}
             </div>

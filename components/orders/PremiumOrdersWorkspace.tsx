@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { BarChart3, Filter, LoaderCircle, Plus, Search, X } from 'lucide-react';
 import moment from 'moment';
 import { Order } from '../../types';
@@ -39,6 +39,48 @@ export const orderStatusTone = (value: string) => {
 
 export default function PremiumOrdersWorkspace(props: Props) {
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [localKeyword, setLocalKeyword] = useState(props.filters.keyword);
+    const debounceTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        setLocalKeyword(props.filters.keyword);
+    }, [props.filters.keyword]);
+
+    const handleKeywordChange = (newVal: string) => {
+        setLocalKeyword(newVal);
+        if (debounceTimerRef.current) {
+            window.clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = window.setTimeout(() => {
+            props.onFilterChange({ keyword: newVal });
+        }, 250);
+    };
+
+    const handleClearKeyword = () => {
+        if (debounceTimerRef.current) {
+            window.clearTimeout(debounceTimerRef.current);
+        }
+        setLocalKeyword('');
+        props.onFilterChange({ keyword: '' });
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            if (debounceTimerRef.current) {
+                window.clearTimeout(debounceTimerRef.current);
+            }
+            props.onFilterChange({ keyword: localKeyword });
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (debounceTimerRef.current) {
+                window.clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, []);
+
     const facets = useMemo(() => {
         const unique = (key: keyof Order) => [...new Set(props.orders.map(order => String(order[key] || '')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
         return [
@@ -55,7 +97,7 @@ export default function PremiumOrdersWorkspace(props: Props) {
                 <button type="button" aria-label="Thống kê đơn hàng" title="Thống kê" onClick={props.onStats}><BarChart3 size={16} /></button>
                 {props.onCreateOrder && <button type="button" aria-label="Tạo đơn hàng mới" title="Tạo đơn hàng mới" onClick={props.onCreateOrder}><Plus size={16} /></button>}
             </div></div>
-            <div className="premium-list-search"><label><Search size={16} /><input aria-label="Tìm đơn hàng" placeholder="Tìm khách hàng, mã đơn, VIN…" value={props.filters.keyword} onChange={event => props.onFilterChange({ keyword: event.target.value })} />{props.filters.keyword && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => props.onFilterChange({ keyword: '' })}><X size={14} /></button>}</label>
+            <div className="premium-list-search"><label><Search size={16} /><input aria-label="Tìm đơn hàng" placeholder="Tìm khách hàng, mã đơn, VIN…" value={localKeyword} onChange={event => handleKeywordChange(event.target.value)} onKeyDown={handleKeyDown} />{localKeyword && <button type="button" aria-label="Xóa tìm kiếm" onClick={handleClearKeyword}><X size={14} /></button>}</label>
                 <button type="button" aria-label="Bộ lọc đơn hàng" aria-expanded={filtersOpen} aria-controls="premium-order-filters" className="premium-filter-toggle" onClick={() => setFiltersOpen(open => !open)}><Filter size={16} />{activeCount ? <span>{activeCount}</span> : 'Lọc'}</button>
             </div>
             {filtersOpen && <div id="premium-order-filters" className="premium-filter-panel" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setFiltersOpen(false); } }}>

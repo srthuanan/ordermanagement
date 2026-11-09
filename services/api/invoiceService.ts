@@ -23,22 +23,28 @@ export const requestInvoice = async (
 
     const gasVinToCheck = (xeXangVin || vtlxData?.soKhung || '').trim().toUpperCase();
     if (gasVinToCheck) {
-        const { data: existingGasCar } = await supabase.from('yeucauxhd')
+        let queryY = supabase.from('yeucauxhd')
             .select('xe_xang_vin, vtlx_so_khung, so_don_hang')
             .or(`xe_xang_vin.ilike.${gasVinToCheck},vtlx_so_khung.ilike.${gasVinToCheck}`);
+        if (orderNumber) {
+            queryY = queryY.neq('so_don_hang', orderNumber);
+        }
+        const { data: existingGasCar } = await queryY;
 
-        const { data: existingArchivedGasCar } = await supabase.from('archived_orders')
+        let queryA = supabase.from('archived_orders')
             .select('xe_xang_vin, vtlx_so_khung, so_don_hang')
             .or(`xe_xang_vin.ilike.${gasVinToCheck},vtlx_so_khung.ilike.${gasVinToCheck}`);
+        if (orderNumber) {
+            queryA = queryA.neq('so_don_hang', orderNumber);
+        }
+        const { data: existingArchivedGasCar } = await queryA;
 
-        const matchY = !!(existingGasCar && existingGasCar.length > 0);
-        const matchA = !!(existingArchivedGasCar && existingArchivedGasCar.length > 0);
+        const conflictY = (existingGasCar || []).find(r => r.so_don_hang && r.so_don_hang.trim() !== orderNumber);
+        const conflictA = (existingArchivedGasCar || []).find(r => r.so_don_hang && r.so_don_hang.trim() !== orderNumber);
+        const matched = conflictY || conflictA;
 
-        if (matchY || matchA) {
-            const matched = matchY && existingGasCar ? existingGasCar[0] : (existingArchivedGasCar ? existingArchivedGasCar[0] : null);
-            if (matched) {
-                throw new Error(`Số khung/VIN xe cũ ${gasVinToCheck} đã được sử dụng trước đó trong yêu cầu xuất hóa đơn ${matched.so_don_hang}.`);
-            }
+        if (matched) {
+            throw new Error(`Số khung/VIN xe cũ ${gasVinToCheck} đã được sử dụng trước đó trong yêu cầu xuất hóa đơn ${matched.so_don_hang}.`);
         }
     }
 

@@ -190,15 +190,17 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             .replace(/\[YÊU CẦU SCAN LẠI\]:\s*/gi, '')
             .replace(match[0], '')
             .trim();
+        const lowerReason = cleanReason.toLowerCase();
+        const hasCamKetKeyword = lowerReason.includes('cam kết') || lowerReason.includes('cà vẹt') || lowerReason.includes('vtlx');
         return {
-            hdmb: rawTags.includes('HDMB'),
-            dnxhd: rawTags.includes('DNXHD'),
+            hdmb: rawTags.includes('HDMB') || lowerReason.includes('hợp đồng') || lowerReason.includes('hdmb'),
+            dnxhd: rawTags.includes('DNXHD') || lowerReason.includes('đề nghị') || lowerReason.includes('dnxhd'),
             chinh_sach: rawTags.includes('CHINH_SACH'),
             hoa_hong: rawTags.includes('HOA_HONG'),
             vpoint: rawTags.includes('VPOINT'),
             ma_vc: rawTags.includes('MA_VC'),
             xe_xang: rawTags.includes('XE_XANG'),
-            vtlx: rawTags.includes('VTLX'),
+            vtlx: rawTags.includes('VTLX') || hasCamKetKeyword,
             hasTag: true,
             isRescan,
             cleanReason
@@ -712,15 +714,34 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return policy.some(p => targetPolicies.some(target => p.includes(target)));
     }, [policy]);
 
+    const isVtlxRequested = Boolean(
+        parsedSupplementRequirements?.vtlx ||
+        (parsedSupplementRequirements?.xe_xang && isVtlxPolicy) ||
+        parsedSupplementRequirements?.cleanReason?.toLowerCase().includes('cam kết') ||
+        parsedSupplementRequirements?.cleanReason?.toLowerCase().includes('cà vẹt') ||
+        parsedSupplementRequirements?.cleanReason?.toLowerCase().includes('vtlx')
+    );
+    const isXeXangRequested = Boolean(
+        parsedSupplementRequirements?.xe_xang ||
+        (!isVtlxPolicy && (
+            parsedSupplementRequirements?.cleanReason?.toLowerCase().includes('xe xăng') ||
+            parsedSupplementRequirements?.cleanReason?.toLowerCase().includes('thu cũ')
+        ))
+    );
+
     const showPolicyCol = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.chinh_sach);
     const showHoaHong = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.hoa_hong);
     const showVpoint = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.vpoint);
-    const showMaVc = isVinFastGasCarAppreciationPolicy && (mode !== 'supplement' || Boolean(parsedSupplementRequirements?.ma_vc));
-    const showXeXang = isGasToElectricPolicy && (mode !== 'supplement' || Boolean(parsedSupplementRequirements?.xe_xang));
-    const showVtlx = isVtlxPolicy && (mode !== 'supplement' || Boolean(parsedSupplementRequirements?.vtlx));
+    const showMaVc = mode === 'supplement' ? Boolean(parsedSupplementRequirements?.ma_vc) : isVinFastGasCarAppreciationPolicy;
+    const showXeXang = mode === 'supplement' ? (isXeXangRequested && !isVtlxPolicy) : isGasToElectricPolicy;
+    const showVtlx = mode === 'supplement' ? (isVtlxRequested || (isXeXangRequested && isVtlxPolicy)) : isVtlxPolicy;
     const showHdmb = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.hdmb);
     const showDnxhd = mode !== 'supplement' || Boolean(parsedSupplementRequirements?.dnxhd);
-    const showDocsSection = showHdmb || showDnxhd;
+
+    const hasAnyField = showPolicyCol || showHoaHong || showVpoint || showMaVc || showXeXang || showVtlx || showHdmb || showDnxhd;
+    const effectiveShowHdmb = showHdmb || !hasAnyField;
+    const effectiveShowDnxhd = showDnxhd || !hasAnyField;
+    const showDocsSection = effectiveShowHdmb || effectiveShowDnxhd;
     const showFinanceRow = showHoaHong || showVpoint;
 
     useEffect(() => {
@@ -729,28 +750,35 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             return;
         }
 
+        const currentOrderNo = (order?.["Số đơn hàng"] || (order as any)?.so_don_hang || '').trim();
         const timeoutId = setTimeout(async () => {
             try {
                 setIsCheckingVin(true);
                 setVinCheckError('');
                 const cleanGasVin = xeXangVin.trim().toUpperCase();
 
-                const { data: existingGasCar } = await apiService.supabase.from('yeucauxhd')
+                let queryY = apiService.supabase.from('yeucauxhd')
                     .select('xe_xang_vin, so_don_hang')
                     .ilike('xe_xang_vin', cleanGasVin);
+                if (currentOrderNo) {
+                    queryY = queryY.neq('so_don_hang', currentOrderNo);
+                }
+                const { data: existingGasCar } = await queryY;
 
-                const { data: existingArchivedGasCar } = await apiService.supabase.from('archived_orders')
+                let queryA = apiService.supabase.from('archived_orders')
                     .select('xe_xang_vin, so_don_hang')
                     .ilike('xe_xang_vin', cleanGasVin);
+                if (currentOrderNo) {
+                    queryA = queryA.neq('so_don_hang', currentOrderNo);
+                }
+                const { data: existingArchivedGasCar } = await queryA;
 
-                const matchY = !!(existingGasCar && existingGasCar.length > 0);
-                const matchA = !!(existingArchivedGasCar && existingArchivedGasCar.length > 0);
+                const conflictY = (existingGasCar || []).find(r => r.so_don_hang && r.so_don_hang.trim() !== currentOrderNo);
+                const conflictA = (existingArchivedGasCar || []).find(r => r.so_don_hang && r.so_don_hang.trim() !== currentOrderNo);
+                const matched = conflictY || conflictA;
 
-                if (matchY || matchA) {
-                    const matched = matchY && existingGasCar ? existingGasCar[0] : (existingArchivedGasCar ? existingArchivedGasCar[0] : null);
-                    if (matched) {
-                        setVinCheckError(`Xe xăng có số VIN ${cleanGasVin} đã được sử dụng trong yêu cầu ${matched.so_don_hang}.`);
-                    }
+                if (matched) {
+                    setVinCheckError(`Xe xăng có số VIN ${cleanGasVin} đã được sử dụng trong yêu cầu ${matched.so_don_hang}.`);
                 }
             } catch (err) {
                 console.error('Error checking duplicate old gas car VIN:', err);
@@ -760,7 +788,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         }, 400);
 
         return () => clearTimeout(timeoutId);
-    }, [xeXangVin, isGasToElectricPolicy]);
+    }, [xeXangVin, isGasToElectricPolicy, order?.["Số đơn hàng"]]);
 
     useEffect(() => {
         if (!isVtlxPolicy || !vtlxSoKhung.trim()) {
@@ -768,28 +796,35 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             return;
         }
 
+        const currentOrderNo = (order?.["Số đơn hàng"] || (order as any)?.so_don_hang || '').trim();
         const timeoutId = setTimeout(async () => {
             try {
                 setIsCheckingVtlxVin(true);
                 setVtlxVinCheckError('');
                 const cleanVin = vtlxSoKhung.trim().toUpperCase();
 
-                const { data: existingY } = await apiService.supabase.from('yeucauxhd')
+                let queryY = apiService.supabase.from('yeucauxhd')
                     .select('vtlx_so_khung, xe_xang_vin, so_don_hang')
                     .or(`vtlx_so_khung.ilike.${cleanVin},xe_xang_vin.ilike.${cleanVin}`);
+                if (currentOrderNo) {
+                    queryY = queryY.neq('so_don_hang', currentOrderNo);
+                }
+                const { data: existingY } = await queryY;
 
-                const { data: existingA } = await apiService.supabase.from('archived_orders')
+                let queryA = apiService.supabase.from('archived_orders')
                     .select('vtlx_so_khung, xe_xang_vin, so_don_hang')
                     .or(`vtlx_so_khung.ilike.${cleanVin},xe_xang_vin.ilike.${cleanVin}`);
+                if (currentOrderNo) {
+                    queryA = queryA.neq('so_don_hang', currentOrderNo);
+                }
+                const { data: existingA } = await queryA;
 
-                const matchY = !!(existingY && existingY.length > 0);
-                const matchA = !!(existingA && existingA.length > 0);
+                const conflictY = (existingY || []).find(r => r.so_don_hang && r.so_don_hang.trim() !== currentOrderNo);
+                const conflictA = (existingA || []).find(r => r.so_don_hang && r.so_don_hang.trim() !== currentOrderNo);
+                const matched = conflictY || conflictA;
 
-                if (matchY || matchA) {
-                    const matched = matchY && existingY ? existingY[0] : (existingA ? existingA[0] : null);
-                    if (matched) {
-                        setVtlxVinCheckError(`Số khung ${cleanVin} đã được sử dụng trong yêu cầu ${matched.so_don_hang}.`);
-                    }
+                if (matched) {
+                    setVtlxVinCheckError(`Số khung ${cleanVin} đã được sử dụng trong yêu cầu ${matched.so_don_hang}.`);
                 }
             } catch (err) {
                 console.error('Error checking duplicate VTLX VIN:', err);
@@ -799,7 +834,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         }, 400);
 
         return () => clearTimeout(timeoutId);
-    }, [vtlxSoKhung, isVtlxPolicy]);
+    }, [vtlxSoKhung, isVtlxPolicy, order?.["Số đơn hàng"]]);
 
     const rawCommission = getRawValue(commission);
     const rawVpoint = getRawValue(vpoint);
@@ -828,10 +863,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const isSupplementMode = mode === 'supplement';
     const hasContract = Boolean(contractFile || existingContractUrl);
     const hasProposal = Boolean(proposalFile || existingProposalUrl);
-    const isVtlxInfoValid = !showVtlx || (vtlxHangXe.trim() !== '' && vtlxSoKhung.trim() !== '' && !vtlxVinCheckError);
+    const isVtlxInfoValid = !showVtlx || (
+        isSupplementMode
+            ? (!vtlxVinCheckError)
+            : (vtlxHangXe.trim() !== '' && vtlxSoKhung.trim() !== '' && !vtlxVinCheckError)
+    );
     const isVtlxDocsValid = !showVtlx || (
         isSupplementMode
-            ? Boolean((camKetChuyenDoiXanhFile || existingCamKetUrl) && (cavetXeCuFile || existingCavetUrl))
+            ? Boolean(camKetChuyenDoiXanhFile || cavetXeCuFile || existingCamKetUrl || existingCavetUrl)
             : Boolean(camKetChuyenDoiXanhFile && cavetXeCuFile)
     );
 
@@ -839,7 +878,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         ? ((!showPolicyCol || policy.length > 0) &&
             (!showHoaHong || isCommissionValid) &&
             (!showVpoint || isVpointValid) &&
-            (!showXeXang || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) &&
+            (!showXeXang || (!vinCheckError)) &&
             (!showMaVc || maVc.trim() !== '') &&
             isVtlxInfoValid)
         : (policy.length > 0 &&
@@ -850,7 +889,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             isVtlxInfoValid);
 
     const isStep1DocsValid = isSupplementMode
-        ? ((!showHdmb || hasContract) && (!showDnxhd || hasProposal) && isVtlxDocsValid)
+        ? ((!effectiveShowHdmb || hasContract) && (!effectiveShowDnxhd || hasProposal) && isVtlxDocsValid)
         : (Boolean(contractFile && proposalFile) && isVtlxDocsValid);
     const isStep1Valid = isStep1InfoValid && isStep1DocsValid && !isVerificationBlocked;
     const isStep2Valid = isSupplementMode ? true : vinClubConfirmed;
@@ -989,7 +1028,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 xeXangHang.trim() || undefined,
                 xeXangModel.trim() || undefined,
                 maVc.trim() || undefined,
-                isVtlxPolicy ? {
+                (showVtlx || isVtlxPolicy) ? {
                     hangXe: vtlxHangXe.trim(),
                     soKhung: vtlxSoKhung.trim().toUpperCase(),
                     camKetFile: camKetChuyenDoiXanhFile || null,
@@ -1533,8 +1572,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             {parsedSupplementRequirements.hoa_hong && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Hoa hồng ứng</span>}
                                             {parsedSupplementRequirements.vpoint && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Điểm Vpoint</span>}
                                             {parsedSupplementRequirements.ma_vc && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Mã VC</span>}
-                                            {parsedSupplementRequirements.xe_xang && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Xe xăng thu cũ</span>}
-                                            {parsedSupplementRequirements.vtlx && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Hồ sơ VTLX</span>}
+                                            {parsedSupplementRequirements.xe_xang && !isVtlxPolicy && !isVtlxRequested && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Xe xăng thu cũ</span>}
+                                            {(parsedSupplementRequirements.vtlx || isVtlxRequested || (parsedSupplementRequirements.xe_xang && isVtlxPolicy)) && <span className={`${isRescan ? 'bg-sky-200/90 text-sky-950 border-sky-300' : 'bg-amber-200/90 text-amber-950 border-amber-300'} font-extrabold px-2 py-0.5 rounded-full text-[11px] border`}>Hồ sơ VTLX (Cam kết & Cà vẹt)</span>}
                                         </span>
                                     )}
                                 </div>
@@ -1565,52 +1604,52 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 <div style={{ display: step === 1 ? (showPolicyCol ? 'grid' : 'block') : 'none' }} className={showPolicyCol ? "invoice-step1-grid" : "w-full max-w-4xl mx-auto space-y-4"}>
                     {/* Cột trái: Danh sách chính sách bán hàng để chọn */}
                     {showPolicyCol && (
-                    <div className="invoice-step1-col">
-                        <div className="invoice-step1-policy-wrap">
-                            <label className="invoice-field-label">
-                                <span>Chính sách bán hàng áp dụng <span className="req">*</span></span>
-                                <span className="invoice-field-hint">
-                                    {policy.length > 0 ? `Đã chọn ${policy.length} chính sách` : 'Chọn 1 hoặc nhiều chính sách'}
-                                </span>
-                            </label>
-                            <div className="invoice-policy-list-box">
-                                {isLoadingPolicies ? (
-                                    <div className="text-[11px] text-slate-400 py-4 px-2 flex items-center gap-2">
-                                        <i className="fas fa-spinner fa-spin text-blue-500"></i>
-                                        <span>Đang tải danh sách chính sách...</span>
-                                    </div>
-                                ) : filteredSalesPolicies.length > 0 ? (
-                                    filteredSalesPolicies.map((policyName) => {
-                                        const isSelected = policy.includes(policyName);
-                                        return (
-                                            <button
-                                                key={policyName}
-                                                type="button"
-                                                className="invoice-policy-chip"
-                                                data-selected={isSelected}
-                                                onClick={() => {
-                                                    setPolicy(prev =>
-                                                        prev.includes(policyName)
-                                                            ? prev.filter(p => p !== policyName)
-                                                            : [...prev, policyName]
-                                                    );
-                                                }}
-                                            >
-                                                <span className="invoice-policy-chip-dot">
-                                                    {isSelected && <i className="fas fa-check"></i>}
-                                                </span>
-                                                <span>{policyName}</span>
-                                            </button>
-                                        );
-                                    })
-                                ) : (
-                                    <div className="text-[11px] text-slate-400 py-3 px-2">
-                                        Không có chính sách khả dụng cho dòng xe này.
-                                    </div>
-                                )}
+                        <div className="invoice-step1-col">
+                            <div className="invoice-step1-policy-wrap">
+                                <label className="invoice-field-label">
+                                    <span>Chính sách bán hàng áp dụng <span className="req">*</span></span>
+                                    <span className="invoice-field-hint">
+                                        {policy.length > 0 ? `Đã chọn ${policy.length} chính sách` : 'Chọn 1 hoặc nhiều chính sách'}
+                                    </span>
+                                </label>
+                                <div className="invoice-policy-list-box">
+                                    {isLoadingPolicies ? (
+                                        <div className="text-[11px] text-slate-400 py-4 px-2 flex items-center gap-2">
+                                            <i className="fas fa-spinner fa-spin text-blue-500"></i>
+                                            <span>Đang tải danh sách chính sách...</span>
+                                        </div>
+                                    ) : filteredSalesPolicies.length > 0 ? (
+                                        filteredSalesPolicies.map((policyName) => {
+                                            const isSelected = policy.includes(policyName);
+                                            return (
+                                                <button
+                                                    key={policyName}
+                                                    type="button"
+                                                    className="invoice-policy-chip"
+                                                    data-selected={isSelected}
+                                                    onClick={() => {
+                                                        setPolicy(prev =>
+                                                            prev.includes(policyName)
+                                                                ? prev.filter(p => p !== policyName)
+                                                                : [...prev, policyName]
+                                                        );
+                                                    }}
+                                                >
+                                                    <span className="invoice-policy-chip-dot">
+                                                        {isSelected && <i className="fas fa-check"></i>}
+                                                    </span>
+                                                    <span>{policyName}</span>
+                                                </button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-[11px] text-slate-400 py-3 px-2">
+                                            Không có chính sách khả dụng cho dòng xe này.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
                     )}
 
                     {/* Cột phải: Các ô nhập liệu & Hồ sơ chứng từ đính kèm */}
@@ -1783,24 +1822,24 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     <div className="invoice-docs-stack">
                                         <SimpleFileUpload
                                             id="cam_ket_vtlx_file_input"
-                                            label="Cam kết chuyển đổi xanh"
+                                            label={isSupplementMode ? "Cam kết chuyển đổi xanh (Mới)" : "Cam kết chuyển đổi xanh"}
                                             onFileSelect={(file) => setCamKetChuyenDoiXanhFile(file)}
-                                            required
+                                            required={!isSupplementMode && !existingCamKetUrl}
                                             accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
                                             buttonText="Chọn PDF / Ảnh"
-                                            placeholderText="Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh"
+                                            placeholderText={isSupplementMode && existingCamKetUrl ? "Đã có tệp cũ trên hệ thống · Bấm để tải file mới thay thế" : "Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh"}
                                             disableCompression={false}
                                             showPreview={false}
                                             variant="slot"
                                         />
                                         <SimpleFileUpload
                                             id="cavet_vtlx_file_input"
-                                            label="Cà vẹt xe điện hoặc xăng cũ"
+                                            label={isSupplementMode ? "Cà vẹt xe điện hoặc xăng cũ (Mới)" : "Cà vẹt xe điện hoặc xăng cũ"}
                                             onFileSelect={(file) => setCavetXeCuFile(file)}
-                                            required
+                                            required={!isSupplementMode && !existingCavetUrl}
                                             accept=".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp"
                                             buttonText="Chọn PDF / Ảnh"
-                                            placeholderText="Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh"
+                                            placeholderText={isSupplementMode && existingCavetUrl ? "Đã có tệp cũ trên hệ thống · Bấm để tải file mới thay thế" : "Kéo thả hoặc bấm để đính kèm PDF hoặc Ảnh"}
                                             disableCompression={false}
                                             showPreview={false}
                                             variant="slot"
@@ -1817,7 +1856,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     <span className="invoice-field-hint">PDF hoặc Ảnh</span>
                                 </label>
                                 <div className="invoice-docs-stack">
-                                    {showHdmb && (
+                                    {effectiveShowHdmb && (
                                         <SimpleFileUpload
                                             id="hop_dong_file_input"
                                             label={mode === 'supplement' ? "Hợp đồng mua bán (Mới)" : "Hợp đồng mua bán"}
@@ -1831,7 +1870,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             placeholderText={mode === 'supplement' && existingContractUrl ? "Đã có tệp cũ trên hệ thống · Bấm để tải file mới thay thế" : "Kéo thả hoặc bấm để đính kèm Hợp đồng"}
                                         />
                                     )}
-                                    {showDnxhd && (
+                                    {effectiveShowDnxhd && (
                                         <SimpleFileUpload
                                             id="denghi_xhd_file_input"
                                             label={mode === 'supplement' ? "Đề nghị xuất hóa đơn (Mới)" : "Đề nghị xuất hóa đơn"}
@@ -1956,7 +1995,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                         </p>
                                     </div>
                                 )}
-                                {isVtlxPolicy && vtlxSoKhung && (
+                                {(isVtlxPolicy || showVtlx) && vtlxSoKhung && (
                                     <div className="invoice-confirm-finance-box" data-span="2">
                                         <p className="invoice-confirm-spec-label mb-0.5 text-emerald-800 font-semibold flex items-center gap-1">
                                             <i className="fas fa-leaf text-emerald-600"></i>
@@ -1975,21 +2014,21 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             <div className="invoice-confirm-card-title">
                                 <span>Hồ sơ chứng từ đính kèm</span>
                                 <span className="invoice-confirm-card-hint">
-                                    {isVtlxPolicy ? '4 tệp (PDF / Ảnh)' : '2 tệp PDF'}
+                                    {(isVtlxPolicy || showVtlx) ? '4 tệp (PDF / Ảnh)' : '2 tệp PDF'}
                                 </span>
                             </div>
                             <div className="invoice-docs-stack">
                                 {[
                                     { label: 'Hợp đồng mua bán', file: contractFile },
                                     { label: 'Đề nghị xuất hóa đơn', file: proposalFile },
-                                    ...(isVtlxPolicy ? [
+                                    ...((isVtlxPolicy || showVtlx) ? [
                                         { label: 'Cam kết chuyển đổi xanh', file: camKetChuyenDoiXanhFile },
                                         { label: 'Cà vẹt xe điện hoặc xăng cũ', file: cavetXeCuFile }
                                     ] : [])
                                 ].map((doc, idx) => {
                                     const sizeText = doc.file
                                         ? doc.file.size >= 1024 * 1024
-                                             ? `${(doc.file.size / (1024 * 1024)).toFixed(2)} MB`
+                                            ? `${(doc.file.size / (1024 * 1024)).toFixed(2)} MB`
                                             : `${(doc.file.size / 1024).toFixed(1)} KB`
                                         : '';
                                     const isImg = doc.file && (doc.file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(doc.file.name));
@@ -2121,8 +2160,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             {isValidatingContract
                                 ? 'Đang kiểm tra...'
                                 : mode === 'supplement'
-                                ? (parsedSupplementRequirements?.isRescan ? 'Xác nhận nộp bản scan lại' : 'Xác nhận nộp bổ sung')
-                                : 'Gửi yêu cầu'}
+                                    ? (parsedSupplementRequirements?.isRescan ? 'Xác nhận nộp bản scan lại' : 'Xác nhận nộp bổ sung')
+                                    : 'Gửi yêu cầu'}
                         </span>
                     </button>
                 )}

@@ -933,6 +933,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             presentation="workspace" order={selectedOrder} orderList={processedData}
             onNavigate={handleOrderNavigation} onCancel={setOrderToCancel}
             onRequestInvoice={setOrderToRequestInvoice} onSupplement={setOrderToSupplement}
+            onSupplementConfirm={handleSupplementFiles}
             onRequestVC={setOrderToRequestVC} onConfirmVC={setOrderToConfirmVC}
             onEdit={updatedOrder => handleEditSuccess(undefined, updatedOrder)}
             onSelectPolicy={handleSelectPolicy} isReferenceAccount={isReferenceAccount}

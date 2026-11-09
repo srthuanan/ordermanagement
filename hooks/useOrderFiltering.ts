@@ -1,6 +1,38 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Order, SortConfig } from '../types';
 
+interface OrderSearchIndex {
+    nfc: string;
+    normalized: string;
+}
+
+const orderSearchIndexCache = new WeakMap<Order, OrderSearchIndex>();
+
+function getOrderSearchIndex(order: Order): OrderSearchIndex {
+    let index = orderSearchIndexCache.get(order);
+    if (!index) {
+        const raw = [
+            order["Tên khách hàng"],
+            order["Số đơn hàng"],
+            order.VIN,
+            order["Dòng xe"],
+            order["Phiên bản"],
+            order["Ngoại thất"],
+            order["Nội thất"],
+            order["Tên tư vấn bán hàng"],
+            order["CHÍNH SÁCH"],
+            order["Số máy"]
+        ].filter(Boolean).join(' ');
+
+        index = {
+            nfc: raw.normalize('NFC').toLowerCase(),
+            normalized: raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd')
+        };
+        orderSearchIndexCache.set(order, index);
+    }
+    return index;
+}
+
 interface UseOrderFilteringProps {
     allHistoryData: Order[];
     isSidebarCollapsed: boolean;
@@ -152,33 +184,13 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
             const keyword = filters.keyword.toLowerCase().trim();
             const normalizedKeyword = filters.keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').trim();
             const hasAccents = keyword !== normalizedKeyword;
-            const normalizedKeywordNFC = filters.keyword.normalize('NFC').toLowerCase();
+            const normalizedKeywordNFC = filters.keyword.normalize('NFC').toLowerCase().trim();
 
             filteredOrders = filteredOrders.filter(order => {
-                // Optimization: Inline selective normalization for speed
-                const fieldsToSearch = [
-                    order["Tên khách hàng"],
-                    order["Số đơn hàng"],
-                    order.VIN,
-                    order["Dòng xe"],
-                    order["Phiên bản"],
-                    order["Ngoại thất"],
-                    order["Nội thất"],
-                    order["Tên tư vấn bán hàng"],
-                    order["CHÍNH SÁCH"],
-                    order["Số máy"]
-                ];
-
-                return fieldsToSearch.some(source => {
-                    if (!source) return false;
-                    if (hasAccents) {
-                        return source.normalize('NFC').toLowerCase().includes(normalizedKeywordNFC);
-                    } else {
-                        // Custom fast normalization for search
-                        const normalizedSource = source.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').trim();
-                        return normalizedSource.includes(normalizedKeyword);
-                    }
-                });
+                const index = getOrderSearchIndex(order);
+                return hasAccents
+                    ? index.nfc.includes(normalizedKeywordNFC)
+                    : index.normalized.includes(normalizedKeyword);
             });
         }
         if (filters.carModel.length > 0) {
