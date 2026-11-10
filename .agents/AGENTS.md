@@ -1,5 +1,16 @@
 # Agent Rules
 
+- **Quy Chuẩn Tra DMS & NDP Tự Động Chờ Ký (NDP & DMS Auto-Transition to Pending Signature Protocol)**:
+  1. **Bản Chất Nghiệp Vụ**: Đối với các đơn hàng ở thư mục/trạng thái *Đã phê duyệt* (xe đã ghép VIN, hồ sơ XHĐ đã được Admin/Kế toán duyệt), tính năng tra cứu tự động đối soát xem xe/đơn đã được VinFast xuất HĐ / PGI / ARI hay chưa để tự động chuyển đơn sang *Chờ ký hóa đơn*.
+  2. **Tài Khoản & Quyền Hạn Xác Thực NDP Mới (NDP Auth Credentials)**:
+     - Khi tra cứu trực tiếp trên hệ thống NDP Dealer Portal (`dealer-portal-api.vinfast.com`), bắt buộc sử dụng token tài khoản **VHKD_01 (Vận hành kinh doanh - Hoàng Thị Hạnh `0925821888`)**.
+     - Header bắt buộc: `x-active-capability: capability:vhkd_01`, `x-market: VN`, `dealerCodes: ["N31913"]`.
+     - Cấu hình lưu trữ tập trung tại `ndp_token_config.json` và `scratch/ndp_token.json`.
+  3. **Kiến Trúc Đa Tầng Tương Thích Hệ Thống Mới NDP (Dealer Portal `dealer-portal.vinfast.com`)**:
+     - *Tầng 1 (NDP Live API & Mirror trên Supabase - Tốc độ 0.00s)*: Đối soát trực tiếp danh sách đơn cần kiểm tra với `donhanghienhuu` (theo `so_vin`, `don_hang_goc`, `so_don_hang_ban`), `thongtinxe` (theo `vin`) và NDP Live API (`/api/assets?search={vin}`). Nếu bản ghi trên NDP có `trang_thai` thuộc `INVOICED`, `Đã xuất hóa đơn`, `Đã giao xe`, `DELIVERED`, `PGI` hoặc `asset_status` thuộc `INVOICED`, `SOLD` hoặc `is_sold = true`, hệ thống tự động chuyển đơn sang *Chờ ký hóa đơn* (gọi RPC `rpc_mark_as_pending_signature` và cập nhật `donhang`, `yeucauxhd`).
+     - *Tầng 2 (DMS Dynamics 365 Fallback)*: Đối với các đơn chưa khớp qua NDP Mirror, nếu máy trạm có chạy `server-cyber` và cookie Dynamics 365 còn hạn, tự động gọi script `scripts/dms_vso_ari_checker.py` để vét cạn nếu showroom vẫn còn đơn chạy song song trên Dynamics cũ.
+     - *Tầng 3 (Bookmarklet NDP Live 1-Click)*: Cung cấp script Bookmarklet chuyên biệt (`bookmarklets/ndp_check_approved_live.txt`) và nút sao chép nhanh trên modal báo cáo để Admin có thể chạy trực tiếp trên tab `dealer-portal.vinfast.com`, đối soát tức thì các xe vừa được VinFast xuất HĐ mà chưa kịp đồng bộ ngầm.
+
 - **Quy Chuẩn Chặn Ghép Trùng Xe (Anti-Duplicate Vehicle Assignment Protocol)**:
   1. **Nguyên Tắc Bất Di Bất Dịch**: Tại mọi thời điểm, một số VIN chỉ được phép gán cho duy nhất 1 đơn hàng đang hoạt động (`ket_qua NOT ILIKE 'Đã hủy%'`). Tuyệt đối không để xảy ra tình trạng 2 đơn hàng mở cùng mang một số VIN.
   2. **Bảo Vệ Đa Tầng (Multi-Layer Enforcement)**:

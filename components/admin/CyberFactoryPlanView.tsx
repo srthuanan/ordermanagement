@@ -1,6 +1,6 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as xlsx from 'xlsx';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import { 
     searchCyberFactoryPlan, 
     getCyberPlanFilterOptions, 
@@ -1841,8 +1841,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     };
 
     return (
-        <div className="flex flex-col md:flex-row h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0 font-sans">
-            <AnimatedBackground />
+        <div className="flex flex-col md:flex-row h-full bg-white border-0 overflow-hidden relative z-0 font-sans">
+
 
             {/* Dedicated Mobile View (Mobile-First Separation Protocol) */}
             <div className="flex md:hidden flex-1 flex-col min-h-0 w-full overflow-hidden">
@@ -2110,7 +2110,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             </div>
 
             {/* COLUMN 1: LEFT SUB-TAB FOLDER SIDEBAR (Desktop Only) */}
-            <div className="w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white hidden md:flex flex-col relative z-10">
+            <div className="w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white hidden md:flex flex-col relative z-10"><div id="sidebar-filters-Cyber" className="admin-sidebar-filter-slot" />
                 {/* Sub-tab Folder List */}
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {/* Tab 1: Kế Hoạch */}
@@ -2338,11 +2338,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             
                             {/* 1. Keyword search / Instant Paste Filter */}
                             <div className="flex-1 min-w-[200px] max-w-sm relative">
-                                <div className={`flex items-center bg-slate-50/90 hover:bg-white border rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs ${
-                                    keyword ? 'border-blue-300 ring-1 ring-blue-200 bg-blue-50/20' : 'border-slate-200'
-                                }`}>
-                                    <i className="fas fa-search text-[11px] text-slate-400 mr-2 flex-shrink-0"></i>
-                                    <input
+                                <SidebarFilterSection targetId="sidebar-filters-Cyber" title="Kế hoạch Cyber" search={<input
                                         type="text"
                                         placeholder="Tìm hoặc dán danh sách VIN, số máy, DMS..."
                                         value={keyword}
@@ -2357,32 +2353,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         }}
                                         className="w-full bg-transparent text-xs text-slate-800 font-semibold placeholder-slate-400 focus:outline-none"
                                         title="Nhập từ khóa hoặc dán danh sách nhiều số VIN (phân cách bằng dấu phẩy, khoảng trắng hoặc dán từ Excel)"
-                                    />
-                                    
-                                    {/* Instant Match Badge on Downloaded Data */}
-                                    {keyword && cars.length > 0 && (
-                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 whitespace-nowrap mr-1 shrink-0 animate-fade-in" title={`Khớp ${displayedCars.length} / ${cars.length} xe đã tải`}>
-                                            {displayedCars.length}/{cars.length}
-                                        </span>
-                                    )}
-
-                                    {keyword && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setKeyword('')}
-                                            className="text-slate-400 hover:text-slate-600 p-0.5 ml-0.5"
-                                            title="Xóa tìm kiếm"
-                                        >
-                                            <i className="fas fa-times-circle text-xs"></i>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 2. Model Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
-                                <i className="fas fa-car text-[11px] text-slate-400 flex-shrink-0"></i>
-                                <select
+                                    />}><select
                                     value={selectedModel}
                                     onChange={e => handleModelChange(e.target.value)}
                                     disabled={isLoadingFilters}
@@ -2394,15 +2365,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         <option key={m} value={m}>{m}</option>
                                     ))}
                                 </select>
-                                {isLoadingFilters && (
-                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                                )}
-                            </div>
-
-                            {/* 3. Version Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
-                                <i className="fas fa-cogs text-[11px] text-slate-400 flex-shrink-0"></i>
-                                <select
+<select
                                     value={selectedVersion}
                                     onChange={e => setSelectedVersion(e.target.value)}
                                     disabled={isLoadingColors}
@@ -2414,15 +2377,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         <option key={v} value={v}>{v}</option>
                                     ))}
                                 </select>
-                                {isLoadingColors && (
-                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                                )}
-                            </div>
-
-                            {/* 4. Color Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
-                                <i className="fas fa-palette text-[11px] text-slate-400 flex-shrink-0"></i>
-                                <select
+<select
                                     value={selectedColor}
                                     onChange={e => setSelectedColor(e.target.value)}
                                     disabled={isLoadingColors}
@@ -2434,12 +2389,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </select>
-                            </div>
-
-                            {/* 5. Showroom Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
-                                <i className="fas fa-store text-[11px] text-slate-400 flex-shrink-0"></i>
-                                <select
+<select
                                     value={selectedTtcp}
                                     onChange={e => setSelectedTtcp(e.target.value)}
                                     className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[155px] truncate"
@@ -2451,7 +2401,37 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             {t.name} ({t.count})
                                         </option>
                                     ))}
-                                </select>
+                                </select></SidebarFilterSection>
+                            </div>
+
+                            {/* 2. Model Filter */}
+                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
+                                <i className="fas fa-car text-[11px] text-slate-400 flex-shrink-0"></i>
+                                
+                                {isLoadingFilters && (
+                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                                )}
+                            </div>
+
+                            {/* 3. Version Filter */}
+                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
+                                <i className="fas fa-cogs text-[11px] text-slate-400 flex-shrink-0"></i>
+                                
+                                {isLoadingColors && (
+                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                                )}
+                            </div>
+
+                            {/* 4. Color Filter */}
+                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
+                                <i className="fas fa-palette text-[11px] text-slate-400 flex-shrink-0"></i>
+                                
+                            </div>
+
+                            {/* 5. Showroom Filter */}
+                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white shadow-xs">
+                                <i className="fas fa-store text-[11px] text-slate-400 flex-shrink-0"></i>
+                                
                             </div>
 
                             {/* Action buttons */}
@@ -2760,27 +2740,58 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all text-xs">
                                     <i className="far fa-calendar-alt text-[11px] text-slate-400"></i>
                                     <span className="text-[10.5px] text-slate-400 font-medium">Từ</span>
-                                    <input
+                                    
+                                    <span className="text-[10.5px] text-slate-400 font-medium">đến</span>
+                                    
+                                </div>
+
+                                {/* 2. Warehouse Filter */}
+                                <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white text-xs">
+                                    <i className="fas fa-warehouse text-[11px] text-slate-400 flex-shrink-0"></i>
+                                    
+                                </div>
+
+                                {/* 3. Model Filter */}
+                                <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white text-xs">
+                                    <i className="fas fa-car text-[11px] text-slate-400 flex-shrink-0"></i>
+                                    
+                                </div>
+
+                                {/* 4. Status Filter */}
+                                <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white text-xs">
+                                    <i className="fas fa-file-invoice text-[11px] text-slate-400 flex-shrink-0"></i>
+                                    
+                                </div>
+
+                                {/* 5. Search Bar */}
+                                <div className="flex-1 min-w-[200px] max-w-xs relative">
+                                    <SidebarFilterSection targetId="sidebar-filters-Cyber" title="Kế hoạch Cyber" search={<input
+                                            type="text"
+                                            placeholder="Tìm VIN, số máy, số HĐ (dán từ Excel)..."
+                                            value={tonKhoKeyword}
+                                            onChange={e => setTonKhoKeyword(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' && tonKhoCars.length === 0) {
+                                                    executeTonKhoSearch();
+                                                }
+                                            }}
+                                            className="w-full bg-transparent text-xs text-slate-800 font-semibold placeholder-slate-400 focus:outline-none"
+                                            title="Nhập từ khóa hoặc dán danh sách số VIN từ Excel"
+                                        />}><input
                                         type="date"
                                         value={tonKhoFromDate}
                                         onChange={e => setTonKhoFromDate(e.target.value)}
                                         className="bg-transparent text-xs text-slate-800 font-bold focus:outline-none cursor-pointer w-[110px]"
                                         title="Từ ngày"
                                     />
-                                    <span className="text-[10.5px] text-slate-400 font-medium">đến</span>
-                                    <input
+<input
                                         type="date"
                                         value={tonKhoToDate}
                                         onChange={e => setTonKhoToDate(e.target.value)}
                                         className="bg-transparent text-xs text-slate-800 font-bold focus:outline-none cursor-pointer w-[110px]"
                                         title="Đến ngày"
                                     />
-                                </div>
-
-                                {/* 2. Warehouse Filter */}
-                                <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white text-xs">
-                                    <i className="fas fa-warehouse text-[11px] text-slate-400 flex-shrink-0"></i>
-                                    <select
+<select
                                         value={tonKhoWarehouse}
                                         onChange={e => {
                                             setTonKhoWarehouse(e.target.value);
@@ -2796,12 +2807,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             </option>
                                         ))}
                                     </select>
-                                </div>
-
-                                {/* 3. Model Filter */}
-                                <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white text-xs">
-                                    <i className="fas fa-car text-[11px] text-slate-400 flex-shrink-0"></i>
-                                    <select
+<select
                                         value={tonKhoModel}
                                         onChange={e => {
                                             setTonKhoModel(e.target.value);
@@ -2815,12 +2821,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             <option key={m} value={m}>{m}</option>
                                         ))}
                                     </select>
-                                </div>
-
-                                {/* 4. Status Filter */}
-                                <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white text-xs">
-                                    <i className="fas fa-file-invoice text-[11px] text-slate-400 flex-shrink-0"></i>
-                                    <select
+<select
                                         value={tonKhoStatus}
                                         onChange={e => {
                                             const newStatus = e.target.value as any;
@@ -2834,42 +2835,11 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         <option value="all">Tất cả xe ({tonKhoTotal})</option>
                                         <option value="invoiced">Đã viết HĐ ({tonKhoInvoiced})</option>
                                     </select>
-                                </div>
-
-                                {/* 5. Search Bar */}
-                                <div className="flex-1 min-w-[200px] max-w-xs relative">
-                                    <div className={`flex items-center bg-slate-50 hover:bg-white border rounded-xl px-2.5 h-9 transition-all focus-within:border-blue-500 focus-within:bg-white ${
-                                        tonKhoKeyword ? 'border-blue-400 bg-blue-50/20' : 'border-slate-200'
-                                    }`}>
-                                        <i className="fas fa-search text-[11px] text-slate-400 mr-2 flex-shrink-0"></i>
-                                        <input
-                                            type="text"
-                                            placeholder="Tìm VIN, số máy, số HĐ (dán từ Excel)..."
-                                            value={tonKhoKeyword}
-                                            onChange={e => setTonKhoKeyword(e.target.value)}
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter' && tonKhoCars.length === 0) {
-                                                    executeTonKhoSearch();
-                                                }
-                                            }}
-                                            className="w-full bg-transparent text-xs text-slate-800 font-semibold placeholder-slate-400 focus:outline-none"
-                                            title="Nhập từ khóa hoặc dán danh sách số VIN từ Excel"
-                                        />
-                                        {tonKhoKeyword && tonKhoCars.length > 0 && (
-                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 whitespace-nowrap mr-1 shrink-0">
-                                                {displayedTonKhoCars.length}/{tonKhoCars.length}
-                                            </span>
-                                        )}
-                                        {tonKhoKeyword && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setTonKhoKeyword('')}
-                                                className="text-slate-400 hover:text-slate-600 p-0.5"
-                                            >
-                                                <i className="fas fa-times-circle text-xs"></i>
-                                            </button>
-                                        )}
-                                    </div>
+<input type="date" value={tonKhoFromDate} onChange={event => setTonKhoFromDate(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none" />
+<input type="date" value={tonKhoToDate} onChange={event => setTonKhoToDate(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none" />
+<select value={tonKhoWarehouse} onChange={event => setTonKhoWarehouse(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả kho</option>{tonKhoWarehouses.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}</select>
+<select value={tonKhoModel} onChange={event => setTonKhoModel(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả dòng xe</option>{tonKhoModels.map(item => <option key={item} value={item}>{item}</option>)}</select>
+<select value={tonKhoStatus} onChange={event => setTonKhoStatus(event.target.value as any)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="not_invoiced">Chưa viết HĐ</option><option value="invoiced">Đã viết HĐ</option><option value="all">Tất cả</option></select></SidebarFilterSection>
                                 </div>
                             </div>
 
@@ -3572,11 +3542,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             
                             {/* 1. Thanh tìm kiếm trung tâm (Hero Search) */}
                             <div className="flex-1 min-w-[280px] max-w-xl relative">
-                                <div className={`flex items-center bg-slate-50 hover:bg-white border-2 rounded-xl px-3.5 h-10 transition-all focus-within:border-purple-600 focus-within:ring-3 focus-within:ring-purple-500/20 focus-within:bg-white shadow-xs ${
-                                    xepXeKeyword ? 'border-purple-500 bg-purple-50/20 ring-2 ring-purple-100' : 'border-slate-200'
-                                }`}>
-                                    <i className="fas fa-magnifying-glass text-slate-400 mr-2.5 text-sm"></i>
-                                    <input
+                                <SidebarFilterSection targetId="sidebar-filters-Cyber" title="Kế hoạch Cyber" search={<input
                                         type="text"
                                         placeholder="🔍 Nhập Tên khách hàng, Số khung (VIN), Số HĐ hoặc SĐT..."
                                         value={xepXeKeyword}
@@ -3591,37 +3557,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         }}
                                         className="w-full bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-semibold"
                                         title="Nhập tên khách hàng hoặc số VIN để kiểm tra ngay Showroom nào xuất hóa đơn"
-                                    />
-
-                                    {/* Instant Match Badge */}
-                                    {xepXeKeyword && xepXeContracts.length > 0 && (
-                                        <span 
-                                            className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 whitespace-nowrap mr-1 shrink-0 animate-fade-in" 
-                                        >
-                                            {displayedXepXeContracts.length} kết quả
-                                        </span>
-                                    )}
-
-                                    {xepXeKeyword && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setXepXeKeyword('');
-                                                setXepXePage(1);
-                                            }}
-                                            className="text-slate-400 hover:text-slate-600 ml-1 p-1"
-                                            title="Xóa từ khóa"
-                                        >
-                                            <i className="fas fa-times-circle text-sm"></i>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 2. Chọn Showroom */}
-                            <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-10 transition-all focus-within:border-purple-500 shadow-xs">
-                                <i className="fas fa-building text-xs text-slate-400 flex-shrink-0"></i>
-                                <select
+                                    />}><select
                                     value={xepXeShowroom}
                                     onChange={e => {
                                         const val = e.target.value;
@@ -3641,12 +3577,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-
-                            {/* 3. Dòng xe */}
-                            <div className="hidden lg:flex items-center gap-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-10 transition-all focus-within:border-purple-500 shadow-xs">
-                                <i className="fas fa-car text-xs text-slate-400 flex-shrink-0"></i>
-                                <select
+<select
                                     value={xepXeModel}
                                     onChange={e => {
                                         setXepXeModel(e.target.value);
@@ -3660,6 +3591,20 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         <option key={m} value={m}>{m}</option>
                                     ))}
                                 </select>
+<select value={xepXeShowroom} onChange={event => setXepXeShowroom(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none">{xepXeShowrooms.map(item => <option key={item} value={item}>{item}</option>)}</select>
+<select value={xepXeModel} onChange={event => setXepXeModel(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả dòng xe</option>{xepXeModels.map(item => <option key={item} value={item}>{item}</option>)}</select></SidebarFilterSection>
+                            </div>
+
+                            {/* 2. Chọn Showroom */}
+                            <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-10 transition-all focus-within:border-purple-500 shadow-xs">
+                                <i className="fas fa-building text-xs text-slate-400 flex-shrink-0"></i>
+                                
+                            </div>
+
+                            {/* 3. Dòng xe */}
+                            <div className="hidden lg:flex items-center gap-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-10 transition-all focus-within:border-purple-500 shadow-xs">
+                                <i className="fas fa-car text-xs text-slate-400 flex-shrink-0"></i>
+                                
                             </div>
 
                             {/* 4. Nút Lấy dữ liệu */}
@@ -4923,21 +4868,13 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
                                 {/* Search input */}
                                 <div className="flex-1 min-w-[220px] max-w-md relative">
-                                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 h-9 focus-within:border-slate-400 focus-within:ring-2 focus-within:ring-slate-400/20 focus-within:bg-white transition-all">
-                                        <i className="fas fa-search text-xs text-slate-400 mr-2"></i>
-                                        <input
+                                    <SidebarFilterSection targetId="sidebar-filters-Cyber" title="Kế hoạch Cyber" search={<input
                                             type="text"
                                             placeholder="Tìm theo số VIN, số phiếu, khách hàng, hợp đồng..."
                                             value={ticketSearch}
                                             onChange={e => setTicketSearch(e.target.value)}
                                             className="w-full bg-transparent text-xs text-slate-800 font-semibold placeholder-slate-400 focus:outline-none"
-                                        />
-                                        {ticketSearch && (
-                                            <button type="button" onClick={() => setTicketSearch('')} className="text-slate-400 hover:text-slate-600 text-xs">
-                                                <i className="fas fa-times-circle"></i>
-                                            </button>
-                                        )}
-                                    </div>
+                                        />}></SidebarFilterSection>
                                 </div>
 
                                 {/* Filter: Loại chứng từ */}
@@ -5430,15 +5367,15 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         <div className="mb-2 flex items-center justify-between px-1"><button type="button" onClick={() => { if (mobileCyberFilterFor === 'ton_kho') handleTonKhoReset(); else if (mobileCyberFilterFor === 'xep_xe') handleXepXeReset(); else { setTicketMaCt(''); setTicketMaPost(''); setTicketSearch(''); } }} className="text-[11px] font-semibold text-slate-500">Đặt lại</button><h3 className="text-[14px] font-bold text-slate-900">Bộ lọc</h3><button type="button" onClick={() => setMobileCyberFilterFor(null)} className="text-[11px] font-semibold text-blue-600">Xong</button></div>
                         <div className="overflow-hidden rounded-[16px] border border-black/[0.06] bg-white">
                             {mobileCyberFilterFor === 'ton_kho' && <>
-                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Từ ngày</span><input type="date" value={tonKhoFromDate} onChange={event => setTonKhoFromDate(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none" /></label>
-                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Đến ngày</span><input type="date" value={tonKhoToDate} onChange={event => setTonKhoToDate(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none" /></label>
-                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Kho xe</span><select value={tonKhoWarehouse} onChange={event => setTonKhoWarehouse(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả kho</option>{tonKhoWarehouses.map(item => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Dòng xe</span><select value={tonKhoModel} onChange={event => setTonKhoModel(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả dòng xe</option>{tonKhoModels.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
-                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Hóa đơn</span><select value={tonKhoStatus} onChange={event => setTonKhoStatus(event.target.value as any)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="not_invoiced">Chưa viết HĐ</option><option value="invoiced">Đã viết HĐ</option><option value="all">Tất cả</option></select></label>
+                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Từ ngày</span></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Đến ngày</span></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Kho xe</span></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Dòng xe</span></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Hóa đơn</span></label>
                             </>}
                             {mobileCyberFilterFor === 'xep_xe' && <>
-                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Showroom</span><select value={xepXeShowroom} onChange={event => setXepXeShowroom(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none">{xepXeShowrooms.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
-                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Dòng xe</span><select value={xepXeModel} onChange={event => setXepXeModel(event.target.value)} className="min-w-0 flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="">Tất cả dòng xe</option>{xepXeModels.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
+                                <label className="flex h-12 items-center px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Showroom</span></label>
+                                <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Dòng xe</span></label>
                                 <label className="flex h-12 items-center border-t border-slate-100 px-3"><span className="w-24 text-[10px] font-semibold text-slate-500">Trạng thái</span><select value={xepXeStatusFilter} onChange={event => setXepXeStatusFilter(event.target.value)} className="flex-1 bg-transparent text-right text-[11px] font-semibold outline-none"><option value="all">Tất cả</option><option value="Đã xuất HĐ">Đã xuất HĐ</option><option value="Chưa xuất HĐ">Chưa xuất HĐ</option></select></label>
                             </>}
                             {mobileCyberFilterFor === 'tra_cuu_phieu' && <>

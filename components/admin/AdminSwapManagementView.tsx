@@ -3,9 +3,9 @@ import moment from 'moment';
 import { SwapRequestItem, getSwapRequests, adminApproveSwapRequest, rejectSwapRequest } from '../../services/api/swapService';
 import { Order } from '../../types';
 import CarImage from '../ui/CarImage';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { AdminDirectSwapFormInline } from './AdminDirectSwapFormInline';
+import SidebarFilterSection from './SidebarFilterSection';
 
 interface AdminSwapManagementViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -19,6 +19,7 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
     allOrders = []
 }) => {
     const [requests, setRequests] = useState<SwapRequestItem[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [selectedFolder, setSelectedFolder] = useState<string>('waiting_admin');
     const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -83,20 +84,22 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
 
     // Filter requests based on selected folder
     const filteredRequests = useMemo(() => {
+        const matchingRequests = requests.filter(request => [request.orderA, request.tvbhA, request.tvbhB, request.vinB]
+            .some(value => String(value || '').toLocaleLowerCase('vi').includes(searchQuery.trim().toLocaleLowerCase('vi'))));
         switch (selectedFolder) {
             case 'waiting_admin':
-                return requests.filter(r => r.status === 'waiting_admin');
+                return matchingRequests.filter(r => r.status === 'waiting_admin');
             case 'pending_tvbh2':
-                return requests.filter(r => r.status === 'pending_tvbh2');
+                return matchingRequests.filter(r => r.status === 'pending_tvbh2');
             case 'approved':
-                return requests.filter(r => r.status === 'approved');
+                return matchingRequests.filter(r => r.status === 'approved');
             case 'rejected_cancelled':
-                return requests.filter(r => r.status === 'rejected' || r.status === 'cancelled' || r.status === 'expired');
+                return matchingRequests.filter(r => r.status === 'rejected' || r.status === 'cancelled' || r.status === 'expired');
             case 'all':
             default:
-                return requests;
+                return matchingRequests;
         }
-    }, [requests, selectedFolder]);
+    }, [requests, selectedFolder, searchQuery]);
 
     // Auto-select first request in list if current selection is not in filtered set
     useEffect(() => {
@@ -190,10 +193,14 @@ export const AdminSwapManagementView: React.FC<AdminSwapManagementViewProps> = (
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
+
 
             <div className="hidden w-full flex-shrink-0 flex-col border-r border-slate-200 bg-white md:flex md:w-64 relative z-10">
+                <div id="swap-inline-filters" className="admin-sidebar-filter-slot" />
+                <SidebarFilterSection targetId="swap-inline-filters" title="Trao đổi xe" search={<input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="VIN, mã đơn, TVBH…" />}>
+                    <select aria-label="Trạng thái trao đổi" value={selectedFolder} onChange={e => setSelectedFolder(e.target.value)}>{folders.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select>
+                </SidebarFilterSection>
                 <div className="p-3 bg-slate-100/80 text-slate-800 border-b border-slate-200 flex flex-col gap-2">
                     <button
                         onClick={() => {

@@ -260,11 +260,16 @@ const TestDrivePreview: React.FC<PreviewProps> & {
     GiayCamKet: React.FC<PreviewProps>;
 } = ({ data, hideOnMobile }) => {
     return (
-        <main id="print-area-wrapper" className={`print-hidden lg:col-span-3 bg-slate-100 p-4 rounded-lg overflow-y-auto flex-col items-center gap-4 ${hideOnMobile ? 'hidden lg:flex' : 'flex'}`}>
-            <div className="w-full max-w-[210mm]">
+        <main
+            id="print-area-wrapper"
+            className={`print-hidden flex-1 h-full min-h-0 overflow-y-auto bg-slate-100/70 p-6 flex flex-col items-center gap-6 overscroll-contain ${
+                hideOnMobile ? 'hidden lg:flex' : 'flex'
+            }`}
+        >
+            <div className="w-full max-w-[210mm] bg-white rounded-lg shadow-md border border-slate-200/90 overflow-hidden shrink-0">
                 <PhieuLaiThuPreview data={data} />
             </div>
-            <div className="w-full max-w-[210mm] mt-4">
+            <div className="w-full max-w-[210mm] bg-white rounded-lg shadow-md border border-slate-200/90 overflow-hidden shrink-0">
                 <GiayCamKetPreview data={data} />
             </div>
         </main>

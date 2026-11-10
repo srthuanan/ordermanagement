@@ -1,6 +1,6 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase, supabaseAdmin } from '../../services/supabaseClient';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import Button from '../ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -295,11 +295,11 @@ const AIKnowledgeManagement: React.FC = () => {
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
+
 
             {/* Cột 1: Thư mục (Categories) */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}><div id="sidebar-filters-AIKnowledgeManagement" className="admin-sidebar-filter-slot" />
                 <div className="p-4 border-b border-border-secondary bg-white flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm">
                         <i className="fas fa-brain text-sm"></i>
@@ -383,16 +383,13 @@ const AIKnowledgeManagement: React.FC = () => {
                 </div>
 
                 <div className="p-3 bg-white border-b border-border-secondary/60">
-                    <div className="relative group">
-                        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs transition-colors group-focus-within:text-blue-600"></i>
-                        <input
+                    <SidebarFilterSection targetId="sidebar-filters-AIKnowledgeManagement" title="Tri thức AI" search={<input
                             type="text"
                             placeholder="Tìm kiếm kiến thức, quy tắc..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-xs font-medium pl-9 pr-3 py-2 rounded-xl transition-all outline-none"
-                        />
-                    </div>
+                        />}><select aria-label="Nhóm kiến thức" value={selectedFolder} onChange={e => {setSelectedFolder(e.target.value);setMobileView('list');}}>{folders.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></SidebarFilterSection>
                 </div>
 
                 <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-slate-100">

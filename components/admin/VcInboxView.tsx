@@ -4,7 +4,6 @@ import { VcRequest, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 import Button from '../ui/Button';
 import { toEmbeddableUrl, getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import MarqueeText from '../ui/MarqueeText';
 
@@ -296,13 +295,14 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
     };
 
     return (
-        <div className="flex h-full bg-slate-50 rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
+
             {/* Column 1: Folders */}
             <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <div className="md:hidden p-3 bg-white border-b border-slate-100 flex items-center justify-center relative">
                     <span className="font-bold text-sm">Quản Lý VC</span>
                 </div>
+                <div id="vc-sidebar-filter-target" className="invoice-sidebar-filter-target" />
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {folders.map(folder => (
                         <button

@@ -1,0 +1,270 @@
+/* LÁI THỬ · AUTOMOTIVE COCKPIT & DIGITAL TWIN WORKSPACE 
+   Scoped to td-premium; strictly aligned with orders-premium.css and Tab Đơn Hàng. */
+.td-premium {
+  --td-navy: #17263b;
+  --td-navy-dark: #142236;
+  --td-blue: #123e77;
+  --td-blue-soft: #edf3fd;
+  --td-muted: #7b879a;
+  --td-stroke: #e9edf2;
+  --td-surface: #fbfbfc;
+  --td-white: #fff;
+  color: var(--td-navy);
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+}
+
+.td-premium-desktop {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+}
+
+.td-cockpit-sidebar select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.9em;
+}
+
+/* Custom Cockpit Scrollbars */
+.td-cockpit-sidebar ::-webkit-scrollbar,
+.td-cockpit-main ::-webkit-scrollbar,
+#print-area-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.td-cockpit-sidebar ::-webkit-scrollbar-track,
+.td-cockpit-main ::-webkit-scrollbar-track,
+#print-area-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.td-cockpit-sidebar ::-webkit-scrollbar-thumb,
+.td-cockpit-main ::-webkit-scrollbar-thumb,
+#print-area-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.85);
+  border-radius: 9999px;
+}
+
+.td-cockpit-sidebar ::-webkit-scrollbar-thumb:hover,
+.td-cockpit-main ::-webkit-scrollbar-thumb:hover,
+#print-area-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.95);
+}
+
+/* Test Drive Checkin Sheet Popover */
+.testdrive-checkin-sheet {
+  position: fixed;
+  z-index: 10050;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #dce5f1;
+  border-radius: 16px;
+  box-shadow: 0 16px 45px -8px rgba(15, 23, 42, 0.25), 0 2px 10px rgba(15, 23, 42, 0.06);
+  animation: testdrive-sheet-reveal 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes testdrive-sheet-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 639px) {
+  .testdrive-checkin-sheet {
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+    animation: testdrive-sheet-slideup 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes testdrive-sheet-slideup {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Header & Mode Switcher */
+.td-workspace-heading {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--td-stroke);
+}
+
+.td-heading-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.td-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #0f172a;
+  color: white;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.td-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.td-heading-identity h1 {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.td-heading-total {
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.td-heading-subtitle {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.td-mode-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.td-mode-switch button {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.td-mode-switch button i {
+  margin-right: 6px;
+}
+
+.td-mode-switch button.is-active {
+  background: #0f172a;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+}
+
+.td-mode-switch button:hover:not(.is-active) {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Top Car Filter Bar */
+.td-filterbar {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Create Form Styles */
+.td-create-grid {
+  padding: 18px;
+  background: #f8fafc;
+  min-height: 0;
+}
+
+.td-create-grid > :first-child,
+.td-create-grid > :nth-child(2) {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+
+.td-create-grid input:not([type=radio]):not([type=checkbox]),
+.td-create-grid select,
+.td-create-grid textarea {
+  background: #fff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  color: #0f172a !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+}
+
+.td-create-grid input:focus,
+.td-create-grid select:focus,
+.td-create-grid textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+.td-create-grid label {
+  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.td-create-grid h3,
+.td-create-grid h4 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px;
+}
+
+/* Print Cleanliness */
+@media print {
+  .td-workspace-heading,
+  .td-filterbar,
+  .td-cockpit-sidebar {
+    display: none !important;
+  }
+  .td-premium {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+}

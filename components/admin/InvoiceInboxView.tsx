@@ -1,11 +1,11 @@
+import AnchoredCyberSheet from '../ui/AnchoredCyberSheet';
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import moment from 'moment';
 import { Order, ActionType } from '../../types';
-import PdfThumbnail from '../ui/PdfThumbnail';
 import Button from '../ui/Button';
-import { toEmbeddableUrl, getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
-import AnimatedBackground from '../ui/AnimatedBackground';
+import { getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
+import './invoice-workspace.css';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { supabase } from '../../services/supabaseClient';
 import MarqueeText from '../ui/MarqueeText';
@@ -71,112 +71,6 @@ const CopyableField: React.FC<{ text: string; showToast?: Function; className?: 
     );
 };
 
-const DocumentThumbnail: React.FC<{
-    url?: string;
-    label: string;
-    icon: string;
-    onPreview: () => void;
-    customerName?: string;
-}> = ({ url, label, icon, onPreview, customerName }) => {
-    const [imgSrc, setImgSrc] = useState<string | null>(null);
-    const [hasError, setHasError] = useState(false);
-    const [retryStage, setRetryStage] = useState(0);
-
-    const fileType = useMemo(() => {
-        if (!url) return 'unknown';
-        const lowerUrl = url.toLowerCase();
-        if (lowerUrl.includes('drive.google.com')) return 'drive';
-        if (lowerUrl.includes('.pdf')) return 'pdf';
-        if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)/.test(lowerUrl)) return 'image';
-        return 'other';
-    }, [url]);
-
-    useEffect(() => {
-        setHasError(false);
-        setRetryStage(0);
-        if (fileType === 'drive' && url) {
-            setImgSrc(toEmbeddableUrl(url, 500));
-        } else if (fileType === 'image' && url) {
-            setImgSrc(url);
-        } else {
-            setImgSrc(null);
-        }
-    }, [url, fileType]);
-
-    const handleError = () => {
-        if (fileType !== 'drive' || !url) {
-            setHasError(true);
-            return;
-        }
-
-        const fileId = getDriveFileId(url);
-        if (!fileId) {
-            setHasError(true);
-            return;
-        }
-
-        if (retryStage === 0) {
-            setRetryStage(1);
-            setImgSrc(`https://lh3.googleusercontent.com/d/${fileId}=w500`);
-        } else if (retryStage === 1) {
-            setRetryStage(2);
-            setImgSrc(`https://drive.google.com/thumbnail?id=${fileId}&sz=w500`);
-        } else {
-            setHasError(true);
-        }
-    };
-
-    return (
-        <div
-            className={`flex flex-col rounded-xl border transition-all overflow-hidden group h-full min-h-0 ${url ? 'border-gray-200 bg-white cursor-pointer hover:shadow-md hover:border-accent-primary' : 'border-gray-100 bg-gray-50/50 opacity-60'}`}
-            onClick={() => url && onPreview()}
-        >
-            <div className={`flex-1 min-h-0 flex items-center justify-center overflow-hidden relative ${url ? 'bg-white' : 'bg-gray-50'}`}>
-                {(fileType === 'pdf' || (fileType === 'drive' && label.toLowerCase().includes('pdf'))) && url ? (
-                    <PdfThumbnail url={url} width={400} className="w-full h-full object-cover object-top transition-transform duration-500 scale-[1.3] group-hover:scale-[1.6]" />
-                ) : imgSrc && !hasError ? (
-                    <img
-                        src={imgSrc}
-                        alt={label}
-                        className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                        onError={handleError}
-                    />
-                ) : (
-                    <i className={`fas ${fileType === 'pdf' ? 'fa-file-pdf text-red-500' : icon + (url ? ' text-accent-primary' : ' text-gray-400')} text-3xl opacity-50`}></i>
-                )}
-                {url && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center">
-                        <i className="fas fa-search-plus text-accent-primary opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all duration-300"></i>
-                    </div>
-                )}
-            </div>
-
-            <div className="px-2 py-1.5 border-t border-gray-100 bg-white flex-shrink-0">
-                <div className="flex items-center justify-between gap-2 overflow-hidden">
-                    <div className="font-bold text-[10px] text-gray-700 truncate min-w-0 flex-1" title={label}>{label}</div>
-                    {url && (
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    forceDownload(url, getSanitizedFilename(customerName, label, url));
-                                }}
-                                className="text-gray-400 hover:text-accent-primary transition-colors p-0.5"
-                                title="Tải xuống"
-                            >
-                                <i className="fas fa-download text-[9px]"></i>
-                            </button>
-                            <i className="fas fa-external-link-alt text-[9px] text-gray-400 group-hover:text-accent-primary transition-colors"></i>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
-
 const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     orders,
     onAction,
@@ -202,7 +96,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [dbPolicies, setDbPolicies] = useState<{ten_chinh_sach: string, dong_xe: string}[]>([]);
     const [policySearchQuery, setPolicySearchQuery] = useState('');
     const [policyFilterModelOnly, setPolicyFilterModelOnly] = useState(true);
-    const [isSplitView, setIsSplitView] = useState(true);
+    
     const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat' | 'CyberDKBH' | 'url_cam_ket_vtlx' | 'url_cavet_vtlx'>('LinkDeNghiXHD');
     const [cyberDkbhUrls, setCyberDkbhUrls] = useState<Record<string, string>>({});
     const [isLoadingCyberDkbh, setIsLoadingCyberDkbh] = useState(false);
@@ -364,6 +258,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [isCheckingDms, setIsCheckingDms] = useState(false);
     const copyWithFeedback = useCopyFeedback();
     const [isCyberAssignModalOpen, setIsCyberAssignModalOpen] = useState(false);
+    const [cyberSheetAnchor, setCyberSheetAnchor] = useState<HTMLElement | null>(null);
     const [cyberContracts, setCyberContracts] = useState<CyberXepXeContract[]>(() => {
         try {
             const cached = sessionStorage.getItem('cyber_xep_xe_contracts_cache');
@@ -990,7 +885,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
 
     // Mobile View State
-    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
+    const [, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
 
     // Update mobile view when folder or order changes
     const handleFolderChange = (folder: string) => {
@@ -1062,31 +957,42 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
     const renderOrder = (order: Order) => {
         const isSelected = selectedOrderId === order['Số đơn hàng'];
+        const status = order['Trạng thái xử lý'] || order['Kết quả'] || 'Chờ duyệt';
+        const date = moment(order['Ngày xuất hóa đơn'] || order['Thời gian nhập'], [moment.ISO_8601, 'DD/MM/YYYY HH:mm:ss', 'DD/MM/YYYY'], true);
+        const getTone = (st: string) => {
+            const s = (st || '').toLowerCase();
+            if (/hủy|từ chối/.test(s)) return 'red';
+            if (/đã xuất|hoàn tất|hoàn thành/.test(s)) return 'green';
+            if (/chờ|yêu cầu bổ sung/.test(s)) return 'amber';
+            if (/đã ghép|đã phê duyệt|đã bổ sung/.test(s)) return 'blue';
+            return 'gray';
+        };
+
         return (
-            <div
+            <button
+                type="button"
                 key={order['Số đơn hàng']}
+                className="premium-order-row"
+                aria-pressed={isSelected}
                 onClick={(e) => {
                     handleOrderSelect(order['Số đơn hàng']);
                     setMobileView('detail');
                     copyWithFeedback(order['Tên khách hàng'], e);
                 }}
-                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${
-                    isSelected
-                        ? 'bg-slate-100/90 border-blue-600 font-bold'
-                        : 'border-transparent hover:bg-slate-50'
-                }`}
             >
-                <div className="text-xs font-extrabold text-slate-900 mb-1 uppercase overflow-hidden">
-                    <MarqueeText 
-                        text={order['Tên khách hàng'] || '—'} 
-                        className="text-xs font-extrabold text-slate-900 uppercase"
-                    />
-                </div>
-                <div className="text-[11px] text-slate-600 font-medium truncate flex items-center justify-between">
-                    <span>{order['Dòng xe']} {order['Phiên bản']}</span>
-                </div>
-
-            </div>
+                <span className="premium-row-top">
+                    <strong>{order['Tên khách hàng'] || 'Chưa có tên'}</strong>
+                    <span className="premium-status" data-tone={getTone(status)}>
+                        <i />
+                        {status}
+                    </span>
+                </span>
+                <span className="premium-row-bottom">
+                    <span>{order['Dòng xe']} · {order['Phiên bản'] || '—'}</span>
+                    <time>{date.isValid() ? date.format('DD/MM/YYYY') : '—'}</time>
+                </span>
+                <span className="premium-row-id">{order['Số đơn hàng']}</span>
+            </button>
         );
     };
 
@@ -1116,11 +1022,11 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 />
             </div>
 
-            {/* Desktop 3-Column Cockpit (>= 768px): 100% Preserved */}
-            <div className="hidden md:flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
-                <AnimatedBackground />
+            {/* Desktop invoice workspace (>= 768px) */}
+            <div className="hidden md:grid premium-orders invoice-workspace">
+
                 {/* Column 1: Folders */}
-                <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="hidden">
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {folders.map(folder => {
                         const isActive = selectedFolder === folder.id;
@@ -1183,9 +1089,37 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             </div>
 
             {/* Column 2: List */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+            <aside className="premium-orders-sidebar" aria-label="Danh sách hóa đơn">
                 {/* Mobile Back Button */}
-                <div className="md:hidden p-2.5 bg-white border-b border-border-secondary flex items-center gap-2">
+                <div className="premium-list-heading">
+                    <h1>Hóa đơn <span>{filteredOrders.length}</span></h1>
+                    <div className="flex items-center gap-1">
+                        
+                    </div>
+                </div>
+
+                <div id="invoice-sidebar-filter-target" className="invoice-sidebar-filter-target" />
+                <div className="invoice-folder-tabs">
+                    {folders.map(folder => {
+                        const isActive = selectedFolder === folder.id;
+                        return (
+                            <button
+                                key={folder.id}
+                                aria-pressed={isActive}
+                                type="button"
+                                onClick={() => handleFolderChange(folder.id)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+                                    isActive
+                                        ? 'bg-slate-900 text-white font-bold'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                {folder.label} {folder.count > 0 ? `(${folder.count})` : ''}
+                            </button>
+                        );
+                    })}
+                </div>
+                <div className="hidden">
                     <button onClick={() => setMobileView('folders')} className="p-1.5 hover:bg-surface-ground rounded-full">
                         <i className="fas fa-arrow-left text-gray-500"></i>
                     </button>
@@ -1196,7 +1130,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                 {/* Batch NDP check button for Approved folder */}
                 {selectedFolder === 'approved' && filteredOrders.length > 0 && (
-                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-emerald-50 to-teal-50/60">
+                    <div className="invoice-batch-tools p-2 border-b border-border-secondary">
                         <button
                             onClick={() => handleBatchDmsCheckApproved(false)}
                             disabled={isCheckingDms}
@@ -1211,7 +1145,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                 {/* Batch NDP check button for ALL folders */}
                 {selectedFolder === 'all' && filteredOrders.length > 0 && (
-                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-emerald-50 to-teal-50/60">
+                    <div className="invoice-batch-tools p-2 border-b border-border-secondary">
                         <button
                             onClick={() => handleBatchDmsCheckApproved(false)}
                             disabled={isCheckingDms}
@@ -1226,7 +1160,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                 {/* Batch NDP check button for Invoiced folder */}
                 {selectedFolder === 'invoiced' && filteredOrders.length > 0 && (
-                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-emerald-50 to-teal-50/60">
+                    <div className="invoice-batch-tools p-2 border-b border-border-secondary">
                         <button
                             onClick={() => handleBatchDmsCheckApproved(false)}
                             disabled={isCheckingDms}
@@ -1241,29 +1175,29 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                 {/* Batch M-Invoice button for Pending Signature folder */}
                 {selectedFolder === 'pending_signature' && filteredOrders.length > 0 && (
-                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-blue-50 to-indigo-50/60 flex flex-col gap-1.5">
+                    <div className="invoice-batch-tools p-2 border-b border-border-secondary flex flex-col gap-1.5">
                         <button
                             onClick={handleBatchFetchMInvoice}
                             disabled={isBatchFetching}
-                            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] text-white rounded-lg text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                            className="w-full flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                             title="Tự động kiểm tra trên M-Invoice và tải lên tất cả các xe đã ký số"
                         >
                             <i className={`fas ${isBatchFetching ? 'fa-spinner fa-spin' : 'fa-bolt'} text-[11px]`}></i>
-                            <span>{isBatchFetching ? 'Đang Quét HĐ M-Invoice...' : `⚡ Quét HĐ Tất Cả Xe (${filteredOrders.length})`}</span>
+                            <span>{isBatchFetching ? 'Đang quét hóa đơn…' : `Quét hóa đơn (${filteredOrders.length})`}</span>
                         </button>
                         <button
                             onClick={() => handleBatchDmsCheckApproved(true)}
                             disabled={isCheckingDms}
-                            className="w-full flex items-center justify-center gap-1.5 py-1 px-2 bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 active:scale-[0.99] rounded-lg text-[11px] font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer"
+                            className="w-full flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                             title="Kiểm tra lại trạng thái hóa đơn trên NDP cho các đơn này"
                         >
                             <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-sync-alt'} text-[10px]`}></i>
-                            <span>{isCheckingDms ? 'Đang kiểm tra NDP...' : `🔄 Đối Soát Lại NDP (${filteredOrders.length})`}</span>
+                            <span>{isCheckingDms ? 'Đang kiểm tra NDP…' : `Đối soát NDP (${filteredOrders.length})`}</span>
                         </button>
                     </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="premium-order-list" aria-busy={isLoading}>
                     {isLoading && filteredOrders.length === 0 ? (
                         <div className="divide-y divide-border-secondary">
                             {Array.from({ length: 10 }).map((_, i) => (
@@ -1302,11 +1236,21 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                     )}
 
                 </div>
-            </div>
 
-            {/* Column 3: Detail */}
+                <div className="premium-list-footer flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between text-[10px]">
+                            <span>{filteredOrders.length} đơn</span>
+                            <span className="flex items-center gap-1 font-semibold text-slate-600">
+                                <i className={`fas ${isDmsCompareXhdEnabled ? 'fa-shield-halved text-emerald-600' : 'fa-shield text-slate-400'}`} />
+                                DMS: {isDmsCompareXhdEnabled ? 'BẬT' : 'TẮT'}
+                            </span>
+                        </div>
+                    </div>
+            </aside>
+
+            {/* Column 2: Detail Workspace */}
             <div
-                className={`flex-1 flex flex-col bg-surface-ground/90 min-w-0 relative z-10 ${mobileView !== 'detail' ? 'hidden md:flex' : 'flex'}`}
+                className={`premium-order-content ${'invoice-split-view'}`}
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
@@ -1315,7 +1259,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                     selectedOrder ? (
                         <>
                             {/* Header Actions - Compact */}
-                            <div className={`bg-white border-b border-gray-100 z-10 ${isSplitView ? 'lg:hidden' : ''}`}>
+                            <div className={`bg-white border-b border-gray-100 z-10 ${'lg:hidden'}`}>
                                 <div className="px-4 md:px-5 py-2 md:py-2 flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                         {/* Mobile Back Button - Premium Refined */}
@@ -1326,7 +1270,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                             <i className="fas fa-arrow-left text-xs"></i>
                                         </button>
 
-                                        <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-2xs flex-shrink-0">
+                                        <div className="hidden">
                                             {selectedOrder['Tên khách hàng'].charAt(0)}
                                         </div>
 
@@ -1380,14 +1324,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                     </div>
 
                                     <div className="flex items-center gap-3 ml-auto">
-                                        <button 
-                                            onClick={() => setIsSplitView(!isSplitView)}
-                                            className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${isSplitView ? 'bg-accent-primary border-accent-primary text-white shadow-lg shadow-accent-primary/20' : 'bg-white border-slate-200 text-slate-500 hover:border-accent-primary hover:text-accent-primary'}`}
-                                            title="Chế độ xem song song"
-                                        >
-                                            <i className={`fas ${isSplitView ? 'fa-columns' : 'fa-chalkboard'} text-xs`}></i>
-                                            <span className="text-[10px] font-black uppercase tracking-tight">Split View</span>
-                                        </button>
+                                        
 
                                         <div className="flex items-center gap-1 p-1 bg-slate-50/80 rounded-xl border border-slate-200/50">
                                             {((selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString().includes('[YÊU CẦU SCAN LẠI]')) && (
@@ -1439,12 +1376,11 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                 </div>
                             </div>
 
-                            {/* Main Content Area - Split View Support */}
-                            <div className={`flex-1 p-1.5 md:p-2 flex ${isSplitView ? 'flex-row overflow-hidden' : 'flex-col overflow-y-auto'} gap-1.5 md:gap-2 min-h-0 bg-gray-50/30`}>
+                            {/* Document and review workspace */}
+                            <div className={`invoice-review-body flex-1 p-1.5 md:p-2 flex ${'flex-row overflow-hidden'} gap-1.5 md:gap-2 min-h-0 bg-gray-50/30`}>
                                 
-                                {isSplitView && (
-                                    <div className="hidden lg:flex flex-[2] flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-0 relative">
-                                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 flex items-center justify-between gap-2 overflow-hidden">
+                                <div className="invoice-document-pane flex flex-[2] flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-0 relative">
+                                        <div className="invoice-document-toolbar bg-gray-50 px-3 py-2 border-b border-gray-100 flex items-center justify-between gap-2 overflow-hidden">
                                             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 py-0.5">
                                                 {[
                                                     { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
@@ -1466,6 +1402,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 ].map(doc => (
                                                     <button 
                                                         key={doc.key}
+                                                        aria-pressed={activeDocKey === doc.key}
+                                                        title={`${doc.label}${doc.key.includes('vtlx') && !(doc as any).hasFile ? ' (Chưa có)' : ''}`}
+                                                        aria-label={`${doc.label}${doc.key.includes('vtlx') && !(doc as any).hasFile ? ' (Chưa có)' : ''}`}
                                                         onClick={() => {
                                                             setActiveDocKey(doc.key as any);
                                                             if (doc.key === 'CyberDKBH' && selectedOrder) {
@@ -1479,10 +1418,6 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         }`}
                                                     >
                                                         <i className={`fas ${doc.icon} ${activeDocKey === doc.key ? 'text-white' : (doc.key.includes('vtlx') ? 'text-emerald-600' : 'text-accent-primary')} opacity-80 text-[9px]`}></i>
-                                                        <span className="whitespace-nowrap">{doc.label}</span>
-                                                        {doc.key.includes('vtlx') && !(doc as any).hasFile && (
-                                                            <span className="text-[8px] font-medium opacity-70 ml-0.5 whitespace-nowrap">(Chưa có)</span>
-                                                        )}
                                                     </button>
                                                 ))}
                                             </div>
@@ -1521,9 +1456,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                     disabled={isCheckingDms}
                                                                     className="px-2 h-6 flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 transition-colors text-[10px] font-bold shadow-2xs"
                                                                     title="Tra cứu trực tiếp mã đơn và VIN của đơn hàng này trên VinFast NDP"
+                                                                    aria-label="Tra NDP"
                                                                 >
                                                                     <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-robot'} text-[9px]`}></i>
-                                                                    <span>Tra NDP</span>
                                                                 </button>
                                                             )}
 
@@ -1764,17 +1699,19 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                             })()}
                                         </div>
                                     </div>
-                                )}
 
-                                <div className={`flex flex-col min-w-0 ${isSplitView ? 'flex-[1] h-full overflow-hidden justify-between gap-2' : 'w-full gap-2'}`}>
+                                <div className={`invoice-inspector flex flex-col min-w-0 ${'flex-[1] h-full overflow-hidden justify-between gap-2'}`}
+                                    onClickCapture={e => {
+                                        const button = (e.target as HTMLElement).closest('button');
+                                        if (button) setCyberSheetAnchor(button);
+                                    }}>
                                     
                                     {/* CUSTOMER HEADER & ACTIONS - Clean Modern Integrated Card */}
-                                    {isSplitView && (
-                                        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3 flex flex-col gap-2 flex-shrink-0 animate-in slide-in-from-right-4 duration-300">
+                                    <div className="invoice-customer-header bg-white rounded-2xl border border-slate-200 shadow-2xs p-3 flex flex-col gap-2 flex-shrink-0">
                                             {/* Top Customer Info */}
                                             <div className="flex items-center justify-between gap-3">
                                                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                    <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-sm font-black shadow-2xs flex-shrink-0">
+                                                    <div className="hidden">
                                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                                     </div>
                                                     <div className="space-y-0.5 min-w-0 flex-1 overflow-hidden">
@@ -1797,13 +1734,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button 
-                                                    onClick={() => setIsSplitView(false)}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all flex-shrink-0"
-                                                    title="Đóng Split View"
-                                                >
-                                                    <i className="fas fa-times text-xs"></i>
-                                                </button>
+                                                
                                             </div>
 
                                             {/* Actions */}
@@ -1843,18 +1774,17 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
 
-                                    <div className={`grid grid-cols-1 ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'md:grid-cols-3'} gap-2`}>
+                                    <div className={`invoice-facts grid grid-cols-1 ${'flex-1 min-h-0 justify-between'} gap-2`}>
                                         {/* Column 1: Vehicle & Specs */}
-                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'h-full'}`}>
+                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col ${'flex-1 min-h-0 justify-between'}`}>
                                             <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                                                 <div className="flex items-center gap-2">
                                                     <i className="fas fa-car text-accent-primary text-[10px]"></i>
                                                     <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Thông tin xe</h3>
                                                 </div>
                                             </div>
-                                            <div className={`p-2 space-y-0.5 ${isSplitView ? 'flex-1 flex flex-col justify-evenly' : ''}`}>
+                                            <div className={`p-2 space-y-0.5 ${'flex-1 flex flex-col justify-evenly'}`}>
                                                 <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
                                                     <div className="flex items-center gap-2">
                                                         <i className="fas fa-car text-blue-500 opacity-50 group-hover:opacity-100 text-[10px] transition-opacity"></i>
@@ -2002,7 +1932,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         className={`w-full bg-blue-50/60 hover:bg-blue-100/80 border border-blue-200 hover:border-blue-300 rounded-lg py-1.5 px-3 flex items-center justify-center transition-all duration-200 shadow-xs ${selectedOrder.VIN && selectedOrder.VIN !== '—' ? 'cursor-pointer active:scale-[0.99]' : ''}`}
                                                         title={selectedOrder.VIN && selectedOrder.VIN !== '—' ? "Click để sao chép số VIN" : ""}
                                                     >
-                                                        <span className="font-mono font-bold text-xs text-blue-700 tracking-wider select-all text-center">
+                                                        <span className="invoice-vin-value font-mono font-bold text-xs text-blue-700 tracking-wider select-all text-center">
                                                             {selectedOrder.VIN || '—'}
                                                         </span>
                                                     </div>
@@ -2087,18 +2017,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                     </div>
                                                                     {effectiveCamKetUrl ? (
                                                                         <div className="flex items-center gap-1 flex-shrink-0">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    setActiveDocKey('url_cam_ket_vtlx');
-                                                                                    setIsSplitView(true);
-                                                                                }}
-                                                                                className="px-1.5 py-0.5 text-[8.5px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition-all flex items-center gap-1 cursor-pointer"
-                                                                                title="Xem tài liệu Cam kết VTLX"
-                                                                            >
-                                                                                <i className="fas fa-eye text-[8px]"></i>
-                                                                                <span>Xem</span>
-                                                                            </button>
+                                                                            
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={(e) => {
@@ -2126,18 +2045,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                     </div>
                                                                     {effectiveCavetUrl ? (
                                                                         <div className="flex items-center gap-1 flex-shrink-0">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    setActiveDocKey('url_cavet_vtlx');
-                                                                                    setIsSplitView(true);
-                                                                                }}
-                                                                                className="px-1.5 py-0.5 text-[8.5px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition-all flex items-center gap-1 cursor-pointer"
-                                                                                title="Xem tài liệu Cà vẹt xe cũ"
-                                                                            >
-                                                                                <i className="fas fa-eye text-[8px]"></i>
-                                                                                <span>Xem</span>
-                                                                            </button>
+                                                                            
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={(e) => {
@@ -2164,12 +2072,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
 
                                         {/* Column 2: Transaction Details */}
-                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'h-full'} overflow-visible relative`}>
+                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col ${'flex-1 min-h-0 justify-between'} overflow-visible relative`}>
                                             <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2 rounded-t-xl flex-shrink-0">
                                                 <i className="fas fa-receipt text-accent-primary text-[10px]"></i>
                                                 <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giao dịch</h3>
                                             </div>
-                                            <div className={`p-2.5 space-y-2 relative ${isSplitView ? 'flex-1 flex flex-col justify-evenly' : ''}`}>
+                                            <div className={`p-2.5 space-y-2 relative ${'flex-1 flex flex-col justify-evenly'}`}>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div className="text-left relative flex flex-col">
                                                         <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5 truncate">Số đơn hàng</div>
@@ -2260,7 +2168,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
 
                                         {/* Column 3: Policy List */}
-                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'min-h-[160px]'}`}>
+                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col ${'flex-1 min-h-0 justify-between'}`}>
                                             <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
                                                 <div className="flex items-center gap-2">
                                                     <i className="fas fa-shield-alt text-accent-primary text-[10px]"></i>
@@ -2277,7 +2185,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className={`p-2.5 overflow-y-auto no-scrollbar ${isSplitView ? 'flex-1 min-h-0 flex flex-col justify-center' : 'flex-1 min-h-[120px]'}`}>
+                                            <div className={`p-2.5 overflow-y-auto no-scrollbar ${'flex-1 min-h-0 flex flex-col justify-center'}`}>
                                                 {isEditing ? (
                                                     <div className="space-y-1.5 p-0.5">
                                                         {/* Quick Search & Model Filter Header */}
@@ -2368,59 +2276,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
                                     </div>
 
-                                    {!isSplitView && (
-                                        <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm flex flex-col min-h-0 lg:flex-1">
-                                            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-50">
-                                                <div className="flex items-center gap-2">
-                                                    <i className="fas fa-folder-open text-accent-primary text-[10px]"></i>
-                                                    <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Hồ Sơ Chứng Từ</h3>
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 min-h-0 overflow-visible lg:overflow-hidden">
-                                                <div className="flex flex-col lg:flex-row gap-3 lg:h-full pb-1">
-                                                    {[
-                                                        { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
-                                                        { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
-                                                        { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
-                                                        { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' },
-                                                        ...(isVtlxPolicyOrder || effectiveCamKetUrl ? [{ key: 'url_cam_ket_vtlx', label: 'Cam kết VTLX', icon: 'fa-leaf' }] : []),
-                                                        ...(isVtlxPolicyOrder || effectiveCavetUrl ? [{ key: 'url_cavet_vtlx', label: 'Cà vẹt xe cũ', icon: 'fa-id-card' }] : [])
-                                                    ].map(file => {
-                                                        const orderKey = selectedOrder['Số đơn hàng'] || selectedOrder.id || '';
-                                                        let url: string | undefined = undefined;
-                                                        if (file.key === 'CyberDKBH') {
-                                                            url = cyberDkbhUrls[orderKey] || undefined;
-                                                        } else if (file.key === 'url_cam_ket_vtlx') {
-                                                            url = effectiveCamKetUrl || undefined;
-                                                        } else if (file.key === 'url_cavet_vtlx') {
-                                                            url = effectiveCavetUrl || undefined;
-                                                        } else {
-                                                            url = (selectedOrder[file.key] as string || (selectedOrder as any)?.[file.key] || undefined);
-                                                        }
-                                                        return (
-                                                            <div key={file.key} className="h-48 lg:h-full flex-none lg:flex-1 lg:min-w-[200px]">
-                                                                <DocumentThumbnail
-                                                                    url={url}
-                                                                    label={file.label}
-                                                                    icon={file.icon}
-                                                                    onPreview={() => {
-                                                                        if (file.key === 'CyberDKBH' && !url) {
-                                                                            loadCyberDkbhPdf(selectedOrder);
-                                                                            setActiveDocKey('CyberDKBH');
-                                                                            setIsSplitView(true);
-                                                                        } else if (url) {
-                                                                            onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`);
-                                                                        }
-                                                                    }}
-                                                                    customerName={selectedOrder["Tên khách hàng"]}
-                                                                />
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                    
                                 </div>
                             </div>
                         </>
@@ -2439,6 +2295,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             </div>
             {/* Modal Ghép Xe CyberSoft trực tiếp trên Tab Hóa Đơn */}
             <CyberAssignVehicleModal
+                anchorElement={cyberSheetAnchor}
                 isOpen={isCyberAssignModalOpen}
                 onClose={() => setIsCyberAssignModalOpen(false)}
                 order={selectedOrder}
@@ -2449,7 +2306,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
             {/* Modal Xác nhận Duyệt / Hoàn tác Hợp đồng Cyber trực tiếp */}
             {cyberApprovalConfirm && cyberApprovalConfirm.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                <AnchoredCyberSheet anchor={cyberSheetAnchor} compact label="Duyệt hợp đồng Cyber" onClose={() => { if (!isSubmittingCyberApproval) setCyberApprovalConfirm(null); }}>
                     <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
                         {/* Header */}
                         <div className={`p-4 border-b flex items-center justify-between ${
@@ -2577,7 +2434,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                             </button>
                         </div>
                     </div>
-                </div>
+                </AnchoredCyberSheet>
             )}
 
             {/* Modal Báo Cáo Chi Tiết Đối Soát NDP Cho Admin - Render trực tiếp lên document.body ở lớp cao nhất */}

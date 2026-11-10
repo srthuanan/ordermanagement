@@ -1,8 +1,8 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useMemo, useEffect, FormEvent } from 'react';
 import { Order } from '../../types';
 import Button from '../ui/Button';
 import StatusBadge from '../ui/StatusBadge';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
@@ -275,28 +275,20 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
     const labelClass = "block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 ml-0.5 flex items-center justify-between";
 
     return (
-        <div className="flex h-full bg-slate-50 rounded-2xl shadow-md border border-border-primary overflow-hidden relative isolate">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative isolate">
+
 
             {/* Column 1: List / Search */}
-            <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 backdrop-blur-md relative z-10 transition-transform duration-300 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 backdrop-blur-md relative z-10 transition-transform duration-300 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}><div id="sidebar-filters-SuperManagementView" className="admin-sidebar-filter-slot" />
                 {/* Search & Filters Header */}
                 <div className="shrink-0 p-3 border-b border-slate-200 bg-white space-y-2">
-                    <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i className="fas fa-search text-slate-400 group-focus-within:text-blue-600 transition-colors text-sm"></i>
-                        </div>
-                        <input
+                    <SidebarFilterSection targetId="sidebar-filters-SuperManagementView" title="Quản lý nâng cao" search={<input
                             type="text"
                             placeholder="Tìm Số ĐH, VIN, Máy, KH..."
                             value={searchTerm}
                             onChange={handleSearchChange}
                             className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all text-xs font-medium placeholder:text-slate-400 text-slate-900"
-                        />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                        <select 
+                        />}><select 
                             className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-medium outline-none focus:border-blue-600 text-slate-700"
                             value={filterModel}
                             onChange={(e) => setFilterModel(e.target.value)}
@@ -304,7 +296,7 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             <option value="">Tất cả dòng xe</option>
                             {vehicleLines.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
-                        <select 
+<select 
                             className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-medium outline-none focus:border-blue-600 text-slate-700"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
@@ -313,7 +305,11 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             <option value="Đã ghép">Đã ghép</option>
                             <option value="Chưa ghép">Chưa ghép</option>
                             <option value="Đã hủy">Đã hủy</option>
-                        </select>
+                        </select></SidebarFilterSection>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                        
+                        
                     </div>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                         <div className="relative group/audit">

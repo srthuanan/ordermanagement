@@ -53,7 +53,7 @@ export const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamDat
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
             {/* Column 1: Folders / Navigation */}
             <div className={`w-full md:w-56 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-3 border-b border-slate-100">

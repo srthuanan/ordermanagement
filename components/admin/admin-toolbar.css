@@ -1,0 +1,73 @@
+/* Invoice toolbar shares the neutral typography and controls of Orders/Stock. */
+.admin-tab-rail { position: relative; z-index: 70; flex-shrink: 0; flex-direction: column; align-items: center; gap: 8px; width: 70px; min-height: 0; padding: 14px 7px; border-right: 1px solid #e9edf2; background: #fbfbfc; }
+.admin-tab-rail-group { position: relative; width: 100%; }
+.admin-tab-rail button { cursor: pointer; }
+.admin-tab-rail button:focus-visible { outline: 2px solid #3778cf; outline-offset: 2px; }
+.admin-rail-group-toggle { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 62px; padding: 10px 2px; border-radius: 10px; color: #8a98ad; }
+.admin-rail-group-toggle > i { font-size: 17px; }
+.admin-rail-group-toggle > span { font-size: 9px; font-weight: 500; white-space: nowrap; }
+.admin-rail-group-toggle:hover { background: #f0f3f8; color: #365578; }
+.admin-rail-group-toggle[data-active='true'] { color: #285d9c; background: #edf3fc; }
+.admin-rail-group-toggle[data-active='true']::before { position: absolute; left: -7px; width: 3px; height: 22px; border-radius: 0 3px 3px 0; background: #3778cf; content: ''; }
+.admin-rail-group-toggle[aria-expanded='true'] { background: #e8eef8; color: #285d9c; }
+.admin-rail-group-items { position: absolute; top: 0; left: calc(100% + 14px); z-index: 80; display: flex; flex-direction: column; gap: 3px; width: 230px; max-height: min(500px, 65vh); overflow-y: auto; padding: 8px; border: 1px solid #e2e7ef; border-radius: 13px; background: #fff; box-shadow: 0 12px 40px #17263b1c; }
+.admin-rail-group-items > strong { padding: 10px 10px 12px; color: #95a0b1; font-size: 10px; font-weight: 500; letter-spacing: .4px; }
+.admin-rail-group-items > button { display: flex; align-items: center; gap: 11px; min-height: 39px; padding: 8px 10px; border-radius: 7px; color: #64758e; text-align: left; }
+.admin-rail-group-items > button > i { width: 16px; color: #8d9db5; text-align: center; font-size: 12px; }
+.admin-rail-group-items > button > span { flex: 1; font-size: 10px; font-weight: 500; }
+.admin-rail-group-items > button > small { padding: 2px 5px; border-radius: 4px; background: #f0f3f8; color: #8a9ab0; font-size: 9px; }
+.admin-rail-group-items > button:hover { background: #f6f8fc; }
+.admin-rail-group-items > button[aria-current='page'] { background: #edf3fc; color: #285d9c; }
+@media (min-width: 768px) {
+  .admin-workspace-toolbar .admin-section-tabs { display: none; }
+  .admin-workspace-toolbar { justify-content: flex-end; }
+  .admin-workspace-toolbar { flex-wrap: wrap; padding: 12px 20px; gap: 12px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #17263b; }
+  .admin-workspace-toolbar .admin-section-tabs { flex: 1 1 440px; gap: 3px; padding: 3px; border: 1px solid #e4e8ef; border-radius: 9px; background: #f2f4f8; }
+  .admin-workspace-toolbar .admin-section-tabs > button { flex: 1 0 auto; min-height: 30px; padding: 6px 12px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #7b879a; font-size: 10px; font-weight: 500; letter-spacing: 0; box-shadow: none; }
+  .admin-workspace-toolbar .admin-section-tabs > button:hover { background: #ffffff80; color: #365578; }
+  .admin-workspace-toolbar .admin-section-tabs > button[aria-pressed='true'] { border-color: #e1e6ee; background: #fff; color: #285d9c; box-shadow: 0 1px 3px #17263b0a; }
+  .admin-workspace-toolbar .admin-section-tabs > button > span:last-child:not(:first-child) { padding: 1px 5px; border: 0; border-radius: 4px; background: #e8edf5; color: #70829c; font-family: inherit; font-size: 9px; font-weight: 500; }
+  .admin-workspace-toolbar > div:last-child { flex: 0 1 auto; min-width: 0; }
+  .admin-workspace-toolbar #admin-filter-portal-target { flex: 1; min-width: 0; }
+  .admin-workspace-toolbar #admin-filter-portal-target > div { width: 100%; }
+  .admin-workspace-toolbar #admin-filter-portal-target > div > div,
+  .admin-workspace-toolbar #admin-filter-portal-target > div > div > div:first-child { flex-wrap: wrap; row-gap: 7px; }
+  .admin-workspace-toolbar #admin-filter-portal-target input:not([type='checkbox']) { height: 32px; border: 1px solid #e1e6ee; border-radius: 7px; background: #f7f9fc; font-size: 11px; font-weight: 400; }
+  .admin-workspace-toolbar #admin-filter-portal-target input:focus { border-color: #91b4e3; outline: 2px solid #3778cf15; }
+  .admin-workspace-toolbar #admin-filter-portal-target button { border-radius: 7px; box-shadow: none; font-weight: 500; }
+  .admin-workspace-toolbar #admin-filter-portal-target button[aria-haspopup] { background: #f7f9fc; border-color: #e1e6ee; color: #63758e; }
+}
+.invoice-compact-filters { position: relative; display: flex; align-items: center; gap: 8px; color: #718099; font-size: 11px; }
+.invoice-sidebar-filter-target { position: relative; z-index: 40; flex-shrink: 0; padding: 0 16px 20px; }
+.invoice-sidebar-filter-target .invoice-compact-filters { gap: 7px; }
+.invoice-sidebar-filter-target .orders-page-search { flex: 1; min-width: 0; width: auto; height: 38px; border: 1px solid #dee4ec; border-radius: 6px; background: #fff; }
+.invoice-sidebar-filter-target .orders-page-search input { min-width: 0; font-size: 11px; }
+.invoice-sidebar-filter-target .orders-page-secondary { flex-shrink: 0; height: 38px; padding: 0 9px; border: 1px solid #dee4ec; border-radius: 6px; background: transparent; color: #53627a; font-size: 11px; }
+.invoice-sidebar-filter-target .orders-filter-panel { left: 0; right: auto; width: min(290px, 100%); padding: 12px; border-radius: 9px; box-shadow: 0 8px 24px #17263b14; }
+.invoice-sidebar-filter-target .orders-filter-panel-heading { margin-bottom: 8px; }
+.invoice-sidebar-filter-target .orders-filter-panel-heading strong { font-size: 11px; font-weight: 550; }
+.invoice-sidebar-filter-target .orders-filter-facets { display: flex; flex-direction: column; gap: 0; }
+.admin-compact-facet + .admin-compact-facet { border-top: 1px solid #edf0f5; }
+.admin-compact-facet > button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 35px; padding: 5px 2px; text-align: left; color: #63758e; font-size: 11px; }
+.admin-compact-facet > button > span { flex: 1; }
+.admin-compact-facet > button > small { max-width: 90px; color: #96a2b4; font-size: 10px; }
+.admin-compact-facet > button > i { font-size: 8px; color: #a7b3c4; }
+.admin-compact-options { padding: 2px 0 9px; }
+.admin-compact-options > input { width: 100%; height: 28px; padding: 0 8px; border: 1px solid #e4e9f1; border-radius: 5px; background: #fafbfd; font-size: 10px; outline: none; }
+.admin-compact-options > div { max-height: 150px; overflow-y: auto; padding-top: 5px; scrollbar-width: thin; }
+.admin-compact-options label { display: flex; align-items: center; gap: 8px; min-height: 29px; padding: 4px 3px; color: #63758e; font-size: 10px; line-height: 1.4; cursor: pointer; }
+.admin-compact-options input[type='checkbox'] { width: 12px; height: 12px; flex-shrink: 0; accent-color: #3778cf; }
+.matching-workspace .premium-list-heading { flex-direction: column; align-items: flex-start; gap: 16px; padding-bottom: 15px; }
+.matching-workspace .matching-status-tabs { display: flex; gap: 3px; width: 100%; padding: 3px; border-radius: 7px; background: #eef1f6; }
+.matching-workspace .matching-status-tabs > button { display: flex; align-items: center; justify-content: center; flex: 1; gap: 5px; width: auto; height: 29px; padding: 0 6px; border-radius: 5px; background: transparent; color: #7b879a; font-size: 10px; font-weight: 500; white-space: nowrap; }
+.matching-workspace .matching-status-tabs > button[aria-pressed='true'] { background: #fff; color: #285d9c; box-shadow: 0 1px 3px #17263b0c; }
+.matching-workspace .matching-status-tabs > button > span { color: #93a1b5; font-size: 9px; }
+.invoice-sidebar-filter-target .orders-filter-done { height: auto; border: 0; background: #edf3fc; color: #3b73b9; }
+@media (min-width: 768px) {
+  .admin-workspace-toolbar .invoice-compact-filters > .orders-page-search { width: clamp(180px, 22vw, 300px); height: 36px; background: #e9ebf0; border-radius: 11px; }
+  .admin-workspace-toolbar #admin-filter-portal-target .orders-page-search input { height: auto; width: 100%; padding: 0; background: transparent; border: 0; border-radius: 0; }
+  .admin-workspace-toolbar .invoice-compact-filters > .orders-page-secondary { height: 33px; border-radius: 10px; background: #ffffffbe; color: #737e90; }
+  .admin-workspace-toolbar .invoice-compact-filters > .orders-page-icon-button { width: 36px; height: 36px; padding: 0; border-radius: 11px; background: #ffffffc4; }
+  .admin-workspace-toolbar #admin-filter-portal-target .orders-filter-panel { width: min(380px, calc(100vw - 110px)); }
+  .admin-workspace-toolbar #admin-filter-portal-target .orders-filter-panel button { border-radius: 8px; }
+}

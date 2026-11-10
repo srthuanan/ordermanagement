@@ -22,6 +22,7 @@ import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
 import { useAdminData } from '../../hooks/useAdminData';
 import AdminFilterPanel from './AdminFilterPanel';
+import './admin-toolbar.css';
 import { TeamManagementComponent, TeamEditorModal } from './TeamManagement';
 import ActiveUsersModal from './ActiveUsersModal';
 import TvbhEmailManager from './TvbhEmailManager';
@@ -236,7 +237,22 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isMobileAdminHome, setIsMobileAdminHome] = useState(true);
     const [showCyberSyncModal, setShowCyberSyncModal] = useState(false);
     const [showCyberLocationSyncModal, setShowCyberLocationSyncModal] = useState(false);
+    const [actionButtonAnchor, setActionButtonAnchor] = useState<HTMLElement | null>(null);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handlePointerCapture = (e: PointerEvent) => {
+            const target = e.target as HTMLElement;
+            // Bỏ qua mọi tương tác bắt nguồn từ bên trong sheet để không làm đổi anchor hay ngắt chuỗi click
+            if (target?.closest('[data-cyber-sheet]') || target?.closest('.anchored-cyber-sheet') || target?.closest('.inline-policy-panel')) {
+                return;
+            }
+            const btn = target?.closest('button');
+            if (btn) setActionButtonAnchor(btn);
+        };
+        document.addEventListener('pointerdown', handlePointerCapture, true);
+        return () => document.removeEventListener('pointerdown', handlePointerCapture, true);
+    }, []);
 
     const closeAllAdminSheets = useCallback(() => {
         setShowCyberSyncModal(false);
@@ -293,6 +309,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         localStorage.setItem('adminCurrentCategory', currentCategory);
     }, [currentCategory]);
 
+    const [openRailGroup, setOpenRailGroup] = useState<string | null>(null);
+    const railRef = useRef<HTMLElement>(null);
     const categories = {
         orders: {
             label: 'ĐƠN HÀNG',
@@ -315,6 +333,28 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             views: ['stats'] as AdminSubView[]
         }
     };
+
+    useEffect(() => {
+        setOpenRailGroup(null);
+    }, [adminView]);
+    useEffect(() => {
+        if (!openRailGroup) return;
+        const outside = (event: PointerEvent) => {
+            if (!railRef.current?.contains(event.target as Node)) setOpenRailGroup(null);
+        };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                (railRef.current?.querySelector('[aria-expanded="true"]') as HTMLButtonElement | null)?.focus();
+                setOpenRailGroup(null);
+            }
+        };
+        document.addEventListener('pointerdown', outside);
+        document.addEventListener('keydown', escape);
+        return () => {
+            document.removeEventListener('pointerdown', outside);
+            document.removeEventListener('keydown', escape);
+        };
+    }, [openRailGroup]);
 
     // Auto-redirect if current adminView is hidden
     useEffect(() => {
@@ -752,7 +792,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     return (
-        <div className="flex h-full w-full overflow-hidden bg-slate-50/50">
+        <div className="flex h-full w-full overflow-hidden bg-white">
             {mobileMode ? (
                 <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#F2F2F7] text-[#1C1C1E] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','SF_Pro_Display','Segoe_UI',Roboto,sans-serif]">
                     {isMobileAdminHome ? (
@@ -923,47 +963,39 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 </div>
             ) : (
             <>
-            {/* COMPACT LEFT SIDEBAR: Main Categories */}
-            <div className="hidden md:flex w-[56px] flex-shrink-0 flex-col bg-white border-r border-slate-200 z-[60] shadow-sm">
-                <div className="flex flex-col items-center py-6 gap-4">
-                    <div className="flex flex-col gap-2 w-full px-2">
-                        {Object.entries(categories).map(([key, cat]) => {
-                            const isActive = currentCategory === key;
-                            return (
-                                <button
-                                    key={key}
-                                    onClick={() => {
-                                        setCurrentCategory(key as any);
-                                        const visibleInCat = cat.views.filter(v => !hiddenTabs.includes(v));
-                                        if (visibleInCat.length > 0) {
-                                            setAdminView(visibleInCat[0]);
-                                        }
-                                    }}
-                                    title={cat.label}
-                                    className={`
-                                        relative w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-300 group
-                                        ${isActive 
-                                            ? 'bg-red-50 text-red-600 shadow-sm border border-red-100' 
-                                            : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}
-                                    `}
-                                >
-                                    <div className={`
-                                        w-8 h-8 rounded-lg flex items-center justify-center transition-all
-                                        ${isActive ? 'bg-red-600 text-white shadow-sm' : 'bg-slate-100 group-hover:bg-slate-200'}
-                                    `}>
-                                        <i className={`fas ${cat.icon} text-[12px]`}></i>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
+            {/* Desktop navigation: all visible tabs live in the compact rail. */}
+            <nav ref={railRef} className="admin-tab-rail hidden md:flex" aria-label="Phân hệ quản trị">
+                {Object.entries(categories).map(([key, category]) => {
+                    const views = category.views.filter(view => !hiddenTabs.includes(view));
+                    if (!views.length) return null;
+                    const expanded = openRailGroup === key;
+                    return <div className="admin-tab-rail-group" key={key} role="group" aria-label={category.label}>
+                        <button type="button" className="admin-rail-group-toggle"
+                            aria-expanded={expanded} aria-controls={`admin-rail-group-${key}`}
+                            title={category.label}
+                            data-active={views.includes(adminView)}
+                            onClick={() => setOpenRailGroup(expanded ? null : key)}>
+                            <i className={`fas ${category.icon}`} aria-hidden="true" />
+                            <span>{({ orders: 'Đơn hàng', inventory: 'Kho xe', system: 'Hệ thống', stats: 'Thống kê' } as Record<string, string>)[key]}</span>
+                        </button>
+                        {expanded && <div className="admin-rail-group-items" id={`admin-rail-group-${key}`}>
+                        <strong>{category.label}</strong>
+                        {views.map(view => <button key={view} type="button"
+                            aria-current={adminView === view ? 'page' : undefined}
+                            title={labels[view]}
+                            onClick={() => { setCurrentCategory(key as keyof typeof categories); setAdminView(view); setOpenRailGroup(null); }}>
+                            <i className={`fas ${iosAppIcons[view]?.icon || category.icon}`} aria-hidden="true" />
+                            <span>{labels[view]}</span>
+                            {counts[view] != null && <small>{counts[view]}</small>}
+                        </button>)}</div>}
+                    </div>;
+                })}
+            </nav>
 
             {/* MAIN CONTENT AREA */}
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Header for Content Pane: Sub-tabs & Filters */}
-                <div className="flex-shrink-0 bg-white border-b border-slate-200 z-[50]">
+                <div className={`flex-shrink-0 bg-white border-b border-slate-200 z-[50] md:hidden`}>
                     {/* MOBILE TOP NAV (Shown only on small screens) */}
                     <div className="flex md:hidden items-center gap-1 overflow-x-auto no-scrollbar p-2 border-b border-border-secondary/20 bg-slate-900">
                         {Object.entries(categories).map(([key, cat]) => {
@@ -980,7 +1012,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                     }}
                                     className={`
                                         flex items-center gap-2 px-3 py-1.5 rounded-lg whitespace-nowrap transition-all
-                                        ${isActive ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400'}
+                                        ${isActive ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400'}
                                     `}
                                 >
                                     <i className={`fas ${cat.icon} text-[10px]`}></i>
@@ -990,27 +1022,28 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         })}
                     </div>
 
-                    <div className="flex items-center justify-between px-4 py-1.5 bg-slate-50/50 gap-4">
-                        <div className="flex items-center overflow-x-auto no-scrollbar gap-1 flex-1">
+                    <div className={`flex items-center justify-between px-4 py-1.5 bg-white gap-4 admin-workspace-toolbar`}>
+                        <div className="admin-section-tabs hidden" role="group" aria-label="Phân hệ quản trị">
                             {(categories[currentCategory]?.views || categories.orders.views).filter(view => !hiddenTabs.includes(view)).map(view => {
                                 const count = counts[view];
                                 const isActive = adminView === view;
                                 return (
                                     <button
                                         key={view}
+                                        aria-pressed={isActive}
                                         onClick={() => setAdminView(view)}
                                         className={`
-                                            relative px-3 py-1.5 min-w-[80px] text-[9.5px] font-bold tracking-tight transition-all duration-300 rounded-lg flex items-center justify-center gap-2 whitespace-nowrap
+                                            relative px-3 py-1.5 min-w-[76px] text-[10px] font-bold tracking-tight transition-all duration-200 rounded-lg flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer
                                             ${isActive
-                                                ? 'bg-white text-red-600 shadow-sm border border-red-100'
-                                                : 'text-slate-400 hover:text-slate-600'}
+                                                ? 'bg-white text-blue-600 shadow-2xs border border-blue-200/90 font-bold'
+                                                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/70'}
                                         `}
                                     >
                                         <span>{labels[view]}</span>
                                         {count !== null && (
                                             <span className={`
-                                                text-[8px] font-mono px-1 py-0.5 rounded
-                                                ${isActive ? 'bg-red-50 text-red-500' : 'bg-slate-200/50 text-slate-400'}
+                                                text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold
+                                                ${isActive ? 'bg-blue-50 text-blue-700 border border-blue-200/60' : 'bg-slate-200/70 text-slate-500'}
                                             `}>
                                                 {count}
                                             </span>
@@ -1153,10 +1186,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         actions.invoiceModalState && (
                             <>
                                 {/* Invoice Actions */}
-                                <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'approve'} onClose={() => actions.setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu" description="Xác nhận phê duyệt yêu cầu xuất hóa đơn cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => actions.handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.')} />
-                                <RequestWithImageModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'supplement'} onClose={() => actions.setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
-                                <RequestWithImageModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'rescan'} onClose={() => actions.setInvoiceModalState(null)} title="Yêu Cầu Scan Lại Hồ Sơ (Không Đổi Trạng Thái)" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu scan lại (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('requestRescanForInvoice', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu scan lại hồ sơ.')} icon="fa-camera" theme="warning" />
-                                <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'pendingSignature'} onClose={() => actions.setInvoiceModalState(null)} title="Chuyển Trạng Thái" description="Xác nhận chuyển đơn hàng sang 'Chờ Ký Hóa Đơn'. Bạn có thể chọn lùi ngày xuất hóa đơn nếu cần." targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={pendingSignatureInputs} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={(data) => actions.handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), ngay_xuat_hoa_don: data.ngay_xuat_hoa_don }, 'Đã chuyển trạng thái.')} />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'approve'} onClose={() => actions.setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu" description="Xác nhận phê duyệt yêu cầu xuất hóa đơn cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => actions.handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.')} />
+                                <RequestWithImageModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'supplement'} onClose={() => actions.setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
+                                <RequestWithImageModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'rescan'} onClose={() => actions.setInvoiceModalState(null)} title="Yêu Cầu Scan Lại Hồ Sơ (Không Đổi Trạng Thái)" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu scan lại (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('requestRescanForInvoice', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu scan lại hồ sơ.')} icon="fa-camera" theme="warning" />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'pendingSignature'} onClose={() => actions.setInvoiceModalState(null)} title="Chuyển Trạng Thái" description="Xác nhận chuyển đơn hàng sang 'Chờ Ký Hóa Đơn'. Bạn có thể chọn lùi ngày xuất hóa đơn nếu cần." targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={pendingSignatureInputs} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={(data) => actions.handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), ngay_xuat_hoa_don: data.ngay_xuat_hoa_don }, 'Đã chuyển trạng thái.')} />
                                 <UploadInvoiceModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'uploadInvoice'} onClose={() => actions.setInvoiceModalState(null)} order={actions.invoiceModalState.order as Order} onSubmit={async (file: File) => {
 //                                     showToast('Đang xử lý', 'Đang tải lên hóa đơn...', 'loading');
                                     const fileToBase64 = (f: File): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res((r.result as string).split(',')[1]); r.onerror = e => rej(e); });
@@ -1178,12 +1211,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                         return false;
                                     }
                                 }} />
-                                <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'cancel'} onClose={() => actions.setInvoiceModalState(null)} title={adminView === 'matching' ? "Hủy Đơn Hàng" : "Hủy Yêu Cầu Xuất Hóa Đơn"} description={adminView === 'matching' ? "Hành động này sẽ hủy đơn hàng và thông báo cho TVBH." : "Hành động này sẽ hủy yêu cầu và thông báo cho TVBH."} targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={cancelRequestInputs} submitText={adminView === 'matching' ? "Xác Nhận Hủy Đơn" : "Xác Nhận Hủy"} submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => actions.handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason: data.reason }, adminView === 'matching' ? 'Đã hủy đơn hàng.' : 'Đã hủy yêu cầu.')} />
-                                <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'unmatch'} onClose={() => actions.setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={unmatchInputs} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data: Record<string, string>) => actions.handleAdminSubmit('unmatchOrder', { orderNumber: actions.invoiceModalState!.order['Số đơn hàng'], reason: data.reason, unmatchType: data.unmatch_type }, 'Đã hủy ghép xe.', 'both')} />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'cancel'} onClose={() => actions.setInvoiceModalState(null)} title={adminView === 'matching' ? "Hủy Đơn Hàng" : "Hủy Yêu Cầu Xuất Hóa Đơn"} description={adminView === 'matching' ? "Hành động này sẽ hủy đơn hàng và thông báo cho TVBH." : "Hành động này sẽ hủy yêu cầu và thông báo cho TVBH."} targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={cancelRequestInputs} submitText={adminView === 'matching' ? "Xác Nhận Hủy Đơn" : "Xác Nhận Hủy"} submitColor="danger" icon="fa-trash-alt" onSubmit={(data: Record<string, string>) => actions.handleAdminSubmit('cancelRequest', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason: data.reason }, adminView === 'matching' ? 'Đã hủy đơn hàng.' : 'Đã hủy yêu cầu.')} />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'unmatch'} onClose={() => actions.setInvoiceModalState(null)} title="Hủy Ghép Xe" description="Hủy ghép xe cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={unmatchInputs} submitText="Xác Nhận Hủy Ghép" submitColor="danger" icon="fa-unlink" onSubmit={(data: Record<string, string>) => actions.handleAdminSubmit('unmatchOrder', { orderNumber: actions.invoiceModalState!.order['Số đơn hàng'], reason: data.reason, unmatchType: data.unmatch_type }, 'Đã hủy ghép xe.', 'both')} />
 
                                 {/* VC Actions */}
-                                <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'approveVc'} onClose={() => actions.setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu VC" description="Xác nhận phê duyệt yêu cầu cấp VinClub cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-circle" onSubmit={() => actions.handleAdminSubmit('approveVcRequest', { orderNumber: actions.invoiceModalState!.order['Số đơn hàng'] }, 'Đã phê duyệt yêu cầu VC.')} />
-                                <RequestWithImageModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'rejectVc'} onClose={() => actions.setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('rejectVcRequest', { orderNumber: actions.invoiceModalState!.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'approveVc'} onClose={() => actions.setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu VC" description="Xác nhận phê duyệt yêu cầu cấp VinClub cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-circle" onSubmit={() => actions.handleAdminSubmit('approveVcRequest', { orderNumber: actions.invoiceModalState!.order['Số đơn hàng'] }, 'Đã phê duyệt yêu cầu VC.')} />
+                                <RequestWithImageModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.invoiceModalState.type === 'rejectVc'} onClose={() => actions.setInvoiceModalState(null)} title="Từ Chối Yêu Cầu VC" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Lý do từ chối (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('rejectVcRequest', { orderNumber: actions.invoiceModalState!.order['Số đơn hàng'], reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã từ chối yêu cầu VC.')} icon="fa-ban" theme="danger" />
                             </>
                         )
                     }
@@ -1192,25 +1225,25 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     {
                         actions.bulkActionModal && (
                             <>
-                                <ActionModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'approve'} onClose={actions.handleCloseBulkActionModal} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={actions.handleBulkApproveSubmit} />
-                                <ActionModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'pendingSignature'} onClose={actions.handleCloseBulkActionModal} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} inputs={pendingSignatureInputs} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={(data) => actions.handleBulkPendingSignatureSubmit(data)} />
-                                <RequestWithImageModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'supplement'} onClose={actions.handleCloseBulkActionModal} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={actions.handleBulkSupplementSubmit} />
-                                <RequestWithImageModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'rescan'} onClose={actions.handleCloseBulkActionModal} title="Y/C Scan Lại hàng loạt (Không đổi trạng thái)" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu scan lại (bắt buộc):" icon="fa-camera" theme="warning" onSubmit={(reason: string, images: string[]) => actions.handleBulkActionSubmit('rescan', { reason, pastedImagesBase64: JSON.stringify(images) })} />
-                                <ActionModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'cancel'} onClose={actions.handleCloseBulkActionModal} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={cancelRequestInputs} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleBulkCancelSubmit} />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.bulkActionModal.type === 'approve'} onClose={actions.handleCloseBulkActionModal} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={actions.handleBulkApproveSubmit} />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.bulkActionModal.type === 'pendingSignature'} onClose={actions.handleCloseBulkActionModal} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} inputs={pendingSignatureInputs} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={(data) => actions.handleBulkPendingSignatureSubmit(data)} />
+                                <RequestWithImageModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.bulkActionModal.type === 'supplement'} onClose={actions.handleCloseBulkActionModal} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={actions.handleBulkSupplementSubmit} />
+                                <RequestWithImageModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.bulkActionModal.type === 'rescan'} onClose={actions.handleCloseBulkActionModal} title="Y/C Scan Lại hàng loạt (Không đổi trạng thái)" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu scan lại (bắt buộc):" icon="fa-camera" theme="warning" onSubmit={(reason: string, images: string[]) => actions.handleBulkActionSubmit('rescan', { reason, pastedImagesBase64: JSON.stringify(images) })} />
+                                <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.bulkActionModal.type === 'cancel'} onClose={actions.handleCloseBulkActionModal} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={cancelRequestInputs} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleBulkCancelSubmit} />
                             </>
                         )
                     }
 
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'archive'} onClose={actions.handleCloseAdminModal} title="Lưu Trữ Hóa Đơn" description="Lưu trữ toàn bộ đơn xuất hóa đơn tháng trước từ bảng yeucauxhd sang kho lưu trữ để sẵn sàng cho tháng mới. Bảng donhang chỉ xóa các đơn mà xe đã ở Thuận An VÀ đã có phiếu TD4; các đơn còn lại tiếp tục cho tồn để TVBH theo dõi và sẽ tự động lưu trữ khi xe về Thuận An hoặc có phiếu TD4." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={actions.handleArchiveSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={addCarInputs} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={actions.handleAddCarSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'bulkAddCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Hàng Loạt" description="Nhập danh sách các số VIN để thêm hàng loạt vào kho." inputs={bulkAddCarInputs} submitText="Thêm Hàng Loạt" submitColor="primary" icon="fa-layer-group" onSubmit={actions.handleBulkAddCarSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteCar'} onClose={actions.handleCloseAdminModal} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={deleteCarInputs} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleDeleteCarSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'restoreCar'} onClose={actions.handleCloseAdminModal} title="Phục Hồi Xe Đã Xóa" description="Dựa vào nhật ký xe đã xóa, hệ thống sẽ thêm xe trở lại Kho Xe với trạng thái 'Chưa ghép'." inputs={restoreCarInputs} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={actions.handleRestoreCarSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addUser'} onClose={actions.handleCloseAdminModal} title="Thêm & Mời Nhân Viên Mới" description="Hệ thống sẽ tạo tài khoản, chuẩn hóa Họ Tên in hoa, và gửi Email chứa Link để nhân viên tự kích hoạt & đặt mật khẩu." inputs={addUserInputs} submitText="Tạo & Gửi Lời Mời" submitColor="primary" icon="fa-user-plus" onSubmit={actions.handleAddUserSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteUser'} onClose={actions.handleCloseAdminModal} title="Xóa Nhân Viên Khỏi Hệ Thống" description="CẢNH BÁO: Thao tác này sẽ xóa vĩnh viễn tài khoản Auth đăng nhập, xóa hồ sơ nhân viên trong hệ thống và gỡ khỏi các nhóm phòng ban." inputs={deleteUserInputs} submitText="Xác Nhận Xóa Nhân Viên" submitColor="danger" icon="fa-user-times" onSubmit={actions.handleDeleteUserSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteOrder'} onClose={actions.handleCloseAdminModal} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={deleteOrderInputs} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={actions.handleDeleteOrderSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'revertOrder'} onClose={actions.handleCloseAdminModal} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng." inputs={revertOrderInputs} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={actions.handleRevertOrderSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'advanceOrder'} onClose={actions.handleCloseAdminModal} title="Tiến Tới Trạng Thái" description="Đẩy đơn hàng này tiến lên trạng thái tiếp theo trong quy trình." inputs={advanceOrderInputs} submitText="Thực Hiện Tiến Tới" submitColor="primary" icon="fa-step-forward" onSubmit={actions.handleAdvanceOrderSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'archive'} onClose={actions.handleCloseAdminModal} title="Lưu Trữ Hóa Đơn" description="Lưu trữ toàn bộ đơn xuất hóa đơn tháng trước từ bảng yeucauxhd sang kho lưu trữ để sẵn sàng cho tháng mới. Bảng donhang chỉ xóa các đơn mà xe đã ở Thuận An VÀ đã có phiếu TD4; các đơn còn lại tiếp tục cho tồn để TVBH theo dõi và sẽ tự động lưu trữ khi xe về Thuận An hoặc có phiếu TD4." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={actions.handleArchiveSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'addCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={addCarInputs} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={actions.handleAddCarSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'bulkAddCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Hàng Loạt" description="Nhập danh sách các số VIN để thêm hàng loạt vào kho." inputs={bulkAddCarInputs} submitText="Thêm Hàng Loạt" submitColor="primary" icon="fa-layer-group" onSubmit={actions.handleBulkAddCarSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'deleteCar'} onClose={actions.handleCloseAdminModal} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={deleteCarInputs} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleDeleteCarSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'restoreCar'} onClose={actions.handleCloseAdminModal} title="Phục Hồi Xe Đã Xóa" description="Dựa vào nhật ký xe đã xóa, hệ thống sẽ thêm xe trở lại Kho Xe với trạng thái 'Chưa ghép'." inputs={restoreCarInputs} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={actions.handleRestoreCarSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'addUser'} onClose={actions.handleCloseAdminModal} title="Thêm & Mời Nhân Viên Mới" description="Hệ thống sẽ tạo tài khoản, chuẩn hóa Họ Tên in hoa, và gửi Email chứa Link để nhân viên tự kích hoạt & đặt mật khẩu." inputs={addUserInputs} submitText="Tạo & Gửi Lời Mời" submitColor="primary" icon="fa-user-plus" onSubmit={actions.handleAddUserSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'deleteUser'} onClose={actions.handleCloseAdminModal} title="Xóa Nhân Viên Khỏi Hệ Thống" description="CẢNH BÁO: Thao tác này sẽ xóa vĩnh viễn tài khoản Auth đăng nhập, xóa hồ sơ nhân viên trong hệ thống và gỡ khỏi các nhóm phòng ban." inputs={deleteUserInputs} submitText="Xác Nhận Xóa Nhân Viên" submitColor="danger" icon="fa-user-times" onSubmit={actions.handleDeleteUserSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'deleteOrder'} onClose={actions.handleCloseAdminModal} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={deleteOrderInputs} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={actions.handleDeleteOrderSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'revertOrder'} onClose={actions.handleCloseAdminModal} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng." inputs={revertOrderInputs} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={actions.handleRevertOrderSubmit} />
+                    <ActionModal anchor={actionButtonAnchor} showToast={showToast} isOpen={actions.adminModal === 'advanceOrder'} onClose={actions.handleCloseAdminModal} title="Tiến Tới Trạng Thái" description="Đẩy đơn hàng này tiến lên trạng thái tiếp theo trong quy trình." inputs={advanceOrderInputs} submitText="Thực Hiện Tiến Tới" submitColor="primary" icon="fa-step-forward" onSubmit={actions.handleAdvanceOrderSubmit} />
                     <BulkAddCarExcelModal 
                         isOpen={actions.adminModal === 'bulkAddCarExcel'} 
                         onClose={actions.handleCloseAdminModal} 

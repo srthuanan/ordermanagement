@@ -1,3 +1,4 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Order } from '../../types';
 import { exportOrdersToExcel } from '../../utils/excelUtils';
@@ -29,6 +30,7 @@ const CopyableField: React.FC<{ text: string; label?: string; className?: string
 export const PolicySummaryView: React.FC<PolicySummaryViewProps> = ({ orders, showToast }) => {
     const copyWithFeedback = useCopyFeedback();
     const [searchQuery, setSearchQuery] = useState('');
+    const [consultantFilter, setConsultantFilter] = useState('');
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
 
@@ -48,11 +50,11 @@ export const PolicySummaryView: React.FC<PolicySummaryViewProps> = ({ orders, sh
                 o['Tên khách hàng']?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 o['CHÍNH SÁCH']?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 o['Tên tư vấn bán hàng']?.toLowerCase().includes(searchQuery.toLowerCase());
-            return matchSearch;
+            return matchSearch && (!consultantFilter || o['Tên tư vấn bán hàng'] === consultantFilter);
         }).sort((a, b) => {
             return (b['Số đơn hàng'] || '').localeCompare(a['Số đơn hàng'] || '');
         });
-    }, [policyOrders, searchQuery]);
+    }, [policyOrders, searchQuery, consultantFilter]);
 
     const selectedOrder = useMemo(() => {
         return filteredOrders.find(o => o['Số đơn hàng'] === selectedOrderId) || filteredOrders[0] || null;
@@ -80,9 +82,9 @@ export const PolicySummaryView: React.FC<PolicySummaryViewProps> = ({ orders, sh
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border border-slate-200 overflow-hidden animate-fade-in relative z-0">
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
             {/* Column 1: Navigation Sidebar */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}><div id="sidebar-filters-PolicySummaryView" className="admin-sidebar-filter-slot" />
 
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     <button
@@ -107,16 +109,16 @@ export const PolicySummaryView: React.FC<PolicySummaryViewProps> = ({ orders, sh
                         <button onClick={() => setMobileView('folders')} className="md:hidden p-1 text-slate-500 hover:text-slate-800">
                             <i className="fas fa-arrow-left text-xs"></i>
                         </button>
-                        <div className="relative flex-1">
-                            <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
-                            <input
+                        <SidebarFilterSection targetId="sidebar-filters-PolicySummaryView" title="Tổng hợp chính sách" search={<input
                                 type="text"
                                 placeholder="Tìm kiếm đơn hàng, KH, CS..."
                                 className="w-full bg-white border border-slate-300 rounded-lg pl-7 pr-2.5 py-1 text-[11px] font-medium text-slate-800 focus:ring-1 focus:ring-blue-600 focus:outline-hidden"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                            />}><select aria-label="Tư vấn bán hàng" value={consultantFilter} onChange={e => setConsultantFilter(e.target.value)}>
+                                <option value="">Tất cả TVBH</option>
+                                {Array.from(new Set(policyOrders.map(o => o['Tên tư vấn bán hàng']).filter(Boolean))).sort().map(name => <option key={name} value={name}>{name}</option>)}
+                            </select></SidebarFilterSection>
                     </div>
                     <button onClick={handleExport} className="p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition-colors" title="Xuất Excel">
                         <i className="fa-solid fa-file-excel text-sm"></i>

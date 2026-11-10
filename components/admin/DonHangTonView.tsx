@@ -1,8 +1,8 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useMemo, useEffect } from 'react';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
 import moment from 'moment';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { exportOrdersToExcel } from '../../utils/excelUtils';
 import MobileDonHangTonView from './mobile/MobileDonHangTonView';
@@ -331,8 +331,8 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 overflow-hidden relative">
-            <AnimatedBackground />
+        <div className="admin-filter-layout"><aside id="sidebar-filters-DonHangTonView" className="admin-sidebar-filters-host hidden md:block" /><div className="flex flex-col h-full bg-white border-0 overflow-hidden relative z-0">
+
 
             {/* 1. DEDICATED MOBILE VIEW (Mobile-First Separation Protocol) */}
             <div className="flex md:hidden flex-1 flex-col min-h-0 w-full overflow-hidden">
@@ -416,28 +416,13 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                     {/* Search & Select TVBH */}
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         {/* Search Input */}
-                        <div className="relative flex-1 max-w-md">
-                            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input
+                        <SidebarFilterSection targetId="sidebar-filters-DonHangTonView" title="Đơn hàng tồn" search={<input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Tìm khách hàng, SĐT, số HĐ, VIN, TVBH..."
                                 className="w-full pl-8 pr-8 py-1.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-xs rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden transition-all text-slate-700 placeholder-slate-400"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
-                                >
-                                    <i className="fas fa-times"></i>
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Month/Year Filter Dropdown */}
-                        <div className="relative">
-                            <select
+                            />}><select
                                 value={selectedMonthYear}
                                 onChange={(e) => setSelectedMonthYear(e.target.value)}
                                 className="py-1.5 pl-8 pr-7 bg-slate-50 hover:bg-slate-100 text-xs font-semibold rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden text-slate-700 appearance-none cursor-pointer"
@@ -449,13 +434,7 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                     </option>
                                 ))}
                             </select>
-                            <i className="fas fa-calendar-alt absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-blue-600 pointer-events-none"></i>
-                            <i className="fas fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
-                        </div>
-
-                        {/* TVBH Dropdown */}
-                        <div className="relative">
-                            <select
+<select
                                 value={selectedTVBH}
                                 onChange={(e) => setSelectedTVBH(e.target.value)}
                                 className="py-1.5 pl-3 pr-7 bg-slate-50 hover:bg-slate-100 text-xs font-semibold rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden text-slate-700 appearance-none cursor-pointer"
@@ -467,12 +446,7 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                     </option>
                                 ))}
                             </select>
-                            <i className="fas fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
-                        </div>
-
-                        {/* Sort Dropdown */}
-                        <div className="relative hidden lg:block">
-                            <select
+<select
                                 value={sortBy}
                                 onChange={(e: any) => setSortBy(e.target.value)}
                                 className="py-1.5 pl-3 pr-7 bg-slate-50 hover:bg-slate-100 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden text-slate-600 appearance-none cursor-pointer"
@@ -481,7 +455,24 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                 <option value="date_asc">Ngày ký: Cũ nhất</option>
                                 <option value="coc_desc">Tiền cọc: Cao nhất</option>
                                 <option value="coc_asc">Tiền cọc: Thấp nhất</option>
-                            </select>
+                            </select></SidebarFilterSection>
+
+                        {/* Month/Year Filter Dropdown */}
+                        <div className="relative">
+                            
+                            <i className="fas fa-calendar-alt absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-blue-600 pointer-events-none"></i>
+                            <i className="fas fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
+                        </div>
+
+                        {/* TVBH Dropdown */}
+                        <div className="relative">
+                            
+                            <i className="fas fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
+                        </div>
+
+                        {/* Sort Dropdown */}
+                        <div className="relative hidden lg:block">
+                            
                             <i className="fas fa-sort absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
                         </div>
                     </div>
@@ -980,7 +971,7 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                     </div>
                 </div>
             )}
-        </div>
+        </div></div>
     );
 };
 

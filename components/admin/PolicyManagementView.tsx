@@ -1,7 +1,7 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabaseAdmin } from '../../services/supabaseClient';
 import { policyAdminService, Policy, normalizePolicyName } from '../../services/api/policyAdminService';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import Button from '../ui/Button';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
@@ -292,11 +292,11 @@ export const PolicyManagementView: React.FC<{showToast: any}> = ({showToast}) =>
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
+
             
             {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}><div id="sidebar-filters-PolicyManagementView" className="admin-sidebar-filter-slot" />
                 <div className="md:hidden p-3 bg-white border-b border-slate-100 flex items-center justify-center relative">
                     <span className="font-bold text-sm">Chính Sách</span>
                 </div>
@@ -366,21 +366,13 @@ export const PolicyManagementView: React.FC<{showToast: any}> = ({showToast}) =>
 
                 {/* Search Bar - Both Desktop and Mobile */}
                 <div className="p-2.5 bg-white border-b border-border-secondary/60 shrink-0">
-                    <div className="relative group">
-                        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs group-focus-within:text-accent-primary transition-colors"></i>
-                        <input
+                    <SidebarFilterSection targetId="sidebar-filters-PolicyManagementView" title="Chính sách" search={<input
                             type="text"
                             placeholder="Tìm kiếm tên chính sách, dòng xe..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-slate-100/50 hover:bg-slate-100 border border-transparent focus:bg-white focus:border-accent-primary/50 text-xs font-medium pl-8 pr-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary/20 transition-all text-gray-700"
-                        />
-                        {searchQuery && (
-                            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 z-10 transition-colors">
-                                <i className="fas fa-times-circle text-xs"></i>
-                            </button>
-                        )}
-                    </div>
+                        />}><select aria-label="Trạng thái chính sách" value={selectedFolder} onChange={e => {setSelectedFolder(e.target.value);setMobileView('list');}}>{folders.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></SidebarFilterSection>
                 </div>
 
                 <div className="flex-1 overflow-y-auto relative no-scrollbar">

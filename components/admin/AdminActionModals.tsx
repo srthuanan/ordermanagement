@@ -3,6 +3,7 @@ import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 // import { compressImage } from '../../services/ocrService';
 import { useModalBackground } from '../../utils/styleUtils';
+import AnchoredCyberSheet from '../ui/AnchoredCyberSheet';
 
 // --- Modal 1: Request with Reason and Optional Image Paste ---
 
@@ -16,29 +17,30 @@ interface RequestWithImageModalProps {
     icon: string;
     theme: 'primary' | 'danger' | 'warning';
     showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    anchor?: HTMLElement | null;
 }
 
 const SUPPLEMENT_OPTIONS = [
-    { id: 'HDMB', label: 'Hợp đồng mua bán (HĐMB)', icon: 'fa-file-contract' },
-    { id: 'DNXHD', label: 'Đề nghị xuất hóa đơn', icon: 'fa-file-invoice' },
-    { id: 'CHINH_SACH', label: 'Chính sách bán hàng', icon: 'fa-tags' },
-    { id: 'HOA_HONG', label: 'Hoa hồng ứng trước', icon: 'fa-money-bill-wave' },
-    { id: 'VPOINT', label: 'Điểm Vpoint', icon: 'fa-coins' },
-    { id: 'MA_VC', label: 'Mã Voucher (tri ân xe xăng)', icon: 'fa-ticket-alt' },
-    { id: 'XE_XANG', label: 'Thông tin xe xăng cũ (Thu cũ)', icon: 'fa-car' },
-    { id: 'VTLX', label: 'Hồ sơ Vì Tương Lai Xanh (VTLX)', icon: 'fa-leaf' },
+    { id: 'HDMB', label: 'HĐMB', icon: 'fa-file-contract' },
+    { id: 'DNXHD', label: 'ĐNXHĐ', icon: 'fa-file-invoice' },
+    { id: 'CHINH_SACH', label: 'Chính sách', icon: 'fa-tags' },
+    { id: 'HOA_HONG', label: 'Hoa hồng', icon: 'fa-money-bill-wave' },
+    { id: 'VPOINT', label: 'Vpoint', icon: 'fa-coins' },
+    { id: 'MA_VC', label: 'Mã Voucher', icon: 'fa-ticket-alt' },
+    { id: 'XE_XANG', label: 'Xe xăng cũ', icon: 'fa-car' },
+    { id: 'VTLX', label: 'Hồ sơ VTLX', icon: 'fa-leaf' },
 ];
 
 const RESCAN_OPTIONS = [
-    { id: 'HDMB', label: 'Hợp đồng mua bán (HĐMB)', icon: 'fa-file-contract' },
-    { id: 'DNXHD', label: 'Đề nghị xuất hóa đơn (ĐNXHĐ)', icon: 'fa-file-invoice' },
-    { id: 'VTLX', label: 'Hồ sơ Vì Tương Lai Xanh (Cam kết & Cà vẹt)', icon: 'fa-leaf' },
-    { id: 'XE_XANG', label: 'Giấy tờ xe xăng cũ (Thu cũ)', icon: 'fa-car' },
-    { id: 'CHINH_SACH', label: 'Phụ lục chính sách bán hàng', icon: 'fa-tags' },
-    { id: 'HOA_HONG', label: 'Chứng từ hoa hồng ứng', icon: 'fa-money-bill-wave' },
+    { id: 'HDMB', label: 'HĐMB', icon: 'fa-file-contract' },
+    { id: 'DNXHD', label: 'ĐNXHĐ', icon: 'fa-file-invoice' },
+    { id: 'VTLX', label: 'Hồ sơ VTLX', icon: 'fa-leaf' },
+    { id: 'XE_XANG', label: 'Xe xăng cũ', icon: 'fa-car' },
+    { id: 'CHINH_SACH', label: 'Chính sách', icon: 'fa-tags' },
+    { id: 'HOA_HONG', label: 'Hoa hồng', icon: 'fa-money-bill-wave' },
 ];
 
-export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ isOpen, onClose, onSubmit, title, orderNumber, reasonLabel, icon, theme, showToast }) => {
+export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ isOpen, onClose, onSubmit, title, orderNumber, reasonLabel, icon, theme: _theme, showToast, anchor }) => {
     const isSupplementModal = (title || '').toLowerCase().includes('bổ sung');
     const isRescanModal = (title || '').toLowerCase().includes('scan lại') || (title || '').toLowerCase().includes('rescan');
     const isSelectableModal = isSupplementModal || isRescanModal;
@@ -48,7 +50,6 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     const [selectedItems, setSelectedItems] = useState<string[]>(['HDMB', 'DNXHD']);
     const [images, setImages] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const bgStyle = useModalBackground();
 
     useEffect(() => {
         if (isOpen) {
@@ -118,37 +119,85 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
     if (!isOpen) return null;
 
-    const themeClasses = {
-        primary: { iconBg: 'bg-blue-100', iconText: 'text-accent-primary', btn: 'btn-primary', barBg: 'bg-accent-primary' },
-        danger: { iconBg: 'bg-danger-bg', iconText: 'text-danger', btn: 'btn-danger', barBg: 'bg-danger' },
-        warning: { iconBg: 'bg-warning-bg', iconText: 'text-warning', btn: 'btn-primary', barBg: 'bg-warning' }, // Primary button for warning action
-    };
-    const currentTheme = themeClasses[theme] || themeClasses.primary;
+    const activeThemeClass = isRescanModal
+        ? {
+            badge: 'bg-sky-50 text-sky-700 border-sky-200',
+            iconColor: 'text-sky-600',
+            btn: 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white',
+            chipActive: 'is-active-rescan'
+          }
+        : isSupplementModal
+        ? {
+            badge: 'bg-amber-50 text-amber-800 border-amber-200',
+            iconColor: 'text-amber-600',
+            btn: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white',
+            chipActive: 'is-active-supplement'
+          }
+        : {
+            badge: 'bg-rose-50 text-rose-700 border-rose-200',
+            iconColor: 'text-rose-600',
+            btn: 'bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white',
+            chipActive: 'is-active-danger'
+          };
+
+    const displayTitle = isRescanModal
+        ? 'Y/C scan lại hồ sơ'
+        : isSupplementModal
+        ? 'Yêu cầu bổ sung'
+        : title;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-xl h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <div className={`h-1.5 rounded-t-none md:rounded-t-2xl ${currentTheme.barBg} flex-shrink-0`}></div>
-                <header className="flex items-start justify-between p-3.5 border-b border-slate-100">
-                    <div className="flex items-start gap-2.5">
-                        <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${currentTheme.iconBg}`}>
-                            <i className={`fas ${icon} text-xl ${currentTheme.iconText}`}></i>
+        <AnchoredCyberSheet
+            anchor={anchor}
+            className="is-request-sheet"
+            label={title}
+            onClose={() => { if (!isSubmitting) onClose(); }}
+        >
+            <div className="request-action-sheet flex flex-col bg-white overflow-hidden text-slate-800">
+                {/* Header */}
+                <div className="request-sheet-header">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border ${activeThemeClass.badge}`}>
+                            <i className={`fas ${icon} text-xs ${activeThemeClass.iconColor}`}></i>
                         </div>
-                        <div>
-                            <h2 className="text-base font-bold text-text-primary">{title}</h2>
-                            <p className="text-xs text-text-secondary mt-0.5">Đang thực hiện cho đơn hàng: <strong className="font-mono text-text-primary">{orderNumber}</strong></p>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-semibold text-xs text-slate-900 truncate">{displayTitle}</span>
+                            {orderNumber && (
+                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0 border border-slate-200/80">
+                                    #{orderNumber}
+                                </span>
+                            )}
                         </div>
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times text-xs"></i></button>
-                </header>
-                <main className="p-4 md:p-5 space-y-3.5 overflow-y-auto flex-grow min-h-0 custom-scrollbar max-h-[75vh]">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onClose();
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        disabled={isSubmitting}
+                        className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs"
+                        title="Đóng (Esc)"
+                    >
+                        <i className="fas fa-times"></i>
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-3 space-y-2.5 max-h-[380px] overflow-y-auto">
+                    {/* Options chips */}
                     {isSelectableModal && (
                         <div>
-                            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                <i className={`fas ${isRescanModal ? 'fa-camera text-sky-500' : 'fa-list-check text-amber-500'}`}></i>
-                                <span>Tick chọn các mục cần TVBH {isRescanModal ? 'scan lại' : 'bổ sung'}:</span>
-                            </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 p-2 bg-slate-50 border border-slate-200/80 rounded-xl">
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                                    <i className="fas fa-check-square text-[9px] text-slate-400"></i>
+                                    <span>Mục cần {isRescanModal ? 'scan lại' : 'bổ sung'}:</span>
+                                </span>
+                                <span className="text-[10px] text-slate-400">({selectedItems.length}/{activeOptions.length})</span>
+                            </div>
+                            <div className="request-sheet-chips">
                                 {activeOptions.map((opt) => {
                                     const isChecked = selectedItems.includes(opt.id);
                                     return (
@@ -162,18 +211,16 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                                                         : [...prev, opt.id]
                                                 );
                                             }}
-                                            className={`flex items-center gap-2 p-2 rounded-lg text-xs font-semibold border transition-all text-left cursor-pointer ${isChecked
-                                                ? (isRescanModal
-                                                    ? 'bg-sky-50/90 text-sky-950 border-sky-300 shadow-2xs ring-1 ring-sky-300/60'
-                                                    : 'bg-amber-50/90 text-amber-950 border-amber-300 shadow-2xs ring-1 ring-amber-300/60')
-                                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                            }`}
+                                            className={`request-sheet-chip ${isChecked ? activeThemeClass.chipActive : ''}`}
                                         >
-                                            <span className={`w-4 h-4 rounded flex items-center justify-center text-[10px] shrink-0 ${isChecked ? (isRescanModal ? 'bg-sky-500 text-white' : 'bg-amber-500 text-white') : 'border border-slate-300 bg-white'}`}>
+                                            <span className={`w-3.5 h-3.5 rounded text-[9px] flex items-center justify-center shrink-0 ${
+                                                isChecked 
+                                                    ? (isRescanModal ? 'bg-sky-500 text-white' : 'bg-amber-500 text-white') 
+                                                    : 'border border-slate-300'
+                                            }`}>
                                                 {isChecked && <i className="fas fa-check"></i>}
                                             </span>
-                                            <i className={`fas ${opt.icon} text-slate-400 text-[11px] shrink-0`}></i>
-                                            <span className="truncate">{opt.label}</span>
+                                            <span>{opt.label}</span>
                                         </button>
                                     );
                                 })}
@@ -181,56 +228,94 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                         </div>
                     )}
 
+                    {/* Reason input */}
                     <div>
-                        <label htmlFor="modal-reason-input" className="block text-xs font-bold text-text-primary mb-1">
-                            {reasonLabel} {isSelectableModal && <span className="text-slate-400 font-normal">(tùy chọn chi tiết)</span>}
+                        <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                            Ghi chú chi tiết {isSelectableModal ? <span className="text-slate-400 font-normal">(tùy chọn)</span> : <span className="text-rose-500">*</span>}:
                         </label>
                         <textarea
-                            id="modal-reason-input"
                             value={reason}
                             onChange={e => setReason(e.target.value)}
                             rows={2}
-                            placeholder={isSelectableModal ? (isRescanModal ? "Ghi chú thêm phần cần scan lại (VD: trang 2 mờ, chụp thiếu góc...)" : "Ghi chú thêm yêu cầu cụ thể cho TVBH...") : "Nhập nội dung yêu cầu..."}
-                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 text-xs futuristic-input"
+                            placeholder={
+                                isRescanModal 
+                                    ? "VD: Trang 2 mờ số khung, chụp thiếu trang cam kết..." 
+                                    : isSupplementModal 
+                                    ? "VD: Thiếu hóa đơn thu cũ, bổ sung phụ lục HĐMB..." 
+                                    : "Nhập lý do chi tiết..."
+                            }
+                            className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none resize-none transition-colors"
                         />
                     </div>
+
+                    {/* Paste zone */}
                     <div>
-                        <label className="block text-sm font-medium text-text-primary mb-1.5">Dán ảnh minh họa (Tùy chọn)</label>
-                        <div onPaste={handleImagePaste} contentEditable suppressContentEditableWarning className="p-2 border-2 border-dashed border-border-primary rounded-lg min-h-[60px] text-center text-text-placeholder focus:outline-none focus:border-accent-primary">Click và nhấn Ctrl+V để dán</div>
+                        <div 
+                            onPaste={handleImagePaste} 
+                            contentEditable 
+                            suppressContentEditableWarning 
+                            className="request-sheet-pastezone"
+                            tabIndex={0}
+                        >
+                            <i className="fas fa-camera mr-1.5 text-slate-400"></i>
+                            <span>Click vào đây & nhấn <strong>Ctrl+V</strong> để dán ảnh minh họa</span>
+                        </div>
                         {images.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="mt-2 flex flex-wrap gap-1.5">
                                 {images.map((src, i) => (
-                                    <div key={i} className="relative group"><img src={src} className="h-20 w-20 object-cover rounded-md" alt={`Pasted ${i}`} /><button onClick={() => handleRemoveImage(i)} className="absolute top-0 right-0 w-5 h-5 bg-danger text-white rounded-full text-xs hidden group-hover:flex items-center justify-center">&times;</button></div>
+                                    <div key={i} className="relative group w-12 h-12 rounded-lg border border-slate-200 overflow-hidden shrink-0">
+                                        <img src={src} className="w-full h-full object-cover" alt={`Minh họa ${i}`} />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveImage(i)}
+                                            className="absolute top-0.5 right-0.5 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] flex items-center justify-center shadow-xs"
+                                            title="Xóa ảnh"
+                                        >
+                                            &times;
+                                        </button>
+                                    </div>
                                 ))}
                             </div>
                         )}
                     </div>
-                </main>
-                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-2 px-3 py-2 bg-slate-50 border-t border-slate-100">
                     <button
-                        onClick={onClose}
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onClose();
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
                         disabled={isSubmitting}
-                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-200/60 transition-colors"
                     >
-                        HỦY
+                        Hủy
                     </button>
                     <button
+                        type="button"
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 ${currentTheme.barBg} hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${activeThemeClass.btn} disabled:opacity-50`}
                     >
                         {isSubmitting ? (
-                            <div className="flex items-center gap-2">
-                                <i className="fas fa-spinner fa-spin"></i>
-                                <span>ĐANG GỬI...</span>
-                            </div>
+                            <>
+                                <i className="fas fa-spinner fa-spin text-[10px]"></i>
+                                <span>Đang gửi...</span>
+                            </>
                         ) : (
-                            "GỬI YÊU CẦU"
+                            <>
+                                <i className="fas fa-paper-plane text-[10px]"></i>
+                                <span>{isRescanModal ? 'Gửi Y/C scan lại' : isSupplementModal ? 'Gửi Y/C bổ sung' : 'Gửi yêu cầu'}</span>
+                            </>
                         )}
                     </button>
-                </footer>
+                </div>
             </div>
-        </div>
+        </AnchoredCyberSheet>
     );
 };
 

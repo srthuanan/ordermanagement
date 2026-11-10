@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SidebarFilterSection from './SidebarFilterSection';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import { getVehicleConfigs, addVehicleConfig, deleteVehicleConfig, updateVehicleConfig, saveColorMappings } from '../../services/api/vehicleConfigService';
 import { getAvailableExteriors, getAvailableInteriors } from '../../constants';
@@ -25,6 +26,8 @@ const TableWrapper = ({ title, columns, children }: any) => (
 );
 
 export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterLine, setFilterLine] = useState('');
     const { refreshConfigs } = useVehicleConfig();
     const [newLine, setNewLine] = useState('');
     const [newVersion, setNewVersion] = useState('');
@@ -146,20 +149,31 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
 
     if (isLoading) return <div className="p-8 text-center text-slate-500"><i className="fas fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu...</div>;
 
-    const lines = rawConfigs.filter(c => c.type === 'line').sort((a,b) => a.value.localeCompare(b.value));
+    const matchesQuery = (value: string) => value.toLocaleLowerCase('vi').includes(searchQuery.trim().toLocaleLowerCase('vi'));
+    const lines = rawConfigs.filter(c => c.type === 'line' && (!filterLine || c.value === filterLine) &&
+        (matchesQuery(c.value) || rawConfigs.some(v => v.type === 'version' && v.parent_value === c.value && matchesQuery(v.value))))
+        .sort((a,b) => a.value.localeCompare(b.value));
     const versions = rawConfigs.filter(c => c.type === 'version').sort((a,b) => {
         const parentCompare = (a.parent_value || '').localeCompare(b.parent_value || '');
         if (parentCompare !== 0) return parentCompare;
         return a.value.localeCompare(b.value);
     });
-    const colors = rawConfigs.filter(c => (c.type === 'exterior' || c.type === 'interior') && c.parent_value === null).sort((a,b) => {
+    const colors = rawConfigs.filter(c => (c.type === 'exterior' || c.type === 'interior') && c.parent_value === null && matchesQuery(c.value)).sort((a,b) => {
         const typeCompare = a.type.localeCompare(b.type);
         if (typeCompare !== 0) return typeCompare;
         return a.value.localeCompare(b.value);
     });
 
     return (
+        <div className="admin-filter-layout"><aside id="sidebar-filters-config" className="admin-sidebar-filters-host hidden md:block" />
         <div className="p-4 h-full flex flex-col bg-slate-50 overflow-y-auto">
+            <SidebarFilterSection targetId="sidebar-filters-config" title="Cấu hình xe"
+                search={<input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Tìm dòng xe, phiên bản, màu…" />}>
+                <select aria-label="Dòng xe" value={filterLine} onChange={e => setFilterLine(e.target.value)}>
+                    <option value="">Tất cả dòng xe</option>
+                    {rawConfigs.filter(c => c.type === 'line').map(c => <option key={c.id} value={c.value}>{c.value}</option>)}
+                </select>
+            </SidebarFilterSection>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
                 <div>
                     {/* BẢNG CÂY THƯ MỤC DÒNG XE & PHIÊN BẢN */}
@@ -439,7 +453,7 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                     </TableWrapper>
                 </div>
             </div>
-        </div>
+        </div></div>
     );
 };
 

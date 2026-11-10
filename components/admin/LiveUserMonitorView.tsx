@@ -1,3 +1,4 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getActiveUsers, recordUserPresence } from '../../services/apiService';
 import { resetUserDevices } from '../../utils/deviceSecurity';
@@ -642,19 +643,16 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
         </div>
 
         {/* User Sidebar List Panel */}
-        <div className="w-full lg:w-[420px] lg:min-w-[420px] h-[350px] lg:h-full bg-white border-t lg:border-t-0 lg:border-l border-slate-200/80 flex flex-col z-10 shadow-sm">
+        <div className="lg:order-first w-full lg:w-[420px] lg:min-w-[420px] h-[350px] lg:h-full bg-white border-t lg:border-t-0 lg:border-l border-slate-200/80 flex flex-col z-10 shadow-sm"><div id="sidebar-filters-LiveUserMonitorView" className="admin-sidebar-filter-slot" />
           {/* Search & Filter Header */}
           <div className="p-3.5 bg-slate-50/70 border-b border-slate-200/80 space-y-2.5 flex-shrink-0">
-            <div className="relative">
-              <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <input
+            <SidebarFilterSection targetId="sidebar-filters-LiveUserMonitorView" title="Vị trí truy cập" search={<input
                 type="text"
                 placeholder="Tìm nhân viên, khu vực..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 outline-none transition-all placeholder:text-slate-400 text-slate-800"
-              />
-            </div>
+              />}><select aria-label="Thiết bị" value={deviceFilter} onChange={e => setDeviceFilter(e.target.value as any)}><option value="all">Tất cả thiết bị</option><option value="Desktop">Máy tính</option><option value="Mobile">Điện thoại</option></select></SidebarFilterSection>
 
             <div className="flex items-center gap-1.5">
               {(['all', 'Desktop', 'Mobile'] as const).map(type => (

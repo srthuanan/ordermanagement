@@ -1,7 +1,7 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useEffect, useState, useMemo } from 'react';
 import * as apiService from '../../services/apiService';
 import Button from '../ui/Button';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import moment from 'moment';
 
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
@@ -585,10 +585,10 @@ const HoldManagementView: React.FC<HoldManagementViewProps> = ({ showToast, onOp
     }, [selectedId, activeSubTab, reputations, extensions, groupedQueue]);
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
+
             
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}><div id="sidebar-filters-HoldManagementView" className="admin-sidebar-filter-slot" />
                 <div className="md:hidden p-3 bg-white border-b border-border-secondary flex items-center justify-center relative">
                     <span className="font-bold text-sm">Quản Lý Giữ Xe</span>
                 </div>
@@ -613,24 +613,13 @@ const HoldManagementView: React.FC<HoldManagementViewProps> = ({ showToast, onOp
                 </div>
 
                 <div className="px-3 py-2 bg-slate-50 border-b border-border-secondary">
-                    <div className="relative">
-                        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
-                        <input 
+                    <SidebarFilterSection targetId="sidebar-filters-HoldManagementView" title="Quản lý giữ" search={<input 
                             type="text" 
                             placeholder="Tìm kiếm..." 
                             className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        {searchTerm && (
-                            <button 
-                                onClick={() => setSearchTerm('')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
-                            >
-                                <i className="fas fa-times-circle text-[10px]"></i>
-                            </button>
-                        )}
-                    </div>
+                        />}><select aria-label="Nhóm giữ xe" value={activeSubTab} onChange={e => handleTabChange(e.target.value as any)}>{folders.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></SidebarFilterSection>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">

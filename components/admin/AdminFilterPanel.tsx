@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Filters, { DropdownFilterConfig } from '../ui/Filters';
 import { AdminSubView, Order, VcRequest } from '../../types';
+import InvoiceCompactFilters from './InvoiceCompactFilters';
 
 interface AdminFilterPanelProps {
     adminView: AdminSubView;
@@ -39,6 +41,15 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
     refetchXuathoadon, refetchHistory, fetchVcData,
     isLoadingXuathoadon, isLoadingHistory, isLoadingVc, activeMatchingTab, suggestedCount
 }) => {
+    const [sidebarTarget, setSidebarTarget] = useState<HTMLElement | null>(null);
+    useEffect(() => {
+        if (!['invoices', 'matching', 'vc'].includes(adminView)) { setSidebarTarget(null); return; }
+        const findTarget = () => setSidebarTarget(document.getElementById(`${adminView === 'invoices' ? 'invoice' : adminView}-sidebar-filter-target`));
+        findTarget();
+        const observer = new MutationObserver(findTarget);
+        observer.observe(document.body, { childList: true, subtree: true });
+        return () => observer.disconnect();
+    }, [adminView]);
     if (['dashboard', 'phongkd', 'activityLog', 'activeUsers'].includes(adminView)) {
         return null;
     }
@@ -125,7 +136,7 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             return null;
     }
 
-    return (
+    const fullFilters = (
         <Filters
             filters={currentFilters}
             onFilterChange={handleFilterChange}
@@ -142,6 +153,14 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             searchable={false}
         />
     );
+    const desktopFilters = <div className="hidden md:block" key={adminView}><InvoiceCompactFilters filters={currentFilters} dropdowns={dropdownConfigs}
+            searchPlaceholder={searchPlaceholder}
+            sidebar
+            onChange={handleFilterChange} onReset={handleReset} onRefresh={onRefresh} totalCount={totalCount} isLoading={isLoading} /></div>;
+    return <>
+        {['invoices', 'matching', 'vc'].includes(adminView) ? (sidebarTarget && createPortal(desktopFilters, sidebarTarget)) : desktopFilters}
+        <div className="md:hidden">{fullFilters}</div>
+    </>;
 };
 
 export default AdminFilterPanel;

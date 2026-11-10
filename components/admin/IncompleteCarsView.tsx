@@ -1,10 +1,10 @@
+import SidebarFilterSection from './SidebarFilterSection';
 import React, { useState, useMemo, useEffect } from 'react';
 import { StockVehicle } from '../../types';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import Button from '../ui/Button';
 import CarImage from '../ui/CarImage';
 import * as apiService from '../../services/apiService';
-import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
 interface IncompleteCarsViewProps {
@@ -176,11 +176,11 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
-            <AnimatedBackground />
+        <div className="flex h-full bg-white border-0 overflow-hidden relative z-0">
+
 
             {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}><div id="sidebar-filters-IncompleteCarsView" className="admin-sidebar-filter-slot" />
                 <div className="md:hidden p-3 bg-white border-b border-slate-100 flex items-center justify-center relative">
                     <span className="font-bold text-sm">Bổ Sung Thông Tin</span>
                 </div>
@@ -223,24 +223,13 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                     </div>
                     
                     {/* Search Bar - Allow Admin to search any car to edit */}
-                    <div className="relative group">
-                        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-accent-primary transition-colors text-[10px]"></i>
-                        <input 
+                    <SidebarFilterSection targetId="sidebar-filters-IncompleteCarsView" title="Bổ sung phiên bản" search={<input 
                             type="text"
                             placeholder="Tìm VIN / Máy / DMS..."
                             className="w-full bg-slate-50 border border-slate-100 rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-bold focus:bg-white focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all outline-none"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {searchQuery && (
-                            <button 
-                                onClick={() => setSearchQuery('')}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-full transition-colors"
-                            >
-                                <i className="fas fa-times text-[8px]"></i>
-                            </button>
-                        )}
-                    </div>
+                        />}><select aria-label="Thông tin còn thiếu" value={selectedFolder} onChange={e => handleFolderChange(e.target.value)}>{folders.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></SidebarFilterSection>
                 </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
                     {displayCars.map(car => renderCarListItem(car))}

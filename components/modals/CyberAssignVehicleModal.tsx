@@ -1,5 +1,5 @@
+import AnchoredCyberSheet from '../ui/AnchoredCyberSheet';
 import React, { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { Order } from '../../types';
 import {
     CyberXepXeContract,
@@ -34,6 +34,7 @@ interface CyberAssignVehicleModalProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onSuccess?: (vin: string, engineNo?: string, contract?: CyberXepXeContract) => void;
     isAdmin?: boolean;
+    anchorElement?: HTMLElement | null;
 }
 
 export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = ({
@@ -44,7 +45,8 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
     initialContracts,
     showToast,
     onSuccess,
-    isAdmin: isAdminProp
+    isAdmin: isAdminProp,
+    anchorElement
 }) => {
     // Contract states
     const [activeContract, setActiveContract] = useState<CyberXepXeContract | null>(contract || null);
@@ -63,6 +65,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
     // Approval states (Duyệt / Hoàn tác duyệt không ghi nhận người duyệt trên Cyber)
     const [isApprovingContract, setIsApprovingContract] = useState<boolean>(false);
+    const [approvalAnchor, setApprovalAnchor] = useState<HTMLElement | null>(null);
     const [approvalConfirmModal, setApprovalConfirmModal] = useState<{
         isOpen: boolean;
         action: 'approve' | 'revoke';
@@ -678,17 +681,14 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
     if (!isOpen) return null;
 
     const modalContent = (
-        <div 
-            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in"
-            onClick={(e) => {
-                if (e.target === e.currentTarget && !isSaving) {
-                    onClose();
-                }
-            }}
-        >
+        <AnchoredCyberSheet anchor={anchorElement} label="Ghép xe Cyber" onClose={() => { if (!isSaving && !isUnassigning && !approvalConfirmModal) onClose(); }}>
             <div 
-                className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-scale-in my-auto relative z-10"
+                className="cyber-assign-content bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden animate-scale-in my-auto relative z-10"
                 onClick={e => e.stopPropagation()}
+                onPointerDownCapture={e => {
+                    const button = (e.target as HTMLElement).closest('button');
+                    if (button && !approvalConfirmModal) setApprovalAnchor(button);
+                }}
             >
                 
                 {/* Modal Header */}
@@ -699,14 +699,9 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         </div>
                         <div>
                             <h3 className="font-bold text-sm flex items-center gap-2">
-                                <span>Ghép Xe CyberSoft ERP</span>
-                                <span className="text-[10px] font-normal px-2 py-0.5 rounded-full bg-white/20">
-                                    [dbo].[CP_BeXepXe]
-                                </span>
+                                <span>Ghép xe Cyber</span>
                             </h3>
-                            <p className="text-[11px] text-white/80">
-                                Tra cứu và gán số khung phù hợp từ kế hoạch phân bổ / kho CyberSoft vào HĐ
-                            </p>
+                            
                         </div>
                     </div>
                     <button
@@ -819,160 +814,18 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         </div>
                     </div>
                 ) : (
-                    /* Selected Contract Info Card */
-                    <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 shrink-0 text-xs">
-                        <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-200/60">
-                            <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 font-bold text-[10px]">
-                                    Hợp đồng CyberSoft
-                                </span>
-                                <span className="font-bold text-slate-900 font-mono text-xs">{activeContract.ma_hd}</span>
-                                {isContractPendingGreen ? (
-                                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
-                                        <i className="fas fa-exclamation-triangle text-[9px] text-amber-600"></i>
-                                        <span>Màu xanh (Chưa duyệt)</span>
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-400 flex items-center gap-1">
-                                        <i className="fas fa-check-circle text-[9px] text-yellow-600"></i>
-                                        <span>Màu vàng (Đã duyệt)</span>
-                                    </span>
-                                )}
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setActiveContract(null);
-                                    setCandidateCars([]);
-                                    setSelectedCandidateVin('');
-                                    setSelectedCandidateCar(null);
-                                }}
-                                className="text-[11px] text-indigo-600 hover:underline font-semibold flex items-center gap-1"
-                            >
-                                <i className="fas fa-arrow-right-arrow-left text-[9px]"></i>
-                                <span>Đổi HĐ khác</span>
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-slate-700">
-                            <div>
-                                <span className="text-slate-400 text-[11px] block">Khách hàng:</span>
-                                <span className="font-bold text-slate-900 truncate block" title={activeContract.ten_kh}>
-                                    {activeContract.ten_kh}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-slate-400 text-[11px] block">Dòng xe / Màu:</span>
-                                <span className="font-bold text-indigo-700 block truncate" title={`${activeContract.ten_kx} (${activeContract.ten_mau})`}>
-                                    {activeContract.ten_kx} ({activeContract.ten_mau || activeContract.ma_mau})
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-slate-400 text-[11px] block">TVBH / Showroom:</span>
-                                <span className="font-medium text-slate-800 block truncate" title={`${activeContract.ten_hs} - ${activeContract.ten_ttcp}`}>
-                                    {activeContract.ten_hs || '-'}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-slate-400 text-[11px] block">VIN hiện tại (Cyber):</span>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <span className="font-mono font-bold text-slate-900 block truncate">
-                                        {activeContract.so_khung || <span className="text-slate-400 italic font-normal">Chưa ghép</span>}
-                                    </span>
-                                    {activeContract.so_khung && (
-                                        <button
-                                            type="button"
-                                            onClick={handleUnassignCurrentContract}
-                                            disabled={isUnassigning || isSaving}
-                                            className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
-                                            title="Hủy ghép xe này trên CyberSoft ERP"
-                                        >
-                                            <i className={`fas ${isUnassigning ? 'fa-spinner fa-spin' : 'fa-trash-alt'} text-[8px]`}></i>
-                                            <span>Gỡ</span>
-                                        </button>
-                                    )}
-                                </div>
-                                {(order?.VIN || (order as any)?.vin || order?.['SỐ VIN']) && (
-                                    <span className="text-[10px] text-indigo-600 font-mono block mt-0.5 truncate" title="VIN trên đơn hàng">
-                                        Đơn hàng: <strong>{(order?.VIN || (order as any)?.vin || order?.['SỐ VIN'] || '').trim()}</strong>
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                    <div className="cyber-contract-summary">
+                        <div><strong>{activeContract.ten_kh}</strong><button type="button" onClick={() => { setActiveContract(null); setCandidateCars([]); setSelectedCandidateVin(''); setSelectedCandidateCar(null); }}>Đổi hợp đồng</button></div>
+                        <span>{activeContract.ten_kx} · {activeContract.ten_mau || activeContract.ma_mau}</span>
+                        <small>{activeContract.ma_hd}</small>
+                        {activeContract.so_khung && <small>VIN hiện tại: {activeContract.so_khung}</small>}
                     </div>
                 )}
 
-                {/* Status / Approval Warning Banner */}
-                {activeContract && (
-                    <div className="px-5 pt-3 shrink-0">
-                        {isContractPendingGreen ? (
-                            <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-xl flex items-start gap-2.5 text-amber-900 shadow-xs">
-                                <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i className="fas fa-exclamation-triangle text-xs"></i>
-                                </div>
-                                <div className="text-xs flex-1">
-                                    <div className="font-extrabold uppercase tracking-wide text-amber-800 flex items-center gap-2">
-                                        <span>Cảnh báo quy định duyệt hợp đồng</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 font-black text-[9px] border border-amber-300">
-                                            MÀU XANH (CHỜ DUYỆT)
-                                        </span>
-                                    </div>
-                                    <div className="mt-1 text-slate-700 leading-relaxed text-[11px]">
-                                        Hợp đồng <strong>{activeContract.ma_hd}</strong> trên CyberSoft đang ở trạng thái <strong>Chờ duyệt (Màu xanh)</strong>. Theo quy định, hợp đồng phải được <strong>Giám đốc duyệt chuyển sang MÀU VÀNG</strong> thì mới được phép ghép xe!
-                                    </div>
-
-                                    {/* Action Button dành cho Admin duyệt đề phòng lúc vắng Giám đốc */}
-                                    {isUserAdmin && (
-                                        <div className="mt-2.5 pt-2 border-t border-amber-200/80 flex items-center justify-between gap-2">
-                                            <span className="text-[10px] text-amber-700 italic">
-                                                Quyền Admin: Cho phép duyệt nhanh để mở khóa xếp xe khi vắng Giám đốc (không ghi người duyệt trên Cyber).
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenApproveModal(activeContract)}
-                                                disabled={isApprovingContract}
-                                                className="px-3 py-1 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition-all flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
-                                            >
-                                                {isApprovingContract ? (
-                                                    <i className="fas fa-spinner fa-spin text-xs"></i>
-                                                ) : (
-                                                    <i className="fas fa-bolt text-xs"></i>
-                                                )}
-                                                <span>Duyệt hợp đồng (Admin)</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-2 text-emerald-800 text-xs shadow-2xs">
-                                <div className="flex items-center gap-2">
-                                    <i className="fas fa-check-circle text-emerald-600 text-xs shrink-0"></i>
-                                    <span className="text-[11px] font-medium">
-                                        Hợp đồng đã được duyệt <strong className="text-emerald-900 font-bold">(Màu vàng)</strong> - Đủ điều kiện ghép xe theo quy định.
-                                    </span>
-                                </div>
-
-                                {/* Nút Hoàn tác duyệt khi chưa ghép số khung */}
-                                {isUserAdmin && !activeContract.so_khung && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleOpenRevokeModal(activeContract)}
-                                        disabled={isApprovingContract}
-                                        className="px-2.5 py-1 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-300 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50 shadow-2xs"
-                                        title="Thu hồi duyệt, chuyển hợp đồng về trạng thái Chờ duyệt (Màu xanh)"
-                                    >
-                                        {isApprovingContract ? (
-                                            <i className="fas fa-spinner fa-spin text-[10px]"></i>
-                                        ) : (
-                                            <i className="fas fa-undo text-[10px]"></i>
-                                        )}
-                                        <span>Hoàn tác duyệt</span>
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
+                {activeContract && <div className="cyber-approval-line" data-pending={isContractPendingGreen}>
+                    <span>{isContractPendingGreen ? 'Chờ duyệt hợp đồng để ghép xe' : 'Đã duyệt · Có thể ghép xe'}</span>
+                    {isUserAdmin && <button type="button" disabled={isApprovingContract} onClick={() => isContractPendingGreen ? handleOpenApproveModal(activeContract) : handleOpenRevokeModal(activeContract)}>{isContractPendingGreen ? 'Duyệt hợp đồng' : 'Hoàn tác duyệt'}</button>}
+                </div>}
 
                 {/* Candidate Cars Section */}
                 {activeContract && (
@@ -983,7 +836,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                 <i className="fas fa-search text-[11px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                                 <input
                                     type="text"
-                                    placeholder="Lọc số khung (VIN), số máy, ghi chú..."
+                                    placeholder="Tìm VIN, số máy…"
                                     value={candidateSearchQuery}
                                     onChange={e => setCandidateSearchQuery(e.target.value)}
                                     className="w-full pl-8 pr-3 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
@@ -999,7 +852,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                             {isLoadingCandidates ? (
                                 <div className="flex flex-col items-center justify-center py-12 text-slate-500">
                                     <div className="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-3"></div>
-                                    <span className="text-xs font-semibold">Đang tra cứu xe khớp cấu hình từ CyberSoft ([dbo].[CP_BeXepXe_SK])...</span>
+                                    <span className="text-xs font-medium">Đang tìm xe phù hợp trên Cyber…</span>
                                 </div>
                             ) : candidateCars.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
@@ -1021,9 +874,9 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                                 <th className="py-2.5 px-3 text-center w-10 border-r border-slate-200">Chọn</th>
                                                 <th className="py-2.5 px-3 border-r border-slate-200">Số khung (VIN)</th>
                                                 <th className="py-2.5 px-3 border-r border-slate-200">Số máy</th>
-                                                <th className="py-2.5 px-3 text-center border-r border-slate-200">Năm SX</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200">Ngày nhập / PB</th>
-                                                <th className="py-2.5 px-3">Ghi chú</th>
+                                                
+                                                
+                                                
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -1069,15 +922,9 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                                         <td className="py-2.5 px-3 border-r border-slate-100 font-mono text-slate-700">
                                                             {car.so_may || '-'}
                                                         </td>
-                                                        <td className="py-2.5 px-3 border-r border-slate-100 text-center text-slate-600">
-                                                            {car.nam_sx || '-'}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 border-r border-slate-100 text-slate-600">
-                                                            {car.ngay_ct || '-'}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-slate-600 max-w-[200px] truncate" title={car.dien_giai}>
-                                                            {car.dien_giai || '-'}
-                                                        </td>
+                                                        
+                                                        
+                                                        
                                                     </tr>
                                                 );
                                             })}
@@ -1095,11 +942,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         {selectedCandidateVin ? (
                             <span className="text-xs text-slate-700">
                                 Đang chọn VIN: <strong className="font-mono text-indigo-700 font-bold">{selectedCandidateVin}</strong>
-                                {selectedCandidateCar?.so_may && (
-                                    <span className="text-slate-500 ml-1.5 font-mono text-[11px]">
-                                        (Số máy: {selectedCandidateCar.so_may})
-                                    </span>
-                                )}
+                                
                             </span>
                         ) : (
                             <span className="text-xs text-slate-400 italic">
@@ -1137,7 +980,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                     ? 'bg-amber-500/85 hover:bg-amber-600 cursor-not-allowed opacity-90' 
                                     : 'bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50'
                             }`}
-                            title={isContractPendingGreen ? "Hợp đồng trên Cyber chưa được Giám đốc duyệt (đang màu xanh). Vui lòng duyệt trước khi ghép xe!" : "Xác nhận ghép xe vào CyberSoft"}
+                            title={isContractPendingGreen ? "Hợp đồng trên Cyber chưa được Giám đốc duyệt (đang màu xanh). Vui lòng duyệt trước khi ghép xe!" : "Ghép xe vào CyberSoft"}
                         >
                             {isSaving ? (
                                 <>
@@ -1161,7 +1004,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
                 {/* Modal xác nhận Duyệt / Hoàn tác duyệt hợp đồng Cyber */}
                 {approvalConfirmModal && approvalConfirmModal.isOpen && (
-                    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                    <AnchoredCyberSheet anchor={approvalAnchor} compact label="Duyệt hợp đồng Cyber" onClose={() => { if (!isApprovingContract) setApprovalConfirmModal(null); }}>
                         <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-150">
                             {/* Header */}
                             <div className={`p-4 border-b flex items-center justify-between ${
@@ -1267,14 +1110,14 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </AnchoredCyberSheet>
                 )}
 
             </div>
-        </div>
+        </AnchoredCyberSheet>
     );
 
-    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
+    return modalContent;
 };
 
 export default CyberAssignVehicleModal;

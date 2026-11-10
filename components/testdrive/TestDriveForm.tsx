@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { ArrowLeft, RotateCcw, Printer } from 'lucide-react';
 import moment from 'moment';
 import { TestDriveBooking, TestDriveSortConfig } from '../../types';
 import * as apiService from '../../services/apiService';
@@ -6,10 +7,9 @@ import TestDriveFormInputs from './TestDriveFormInputs';
 import TestDrivePreview from './TestDrivePreview';
 import TestDriveHistoryTable from './TestDriveHistoryTable';
 import TestDriveCheckinModal from './TestDriveCheckinModal';
-import TabbedFilter from '../ui/TabbedFilter';
-import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import ActionModal from '../admin/ActionModal';
 import Button from '../ui/Button';
+import './testdrive-premium.css';
 
 
 interface ImageSource {
@@ -94,7 +94,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     const [activeTab, setActiveTab] = useState<'create' | 'history'>(isReferenceAccount || mobileMode ? 'history' : 'create');
     const [selectedBookingForPreview, setSelectedBookingForPreview] = useState<TestDriveBooking | null>(null);
     const [dataForPrinting, setDataForPrinting] = useState<TestDriveBooking>(formData);
-    const [checkinModalState, setCheckinModalState] = useState<{ booking: TestDriveBooking, mode: 'checkin' | 'checkout' | 'update' | 'view' } | null>(null);
+    const [checkinModalState, setCheckinModalState] = useState<{ booking: TestDriveBooking, mode: 'checkin' | 'checkout' | 'update' | 'view', anchorEl?: HTMLElement | null } | null>(null);
     const [bookingToDelete, setBookingToDelete] = useState<TestDriveBooking | null>(null);
 
 
@@ -157,7 +157,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
 
     const triggerPrint = useCallback((bookingData: TestDriveBooking) => {
         setDataForPrinting(bookingData);
-//         showToast('Đang chuẩn bị...', 'Vui lòng chờ trong khi tài liệu in đang được tạo.', 'loading');
+        //         showToast('Đang chuẩn bị...', 'Vui lòng chờ trong khi tài liệu in đang được tạo.', 'loading');
 
         setTimeout(() => {
             const printContents = document.getElementById('print-container')?.innerHTML;
@@ -372,7 +372,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     };
 
     const handleUpdateCheckin = async (payload: any): Promise<boolean> => {
-//         showToast('Đang Cập Nhật', 'Vui lòng chờ...', 'loading');
+        //         showToast('Đang Cập Nhật', 'Vui lòng chờ...', 'loading');
         try {
             const result = await apiService.updateTestDriveCheckin(payload);
             if (result.status === 'SUCCESS' && result.updatedRecord) {
@@ -400,7 +400,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
 
     const handleDeleteBooking = async (): Promise<boolean> => {
         if (!bookingToDelete) return false;
-//         showToast('Đang Xóa', `Đang xóa phiếu ${bookingToDelete.soPhieu}...`, 'loading');
+        //         showToast('Đang Xóa', `Đang xóa phiếu ${bookingToDelete.soPhieu}...`, 'loading');
         try {
             const result = await apiService.deleteTestDriveBooking(bookingToDelete.soPhieu);
             if (result.status === 'SUCCESS') {
@@ -419,19 +419,18 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
         }
     };
 
-    const handleOpenCheckinModal = (booking: TestDriveBooking, modeOverride?: 'update' | 'view') => {
-        if (modeOverride) {
-            setCheckinModalState({ booking, mode: modeOverride });
-            return;
+    const handleOpenCheckinModal = (booking: TestDriveBooking, modeOverride?: 'checkin' | 'checkout' | 'update' | 'view', anchorEl?: HTMLElement | null) => {
+        let mode: 'checkin' | 'checkout' | 'update' | 'view' = modeOverride || 'checkin';
+        if (!modeOverride) {
+            if (booking.odoBefore && booking.odoAfter) {
+                mode = 'view';
+            } else if (booking.odoBefore) {
+                mode = 'checkout';
+            } else {
+                mode = 'checkin';
+            }
         }
-
-        let mode: 'checkin' | 'checkout' | 'update' | 'view' = 'checkin';
-        if (booking.odoBefore && booking.odoAfter) {
-            mode = 'view';
-        } else if (booking.odoBefore) {
-            mode = 'checkout';
-        }
-        setCheckinModalState({ booking, mode });
+        setCheckinModalState({ booking, mode, anchorEl });
     };
 
     const processedHistory = useMemo(() => {
@@ -497,7 +496,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
 
     if (selectedBookingForPreview) {
         return (
-            <div className={mobileMode ? 'flex h-full flex-col overflow-hidden bg-[#f2f2f7] animate-fade-in-up' : 'bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden animate-fade-in-up'}>
+            <div className={mobileMode ? 'flex h-full min-h-0 flex-col overflow-hidden bg-[#f2f2f7] animate-fade-in-up' : 'bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full min-h-0 overflow-hidden animate-fade-in-up'}>
                 <header className={mobileMode ? 'print-hidden flex h-12 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-3 backdrop-blur-xl' : 'print-hidden flex-shrink-0 flex items-center justify-between border-b border-border-primary mb-4 pb-3 gap-2'}>
                     {mobileMode ? (
                         <>
@@ -529,145 +528,122 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
         );
     }
 
-    const historyCarTabs = uniqueCars.map(car => ({
-        id: car,
-        label: car,
-        count: allTestDrives.filter(b => b.loaiXe === car).length
-    }));
-
-    const historyTabs = [
-        { id: 'all', label: 'Tất cả', count: allTestDrives.length },
-        ...historyCarTabs
-    ];
-
-    const activeHistoryCarTab = (historyFilters.car && historyFilters.car.length === 1) ? historyFilters.car[0] : 'all';
-
-    const handleHistoryTabChange = (tabId: string) => {
-        setHistoryFilters(prev => ({ ...prev, car: tabId === 'all' ? [] : [tabId] }));
-    };
-
     return (
         <div className={mobileMode
-            ? 'relative flex h-full min-h-0 flex-col overflow-hidden bg-[#f2f2f7]'
-            : 'bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden'}>
-            {activeTab === 'history' && (
-                <div className={mobileMode ? 'flex-shrink-0 border-b border-slate-200/80 bg-white/90 px-3 py-2 backdrop-blur-xl' : 'flex-shrink-0 mb-2'}>
-                    {mobileMode && (
-                        <div className="space-y-2">
-                            <div className="flex rounded-[10px] bg-slate-100 p-0.5">
-                                <button type="button" className="flex-1 rounded-lg bg-white py-1.5 text-[11px] font-semibold text-slate-900 shadow-xs">Lịch lái thử</button>
-                                {!isReferenceAccount && (
-                                    <button type="button" onClick={() => setActiveTab('create')} className="flex-1 rounded-lg py-1.5 text-[11px] font-medium text-slate-500 active:bg-white">Tạo lịch mới</button>
-                                )}
-                            </div>
+            ? 'td-premium td-premium-mobile relative flex h-full min-h-0 flex-col overflow-hidden'
+            : 'td-premium td-premium-desktop flex flex-col h-full min-h-0 overflow-hidden'}>
+            {activeTab === 'history' && mobileMode && (
+                <div className="flex-shrink-0 border-b border-slate-200/80 bg-white/90 px-3 py-2 backdrop-blur-xl">
+                    <div className="space-y-2">
+                        <div className="flex rounded-[10px] bg-slate-100 p-0.5">
+                            <button type="button" className="flex-1 rounded-lg bg-white py-1.5 text-[11px] font-semibold text-slate-900 shadow-xs">Lịch lái thử</button>
+                            {!isReferenceAccount && (
+                                <button type="button" onClick={() => setActiveTab('create')} className="flex-1 rounded-lg py-1.5 text-[11px] font-medium text-slate-500 active:bg-white">Tạo lịch mới</button>
+                            )}
                         </div>
-                    )}
-                    {!mobileMode && (
-                    <TabbedFilter
-                        tabs={historyTabs}
-                        activeTab={activeHistoryCarTab}
-                        onTabChange={handleHistoryTabChange}
-                        searchValue={historyFilters.keyword}
-                        onSearchChange={(val) => setHistoryFilters(prev => ({ ...prev, keyword: val }))}
-                        onReset={() => setHistoryFilters({ keyword: '', dateRange: { start: '', end: '', }, car: [], status: [] })}
-                        canReset={true}
-                        extraActions={
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center gap-1.5 bg-gray-50/50 border border-gray-100 rounded-md px-2 py-1 lg:py-0.5">
-                                    <i className="fas fa-calendar-alt text-accent-primary opacity-60 text-[10px] lg:text-[9px]"></i>
-                                    <input
-                                        type="date"
-                                        className="bg-transparent text-[11px] lg:text-[10px] border-none focus:ring-0 p-0 text-gray-700 w-[95px] lg:w-[85px] font-bold"
-                                        value={historyFilters.dateRange.start}
-                                        onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, start: e.target.value } }))}
-                                    />
-                                    <span className="text-gray-300 text-[10px]">-</span>
-                                    <input
-                                        type="date"
-                                        className="bg-transparent text-[11px] lg:text-[10px] border-none focus:ring-0 p-0 text-gray-700 w-[95px] lg:w-[85px] font-bold"
-                                        value={historyFilters.dateRange.end}
-                                        onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, end: e.target.value } }))}
-                                    />
-                                </div>
-                                {!isReferenceAccount && (
-                                    <Button
-                                        onClick={() => setActiveTab('create')}
-                                        variant="primary"
-                                        className="h-8 lg:h-7 !px-3 lg:!px-2.5 !rounded-md"
-                                        leftIcon={<i className="fas fa-plus text-[10px]"></i>}
-                                    >
-                                        <span className="text-[11px] lg:text-[10px] font-bold">Tạo Mới</span>
-                                    </Button>
-                                )}
-                            </div>
-                        }
-                    >
-                        {/* Secondary Filters */}
-                        <div className="min-w-[80px] xl:min-w-[90px] flex-shrink-0 hidden lg:block">
-                            <MultiSelectDropdown
-                                id="car-filter"
-                                label="Dòng xe"
-                                options={uniqueCars}
-                                selectedOptions={historyFilters.car}
-                                onChange={(selected: string[]) => setHistoryFilters(prev => ({ ...prev, car: selected }))}
-                                icon="fa-car"
-                                displayMode="selection"
-                                size="compact"
-                                variant="modern"
-                                searchable={true}
-                                align="right"
-                            />
-                        </div>
-                        <div className="min-w-[110px]">
-                            <MultiSelectDropdown
-                                id="status-filter"
-                                label="Trạng thái"
-                                options={['Chờ check-in', 'Đang lái thử', 'Hoàn tất', 'Hủy']}
-                                selectedOptions={historyFilters.status}
-                                onChange={(selected: string[]) => setHistoryFilters(prev => ({ ...prev, status: selected }))}
-                                icon="fa-tasks"
-                                displayMode="selection"
-                                size="compact"
-                                variant="modern"
-                                align="right"
-                            />
-                        </div>
-                    </TabbedFilter>
-                    )}
+                    </div>
                 </div>
             )}
 
-
             {activeTab === 'create' && (
-                <div className={`flex-grow grid grid-cols-1 lg:grid-cols-5 overflow-hidden print-hidden ${mobileMode ? 'gap-0 pt-12' : 'gap-6'}`}>
-                    {mobileMode && (
-                        <div className="absolute left-3 right-3 top-2 z-30 flex rounded-[10px] bg-slate-100 p-0.5 shadow-sm">
-                            <button type="button" onClick={() => setActiveTab('history')} className="flex-1 rounded-lg py-1.5 text-[11px] font-medium text-slate-500">Lịch lái thử</button>
-                            <button type="button" className="flex-1 rounded-lg bg-white py-1.5 text-[11px] font-semibold text-slate-900 shadow-xs">Tạo lịch mới</button>
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white">
+                    {/* Header: Matches Tab Đơn Hàng 100% */}
+                    <header className="premium-detail-heading shrink-0">
+                        <div className="premium-detail-breadcrumb">
+                            Lái thử <span>/</span> Tạo phiếu mới
                         </div>
-                    )}
-                    <TestDriveFormInputs
-                        formData={formData}
-                        handleInputChange={handleInputChange}
-                        handleRadioChange={handleRadioChange}
-                        conflictError={conflictError}
-                        scheduleForSelectedCar={scheduleForSelectedCar}
-                        suggestions={suggestions}
-                        onSuggestionClick={handleSuggestionClick}
-                        onReset={handleReset}
-                        onSave={handleSaveAndPrint}
-                        isSubmitting={isSubmitting}
-                        onSwitchToList={() => setActiveTab('history')}
-                        mobileMode={mobileMode}
-                    />
-                    <TestDrivePreview data={formData} hideOnMobile={true} />
+                        <div className="premium-detail-title-row">
+                            <div>
+                                <h2>Tạo Phiếu Lái Thử Mới</h2>
+                                <p>
+                                    Tư vấn bán hàng · <strong className="text-slate-800">{formData.tenTuVan || currentUser}</strong>
+                                    <span>·</span>
+                                    Cơ sở: {formData.coSo || 'VF Minh Đạo Thuận An'}
+                                    <span>·</span>
+                                    Mã phiếu dự kiến: <span className="font-mono font-bold text-blue-600">{formData.soPhieu || 'Đang tạo...'}</span>
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('history')}
+                                    className="px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                                >
+                                    <ArrowLeft size={14} /> Danh sách phiếu
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Body: 2-Column Split Workspace */}
+                    <div className="flex-1 min-h-0 flex overflow-hidden">
+                        <TestDriveFormInputs
+                            formData={formData}
+                            handleInputChange={handleInputChange}
+                            handleRadioChange={handleRadioChange}
+                            conflictError={conflictError}
+                            scheduleForSelectedCar={scheduleForSelectedCar}
+                            suggestions={suggestions}
+                            onSuggestionClick={handleSuggestionClick}
+                            onReset={handleReset}
+                            onSave={handleSaveAndPrint}
+                            isSubmitting={isSubmitting}
+                            onSwitchToList={() => setActiveTab('history')}
+                            mobileMode={mobileMode}
+                        />
+                        <TestDrivePreview data={formData} hideOnMobile={true} />
+                    </div>
+
+                    {/* Bottom Action Bar: Matches Tab Đơn Hàng Footer 100% */}
+                    <div className="h-12 px-6 border-t border-slate-200/90 bg-white flex items-center justify-between shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('history')}
+                            className="text-xs text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                            <ArrowLeft size={14} /> Quay lại danh sách
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                disabled={isSubmitting}
+                                className="px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                            >
+                                <RotateCcw size={13} /> Làm mới form
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleSaveAndPrint}
+                                disabled={!!conflictError || isSubmitting}
+                                className={`px-4 py-1.5 rounded-md text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    conflictError || isSubmitting
+                                        ? 'bg-slate-400 cursor-not-allowed opacity-60'
+                                        : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin text-xs"></i>
+                                        <span>Đang lưu...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Printer size={13} />
+                                        <span>Lưu &amp; In Phiếu Lái Thử</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            )
-            }
+            )}
 
             {
                 activeTab === 'history' && (
-                    <div className="flex-grow flex flex-col overflow-hidden print-hidden">
+                    <div className="td-history-panel flex-grow flex flex-col overflow-hidden print-hidden">
                         {isLoading && allTestDrives.length === 0 ? (
                             <div className="bg-white/50 h-full rounded-lg overflow-hidden divide-y divide-border-secondary">
                                 {Array.from({ length: 8 }).map((_, i) => (
@@ -682,7 +658,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                             </div>
                         ) : (
                             <TestDriveHistoryTable
-                                bookings={processedHistory}
+                                bookings={allTestDrives}
                                 onSelectBooking={setSelectedBookingForPreview}
                                 onUpdateCheckin={handleOpenCheckinModal}
                                 onDelete={setBookingToDelete}
@@ -692,6 +668,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                                 sortConfig={historySortConfig}
                                 onSort={(key) => setHistorySortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
                                 isReferenceAccount={isReferenceAccount}
+                                onCreateNew={!isReferenceAccount ? () => setActiveTab('create') : undefined}
                             />
                         )}
                     </div>
@@ -778,6 +755,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                     <TestDriveCheckinModal
                         booking={checkinModalState.booking}
                         mode={checkinModalState.mode}
+                        anchorEl={checkinModalState.anchorEl}
                         onClose={() => setCheckinModalState(null)}
                         onSubmit={handleUpdateCheckin}
                         showToast={showToast}

@@ -66,7 +66,10 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
     }, [isOpen, images, currentIndex]);
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
+        if (e.key === 'Escape') {
+            e.stopPropagation();
+            onClose();
+        }
         if (e.key === 'ArrowRight') goTo(currentIndex + 1);
         if (e.key === 'ArrowLeft') goTo(currentIndex - 1);
         if (e.key === ' ') {
@@ -157,7 +160,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 bg-black/95 z-[9999] flex flex-col animate-fade-in overflow-hidden select-none"
+            className="fixed inset-0 bg-black/95 z-[110000] flex flex-col animate-fade-in overflow-hidden select-none"
             onClick={() => setShowControls(prev => !prev)}
             onWheel={handleWheel}
         >
