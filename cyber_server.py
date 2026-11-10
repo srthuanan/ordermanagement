@@ -754,6 +754,22 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/ndp/order-evidence":
+            from scripts.ndp_order_evidence import fetch_evidence
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                if not 0 < length <= 262144:
+                    raise ValueError("Invalid request size")
+                result = fetch_evidence(json.loads(self.rfile.read(length)))
+            except Exception:
+                result = {"success": False, "error": "Không thể tra cứu NDP; giữ nguyên trạng thái đơn."}
+            self.send_response(200)
+            self._send_cors_headers()
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+            return
+
         if parsed.path == "/api/cyber/sync-allocations":
             content_len = int(self.headers.get("Content-Length", 0))
             body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"

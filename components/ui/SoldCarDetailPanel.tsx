@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Order } from '../../types';
-import { getBackgroundColorStyle, getExteriorColorStyle, getInteriorColorStyle } from '../../utils/styleUtils';
+
 import CarImage from './CarImage';
-import StatusBadge from './StatusBadge';
+
 import FilePreviewModal from '../modals/FilePreviewModal';
 import moment from 'moment';
-import MarqueeText from './MarqueeText';
+
 
 const formatDateTime = (dateString?: string): string | null => {
     if (!dateString || dateString === '—' || dateString === 'N/A' || dateString === 'null') return null;
@@ -39,7 +39,7 @@ const DetailRow: React.FC<{ icon: string, label: string; value?: string | number
     };
 
     return (
-        <div className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 hover:bg-slate-50/70 px-2 rounded-lg transition-colors">
+        <div className="sold-detail-row flex items-center justify-between py-2 border-b border-slate-100 last:border-0 hover:bg-slate-50/70 px-2 rounded-lg transition-colors">
             <div className="flex items-center gap-2.5 min-w-0 pr-2">
                 <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
                     <i className={`fas ${icon} text-xs`}></i>
@@ -81,7 +81,7 @@ const FileCard: React.FC<FileCardProps> = ({ title, description, url, icon, icon
     if (!hasUrl) return null;
 
     return (
-        <div className="p-3 rounded-xl border border-slate-200/80 bg-white shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
+        <div className="sold-file-card p-3 rounded-xl border border-slate-200/80 bg-white shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-200">
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-9 h-9 rounded-xl ${iconBgColor} ${iconTextColor} flex items-center justify-center shrink-0 shadow-sm`}>
@@ -96,6 +96,8 @@ const FileCard: React.FC<FileCardProps> = ({ title, description, url, icon, icon
                 <div className="shrink-0">
                     <button
                         onClick={() => onView(url!, title)}
+                        aria-label={`Xem ${title}`}
+                        title={title}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all shadow-sm group"
                     >
                         <span>Xem File</span>
@@ -118,8 +120,56 @@ interface SoldCarDetailPanelProps {
 const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, mobileMode = false }) => {
     const [copiedVin, setCopiedVin] = useState(false);
     const [previewFile, setPreviewFile] = useState<{ url: string; label: string } | null>(null);
+    const fitViewportRef = useRef<HTMLDivElement>(null);
+    const fitContentRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        if (mobileMode || !order) return;
+        const viewport = fitViewportRef.current;
+        const content = fitContentRef.current;
+        if (!viewport || !content) return;
+        const fit = () => {
+            const height = viewport.clientHeight;
+            if (!height || !viewport.clientWidth) return;
+            content.style.setProperty('zoom', '1');
+            content.style.width = '100%';
+            content.style.height = height + 'px';
+            // Reduce image height and whitespace before scaling any text.
+            for (let density = 0; density <= 2; density++) {
+                content.dataset.density = String(density);
+                if (content.scrollHeight <= height + 1) return;
+            }
+            // Reflow at the wider logical width so every field stays visible.
+            let scale = 1;
+            for (let pass = 0; pass < 12; pass++) {
+                const measured = content.scrollHeight * scale;
+                if (measured <= height + 1) break;
+                scale *= Math.min(0.98, height / measured);
+                content.style.setProperty('zoom', String(scale));
+                content.style.width = (100 / scale) + '%';
+                content.style.height = (height / scale) + 'px';
+            }
+        };
+        let frame = 0;
+        let active = true;
+        const schedule = () => {
+            if (!active) return;
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(fit);
+        };
+        fit();
+        const observer = new ResizeObserver(schedule);
+        observer.observe(viewport);
+        document.fonts?.ready.then(schedule);
+        return () => {
+            active = false;
+            observer.disconnect();
+            cancelAnimationFrame(frame);
+        };
+    }, [order, mobileMode]);
 
     if (!order) {
+        if (!mobileMode) return <div className="sold-detail-empty"><i className="fas fa-receipt" /><h2>Chọn một đơn hàng</h2><p>Xem thông tin xe, giao dịch và hồ sơ đã bán.</p></div>;
         return (
             <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-50/30 rounded-2xl border border-dashed border-slate-200 m-3 animate-fade-in">
                 <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-300 mb-4 shadow-inner">
@@ -316,195 +366,30 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, mobileMo
         );
     }
 
-    return (
-        <div className="p-4 flex flex-col h-full space-y-4 animate-fade-in overflow-y-auto custom-scrollbar relative">
-            {/* 1. Header & Quick Overview */}
-            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-4 rounded-2xl text-white shadow-lg relative overflow-hidden shrink-0">
-                <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl pointer-events-none"></div>
-                <div className="flex items-start justify-between gap-3 mb-2 relative z-10">
-                    <div className="min-w-0 flex-1 overflow-hidden">
-                        <MarqueeText
-                            text={order["Tên khách hàng"] || '—'}
-                            className="text-lg font-black tracking-tight text-white mb-0.5"
-                        />
-                        <p className="text-[11px] font-mono text-slate-400 font-bold uppercase tracking-wider">
-                            Đơn hàng #{order["Số đơn hàng"]}
-                        </p>
-                    </div>
-                    <StatusBadge status={statusText} />
-                </div>
-
-                {/* VIN Box inside Header */}
-                {order.VIN && order.VIN !== '—' && (
-                    <div 
-                        onClick={handleCopyVin}
-                        className="mt-3 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl p-2.5 flex items-center justify-between cursor-pointer transition-all group backdrop-blur-sm"
-                        title="Click để sao chép VIN"
-                    >
-                        <div>
-                            <p className="text-[9px] uppercase tracking-widest text-sky-300 font-bold">Số Khung (VIN)</p>
-                            <p 
-                                className="text-base font-extrabold tracking-wider transition-colors"
-                                style={{
-                                    fontFamily: "'Barlow Condensed', 'Rajdhani', 'Bahnschrift', sans-serif",
-                                    background: 'linear-gradient(180deg, #ffffff 0%, #cbd5e1 45%, #ffffff 50%, #64748b 55%, #cbd5e1 100%)',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent'
-                                }}
-                            >
-                                {order.VIN}
-                            </p>
-                        </div>
-                        <div className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${copiedVin ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white group-hover:bg-white/30'}`}>
-                            <i className={`fas ${copiedVin ? 'fa-check' : 'fa-copy'} text-[10px]`}></i>
-                            <span>{copiedVin ? 'Đã copy' : 'Copy'}</span>
-                        </div>
-                    </div>
-                )}
+    return <div className="sold-detail">
+        <header className="sold-detail-heading"><p>Lịch sử bán hàng <span> / </span>{order['Số đơn hàng']}</p><div><h2>{order['Tên khách hàng'] || 'Chưa có tên khách hàng'}</h2><span className="sold-status" data-cancelled={/hủy/i.test(statusText)}>{statusText}</span></div></header>
+        <div className="sold-detail-fit-viewport" ref={fitViewportRef}>
+        <div className="sold-detail-scroll sold-detail-compact" ref={fitContentRef}>
+            <section className="sold-vehicle-summary">
+                <div className="sold-vehicle-photo"><CarImage model={order['Dòng xe']} exteriorColor={order['Ngoại thất']} version={order['Phiên bản']} alt={order['Dòng xe']} /></div>
+                <div className="sold-vehicle-info"><h3>{order['Dòng xe']}</h3><p>{order['Phiên bản'] || '—'}</p>{order.VIN && order.VIN !== '—' && <button type="button" className="sold-copy-vin" onClick={handleCopyVin} title="Sao chép số VIN">{order.VIN}<i className={copiedVin?'fas fa-check':'fas fa-copy'} /><span aria-live="polite">{copiedVin?'Đã sao chép':''}</span></button>}<dl><div><dt>Ngoại thất</dt><dd>{order['Ngoại thất'] || '—'}</dd></div><div><dt>Nội thất</dt><dd>{order['Nội thất'] || '—'}</dd></div></dl></div>
+            </section>
+            <div className="sold-detail-data-grid">
+            <section className="sold-detail-section"><h4>Thông tin xe & tư vấn</h4><DetailRow icon="fa-cogs" label="Số máy" value={order['Số máy']} copyable isMono /><DetailRow icon="fa-barcode" label="Mã DMS" value={order['Mã DMS']} copyable isMono /><DetailRow icon="fa-user-tie" label="Tư vấn bán hàng" value={order['Tên tư vấn bán hàng']} /><DetailRow icon="fa-receipt" label="Phiếu xuất DNX" value={order.so_ct_dnx || order['Số CT DNX']} copyable /><DetailRow icon="fa-truck" label="Phiếu giao TD4" value={order.so_ct_td4 || order['Số CT TD4']} copyable /></section>
+            {!!(order['SĐT'] || order['CCCD'] || order['Địa chỉ'] || dateCoc || dateGhep || dateXHD) && <section className="sold-detail-section"><h4>Khách hàng & giao dịch</h4><DetailRow icon="fa-phone" label="Điện thoại" value={order['SĐT']} copyable /><DetailRow icon="fa-id-card" label="CCCD / CMND" value={order['CCCD']} copyable /><DetailRow icon="fa-map-marker-alt" label="Địa chỉ" value={order['Địa chỉ']} /><DetailRow icon="fa-calendar-alt" label="Ngày cọc" value={dateCoc || undefined} /><DetailRow icon="fa-link" label="Ngày ghép VIN" value={dateGhep || undefined} /><DetailRow icon="fa-file-invoice-dollar" label="Ngày xuất hóa đơn" value={dateXHD || undefined} /></section>}
             </div>
-
-            {/* 2. Vehicle Image & Specifications Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 space-y-3 shrink-0">
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-1.5">
-                        <i className="fas fa-car text-blue-500"></i> Thông Tin Phương Tiện
-                    </span>
-                    <span className="text-xs font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                        {order["Dòng xe"]} {order["Phiên bản"]}
-                    </span>
-                </div>
-
-                {/* Car Preview Image */}
-                <div className="w-full h-32 rounded-xl bg-gradient-to-b from-slate-50 to-slate-100/60 border border-slate-100 flex items-center justify-center p-2 relative overflow-hidden group">
-                    <CarImage 
-                        model={order["Dòng xe"]} 
-                        exteriorColor={order["Ngoại thất"]} 
-                        version={order["Phiên bản"]}
-                        className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500" 
-                        alt={order["Dòng xe"]}
-                    />
-                </div>
-
-                {/* Exterior & Interior Swatches */}
-                <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-4 h-4 rounded-full border border-black/20 shadow-sm shrink-0" style={getBackgroundColorStyle(order["Ngoại thất"])}></div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Ngoại thất</span>
-                        </div>
-                        <p className="text-xs font-bold truncate" style={getExteriorColorStyle(order["Ngoại thất"])}>{order["Ngoại thất"] || '—'}</p>
-                    </div>
-
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-4 h-4 rounded-full border border-black/20 shadow-sm shrink-0" style={getBackgroundColorStyle(order["Nội thất"])}></div>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Nội thất</span>
-                        </div>
-                        <p className="text-xs font-bold truncate" style={getInteriorColorStyle(order["Nội thất"])}>{order["Nội thất"] || '—'}</p>
-                    </div>
-                </div>
-
-                <DetailRow icon="fa-cogs" label="Số máy" value={order["Số máy"]} copyable isMono />
-                <DetailRow icon="fa-barcode" label="Mã DMS" value={order["Mã DMS"]} copyable isMono />
-                <DetailRow icon="fa-user-tie" label="TVBH Phụ Trách" value={order["Tên tư vấn bán hàng"]} />
+            <div className="sold-detail-resources">
+            <div className="sold-detail-context-grid">
+            {policies.length > 0 && <section className="sold-detail-section"><h4>Chính sách áp dụng</h4><ul className="sold-policy-list">{policies.map((policy,index)=><li key={index}>{policy}</li>)}</ul></section>}
+            {(order['Ghi chú'] || order['Ghi chú hủy']) && <section className="sold-detail-section"><h4>Ghi chú</h4><p className="sold-note">{order['Ghi chú hủy'] || order['Ghi chú']}</p></section>}
             </div>
+            {(availableFiles.length > 0 || extraFiles.length > 0) && <section className="sold-detail-section"><h4>Hồ sơ & chứng từ <span>{totalFileCount}</span></h4><div className="sold-file-list">{availableFiles.map((file,index)=><FileCard key={index} {...file} onView={handleViewFile} />)}{extraFiles.map((file,index)=><FileCard key={index} title={file.name || 'Tập tin bổ sung'} description="Tài liệu đính kèm" url={file.url} icon="fa-paperclip" iconBgColor="bg-slate-100" iconTextColor="text-slate-600" onView={handleViewFile} />)}</div></section>}
 
-            {/* 3. Customer & Transaction Details (Rendered ONLY if at least 1 field exists) */}
-            {hasTransactionInfo && (
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 space-y-2 shrink-0">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-1.5 mb-2">
-                        <i className="fas fa-user-circle text-amber-500"></i> Thông Tin Giao Dịch
-                    </span>
-
-                    {order["SĐT"] && <DetailRow icon="fa-phone" label="Số điện thoại" value={order["SĐT"]} copyable />}
-                    {order["CCCD"] && <DetailRow icon="fa-id-card" label="CCCD / CMND" value={order["CCCD"]} copyable isMono />}
-                    {order["Địa chỉ"] && <DetailRow icon="fa-map-marker-alt" label="Địa chỉ KH" value={order["Địa chỉ"]} />}
-                    {dateCoc && <DetailRow icon="fa-calendar-alt" label="Ngày Cọc" value={dateCoc} />}
-                    {dateGhep && <DetailRow icon="fa-link" label="Ngày Ghép VIN" value={dateGhep} />}
-                    {dateXHD && <DetailRow icon="fa-file-invoice-dollar" label="Ngày Xuất HĐ" value={dateXHD} />}
-
-                    {policies.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-100">
-                            <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider flex items-center gap-1 mb-2">
-                                <i className="fas fa-award"></i> Chính sách áp dụng
-                            </span>
-                            <div className="space-y-1.5">
-                                {policies.map((p, i) => (
-                                    <div key={i} className="flex items-start gap-2 bg-amber-50/80 border border-amber-100/80 p-2 rounded-lg text-xs font-bold text-slate-800">
-                                        <i className="fas fa-check-circle text-amber-500 text-xs mt-0.5 shrink-0"></i>
-                                        <span>{p}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* 4. ATTACHED FILES & DOCUMENTS SECTION (Rendered ONLY if at least 1 file exists!) 🔥 */}
-            {totalFileCount > 0 && (
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 space-y-3 shrink-0">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-1.5">
-                            <i className="fas fa-folder-open text-purple-500"></i> Tập Tin & Hồ Sơ Đơn Hàng
-                        </span>
-                        <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                            {totalFileCount} Tệp
-                        </span>
-                    </div>
-
-                    <div className="space-y-2">
-                        {availableFiles.map((file, idx) => (
-                            <FileCard
-                                key={idx}
-                                title={file.title}
-                                description={file.description}
-                                url={file.url}
-                                icon={file.icon}
-                                iconBgColor={file.iconBgColor}
-                                iconTextColor={file.iconTextColor}
-                                onView={handleViewFile}
-                            />
-                        ))}
-
-                        {/* Extra files if any */}
-                        {extraFiles.map((file, i) => (
-                            <FileCard
-                                key={i}
-                                title={file.name || `Tập tin bổ sung #${i + 1}`}
-                                description="Tệp tin đính kèm phụ trợ"
-                                url={file.url}
-                                icon="fa-paperclip"
-                                iconBgColor="bg-teal-100"
-                                iconTextColor="text-teal-600"
-                                onView={handleViewFile}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* 5. Notes & Cancel Remarks */}
-            {(order["Ghi chú"] || order["Ghi chú hủy"]) && (
-                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 space-y-1 shrink-0">
-                    <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <i className="fas fa-sticky-note"></i> Ghi Chú Đơn Hàng
-                    </span>
-                    <p className="text-xs font-semibold text-amber-900 leading-relaxed">
-                        {order["Ghi chú hủy"] || order["Ghi chú"]}
-                    </p>
-                </div>
-            )}
-
-            {/* In-app File Preview Modal */}
-            <FilePreviewModal
-                isOpen={!!previewFile}
-                onClose={() => setPreviewFile(null)}
-                fileUrl={previewFile?.url || ''}
-                fileLabel={previewFile?.label || ''}
-            />
+            </div>
         </div>
-    );
+        </div>
+        <FilePreviewModal isOpen={!!previewFile} onClose={() => setPreviewFile(null)} fileUrl={previewFile?.url || ''} fileLabel={previewFile?.label || ''} />
+    </div>;
 };
 
 export default SoldCarDetailPanel;

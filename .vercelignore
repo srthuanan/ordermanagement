@@ -21,3 +21,7 @@ vf-kim-son-trang-dai
 *.xlsx
 *.zip
 *.bat
+
+# Local NDP session must stay on the office machine
+ndp_token_config.json
+ndp_token_config.json.*

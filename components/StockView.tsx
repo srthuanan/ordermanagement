@@ -114,6 +114,7 @@ const StockView: React.FC<StockViewProps> = ({
     const [fModel, setFModel] = useState<string>('');
     const [fStatus, setFStatus] = useState<string>('');
     const [fLoc, setFLoc] = useState<string>('');
+    const [fExterior, setFExterior] = useState<string>('');
     const [keyword, setKeyword] = useState<string>('');
     const lastForcedSearchRef = useRef<string | null>(null);
 
@@ -125,6 +126,7 @@ const StockView: React.FC<StockViewProps> = ({
             setFModel('');
             setFStatus('');
             setFLoc('');
+            setFExterior('');
             setVisibleCount(30);
             onClearForcedSearch?.();
         }
@@ -198,10 +200,15 @@ const StockView: React.FC<StockViewProps> = ({
     }, [stockData]);
 
     const stockStreamRef = useRef<HTMLElement | null>(null);
+    const exteriorVehicles = useMemo(() => stockData.filter(c => !fModel || c['Dòng xe'] === fModel), [stockData, fModel]);
+    const exteriors = useMemo(() => {
+        return [...new Set(exteriorVehicles.map(c => (c['Ngoại thất'] || '').trim().normalize('NFC')).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, 'vi'));
+    }, [exteriorVehicles]);
     const stockOrderRef = useRef(new Map<string, number>());
     const pinnedVehiclesRef = useRef({ filterKey: '', vins: new Set<string>() });
     const stockPositionRef = useRef<{ vin: string; filterKey: string; offset: number } | null>(null);
-    const stockFilterKey = JSON.stringify([fModel, fStatus, fLoc, keyword.trim().toLowerCase()]);
+    const stockFilterKey = JSON.stringify([fModel, fStatus, fLoc, fExterior, keyword.trim().toLowerCase()]);
 
     const orderedStock = useMemo(() => {
         for (const car of stockData) {
@@ -262,6 +269,7 @@ const StockView: React.FC<StockViewProps> = ({
                     : c["Trạng thái"] === fStatus
             );
             const matchL = !fLoc || c["Vị trí"] === fLoc;
+            const matchExterior = !fExterior || (c['Ngoại thất'] || '').trim().normalize('NFC') === fExterior;
 
             let matchKw = true;
             if (keyword.trim()) {
@@ -283,9 +291,9 @@ const StockView: React.FC<StockViewProps> = ({
                 );
             }
 
-            return matchM && matchS && matchL && matchKw;
+            return matchM && matchS && matchL && matchExterior && matchKw;
         });
-    }, [orderedStock, stockFilterKey, fModel, fStatus, fLoc, keyword]);
+    }, [orderedStock, stockFilterKey, fModel, fStatus, fLoc, fExterior, keyword]);
 
     // Batch infinite scroll
     const [visibleCount, setVisibleCount] = useState(30);
@@ -318,13 +326,14 @@ const StockView: React.FC<StockViewProps> = ({
         setFModel('');
         setFStatus('');
         setFLoc('');
+        setFExterior('');
         setKeyword('');
         lastForcedSearchRef.current = '';
         setVisibleCount(30);
         onClearForcedSearch?.();
     };
 
-    const hasActiveFacets = Boolean(fModel || fStatus || fLoc || keyword);
+    const hasActiveFacets = Boolean(fModel || fStatus || fLoc || fExterior || keyword);
 
     // Swap car check
     const userOrders = useMemo(() => {
@@ -661,6 +670,7 @@ const StockView: React.FC<StockViewProps> = ({
                                         className={`facet-item ${fModel === m ? 'active' : ''}`}
                                         onClick={() => {
                                             setFModel(fModel === m ? '' : m);
+                                            setFExterior('');
                                             setVisibleCount(30);
                                         }}
                                     >
@@ -672,7 +682,28 @@ const StockView: React.FC<StockViewProps> = ({
                         </div>
                     </div>
 
-                    {/* Facet Group 3: Vị trí kho bãi */}
+                    <div className="facet-group">
+                        <strong>Ngoại thất</strong>
+                        <div className="facet-btn-list">
+                            {['', ...exteriors].map(color => (
+                                <button
+                                    key={color}
+                                    type="button"
+                                    className={`facet-item ${fExterior === color ? 'active' : ''}`}
+                                    aria-pressed={fExterior === color}
+                                    onClick={() => {
+                                        setFExterior(fExterior === color ? '' : color);
+                                        setVisibleCount(30);
+                                    }}
+                                >
+                                    <span>{color || 'Tất cả ngoại thất'}</span>
+                                    <small>{color ? exteriorVehicles.filter(c => (c['Ngoại thất'] || '').trim().normalize('NFC') === color).length : exteriorVehicles.length}</small>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Facet Group 4: Vị trí kho bãi */}
                     <div className="facet-group">
                         <strong>Vị trí kho bãi</strong>
                         <div className="facet-btn-list">

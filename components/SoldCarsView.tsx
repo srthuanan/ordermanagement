@@ -1,21 +1,17 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Order, SortConfig } from '../types';
-import HistoryTable from './HistoryTable';
+
 import { useSoldCarsApi } from '../hooks/useSoldCarsApi';
 import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
 
 import { DropdownFilterConfig } from './ui/Filters';
-import TabbedFilter from './ui/TabbedFilter';
-import MultiSelectDropdown from './ui/MultiSelectDropdown';
-import DateFilter from './ui/DateFilter';
+
 import { MONTHS } from '../constants';
 import moment from 'moment';
 import { exportOrdersToExcel } from '../utils/excelUtils';
 import { includesNormalized } from '../utils/stringUtils';
-import AnimatedBackground from './ui/AnimatedBackground';
 
-// Chart.js is loaded globally via index.html
-declare const Chart: any;
+import './sold/sold-workspace.css';
 
 interface SoldCarsViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -43,7 +39,7 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
         if (key === 'Tên tư vấn bán hàng') {
             value = synchronizeTvbhName(value as string);
         }
-        const strValue = String(value).trim();
+        const strValue = String(value || '').trim();
         if (strValue && strValue !== 'N/A') {
             stats[strValue] = (stats[strValue] || 0) + 1;
         }
@@ -218,6 +214,20 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
 
     const visibleData = useMemo(() => sortedData.slice(0, visibleItemsCount), [sortedData, visibleItemsCount]);
 
+    useEffect(() => {
+        if (mobileMode || !isDetailDrawerOpen) return;
+        const onEscape = (event: KeyboardEvent) => {if(event.key==='Escape')setIsDetailDrawerOpen(false);};
+        document.addEventListener('keydown',onEscape);
+        return () => document.removeEventListener('keydown',onEscape);
+    }, [mobileMode,isDetailDrawerOpen]);
+
+    useEffect(() => {
+        if (!mobileMode && !isLoading && selectedDetailOrder && !displayData.some(order => order['Số đơn hàng']===selectedDetailOrder['Số đơn hàng'])) {
+            setSelectedDetailOrder(null);
+            setIsDetailDrawerOpen(false);
+        }
+    }, [displayData,isLoading,mobileMode,selectedDetailOrder]);
+
     // Handlers
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setVisibleItemsCount(INITIAL_LOAD_COUNT);
@@ -244,7 +254,6 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
     const uniqueCarModels = useMemo(() => [...new Set(soldData.map(o => o['Dòng xe']).filter(Boolean))].sort(), [soldData]);
     const uniqueVersions = useMemo(() => [...new Set(soldData.map(o => o['Phiên bản']).filter(Boolean))].sort(), [soldData]);
     const uniqueExteriors = useMemo(() => [...new Set(soldData.map(o => o['Ngoại thất']).filter(Boolean))].sort(), [soldData]);
-
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'sold-filter-tvbh', key: 'tvbh', label: 'Tư vấn', options: uniqueTvbh, icon: 'fa-user-tie' },
@@ -286,31 +295,6 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
             </div>
         );
     }
-
-    if (error) {
-        return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
-    }
-
-    // --- TABS LOGIC ---
-    const carModelTabs = uniqueCarModels.map(model => ({
-        id: model,
-        label: model,
-        count: soldData.filter(o => o['Dòng xe'] === model).length
-    }));
-
-    const totalCount = soldData.length;
-    const tabs = [
-        { id: 'all', label: 'Tất cả', count: totalCount },
-        ...carModelTabs
-    ];
-
-    const activeTab = (filters.carModel && filters.carModel.length === 1) ? filters.carModel[0] : 'all';
-
-    const handleTabChange = (tabId: string) => {
-        handleFilterChange({ carModel: tabId === 'all' ? [] : [tabId] });
-    };
-
-    const activeDropdowns = dropdownConfigs.filter(d => d.key !== 'carModel');
 
     if (mobileMode) {
         const activeFilterCount = filters.carModel.length + filters.tvbh.length + filters.version.length + filters.exterior.length;
@@ -667,165 +651,49 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
         );
     }
 
-    return (
-        <div className="flex flex-col h-full space-y-2 p-1 md:p-0">
-            {/* Header with Tabs & Filters */}
-            <div className="flex-shrink-0 bg-white/40 backdrop-blur-md rounded-xl border border-white/60 p-1.5 shadow-sm relative z-50">
-                <TabbedFilter
-                    tabs={tabs}
-                    activeTab={activeTab}
-                    onTabChange={handleTabChange}
-                    searchValue={filters.keyword || ''}
-                    onSearchChange={(val) => handleFilterChange({ keyword: val })}
-                    onReset={handleResetFilters}
-                    canReset={true}
-                    extraActions={
-                        <div className="flex items-center gap-2">
-                            <DateFilter
-                                selectedMonth={selectedMonth}
-                                selectedYear={selectedYear}
-                                onMonthChange={setSelectedMonth}
-                                onYearChange={setSelectedYear}
-                            />
-                            {isAdmin && (
-                                <button
-                                    onClick={handleExportExcel}
-                                    className="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-1.5 transition-all text-xs border border-emerald-500/30 shadow-md hover:scale-[1.02] flex-shrink-0"
-                                    title="Tải dữ liệu lịch sử tháng này về máy dưới dạng Excel"
-                                >
-                                    <i className="fas fa-file-excel"></i>
-                                    <span className="hidden md:inline">Tải Excel</span>
-                                </button>
-                            )}
-                        </div>
-                    }
-                >
-                    {activeDropdowns.map(dropdown => (
-                        <div key={dropdown.id} className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
-                            <MultiSelectDropdown
-                                id={dropdown.id}
-                                label={dropdown.label}
-                                options={dropdown.options}
-                                selectedOptions={(filters[dropdown.key as keyof typeof filters] || []) as string[]}
-                                onChange={(selected) => handleFilterChange({ [dropdown.key]: selected })}
-                                icon={dropdown.icon}
-                                displayMode="selection"
-                                size="compact"
-                                variant="modern"
-                                searchable={true}
-                                align="right"
-                            />
-                        </div>
-                    ))}
-                </TabbedFilter>
+    const activeFilterCount = filters.tvbh.length + filters.carModel.length + filters.version.length + filters.exterior.length;
+    const periodLabel = selectedMonth === null ? 'Năm ' + selectedYear : MONTHS[selectedMonth] + ' / ' + selectedYear;
+    const facetFields: Record<string, keyof Order> = { carModel:'Dòng xe', version:'Phiên bản', exterior:'Ngoại thất', tvbh:'Tên tư vấn bán hàng' };
+    const invoiceDate = (order: Order) => {
+        const raw = order['Ngày xuất hóa đơn'] || order.ngay_xuat_hoa_don || order['Thời gian nhập'];
+        if (!raw || raw === 'null' || raw === '—') return '—';
+        const date = moment(raw, [moment.ISO_8601,'YYYY-MM-DD','DD/MM/YYYY','DD/MM/YYYY HH:mm:ss'], true);
+        return date.isValid() ? date.format('DD/MM/YYYY') : '—';
+    };
+    return <div className="sold-workspace">
+        <aside className="sold-sidebar" aria-label="Bộ lọc lịch sử bán hàng">
+            <div className="sold-sidebar-heading"><h1>Lịch sử <span>{soldData.length}</span></h1><button type="button" title="Làm mới lịch sử" aria-label="Làm mới lịch sử" onClick={refetch} disabled={isLoading}><i className={isLoading ? 'fas fa-spinner fa-spin' : 'fas fa-rotate'} /></button></div>
+            <div className="sold-search"><label><i className="fas fa-search" /><input aria-label="Tìm lịch sử bán hàng" value={filters.keyword} onChange={event => handleFilterChange({keyword:event.target.value})} placeholder="Tìm khách hàng, mã đơn, VIN…" />{filters.keyword && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => handleFilterChange({keyword:''})}><i className="fas fa-times" /></button>}</label></div>
+            {(activeFilterCount > 0 || filters.keyword) && <div className="sold-filter-summary"><span>{displayData.length} kết quả</span><button type="button" onClick={handleResetFilters}>Xóa bộ lọc</button></div>}
+            <div className="sold-sidebar-scroll">
+                <section className="sold-facet-group"><h2>Kỳ xuất hóa đơn</h2><div className="sold-period-fields"><label><span>Tháng</span><select aria-label="Tháng lịch sử" value={selectedMonth === null ? 'all' : selectedMonth} onChange={event => {setSelectedMonth(event.target.value === 'all' ? null : Number(event.target.value));setVisibleItemsCount(INITIAL_LOAD_COUNT);setSelectedDetailOrder(null);setIsDetailDrawerOpen(false);}}><option value="all">Cả năm</option>{MONTHS.map((month,index) => <option key={month} value={index}>{month}</option>)}</select></label><label><span>Năm</span><select aria-label="Năm lịch sử" value={selectedYear} onChange={event => {setSelectedYear(Number(event.target.value));setVisibleItemsCount(INITIAL_LOAD_COUNT);setSelectedDetailOrder(null);setIsDetailDrawerOpen(false);}}>{[...new Set([selectedYear,...Array.from({length:14},(_,index)=>new Date().getFullYear()+3-index)])].sort((a,b)=>b-a).map(year=><option key={year} value={year}>{year}</option>)}</select></label></div></section>
+                {dropdownConfigs.map(facet => {
+                    const key=facet.key as 'carModel'|'version'|'exterior'|'tvbh'; const selected=filters[key]; const field=facetFields[key];
+                    const facetData = key==='exterior'||key==='version' ? soldData.filter(o=>!filters.carModel.length||filters.carModel.includes(o['Dòng xe'])) : soldData;
+                    const options=key==='exterior'||key==='version' ? [...new Set(facetData.map(o=>String(o[field]||'')).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'vi')) : facet.options;
+                    return <details className="sold-facet-group" key={facet.id} open={key==='carModel'||key==='exterior'}><summary>{key==='tvbh'?'Tư vấn bán hàng':facet.label}</summary><div className="sold-facet-list"><button type="button" className="sold-facet-item" aria-pressed={!selected.length} onClick={() => handleFilterChange(key==='carModel'?{carModel:[],version:[],exterior:[]}:{[key]:[]})}><span>Tất cả {key==='tvbh'?'tư vấn':facet.label.toLowerCase()}</span><small>{facetData.length}</small></button>{options.map(value => <button type="button" key={value} className="sold-facet-item" aria-pressed={selected.includes(value)} onClick={() => handleFilterChange(key==='carModel'?{carModel:selected.includes(value)?selected.filter(v=>v!==value):[...selected,value],version:[],exterior:[]}:{[key]:selected.includes(value)?selected.filter(v=>v!==value):[...selected,value]})}><span>{value}</span><small>{facetData.filter(o=>(key==='tvbh'?synchronizeTvbhName(o[field] as string):o[field])===value).length}</small></button>)}</div></details>;
+                })}
+            </div><div className="sold-sidebar-footer"><span>{periodLabel}</span><span>{displayData.length} xe</span></div>
+        </aside>
+        <main className="sold-main">
+            <header className="sold-page-heading"><div><h2>Lịch sử bán hàng</h2><p>{periodLabel} · {stats.total} xe theo bộ lọc</p></div>{isAdmin && <button type="button" onClick={handleExportExcel} disabled={isLoading||!soldData.length} title="Xuất toàn bộ dữ liệu của kỳ đang chọn"><i className="fas fa-file-excel" />Xuất Excel</button>}</header>
+            <div className="sold-period-summary"><div><span>Xe đã bán</span><strong>{stats.total}</strong></div><div><span>Dòng xe nhiều nhất</span><strong>{stats.topCarDisplay}</strong></div><div><span>TVBH nhiều nhất</span><strong>{stats.topTvbhDisplay}</strong></div></div>
+            <div className="sold-content">
+                <section className="sold-list-column" aria-label="Danh sách bán hàng">
+                    <div className="sold-list-toolbar"><span>{displayData.length} đơn hàng</span><div><select aria-label="Sắp xếp lịch sử" value={sortConfig?.key||'Thời gian nhập'} onChange={event => handleSort(event.target.value as keyof Order)}><option value="Thời gian nhập">Thời gian nhập</option><option value="Ngày xuất hóa đơn">Ngày xuất hóa đơn</option><option value="Tên khách hàng">Tên khách hàng</option><option value="Dòng xe">Dòng xe</option></select><button type="button" aria-label="Đổi chiều sắp xếp" onClick={() => handleSort(sortConfig?.key||'Thời gian nhập')}><i className={sortConfig?.direction==='asc'?'fas fa-arrow-up-short-wide':'fas fa-arrow-down-wide-short'} /></button></div></div>
+                    <div className="sold-order-list" aria-busy={isLoading}>
+                        {error ? <div className="sold-message" role="alert"><strong>Không thể tải lịch sử</strong><p>{error}</p><button type="button" onClick={refetch}>Thử lại</button></div> : isLoading&&!soldData.length ? <div className="sold-skeletons">{skeletons}</div> : <>
+                            {visibleData.map(order => <button type="button" key={order['Số đơn hàng']} className="sold-order-row" aria-pressed={selectedDetailOrder?.['Số đơn hàng']===order['Số đơn hàng']} onClick={() => handleRowClick(order)}><span className="sold-row-top"><strong>{order['Tên khách hàng']||'Chưa có tên khách hàng'}</strong><time>{invoiceDate(order)}</time></span><span className="sold-row-vehicle">{order['Dòng xe']}</span></button>)}
+                            {!visibleData.length && <div className="sold-message"><strong>Không có đơn hàng phù hợp</strong><p>Thử đổi kỳ xuất hóa đơn hoặc bộ lọc.</p><button type="button" onClick={handleResetFilters}>Xóa bộ lọc</button></div>}
+                            <div ref={observerTarget} className="sold-load-more">{visibleItemsCount<sortedData.length && <button type="button" onClick={() => setVisibleItemsCount(prev=>prev+LOAD_MORE_STEP)}>Xem thêm đơn hàng</button>}</div>
+                        </>}
+                    </div><div className="sold-list-footer">{visibleData.length} / {displayData.length} đơn hàng</div>
+                </section>
+                <section className={'sold-detail-column'+(isDetailDrawerOpen?' is-open':'')} aria-label="Chi tiết bán hàng"><button type="button" className="sold-detail-close" aria-label="Đóng chi tiết bán hàng" onClick={() => setIsDetailDrawerOpen(false)}><i className="fas fa-times" /></button><SoldCarDetailPanel order={selectedDetailOrder} showOrderInAdmin={showOrderInAdmin} showAdminTab={showAdminTab} isAdmin={isAdmin} /></section>
             </div>
-
-            {/* Stats Cards - More Compact */}
-            <div className="grid grid-cols-3 gap-2 px-1">
-                {isLoading && soldData.length === 0 ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="bg-white/40 backdrop-blur-sm rounded-lg p-2 border border-white/60 h-14 animate-pulse"></div>
-                    ))
-                ) : (
-                    <>
-                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                <i className="fas fa-car text-sm"></i>
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{selectedMonth !== null ? MONTHS[selectedMonth] : 'Năm'}</p>
-                                <p className="text-sm font-bold text-gray-800">{stats.total} Xe</p>
-                            </div>
-                        </div>
-                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
-                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                                <i className="fas fa-trophy text-sm"></i>
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Top Xe</p>
-                                <p className="text-sm font-bold text-gray-800 truncate">{stats.topCarDisplay}</p>
-                            </div>
-                        </div>
-                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                                <i className="fas fa-crown text-sm"></i>
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Top TVBH</p>
-                                <p className="text-sm font-bold text-gray-800 truncate">{stats.topTvbhDisplay}</p>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Main Content Area */}
-            <div className="flex-grow flex flex-col lg:flex-row gap-2 min-h-0">
-                {/* Left Column: List */}
-                <div className="flex-1 flex flex-col relative rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-white/60 min-w-0 overflow-hidden bg-white/40">
-                    <AnimatedBackground />
-                    <div className="flex-grow overflow-auto hidden-scrollbar relative z-10">
-                        {isLoading && soldData.length === 0 ? (
-                            <div className="p-2 space-y-1">
-                                {skeletons}
-                            </div>
-                        ) : (
-                            <>
-                                <HistoryTable
-                                    orders={visibleData}
-                                    onRowClick={handleRowClick}
-                                    selectedOrder={selectedDetailOrder}
-                                    sortConfig={sortConfig}
-                                    onSort={handleSort}
-                                    startIndex={0}
-                                    viewMode="sold"
-                                />
-                                {/* Intersection Observer Target */}
-                                <div ref={observerTarget} className="h-10 w-full flex items-center justify-center py-4">
-                                    {visibleItemsCount < sortedData.length && (
-                                        <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">
-                                            <i className="fas fa-spinner fa-spin"></i>
-                                            Đang tải thêm...
-                                        </div>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* Right Column: Details */}
-                <div className={`
-                    fixed inset-y-0 right-0 w-full md:w-[450px] bg-white z-[9999] transform transition-transform duration-300 ease-in-out
-                    lg:relative lg:transform-none lg:w-[480px] xl:w-[540px] 2xl:w-[580px] lg:z-0 lg:flex lg:flex-col lg:bg-transparent
-                    ${isDetailDrawerOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-                `}>
-                    <div className="h-full flex flex-col lg:bg-white/60 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-white/80 lg:shadow-[0_4px_30px_rgba(0,0,0,0.03)] overflow-hidden">
-                        <div className="p-3 border-b border-white/60 bg-gray-50/50 flex items-center justify-between">
-                            <h3 className="font-bold text-xs uppercase tracking-widest text-gray-500">Chi Tiết Đơn Hàng</h3>
-                            <button onClick={() => setIsDetailDrawerOpen(false)} className="lg:hidden p-1.5 bg-gray-100 rounded-full text-gray-400">
-                                <i className="fas fa-times text-xs"></i>
-                            </button>
-                        </div>
-                        <div className="flex-grow overflow-y-auto hidden-scrollbar">
-                            <SoldCarDetailPanel
-                                order={selectedDetailOrder}
-                                showOrderInAdmin={showOrderInAdmin}
-                                showAdminTab={showAdminTab}
-                                isAdmin={isAdmin}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            {/* Mobile Overlay for Drawer */}
-            {isDetailDrawerOpen && (
-                <div className="fixed inset-0 bg-black/50 z-[9990] lg:hidden" onClick={() => setIsDetailDrawerOpen(false)}></div>
-            )}
-        </div>
-    );
+        </main>
+        {isDetailDrawerOpen && <button type="button" className="sold-detail-backdrop" aria-label="Đóng chi tiết bán hàng" onClick={() => setIsDetailDrawerOpen(false)} />}
+    </div>;
 };
 
 export default SoldCarsView;

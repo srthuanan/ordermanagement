@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VinFast DMS Auto Silent Sync",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Tự động chạy ngầm đồng bộ Số máy, Mã DMS đa đại lý, Kho xe, thongtinxe & donhanghienhuu trên cả DMS Mới (dealer-portal.vinfast.com) và DMS Cũ (Dynamics)",
   "content_scripts": [
     {
@@ -15,9 +15,31 @@
         "https://*.vinfast.vn/*",
         "https://*.powerapps.com/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://dealer-portal.vinfast.com/*"
+      ],
+      "js": [
+        "ndp-session.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
     }
+  ],
+  "background": {
+    "service_worker": "session-background.js"
+  },
+  "permissions": [
+    "alarms"
+  ],
+  "host_permissions": [
+    "http://localhost:3001/*",
+    "https://dealer-portal.vinfast.com/*"
   ]
 }

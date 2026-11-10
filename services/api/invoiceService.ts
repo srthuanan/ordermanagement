@@ -2,6 +2,8 @@ import { supabase, supabaseAdmin } from '../supabaseClient';
 import { getStorageItem, logAction, uploadToSupabase, ApiResult, postApi } from './baseService';
 import { createNotification } from './notificationService';
 import { autoSyncDmsRadarIfNeeded } from './stockService';
+import { executeCyberApi } from './cyberBridge';
+import { normalizeNdpId, evaluateNdpEvidence, validNdpInvoiceDate, NdpOrderEvidence } from './ndpEvidence';
 
 export const requestInvoice = async (
     orderNumber: string, contractFile: File | null, proposalFile: File | null, policy: string, commission: string, vpoint: string,
@@ -600,3 +602,93 @@ export const getOrderDriveImages = async (orderNumber: string, customerName: str
     }
 };
 
+export interface DmsCheckItemTransitioned {
+    order_no: string;
+    customer: string;
+    vin: string;
+    showroom: string;
+    ari_no: string;
+    invoice_date: string;
+    source?: string;
+}
+
+export interface DmsCheckItemUnprocessed {
+    order_no: string;
+    customer: string;
+    vin: string;
+    showroom: string;
+    current_status?: string;
+    reason: string;
+}
+
+export interface DmsCheckReportResult {
+    success: boolean;
+    total_checked: number;
+    transitioned_count: number;
+    transitioned: DmsCheckItemTransitioned[];
+    unprocessed: DmsCheckItemUnprocessed[];
+    summary?: string;
+    error?: string;
+}
+
+export const checkNdpApprovedOrders = async (
+    targetOrders: Array<{ orderNo: string; vin?: string; customerName?: string; showroom?: string; currentStatus?: string }>
+): Promise<DmsCheckReportResult> => {
+    const targets = Array.from(new Map(targetOrders.map(t => [t.orderNo.trim(), t])).values());
+    const transitioned: DmsCheckItemTransitioned[] = [];
+    const unprocessed: DmsCheckItemUnprocessed[] = [];
+    const reject = (t: typeof targets[number], reason: string) => unprocessed.push({ order_no: t.orderNo, customer: t.customerName || '', vin: t.vin || '', showroom: t.showroom || '', current_status: t.currentStatus, reason });
+    const eligible = targets.filter(t => {
+        if (String(t.currentStatus || '').normalize('NFC').trim().toLowerCase() !== 'đã phê duyệt') {
+            reject(t, 'Chỉ tự động chuyển đơn Đã phê duyệt; giữ nguyên trạng thái hiện tại.'); return false;
+        }
+        if (!t.orderNo.trim() || !/^[A-Z0-9]{17}$/.test((t.vin || '').trim().toUpperCase())) {
+            reject(t, 'Thiếu mã đơn hoặc VIN 17 ký tự.'); return false;
+        }
+        return true;
+    });
+    if (eligible.length) {
+        try {
+            const mirror = await supabase.from('donhanghienhuu').select('so_don_hang_ban,don_hang_goc,so_vin,chi_nhanh').in('so_vin', eligible.map(t => t.vin!.trim().toUpperCase()));
+            const lookup = eligible.map(t => {
+                // Mirror is only an ID mapping, never evidence of invoice status.
+                const aliases = (mirror.data || []).filter((r: any) => normalizeNdpId(r.so_vin) === normalizeNdpId(t.vin) && [r.so_don_hang_ban, r.don_hang_goc].some(n => normalizeNdpId(n) === normalizeNdpId(t.orderNo)));
+                const dealerCode = t.orderNo.toUpperCase().match(/^N319\d{2}/)?.[0] || (/^N319\d{2}$/.test(t.showroom || '') ? t.showroom! : aliases[0]?.chi_nhanh || '');
+                return { target: t, dealerCode, orderNumbers: Array.from(new Set([t.orderNo, ...aliases.flatMap((r: any) => [r.so_don_hang_ban, r.don_hang_goc]).filter(Boolean)])) as string[] };
+            }).filter(l => {
+                if (!/^N319\d{2}$/.test(l.dealerCode)) { reject(l.target, 'Không xác định được đại lý N319; cần bổ sung mã đại lý.'); return false; }
+                return true;
+            });
+            if (lookup.length) {
+                const response = await executeCyberApi<{ success: boolean; error?: string; records?: NdpOrderEvidence[]; errors?: Record<string, string> }>('/api/ndp/order-evidence', {
+                    method: 'POST', body: JSON.stringify({ targets: lookup.map(({ dealerCode, orderNumbers }) => ({ dealerCode, orderNumbers })) }), timeoutMs: 35000
+                });
+                for (const { target, dealerCode, orderNumbers } of lookup) {
+                    const reason = !response?.success ? response?.error || 'Không nhận được kết quả NDP.' : response.errors?.[dealerCode];
+                    if (reason) { reject(target, reason); continue; }
+                    const result = evaluateNdpEvidence(response.records || [], orderNumbers, target.vin!, dealerCode);
+                    if (!result.record) { reject(target, result.reason); continue; }
+                    const record = result.record;
+                    const patch: Record<string, string> = { ket_qua: 'Chờ ký hóa đơn' };
+                    const invoiceDate = validNdpInvoiceDate(record.invoiceDate);
+                    if (invoiceDate) patch.ngay_xuat_hoa_don = invoiceDate;
+                    // Compare-and-set prevents reverting completed/cancelled orders or a changed VIN.
+                    const update = await supabase.from('donhang').update(patch).eq('so_don_hang', target.orderNo)
+                        .eq('ket_qua', 'Đã phê duyệt').eq('vin', target.vin!.trim().toUpperCase()).select('so_don_hang,ten_tu_van_ban_hang');
+                    if (update.error || update.data?.length !== 1) {
+                        reject(target, update.error ? 'Lưu trạng thái thất bại: ' + update.error.message : 'Đơn đã đổi trạng thái/VIN hoặc không có quyền cập nhật; hãy tải lại.'); continue;
+                    }
+                    const consultant = update.data[0].ten_tu_van_ban_hang;
+                    if (consultant) await createNotification({ recipient: consultant, type: 'info', targetView: 'orders', targetId: target.orderNo, message: 'ĐH ' + target.orderNo + ': NDP đã xác nhận xuất hóa đơn, đơn được chuyển sang Chờ ký hóa đơn.' }).catch(() => {});
+                    // Existing database triggers synchronize yeucauxhd from donhang.
+                    await logAction('NDP_AUTO_TRANSITION', { orderNo: target.orderNo, vin: target.vin, ndpOrder: record.orderNumber, ndpStatus: record.status, invoiceDate: invoiceDate || null }, target.orderNo, 'order').catch(() => {});
+                    transitioned.push({ order_no: target.orderNo, customer: target.customerName || '', vin: target.vin!, showroom: dealerCode, ari_no: record.orderNumber, invoice_date: invoiceDate || 'NDP chưa cung cấp ngày hóa đơn', source: 'NDP Live · khớp mã đơn + VIN' });
+                }
+            }
+        } catch (error: any) {
+            for (const t of eligible) if (!transitioned.some(r => r.order_no === t.orderNo) && !unprocessed.some(r => r.order_no === t.orderNo)) reject(t, 'Chưa xác nhận được NDP: ' + (error?.message || 'Lỗi kết nối'));
+        }
+    }
+    return { success: true, total_checked: targets.length, transitioned_count: transitioned.length, transitioned, unprocessed,
+        summary: 'Đã kiểm tra ' + targets.length + ' đơn trên NDP: ' + transitioned.length + ' đơn chuyển Chờ ký, ' + unprocessed.length + ' đơn giữ nguyên.' };
+};

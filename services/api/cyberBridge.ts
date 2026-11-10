@@ -203,7 +203,7 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data && (data.success !== false || data.cars || data.data)) {
+                    if (data && (pathname.startsWith('/api/ndp/') || data.success !== false || data.cars || data.data)) {
                         return data;
                     }
                 }

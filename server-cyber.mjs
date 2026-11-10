@@ -1,3 +1,4 @@
+import { allowedSessionRequest, saveNdpSession, sessionStatus } from './scripts/ndp-session-store.mjs';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -234,6 +235,9 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
             return await executePython([minvoiceScript], mergedJson);
 
         // Tra cứu DMS VSO & ARI tự động chuyển sang Chờ ký
+        case '/api/ndp/order-evidence':
+            return await executePython([path.resolve(__dirname, 'scripts/ndp_order_evidence.py')], mergedJson);
+
         case '/api/dms/check-approved-ari': {
             const orderNo = queryParams.orderNo || mergedData.orderNo || '';
             const orderNumbers = Array.isArray(mergedData.orderNumbers) ? mergedData.orderNumbers : [];
@@ -677,6 +681,34 @@ const server = http.createServer(async (req, res) => {
     const urlObj = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
     const pathname = urlObj.pathname;
     const queryParams = Object.fromEntries(urlObj.searchParams);
+
+    // Session ingestion is local-only and only accepts extension origins; never bridge it to cloud.
+    if (pathname === '/api/ndp/session') {
+        if (!allowedSessionRequest(req.socket.remoteAddress, req.headers.origin)) {
+            res.writeHead(403, {'Content-Type':'application/json'});
+            return res.end(JSON.stringify({success:false,error:'Chỉ tiện ích NDP trên máy này được đồng bộ phiên.'}));
+        }
+        res.setHeader('Cache-Control','no-store');
+        if (req.method === 'GET') {
+            res.writeHead(200, {'Content-Type':'application/json'});
+            return res.end(JSON.stringify(await sessionStatus(__dirname)));
+        }
+        if (req.method !== 'POST') { res.writeHead(405); return res.end(); }
+        let input = '', tooLarge = false;
+        req.on('data', chunk => { input += chunk; if (input.length > 16384) {tooLarge=true;input='';} });
+        req.on('end', async () => {
+            try {
+                if (tooLarge) throw new Error('Dữ liệu phiên quá lớn.');
+                const result = await saveNdpSession(__dirname, JSON.parse(input));
+                res.writeHead(200, {'Content-Type':'application/json'});
+                res.end(JSON.stringify(result));
+            } catch {
+                res.writeHead(400, {'Content-Type':'application/json'});
+                res.end(JSON.stringify({success:false,error:'Chưa đồng bộ được phiên NDP. Kiểm tra đăng nhập đúng tài khoản VHKD_01.'}));
+            }
+        });
+        return;
+    }
 
     // Xem PDF trực tiếp
     if (pathname === '/api/cyber/view-pdf') {

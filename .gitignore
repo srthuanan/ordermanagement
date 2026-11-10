@@ -71,3 +71,7 @@ downloads_vnpt/
 *.pdf
 !public/cyber_pdfs/.gitkeep
 .env*
+
+# Local NDP session credentials
+ndp_token_config.json
+ndp_token_config.json.*

@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import * as xlsx from 'xlsx';
+import './crm-workspace.css';
+import { shuffleCrmModels, shuffleCrmSources } from './crmModelShuffle';
 import {
     fetchCrmMetadata,
     checkCrmDuplicates,
@@ -232,6 +235,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     });
 
+    const [autoShuffleModels, setAutoShuffleModels] = useState(true);
     const [leadRows, setLeadRows] = useState<ParsedLeadRow[]>([]);
     const leadRowsRef = useRef<ParsedLeadRow[]>([]);
     leadRowsRef.current = leadRows;
@@ -254,8 +258,87 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         accountName: string;
     } | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
+    const paymentTriggerRef = useRef<HTMLButtonElement>(null);
+    const paymentSheetRef = useRef<HTMLDivElement>(null);
+    const [paymentSheetStyle, setPaymentSheetStyle] = useState<React.CSSProperties>({});
     const [sePayPaidSuccess, setSePayPaidSuccess] = useState<boolean>(false);
     const isPaidHandledRef = useRef<boolean>(false);
+
+    useLayoutEffect(() => {
+        if (!showPaymentModal) return;
+        const positionSheet = () => {
+            const trigger = paymentTriggerRef.current;
+            const sheet = paymentSheetRef.current;
+            if (!trigger || !sheet) return;
+            const rect = trigger.getBoundingClientRect();
+            const viewport = window.visualViewport;
+            const width = viewport?.width || window.innerWidth;
+            const height = viewport?.height || window.innerHeight;
+            const offsetLeft = viewport?.offsetLeft || 0;
+            const offsetTop = viewport?.offsetTop || 0;
+            const sheetWidth = Math.min(380, width - 16);
+            const sheetHeight = Math.min(sheet.scrollHeight, height - 24);
+            const left = Math.max(offsetLeft + 8, Math.min(rect.right - sheetWidth, offsetLeft + width - sheetWidth - 8));
+            const above = rect.top - sheetHeight - 8;
+            const top = above >= offsetTop + 8 ? above : Math.max(offsetTop + 8, Math.min(rect.bottom + 8, offsetTop + height - sheetHeight - 8));
+            setPaymentSheetStyle({ left, top, right: 'auto', bottom: 'auto', width: sheetWidth, maxHeight: height - 24 });
+        };
+        positionSheet();
+        const observer = new ResizeObserver(positionSheet);
+        if (paymentSheetRef.current) observer.observe(paymentSheetRef.current);
+        window.addEventListener('resize', positionSheet);
+        window.addEventListener('scroll', positionSheet, true);
+        window.visualViewport?.addEventListener('resize', positionSheet);
+        window.visualViewport?.addEventListener('scroll', positionSheet);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', positionSheet);
+            window.removeEventListener('scroll', positionSheet, true);
+            window.visualViewport?.removeEventListener('resize', positionSheet);
+            window.visualViewport?.removeEventListener('scroll', positionSheet);
+        };
+    }, [showPaymentModal]);
+
+    useEffect(() => {
+        if (!showPaymentModal) return;
+        paymentSheetRef.current?.focus({ preventScroll: true });
+        const outside = (event: PointerEvent) => {
+            if (event.target instanceof Node && !paymentSheetRef.current?.contains(event.target) && !paymentTriggerRef.current?.contains(event.target)) setShowPaymentModal(false);
+        };
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                setShowPaymentModal(false);
+                paymentTriggerRef.current?.focus({ preventScroll: true });
+            }
+        };
+        document.addEventListener('pointerdown', outside, true);
+        document.addEventListener('keydown', escape, true);
+        return () => {
+            document.removeEventListener('pointerdown', outside, true);
+            document.removeEventListener('keydown', escape, true);
+        };
+    }, [showPaymentModal]);
+
+    useEffect(() => {
+        if (!showAdminTvbhModal) return;
+        const escape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                if (selectedTvbhDetail) {
+                    setSelectedTvbhDetail(null);
+                } else {
+                    setShowAdminTvbhModal(false);
+                }
+            }
+        };
+        document.addEventListener('keydown', escape, true);
+        return () => {
+            document.removeEventListener('keydown', escape, true);
+        };
+    }, [showAdminTvbhModal, selectedTvbhDetail]);
 
     // CyberSoft Replica Grid States
     const [cyberSelectedRowIdx, setCyberSelectedRowIdx] = useState<number>(0);
@@ -493,23 +576,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         return (words[0][0] + words[words.length - 1][0]).toUpperCase();
     };
 
-    // Helper: Tạo dải màu gradient ngẫu nhiên cố định theo tên
-    const getAvatarGradient = (str: string): string => {
-        const gradients = [
-            'from-blue-600 to-indigo-700',
-            'from-emerald-600 to-teal-700',
-            'from-violet-600 to-purple-700',
-            'from-amber-600 to-orange-700',
-            'from-rose-600 to-pink-700',
-            'from-cyan-600 to-blue-700'
-        ];
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const idx = Math.abs(hash) % gradients.length;
-        return gradients[idx];
-    };
+
 
     // Thống kê sử dụng dịch vụ gom nhóm theo từng TVBH
     const tvbhUsageStatsList = useMemo<TvbhUsageStats[]>(() => {
@@ -667,6 +734,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
     // Đọc và bóc tách dữ liệu từ file Excel
     const handleFileUpload = async (file: File) => {
+        if (autoShuffleModels && !metadata?.models.length) { showToast?.("Chưa có danh mục xe", "Đợi tải xong danh mục hoặc tắt Tự xáo dòng xe rồi tải lại file.", "warning"); return; }
         try {
             const data = await file.arrayBuffer();
             const workbook = xlsx.read(data, { type: 'array' });
@@ -786,9 +854,11 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 return;
             }
 
-            setLeadRows(parsed);
+            const sourced = shuffleCrmSources(parsed, metadata?.sources || []);
+            const prepared = autoShuffleModels ? shuffleCrmModels(sourced, metadata?.models || []) : sourced;
+            setLeadRows(prepared);
             showToast?.('Nhập file thành công', `Đã nhập ${parsed.length} khách hàng từ file ${file.name}. Đang kiểm tra trùng...`, 'success', 3000);
-            runDuplicateCheck(parsed);
+            runDuplicateCheck(prepared);
         } catch (err: any) {
             console.error('File upload error:', err);
             showToast?.('Lỗi đọc file', `Không thể đọc file Excel: ${err.message}`, 'error');
@@ -797,6 +867,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
     // Xử lý dán văn bản nhanh từ Zalo / Notes
     const handleExecutePaste = () => {
+        if (autoShuffleModels && !metadata?.models.length) { showToast?.('Chưa có danh mục xe', 'Đợi tải xong danh mục hoặc tắt Tự xáo dòng xe rồi dán lại.', 'warning'); return; }
         if (!rawPasteText.trim()) {
             showToast?.('Chưa nhập văn bản', 'Vui lòng dán danh sách khách hàng vào ô bên dưới!', 'warning');
             return;
@@ -876,7 +947,9 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
             return;
         }
 
-        const combined = [...leadRows, ...parsed];
+        const sourced = shuffleCrmSources(parsed, metadata?.sources || []);
+        const prepared = autoShuffleModels ? shuffleCrmModels(sourced, metadata?.models || []) : sourced;
+        const combined = [...leadRows, ...prepared];
         setLeadRows(combined);
         setShowPasteModal(false);
         setRawPasteText('');
@@ -1108,68 +1181,12 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         }
     };
 
-    // Phân bổ ngẫu nhiên Dòng xe, Màu xe, Nguồn, Hình thức thanh toán & Ngày tiếp cận chia đều trong tháng cho toàn bộ danh sách
     const handleRandomizeAllRows = () => {
-        if (leadRows.length === 0) {
-            showToast?.('Thông báo', 'Chưa có danh sách khách hàng để xáo trộn.', 'info');
-            return;
-        }
-
-        const mainstreamModelKeys = [
-            'VF301', 'VF302', 'VF305',
-            'VF501', 'VF503',
-            'VF603', 'VF604', 'VF605',
-            'VF701', 'VF704', 'VF705',
-            'PD1U01', 'PD1U02',
-            'PE1U01', 'PE1U02',
-            'EB15'
-        ];
-        const modelPool = metadata?.models?.filter(m => mainstreamModelKeys.includes(m.maKx)) || [];
-        const activeModelPool = modelPool.length > 0 ? modelPool : (metadata?.models || []);
-
-        const popularColorCodes = [
-            'CE18', 'TRANG',       // Trắng
-            'CE11', 'DEN',         // Đen
-            'CE14', 'XAM',         // Xám
-            'CE16', 'DO',          // Đỏ
-            'CE17', 'BAC',         // Bạc
-            'CE1K', '181Y',        // Xanh dương
-            '181U',                // Vàng nóc trắng
-            '1823',                // Be nóc trắng
-            'CE1H', '111H',        // Xanh rêu
-            'CE1A',                // Cam
-            '1821'                 // Hồng phấn
-        ];
-        const colorPool = metadata?.colors?.filter(c => popularColorCodes.includes(c.maMau)) || [];
-        const activeColorPool = colorPool.length > 0 ? colorPool : (metadata?.colors || []);
-        const activeSourcePool = metadata?.sources || [];
-
-        setLeadRows(prev => prev.map((row, idx) => {
-            const mObj = activeModelPool.length > 0 ? activeModelPool[(idx * 3 + Math.floor(Math.random() * 5)) % activeModelPool.length] : null;
-            const cObj = activeColorPool.length > 0 ? activeColorPool[(idx * 7 + Math.floor(Math.random() * 7)) % activeColorPool.length] : null;
-            const sObj = activeSourcePool.length > 0 ? activeSourcePool[(idx * 2 + Math.floor(Math.random() * 3)) % activeSourcePool.length] : null;
-            const pay = Math.random() > 0.4 ? '02' : '01'; // 60% trả góp, 40% trả thẳng
-
-            // Phân bổ ngày tiếp cận chia đều ngẫu nhiên trong tháng nhập
-            const { dateStr, timeStr } = getRandomDistributedDate(idx, prev.length, selectedMonth);
-
-            return {
-                ...row,
-                model: mObj ? mObj.maKx : row.model,
-                color: cObj ? cObj.maMau : row.color,
-                source: sObj ? sObj.maPtlh : row.source,
-                paymentMethod: pay,
-                createdDate: dateStr,
-                createdTime: timeStr
-            };
-        }));
-
-        showToast?.(
-            'Đã xáo trộn ngẫu nhiên',
-            `Đã phân bổ ngẫu nhiên dòng xe, màu sắc và ngày tiếp cận chia đều trong tháng cho ${leadRows.length} khách hàng!`,
-            'success',
-            3000
-        );
+        const selected = leadRows.filter(row => row.isSelected && !row.isImported);
+        if (!selected.length) { showToast?.('Chưa chọn khách', 'Chọn khách hàng chưa nhập để xáo dòng xe.', 'info'); return; }
+        if (!metadata?.models.length) { showToast?.('Chưa có danh mục xe', 'Vui lòng tải lại danh mục trước khi xáo dòng xe.', 'warning'); return; }
+        setLeadRows(prev => shuffleCrmModels(prev, metadata.models));
+        showToast?.('Đã xáo dòng xe', 'Đã phân bổ dòng xe cho ' + selected.length + ' khách được chọn. Màu xe và thông tin khách được giữ nguyên.', 'success', 4000);
     };
 
     const handleDeleteRow = (id: string) => {
@@ -1221,7 +1238,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         const valid = leadRows.filter(r => r.isValidPhone && !r.duplicateInfo && !r.isImported).length;
         const duplicate = leadRows.filter(r => !!r.duplicateInfo && !r.isImported).length;
         const invalid = leadRows.filter(r => !r.isValidPhone && !r.isImported).length;
-        const selected = leadRows.filter(r => r.isSelected && !r.isImported).length;
+        const selected = leadRows.filter(r => r.isSelected && r.isValidPhone && !r.isImported).length;
         return { total, imported, valid, duplicate, invalid, selected };
     }, [leadRows]);
 
@@ -1471,7 +1488,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     return (
         <div className={mobileMode
             ? 'flex h-full min-h-0 flex-col overflow-hidden bg-[#f2f2f7] font-sans select-text'
-            : 'flex flex-col h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] bg-slate-100 overflow-hidden font-sans select-text p-2 sm:p-3 gap-2'}>
+            : 'crm-workspace'}>
             {mobileMode ? (
                 <>
                     <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".xlsx,.xls,.csv" className="hidden" />
@@ -1557,7 +1574,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             </label>
                             <input type="month" value={selectedMonth} onChange={event => { setSelectedMonth(event.target.value); if (leadRows.length > 0) handleApplyMonthToAll(event.target.value); }} className="h-[34px] w-[116px] rounded-xl border border-slate-200/80 bg-slate-100/90 px-2 text-[10px] font-medium text-slate-600 outline-none focus:bg-white" />
                         </div>
-                        <button type="button" onClick={handleImport} disabled={counts.selected === 0 || isImporting || !selectedUser} className="flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-slate-900 text-xs font-semibold text-white shadow-sm disabled:bg-slate-200 disabled:text-slate-400">
+                        <button type="button" ref={paymentTriggerRef} aria-haspopup="dialog" aria-expanded={showPaymentModal} aria-controls={showPaymentModal ? "crm-payment-sheet" : undefined} onClick={handleImport} disabled={counts.selected === 0 || isImporting || !selectedUser} className="flex h-11 w-full items-center justify-center gap-2 rounded-[14px] bg-slate-900 text-xs font-semibold text-white shadow-sm disabled:bg-slate-200 disabled:text-slate-400">
                             <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-qrcode'}`} />
                             {isImporting ? 'Đang xử lý...' : counts.selected > 0 ? `Quét QR & Nhập ${counts.selected} khách` : 'Chọn khách hàng để nhập'}
                         </button>
@@ -1565,9 +1582,35 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 </>
             ) : (
             <>
+            <aside className="crm-sidebar" aria-label="Chức năng nhập khách hàng tiềm năng">
+                <div className="crm-sidebar-heading"><h1>Khách hàng <span>{counts.total}</span></h1></div>
+                <div className="crm-sidebar-search">
+                    <label><i className="fas fa-search" aria-hidden="true" /><input aria-label="Tìm khách hàng" placeholder="Tìm tên, số điện thoại, địa chỉ…" value={cyberSearchContact} onChange={event => { setCyberSearchContact(event.target.value); setCyberSelectedRowIdx(0); }} />{cyberSearchContact && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => setCyberSearchContact('')}><i className="fas fa-times" /></button>}</label>
+                </div>
+                <div className="crm-sidebar-scroll">
+                    <section className="crm-facet-group crm-function-list"><h2>Nhập danh sách</h2>
+                        <button type="button" onClick={() => fileInputRef.current?.click()}><i className="fas fa-file-arrow-up" />Tải file Excel</button>
+                        <button type="button" title="Dán nhanh danh sách khách hàng từ Zalo hoặc Ghi chú" onClick={() => setShowPasteModal(true)}><i className="fas fa-paste" />Dán từ Zalo / ghi chú</button>
+                        <button type="button" onClick={handleDownloadTemplate}><i className="fas fa-file-excel" />Tải mẫu Excel</button>
+                    </section>
+                    <section className="crm-facet-group crm-function-list"><h2>Xử lý danh sách</h2>
+                        <button type="button" disabled={!counts.selected || isImporting} onClick={handleRandomizeAllRows}><i className="fas fa-shuffle" />Xáo dòng xe đã chọn</button>
+                        <button type="button" disabled={!counts.selected || isImporting || !metadata?.sources.length} onClick={() => {
+                            setLeadRows(prev => shuffleCrmSources(prev, metadata?.sources || []));
+                            showToast?.('Đã xáo nguồn tiếp cận', 'Đã phân bổ nguồn ngẫu nhiên cho khách đang chọn, chưa nhập.', 'success');
+                        }}><i className="fas fa-shuffle" />Xáo nguồn tiếp cận</button>
+                        <button type="button" title="Kiểm tra trùng số điện thoại" disabled={!counts.total || isCheckingDuplicates} onClick={() => runDuplicateCheck()}><i className={isCheckingDuplicates ? 'fas fa-spinner fa-spin' : 'fas fa-shield-check'} />Kiểm tra dữ liệu</button>
+                        <button type="button" title="Sửa thông tin trùng hoặc lỗi trong danh sách" disabled={(!counts.duplicate && !counts.invalid) || isImporting} onClick={handleAutoFixDuplicates}><i className="fas fa-wand-magic-sparkles" />Sửa trùng / lỗi</button>
+                    </section>
+                    <section className="crm-facet-group crm-auto-shuffle"><h2>Tự động phân bổ</h2><label><input type="checkbox" checked={autoShuffleModels} onChange={event => setAutoShuffleModels(event.target.checked)} /><span>Tự xáo dòng xe khi nạp</span></label><p>Phân bổ đều giữa các dòng xe trong danh mục. Chỉ áp dụng cho khách mới tải hoặc dán; giữ màu xe và thông tin liên hệ. Nguồn tiếp cận được phân bổ ngẫu nhiên khi nạp.</p></section>
+                    <section className="crm-facet-group crm-batch-settings"><h2>Đợt tiếp cận</h2><label htmlFor="crm-batch-month">Tháng nhập khách hàng</label><input id="crm-batch-month" type="month" value={selectedMonth} onChange={event => { setSelectedMonth(event.target.value); if (leadRows.length && event.target.value) handleApplyMonthToAll(event.target.value); }} /><p>Chọn TVBH nhận danh sách ở phía trên, sau đó tải file hoặc dán thông tin khách hàng.</p></section>
+                </div>
+                <div className="crm-sidebar-footer"><span>Đang chọn</span><strong>{counts.selected} khách hàng</strong></div>
+            </aside>
+            <main className="crm-main" aria-label="Quản lý khách hàng tiềm năng">
             {/* Success Banner if present */}
             {lastImportStats && (
-                <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-lg shadow-sm flex items-center justify-between text-xs animate-fade-in shrink-0">
+                <div className="crm-import-success">
                     <div className="flex items-center gap-2">
                         <i className="fas fa-circle-check text-emerald-200"></i>
                         <span>
@@ -1594,7 +1637,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
             )}
 
             {/* Top Compact Control Bar (Consolidates Header, TVBH, and Data Import Actions) */}
-            <div className="bg-white rounded-lg border border-slate-200 p-2 sm:p-2.5 shadow-xs shrink-0 flex flex-col gap-2 relative">
+            <div className="crm-control-bar">
                 {/* Hidden File Input for Excel Upload */}
                 <input
                     type="file"
@@ -1605,14 +1648,14 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 />
 
                 {/* Line 1: Title + TVBH + Admin Switch + Quick Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="crm-header-line">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="w-6 h-6 rounded bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white text-xs shadow-xs">
                             <i className="fas fa-file-excel"></i>
                         </span>
                         <h1 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight flex items-center gap-1.5">
-                            Dịch Vụ Hỗ Trợ Nhập Liệu KHTN
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold uppercase">Hỗ Trợ TVBH</span>
+                            Khách hàng tiềm năng
+
                         </h1>
                         <span className="text-[11px] text-slate-500 hidden md:inline">
                             🏢 Ô tô VinFast Thuận An (<code className="font-mono text-[10px] text-slate-600">02.01.08</code>)
@@ -1626,13 +1669,13 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                     </div>
 
                     {/* TVBH badge & Action controls */}
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className="crm-account-controls">
                         <div 
-                            className="flex items-center gap-1.5 bg-blue-50/90 border border-blue-300 hover:border-blue-400 focus-within:border-blue-500 rounded-lg px-2.5 py-1 text-xs shadow-2xs transition-all"
+                            className="crm-account-pill flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-slate-300 border border-slate-200/90 rounded-md px-2 h-[30px] text-[11px] shadow-2xs transition-all"
                             title="Bấm để chọn hoặc nhập trực tiếp mã TVBH Cyber"
                         >
-                            <span className="text-slate-600 text-[11px] font-bold shrink-0 flex items-center gap-1">
-                                <i className="fas fa-user-tie text-blue-600 text-[11px]"></i>
+                            <span className="text-slate-500 text-[10.5px] font-medium shrink-0 flex items-center gap-1">
+                                <i className="fas fa-user-tie text-slate-400 text-[10px]"></i>
                                 TVBH:
                             </span>
 
@@ -1640,26 +1683,26 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setIsManualUserSelection(prev => !prev)}
-                                className="font-bold text-blue-800 hover:text-blue-950 max-w-[120px] sm:max-w-[150px] truncate text-left cursor-pointer flex items-center gap-1 text-xs"
+                                className="font-semibold text-slate-800 hover:text-blue-600 max-w-[120px] sm:max-w-[150px] truncate text-left cursor-pointer flex items-center gap-1 text-[11px]"
                                 title="Bấm để mở danh sách chọn TVBH từ Cyber"
                             >
                                 <span className="truncate">{selectedUserInfo?.fullName || currentUser || currentUserName || 'Tư vấn bán hàng'}</span>
-                                <i className={`fas fa-chevron-down text-[8px] text-blue-500 transition-transform ${isManualUserSelection ? 'rotate-180' : ''}`}></i>
+                                <i className={`fas fa-chevron-down text-[8px] text-slate-400 transition-transform ${isManualUserSelection ? 'rotate-180' : ''}`}></i>
                             </button>
 
                             {/* Ô nhập trực tiếp Mã TVBH Cyber */}
-                            <div className="flex items-center bg-white border border-blue-300 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 rounded px-1.5 py-0.5 shadow-inner transition-all">
-                                <span className="text-[10px] text-slate-400 font-mono select-none mr-1 font-semibold">Mã:</span>
+                            <div className="crm-account-code-box flex items-center bg-white border border-slate-200 focus-within:border-blue-500 rounded px-1.5 h-[22px] transition-all">
+                                <span className="text-[9.5px] text-slate-400 font-mono select-none mr-1 font-semibold">Mã:</span>
                                 <input
                                     type="text"
                                     value={selectedUser}
                                     onChange={e => handleDirectUserCodeChange(e.target.value)}
                                     placeholder="02.xxxx"
-                                    className="w-24 sm:w-28 font-mono text-[11px] font-bold text-blue-800 uppercase bg-transparent outline-none tracking-tight placeholder:text-slate-400 placeholder:font-normal placeholder:normal-case"
+                                    className="w-20 sm:w-24 font-mono text-[10.5px] font-semibold text-slate-800 uppercase bg-transparent outline-none tracking-tight placeholder:text-slate-400 placeholder:font-normal placeholder:normal-case"
                                     title="Nhập chính xác mã TVBH Cyber (Ví dụ: 02.TUONGTB)"
                                 />
                                 {selectedUserInfo ? (
-                                    <i className="fas fa-circle-check text-emerald-600 text-[11px] ml-1" title={`Khớp danh mục Cyber: ${selectedUserInfo.fullName} (${selectedUserInfo.userName})`}></i>
+                                    <i className="fas fa-circle-check text-emerald-600 text-[10.5px] ml-1" title={`Khớp danh mục Cyber: ${selectedUserInfo.fullName} (${selectedUserInfo.userName})`}></i>
                                 ) : selectedUser ? (
                                     <i className="fas fa-pen text-amber-500 text-[10px] ml-1" title="Mã TVBH Cyber tự nhập"></i>
                                 ) : null}
@@ -1673,42 +1716,33 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                         type="button"
                                         onClick={onToggleCrmGlobal}
                                         disabled={isTogglingCrm}
-                                        className={`px-2 py-0.5 text-xs font-semibold rounded transition-all cursor-pointer flex items-center gap-1 border ${
+                                        className={`crm-account-btn h-[30px] px-2.5 text-[11px] font-medium rounded-md transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
                                             isCrmEnabled 
-                                                ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-300' 
-                                                : 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300'
+                                                ? 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs' 
+                                                : 'border-amber-200 bg-amber-50/70 hover:bg-amber-100/70 text-amber-800'
                                         } ${isTogglingCrm ? 'opacity-50 cursor-wait' : ''}`}
                                         title={isCrmEnabled ? 'Bấm để tắt cổng tiếp nhận KHTN đối với toàn bộ TVBH' : 'Bấm để mở lại cổng tiếp nhận KHTN cho toàn bộ TVBH'}
                                     >
-                                        <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin' : (isCrmEnabled ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-amber-600')} text-[12px]`}></i>
-                                        <span>{isCrmEnabled ? 'Tab KHTN: Đang Mở' : 'Tab KHTN: Đang Tắt'}</span>
+                                        <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin text-slate-400' : (isCrmEnabled ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-amber-600')} text-[11px]`}></i>
+                                        <span>KHTN: <strong className={isCrmEnabled ? 'text-emerald-700 font-semibold' : 'text-amber-800 font-semibold'}>{isCrmEnabled ? 'Đang Mở' : 'Đang Tắt'}</strong></span>
                                     </button>
                                 )}
 
                                 <button
                                     type="button"
                                     onClick={() => setShowAdminTvbhModal(true)}
-                                    className="px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-all cursor-pointer flex items-center gap-1"
+                                    className="crm-account-btn h-[30px] px-2.5 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                                     title="Danh sách TVBH đã sử dụng dịch vụ nạp KHTN (Chỉ Admin)"
                                 >
-                                    <i className="fas fa-users text-[10px]"></i>
+                                    <i className="fas fa-users text-slate-400 text-[10.5px]"></i>
                                     <span>DS TVBH Đã Dùng</span>
                                     {overallStats.totalTvbhUsed > 0 && (
-                                        <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                                        <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[9.5px] px-1.5 py-0.5 rounded-full font-semibold">
                                             {overallStats.totalTvbhUsed}
                                         </span>
                                     )}
                                 </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() => setIsManualUserSelection(!isManualUserSelection)}
-                                    className="px-2 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer"
-                                    title="Admin đổi TVBH cần nạp thay"
-                                >
-                                    <i className="fas fa-user-gear text-[10px] mr-1"></i>
-                                    <span>{isManualUserSelection ? 'Đóng' : 'Đổi TVBH'}</span>
-                                </button>
                             </>
                         )}
 
@@ -1723,79 +1757,19 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                     }
                                 });
                             }}
-                            className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded border border-slate-200 transition-colors cursor-pointer"
+                            className="crm-account-icon-btn h-[30px] w-[30px] inline-flex items-center justify-center text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-md border border-slate-200 shadow-2xs transition-colors cursor-pointer"
                             title="Làm mới danh mục"
                         >
-                            <i className={`fas fa-rotate-right text-xs ${isLoadingMeta ? 'animate-spin text-blue-600' : ''}`}></i>
+                            <i className={`fas fa-rotate-right text-[10.5px] ${isLoadingMeta ? 'animate-spin text-blue-600' : ''}`}></i>
                         </button>
                     </div>
                 </div>
 
-                {/* Line 2: Fast Data Import Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-100">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        {/* 1. Tải File Excel */}
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="h-7 px-2.5 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
-                            title="Tải lên file Excel (.xlsx, .xls, .csv) danh sách khách hàng của bạn"
-                        >
-                            <i className="fas fa-file-arrow-up text-[11px]"></i>
-                            <span>Tải File Excel</span>
-                        </button>
-
-                        {/* 2. Dán Danh Sách Nhanh */}
-                        <button
-                            type="button"
-                            onClick={() => setShowPasteModal(true)}
-                            className="h-7 px-2.5 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded shadow-2xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
-                            title="Dán nhanh danh sách khách hàng từ Zalo hoặc Ghi chú"
-                        >
-                            <i className="fas fa-paste text-[11px]"></i>
-                            <span>Dán Nhanh (Zalo/Note)</span>
-                        </button>
-
-                        {/* 3. Tải File Mẫu Excel */}
-                        <button
-                            type="button"
-                            onClick={handleDownloadTemplate}
-                            className="h-7 px-2 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded shadow-2xs flex items-center gap-1 cursor-pointer"
-                            title="Tải tệp Excel mẫu chuẩn để điền thông tin"
-                        >
-                            <i className="fas fa-file-excel text-emerald-600"></i>
-                            <span className="hidden sm:inline">Mẫu Excel</span>
-                        </button>
-
-                        <div className="h-4 w-[1px] bg-slate-200 mx-0.5 hidden sm:block"></div>
-
-                        {/* Month picker */}
-                        <input
-                            type="month"
-                            value={selectedMonth}
-                            onChange={e => {
-                                const val = e.target.value;
-                                setSelectedMonth(val);
-                                if (leadRows.length > 0 && val) handleApplyMonthToAll(val);
-                            }}
-                            className="h-7 px-2 bg-white border border-slate-300 rounded text-[11px] font-semibold text-slate-700 outline-none cursor-pointer"
-                            title="Tháng tiếp cận"
-                        />
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex items-center gap-2 ml-auto">
-                        <button
-                            type="button"
-                            onClick={handleImport}
-                            disabled={counts.selected === 0 || isImporting || !selectedUser}
-                            className="h-7 px-3.5 text-[11px] font-bold text-white bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 disabled:opacity-50 rounded shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all shrink-0"
-                            title="Xác nhận quét mã QR và import KHTN"
-                        >
-                            <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-qrcode'} text-[10px]`}></i>
-                            <span>Import ({counts.selected} Khách)</span>
-                        </button>
-                    </div>
+                <div className="crm-import-progress" aria-label="Tiến trình nhập khách hàng">
+                    <span data-complete={!!selectedUser}><b>1</b>TVBH tải lên danh sách</span>
+                    <span data-complete={counts.total > 0}><b>2</b>{counts.total ? counts.total + ' khách đã tải' : 'Tải danh sách'}</span>
+                    <span data-complete={counts.valid > 0 && !counts.duplicate && !counts.invalid}><b>3</b>{counts.duplicate || counts.invalid ? (counts.duplicate + counts.invalid) + ' khách cần rà soát' : 'Kiểm tra & chọn khách'}</span>
+                    <span data-complete={counts.imported > 0}><b>4</b>Nhập khách hàng</span>
                 </div>
 
                 {/* Floating TVBH Switcher Overlay (Mở cho tất cả TVBH & Admin) */}
@@ -1875,162 +1849,31 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 )}
             </div>
 
-            {/* Main Area: 100% CyberSoft Desktop Window (Fills all remaining height!) */}
-            <div className="flex-1 flex flex-col min-h-0 bg-[#ECE9D8] rounded border-2 border-[#0055EA] shadow-xl overflow-hidden font-sans select-none">
-                {/* Title Bar */}
-                <div className="h-7 bg-gradient-to-r from-[#0058EE] via-[#3593FF] to-[#288EFF] px-2 flex items-center justify-between text-white shrink-0">
-                    <div className="flex items-center gap-1.5">
-                        <span className="w-3.5 h-3.5 bg-gradient-to-br from-amber-400 to-red-500 rounded-xs flex items-center justify-center text-[9px] font-black text-slate-900 shadow-xs border border-white/40">
-                            <i className="fas fa-users text-[7px] text-white"></i>
-                        </span>
-                        <span className="font-bold text-[11px] text-white tracking-tight drop-shadow-xs">
-                            Quản lý khách hàng tiềm năng - Ô tô VinFast Thuận An
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                        <button type="button" className="w-4 h-3.5 bg-[#0058EE] text-white text-[10px] font-bold flex items-center justify-center border border-white/30 rounded-xs">_</button>
-                        <button type="button" className="w-4 h-3.5 bg-[#0058EE] text-white text-[9px] font-bold flex items-center justify-center border border-white/30 rounded-xs">□</button>
-                        <button type="button" className="w-4 h-3.5 bg-[#E81123] text-white text-[10px] font-bold flex items-center justify-center border border-white/30 rounded-xs">✕</button>
+            {/* Desktop customer list */}
+            <div className="crm-data-panel">
+                <div className="crm-list-heading"><div><h2>Danh sách khách hàng</h2><span>{cyberFilteredRows.length} khách hàng hiển thị</span></div><span className="crm-list-month">{selectedMonth.split('-').reverse().join('/')}</span></div>
+                <div className="crm-review-tabs" aria-label="Trạng thái danh sách">{([
+                    ['all','Tất cả',counts.total],['valid','Hợp lệ',counts.valid],['duplicate','Trùng',counts.duplicate],['invalid','Lỗi SĐT',counts.invalid],['imported','Đã nhập',counts.imported],
+                ] as const).map(([id,label,count]) => <button type="button" key={id} aria-pressed={filterTab === id} onClick={() => {setFilterTab(id);setCyberSelectedRowIdx(0);}}>{label}<small>{count}</small></button>)}</div>
+
+
+                <div className="crm-list-toolbar">
+                    <span className="crm-review-hint">{counts.duplicate || counts.invalid ? 'Rà soát thông tin trùng và số điện thoại lỗi trước khi nhập.' : 'Chọn những khách hàng cần nhập vào hệ thống.'}</span>
+                    <div className="crm-row-actions">
+                        <button type="button" title="Sửa khách hàng đang chọn" disabled={!cyberFilteredRows[cyberSelectedRowIdx] || !!cyberFilteredRows[cyberSelectedRowIdx]?.isImported} onClick={() => { const row = cyberFilteredRows[cyberSelectedRowIdx]; if (row) { const phone = prompt('Nhập số điện thoại mới:', row.phone); if (phone) handleRowChange(row.id, 'phone', phone); } }}><i className="fas fa-pencil" /> Sửa SĐT</button>
+                        <button type="button" title="Xóa dòng đang chọn" disabled={!cyberFilteredRows[cyberSelectedRowIdx]} onClick={() => { const row = cyberFilteredRows[cyberSelectedRowIdx]; if (row) handleDeleteRow(row.id); }}><i className="fas fa-trash-can" /> Xóa dòng</button>
+                        <button type="button" title="Xóa toàn bộ danh sách" onClick={handleClearAll} disabled={!counts.total || isImporting}><i className="fas fa-trash" /> Xóa toàn bộ</button>
                     </div>
                 </div>
 
-                {/* CyberSoft Toolbar (Ribbon) */}
-                <div className="bg-[#F0F0F0] border-b border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-800 shrink-0">
-                    <div className="flex items-center gap-1 flex-wrap">
-                        <button 
-                            type="button" 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="px-2 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-slate-800 active:translate-y-px cursor-pointer"
-                            title="Tải lên file Excel để thêm khách hàng"
-                        >
-                            <span className="text-emerald-600 font-bold text-xs">+</span> Thêm
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={() => {
-                                const row = cyberFilteredRows[cyberSelectedRowIdx];
-                                if (row) {
-                                    const newPhone = prompt('Nhập số điện thoại mới:', row.phone);
-                                    if (newPhone) handleRowChange(row.id, 'phone', newPhone);
-                                }
-                            }}
-                            className="px-2 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-slate-800 active:translate-y-px cursor-pointer"
-                            title="Sửa khách hàng đang chọn"
-                        >
-                            <i className="fas fa-pencil text-amber-500 text-[10px]"></i> Sửa
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={handleRandomizeAllRows}
-                            className="px-2 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-indigo-700 active:translate-y-px cursor-pointer"
-                            title="Xáo trộn đa dạng dòng xe & màu sắc"
-                        >
-                            <i className="fas fa-shuffle text-indigo-500 text-[10px]"></i> Xáo xe
-                        </button>
-                        {(counts.duplicate > 0 || counts.invalid > 0) && (
-                            <button 
-                                type="button" 
-                                onClick={handleAutoFixDuplicates}
-                                className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 border border-amber-400 rounded-xs shadow-2xs flex items-center gap-1 font-bold text-amber-900 active:translate-y-px cursor-pointer"
-                                title="Tự động sửa các số điện thoại trùng hoặc lỗi"
-                            >
-                                <i className="fas fa-wand-magic-sparkles text-amber-600 text-[10px]"></i> Sửa trùng ({counts.duplicate + counts.invalid})
-                            </button>
-                        )}
-                        <button 
-                            type="button" 
-                            className="px-2 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-slate-800 active:translate-y-px cursor-pointer"
-                        >
-                            <i className="fas fa-code-fork text-purple-500 text-[10px]"></i> Đổi mã
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={() => {
-                                const row = cyberFilteredRows[cyberSelectedRowIdx];
-                                if (row) handleDeleteRow(row.id);
-                            }}
-                            className="px-2 py-0.5 bg-white hover:bg-rose-50 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-rose-700 active:translate-y-px cursor-pointer"
-                            title="Xóa dòng đang chọn"
-                        >
-                            <i className="fas fa-trash-can text-rose-500 text-[10px]"></i> Xóa
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={handleClearAll}
-                            className="p-1 hover:bg-rose-100 text-rose-600 border border-transparent hover:border-rose-300 rounded-xs cursor-pointer"
-                            title="Xóa toàn bộ danh sách"
-                        >
-                            <i className="fas fa-trash text-[10px]"></i>
-                        </button>
-
-                        <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5"></div>
-
-                        <button 
-                            type="button" 
-                            onClick={() => window.print()}
-                            className="p-1 hover:bg-slate-200 border border-transparent hover:border-slate-300 rounded-xs text-slate-600 cursor-pointer"
-                            title="In danh sách"
-                        >
-                            <i className="fas fa-print text-[11px]"></i>
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={handleExportResultExcel}
-                            className="p-1 hover:bg-slate-200 border border-transparent hover:border-slate-300 rounded-xs text-emerald-700 cursor-pointer"
-                            title="Xuất file Excel"
-                        >
-                            <i className="fas fa-file-excel text-[11px]"></i>
-                        </button>
-
-                        <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5"></div>
-
-                        {/* Navigation buttons */}
-                        <div className="flex items-center gap-0.5">
-                            <button type="button" onClick={() => setCyberSelectedRowIdx(0)} className="w-4 h-4 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs text-[8px] flex items-center justify-center font-bold cursor-pointer">|◀</button>
-                            <button type="button" onClick={() => setCyberSelectedRowIdx(prev => Math.max(0, prev - 1))} className="w-4 h-4 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs text-[8px] flex items-center justify-center font-bold cursor-pointer">◀</button>
-                            <button type="button" onClick={() => setCyberSelectedRowIdx(prev => Math.min(cyberFilteredRows.length - 1, prev + 1))} className="w-4 h-4 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs text-[8px] flex items-center justify-center font-bold cursor-pointer">▶</button>
-                            <button type="button" onClick={() => setCyberSelectedRowIdx(Math.max(0, cyberFilteredRows.length - 1))} className="w-4 h-4 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs text-[8px] flex items-center justify-center font-bold cursor-pointer">▶|</button>
-                        </div>
-
-                        <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5"></div>
-
-                        <button 
-                            type="button"
-                            onClick={() => runDuplicateCheck()}
-                            className="px-2 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-blue-700 cursor-pointer"
-                            title="Kiểm tra trùng số điện thoại"
-                        >
-                            <i className={`fas fa-rotate text-[9px] ${isCheckingDuplicates ? 'animate-spin' : ''}`}></i>
-                            <span>Kiểm tra</span>
-                        </button>
-                    </div>
-
-                    {/* Filter input Người liên hệ */}
-                    <div className="flex items-center gap-1 ml-auto">
-                        <span className="font-semibold text-slate-700 text-[11px]">Người liên hệ:</span>
-                        <input 
-                            type="text"
-                            value={cyberSearchContact}
-                            onChange={e => setCyberSearchContact(e.target.value)}
-                            placeholder="Tìm tên, SĐT..."
-                            className="w-36 sm:w-48 h-5 px-1.5 bg-white border border-[#7F9DB9] rounded-xs text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner"
-                        />
-                        {cyberSearchContact && (
-                            <button type="button" onClick={() => setCyberSearchContact('')} className="text-slate-400 hover:text-slate-600 text-[10px] cursor-pointer">
-                                ✕
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* DataGrid Body (Pink rows, fills all remaining height!) */}
-                <div className="flex-1 overflow-auto bg-white">
+                {/* Customer data */}
+                <div className="crm-table-scroll">
                     {cyberFilteredRows.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-[#FCE7EA]">
-                            <div className="w-12 h-12 rounded-xl bg-white/80 border border-[#F8B4BD] text-rose-500 flex items-center justify-center text-xl mb-2 shadow-xs">
+                        <div className="crm-empty-state">
+                            <div className="crm-empty-icon">
                                 <i className="fas fa-file-arrow-up"></i>
                             </div>
-                            <p className="text-xs font-bold text-slate-700">Chưa có khách hàng nào trong danh sách</p>
+                            <p className="crm-empty-title">{leadRows.length ? "Không tìm thấy khách hàng phù hợp" : "Bắt đầu danh sách khách hàng"}</p>
                             <p className="text-[11px] text-slate-500 mt-1 max-w-sm">
                                 Bấm <strong>"Tải File Excel"</strong> để tải lên danh sách khách hàng của TVBH, hoặc <strong>"Dán Nhanh"</strong> để dán từ Zalo/Ghi chú.
                             </p>
@@ -2054,90 +1897,34 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <table className="w-full border-collapse text-[11px] font-sans" style={{ fontFamily: 'Tahoma, Arial, Segoe UI, sans-serif' }}>
-                            <thead className="bg-[#EDF2F8] sticky top-0 z-20 shadow-xs border-b border-[#C4D3E3]">
-                                <tr className="text-slate-700 text-center font-bold text-[11px] h-7">
-                                    <th 
-                                        onClick={() => handleToggleSelectAll(counts.selected < counts.valid)}
-                                        className="w-9 border-r border-[#C4D3E3] bg-[#E2EAF2] text-[10px] text-slate-600 font-bold p-0 text-center cursor-pointer hover:bg-slate-300"
-                                        title="Bấm để chọn hoặc bỏ chọn tất cả khách hàng hợp lệ"
-                                    >
-                                        {counts.selected > 0 && counts.selected === counts.valid ? '✓' : '▼'}
-                                    </th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[75px] text-left">Mã điểm KD</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[150px] text-left">Tên điểm KD</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[85px] text-center">Ngày tạo</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[75px] text-center">Trạng thái</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[125px] text-left">Id KH</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[130px] text-left">Tên TVBH</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[140px] text-left">Tên đối tượng</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[140px] text-left">Người liên hệ</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[200px] text-left">Địa chỉ</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[95px] text-left">Điện thoại 1</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[95px] text-left">Điện thoại 2</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[95px] text-left">Điện thoại 3</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[85px] text-left">Dòng xe</th>
-                                    <th className="px-2 border-r border-[#C4D3E3] min-w-[85px] text-left">Màu xe</th>
-                                    <th className="px-2 min-w-[140px] text-left">Nguồn tiếp cận</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {cyberFilteredRows.map((row, idx) => {
-                                    const isSelected = idx === cyberSelectedRowIdx;
-                                    const parts = (row.createdDate || '').split('-');
-                                    const displayDate = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : row.createdDate;
-                                    const mObj = metadata?.models.find(m => m.maKx === row.model);
-                                    const cObj = metadata?.colors?.find(c => c.maMau === row.color);
-                                    const sObj = metadata?.sources.find(s => s.maPtlh === row.source);
-
-                                    return (
-                                        <tr
-                                            key={row.id}
-                                            onClick={() => setCyberSelectedRowIdx(idx)}
-                                            className={`h-6 cursor-pointer border-b border-[#F8B4BD] text-[11px] leading-tight transition-colors ${
-                                                isSelected 
-                                                    ? 'bg-[#FBCFE8] font-bold text-slate-900 outline outline-1 outline-blue-600 z-10' 
-                                                    : 'bg-[#FCE7EA] hover:bg-[#FDDDE1] text-slate-800'
-                                            }`}
-                                            style={{ backgroundColor: isSelected ? '#FBCFE8' : '#FCE7EA' }}
-                                        >
-                                            <td className="w-9 border-r border-[#C4D3E3] bg-[#EDF2F8] text-[10px] text-center font-mono text-slate-600 p-0 select-none">
-                                                <span className="flex items-center justify-center gap-0.5">
-                                                    {isSelected ? <span className="text-[8px] text-slate-900 font-black">▶</span> : null}
-                                                    <span>{idx + 1}</span>
-                                                </span>
-                                            </td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-mono text-slate-700">02.01.08</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap">Ô tô VinFast Thuận An</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] text-center whitespace-nowrap font-mono">{displayDate}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] text-center whitespace-nowrap">Warm</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-mono font-bold">
-                                                {row.cyberId ? (
-                                                    <span className="text-emerald-700 font-extrabold">{row.cyberId}</span>
-                                                ) : (
-                                                    <span className="text-slate-400 italic font-normal">Chờ cấp mã...</span>
-                                                )}
-                                            </td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap">{selectedUserInfo?.fullName || currentUser || currentUserName || selectedUser || 'TVBH'}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-semibold">{row.fullName}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-semibold">{row.fullName}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] truncate max-w-[220px]" title={row.address}>{row.address}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-mono text-slate-900">{row.phone}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-mono text-slate-600">{row.phone2 || row.phone}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap font-mono text-slate-600">{row.phone}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap">{mObj?.tenKx || row.model}</td>
-                                            <td className="px-1.5 border-r border-[#F8B4BD] whitespace-nowrap">{cObj?.tenMau || row.color}</td>
-                                            <td className="px-1.5 whitespace-nowrap truncate max-w-[150px]" title={sObj?.tenPtlh}>{sObj?.tenPtlh || 'Khách vãng lai'}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
+                        <table className="crm-lead-table">
+                            <thead><tr>
+                                <th><input type="checkbox" aria-label="Chọn tất cả khách hàng hợp lệ" disabled={!counts.valid} checked={counts.valid > 0 && leadRows.filter(r => r.isValidPhone && !r.duplicateInfo && !r.isImported).every(r => r.isSelected)} onChange={event => { const checked = event.target.checked; setLeadRows(prev => prev.map(r => ({ ...r, isSelected: checked && r.isValidPhone && !r.duplicateInfo && !r.isImported }))); }} /></th>
+                                <th>Khách hàng</th><th>Điện thoại</th><th>Dòng xe / màu</th><th>Ngày tiếp cận</th><th>Nguồn tiếp cận</th><th>Kiểm tra dữ liệu</th><th>Mã khách hàng</th>
+                            </tr></thead>
+                            <tbody>{cyberFilteredRows.map((row, idx) => {
+                                const model = metadata?.models.find(m => m.maKx === row.model)?.tenKx || row.model;
+                                const color = metadata?.colors?.find(c => c.maMau === row.color)?.tenMau || row.color;
+                                const source = metadata?.sources.find(s => s.maPtlh === row.source)?.tenPtlh || row.source;
+                                const state = row.isImported ? 'imported' : !row.isValidPhone ? 'invalid' : row.duplicateInfo ? 'duplicate' : 'valid';
+                                const label = state === 'imported' ? 'Đã nhập' : state === 'invalid' ? 'SĐT không hợp lệ' : state === 'duplicate' ? 'Trùng thông tin' : 'Hợp lệ';
+                                return <tr key={row.id} aria-selected={idx === cyberSelectedRowIdx} onClick={() => setCyberSelectedRowIdx(idx)}>
+                                    <td><input type="checkbox" aria-label={'Chọn khách hàng ' + row.fullName} checked={!!row.isSelected && !row.isImported} disabled={row.isImported || !row.isValidPhone} onClick={event => event.stopPropagation()} onChange={event => handleRowChange(row.id, 'isSelected', event.target.checked)} /></td>
+                                    <td><strong>{row.fullName || 'Chưa có tên'}</strong><small title={row.address}>{row.address || 'Chưa có địa chỉ'}</small>{row.note && <small title={row.note}>{row.note}</small>}</td>
+                                    <td className="crm-mono">{row.phone || 'Chưa có SĐT'}{row.phone2 && row.phone2 !== row.phone && <small>{row.phone2}</small>}</td>
+                                    <td>{model || 'Chưa chọn xe'}<small>{color || 'Chưa chọn màu'}</small></td>
+                                    <td className="crm-mono">{row.createdDate ? row.createdDate.split('-').reverse().join('/') : '—'}<small>{row.createdTime}</small></td>
+                                    <td>{source || 'Chưa chọn nguồn'}</td>
+                                    <td><span className="crm-validation-status" data-state={state}>{label}</span>{row.duplicateInfo && !row.isImported && <small title={row.duplicateInfo.tenKh + " · " + row.duplicateInfo.userName}>{row.duplicateInfo.tenKh} · {row.duplicateInfo.idKh}</small>}</td>
+                                    <td className="crm-mono">{row.cyberId || 'Chưa nhập'}</td>
+                                </tr>;
+                            })}</tbody>
                         </table>
                     )}
                 </div>
 
-                {/* CyberSoft Status & Execution Bar */}
-                <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-3 py-1 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs select-none shrink-0">
+                {/* Final batch import action */}
+                <div className="crm-execution-bar">
                     <div className="flex items-center gap-3 text-[11px] text-slate-700 flex-wrap">
                         <span className="font-bold">Tổng số: <strong>{counts.total}</strong> khách hàng</span>
                         <span>•</span>
@@ -2153,6 +1940,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <span className="crm-submit-hint">{!selectedUser ? "Chọn TVBH nhận danh sách" : isCheckingDuplicates ? "Đang kiểm tra dữ liệu…" : !counts.selected ? "Chọn khách hàng để nhập" : ""}</span>
                         {counts.imported > 0 && (
                             <button
                                 type="button"
@@ -2165,21 +1953,22 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                         )}
                         <button
                             type="button"
-                            onClick={handleImport}
-                            disabled={counts.selected === 0 || isImporting || !selectedUser}
+                            ref={paymentTriggerRef} aria-haspopup="dialog" aria-expanded={showPaymentModal} aria-controls={showPaymentModal ? "crm-payment-sheet" : undefined} onClick={handleImport}
+                            disabled={counts.selected === 0 || isImporting || isCheckingDuplicates || !selectedUser}
                             className="px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-bold rounded text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
                             <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-qrcode'}`}></i>
                             <span>
                                 {isImporting
                                     ? 'Đang import...'
-                                    : `Quét QR & Import ${counts.selected} Khách`}
+                                    : `Quét QR & Nhập ${counts.selected} khách`}
                             </span>
                         </button>
                     </div>
                 </div>
             </div>
 
+            </main>
             </>
             )}
 
@@ -2326,33 +2115,10 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
             )}
 
             {/* Modal: Thanh Toán & Quét Mã VietQR (Dịch Vụ Nhập Liệu Hàng Loạt) */}
-            {showPaymentModal && (
-                <div className="fixed inset-0 z-[1200] flex items-start justify-center p-2.5 sm:p-5 overflow-y-auto">
-                    {/* Backdrop mờ sương chuẩn iOS */}
-                    <div 
-                        className="fixed inset-0 bg-[#14273e]/25 backdrop-blur-md transition-opacity cursor-pointer"
-                        style={{ animation: 'iosBackdropIn 0.25s ease-out both' }}
-                        onClick={() => setShowPaymentModal(false)}
-                    ></div>
-                    <div 
-                        className="relative w-full max-w-[430px] bg-[#f8fafd] border border-white/90 shadow-[0_24px_70px_-15px_rgba(20,39,62,0.22)] rounded-3xl overflow-hidden z-10 flex flex-col my-1 sm:my-3"
-                        style={{ animation: 'iosTopSheetIn 0.34s cubic-bezier(0.16, 1, 0.3, 1) both' }}
-                    >
-                        <style>{`
-                            @keyframes iosTopSheetIn {
-                                from { transform: translateY(-100%); opacity: 0.4; }
-                                to { transform: translateY(0); opacity: 1; }
-                            }
-                            @keyframes iosBackdropIn {
-                                from { opacity: 0; }
-                                to { opacity: 1; }
-                            }
-                        `}</style>
-
-                        {/* Top Grip Handle */}
-                        <div className="flex justify-center pt-2.5 pb-1 shrink-0"><span className="w-10 h-1 bg-[#cdd7e5] rounded-full"></span></div>
+            {showPaymentModal && createPortal(
+                <div id="crm-payment-sheet" ref={paymentSheetRef} role="dialog" aria-label="Quét QR và nhập khách hàng" tabIndex={-1} className="crm-payment-sheet" style={paymentSheetStyle}>
                         {/* Top Section - Alert & Amount */}
-                        <div className="px-5 pt-2 pb-3 flex items-center justify-between border-b border-[#e8edf5] bg-[#fcfdff] shrink-0">
+                        <div className="crm-payment-header">
                             
                                 <div className="flex items-center gap-3">
                                     <div className="w-[33px] h-[33px] rounded-[10px] bg-[#eaf1fb] text-[#5782ba] flex items-center justify-center shrink-0 shadow-2xs">
@@ -2368,7 +2134,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => setShowPaymentModal(false)}
+                                    onClick={() => { setShowPaymentModal(false); paymentTriggerRef.current?.focus({ preventScroll: true }); }}
                                     className="w-7 h-7 rounded-full bg-[#eaf0f7] hover:bg-[#dfe8f3] text-[#8899af] hover:text-[#4d6585] flex items-center justify-center transition-colors cursor-pointer shrink-0"
                                 >
                                     <i className="fas fa-times text-[11px]"></i>
@@ -2376,7 +2142,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             </div>
 
                         {/* Sheet Body */}
-                        <div className="p-4 flex flex-col gap-3">
+                        <div className="crm-payment-body">
                             <div className="flex items-center justify-between bg-white rounded-2xl p-3 border border-[#e8edf5] shadow-2xs">
                                 <div>
                                     <p className="text-[#8194ad] text-[9.5px] font-bold uppercase tracking-wider mb-0.5">TVBH Nhờ Nhập Hộ</p>
@@ -2421,9 +2187,9 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-stretch">
+                                    <div className="crm-payment-bank-grid">
                                         {/* QR Code */}
-                                        <div className="p-2 bg-white rounded-2xl shadow-2xs border border-[#e8edf5] w-[148px] h-[148px] shrink-0 relative group flex items-center justify-center">
+                                        <div className="crm-payment-qr">
                                             <img 
                                                 src={`https://img.vietqr.io/image/${(bankInfo?.bankId || 'ICB')}-${(bankInfo?.accountNo || '108874916326')}-qr_only.png?amount=${calculateLeadPrice(counts.selected)}&accountName=${encodeURIComponent(bankInfo?.accountName || 'PHAM THANH NHAN')}&addInfo=${encodeURIComponent(`SEVQR NAPCRM ${selectedUser.replace(/^02\./i, '').toUpperCase()} ${counts.selected}K`)}`}
                                                 alt="VietQR"
@@ -2497,7 +2263,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
                                         <button
                                             type="button"
-                                            onClick={() => setShowPaymentModal(false)}
+                                            onClick={() => { setShowPaymentModal(false); paymentTriggerRef.current?.focus({ preventScroll: true }); }}
                                             className="w-full py-2 bg-[#eaf0f7] hover:bg-[#dfe8f3] text-[#4d6585] font-bold rounded-xl text-xs transition-colors cursor-pointer active:scale-98"
                                         >
                                             Đóng / Để sau
@@ -2506,389 +2272,412 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                 </>
                             )}
                         </div>
-                    </div>
-                </div>
+                </div>, document.body
             )}
 
-            {/* Modal: Danh Sách TVBH Đã Sử Dụng Dịch Vụ Nạp KHTN (Chỉ Admin) */}
+            {/* Sheet: Danh Sách TVBH Đã Sử Dụng Dịch Vụ Nạp KHTN (Chỉ Admin) */}
             {isAdmin && showAdminTvbhModal && (
-                <div className="fixed inset-0 z-[1240] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
-                    <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
-                        {/* Modal Header */}
-                        <div className="px-5 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-xs text-white flex items-center justify-center text-lg shadow-inner">
-                                    <i className="fas fa-users-gear"></i>
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-base font-bold tracking-tight text-white">
-                                            Danh Sách TVBH Đã Sử Dụng Dịch Vụ
-                                        </h3>
-                                        <span className="text-[10px] font-bold bg-amber-400 text-slate-900 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                            Chỉ Admin
-                                        </span>
+                <>
+                    <div 
+                        className="crm-admin-sheet-backdrop" 
+                        onClick={() => { setShowAdminTvbhModal(false); setSelectedTvbhDetail(null); }} 
+                    />
+                    <div 
+                        className="crm-admin-sheet" 
+                        role="dialog" 
+                        aria-modal="true" 
+                        aria-label="Danh Sách TVBH Đã Sử Dụng Dịch Vụ"
+                    >
+                        {selectedTvbhDetail ? (
+                            /* Sub-view: Chi Tiết Lịch Sử Nạp KHTN của TVBH được chọn */
+                            <>
+                                {/* Header */}
+                                <div className="px-6 py-4 bg-white border-b border-[#e9edf2] flex items-center justify-between shrink-0">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedTvbhDetail(null)}
+                                            className="w-7 h-7 rounded-md bg-[#f0f3f8] hover:bg-[#e2e8f0] text-[#435570] flex items-center justify-center text-xs cursor-pointer transition-colors shrink-0"
+                                            title="Quay lại danh sách TVBH"
+                                        >
+                                            <i className="fas fa-arrow-left text-[11px]"></i>
+                                        </button>
+                                        <div className="w-8 h-8 rounded-full bg-[#edf3fc] text-[#2466cd] flex items-center justify-center font-semibold text-xs shrink-0 border border-[#d1e0f5]">
+                                            {getInitials(selectedTvbhDetail.fullName)}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="text-sm font-semibold tracking-tight text-[#17263b] flex items-center gap-2 truncate">
+                                                <span className="truncate">{selectedTvbhDetail.fullName}</span>
+                                                <span className="text-[10px] font-mono font-medium bg-[#f0f3f8] text-[#53627a] px-1.5 py-0.5 rounded border border-[#dee4ec] shrink-0">
+                                                    {selectedTvbhDetail.userCyber}
+                                                </span>
+                                            </h3>
+                                            <p className="text-[11px] text-[#7b879a] mt-0.5 truncate">
+                                                Lịch sử giao dịch & nạp KHTN qua SePay
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-blue-100/80 mt-0.5">
-                                        Thống kê tư vấn bán hàng nạp KHTN qua hệ thống SePay
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setShowAdminTvbhModal(false)}
-                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm cursor-pointer transition-colors"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        {/* Summary KPI Cards */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 bg-slate-50 border-b border-slate-200 shrink-0">
-                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 block truncate">TVBH Đã Nạp</span>
-                                <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="text-lg font-black text-slate-800 font-mono">{overallStats.totalTvbhUsed}</span>
-                                    <span className="text-[11px] text-slate-500">nhân sự</span>
-                                </div>
-                            </div>
-                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-emerald-600 block truncate">Tổng Khách Nạp</span>
-                                <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="text-lg font-black text-emerald-700 font-mono">{overallStats.totalLeadsImported}</span>
-                                    <span className="text-[11px] text-emerald-600">khách</span>
-                                </div>
-                            </div>
-                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-blue-600 block truncate">Tổng Phí Đã Thu</span>
-                                <div className="flex items-baseline gap-1 mt-0.5">
-                                    <span className="text-lg font-black text-blue-700 font-mono">{overallStats.totalRevenue.toLocaleString('vi-VN')}</span>
-                                    <span className="text-[11px] text-blue-600 font-bold">₫</span>
-                                </div>
-                            </div>
-                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-purple-600 block truncate">Giao Dịch Gần Nhất</span>
-                                <div className="mt-0.5 truncate">
-                                    {overallStats.latestOrder ? (
-                                        <span className="text-xs font-bold text-slate-800 font-mono">
-                                            {formatRelativeTime(overallStats.latestOrder.paid_at || overallStats.latestOrder.created_at)}
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-slate-400 italic">Chưa có</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Search & Actions Bar */}
-                        <div className="px-4 py-2.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
-                            <div className="relative flex-1 min-w-[200px] max-w-sm">
-                                <i className="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                <input
-                                    type="text"
-                                    value={ordersSearchQuery}
-                                    onChange={e => setOrdersSearchQuery(e.target.value)}
-                                    placeholder="Tìm theo tên hoặc mã TVBH..."
-                                    className="w-full h-8 pl-8 pr-7 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white text-slate-800"
-                                />
-                                {ordersSearchQuery && (
                                     <button
                                         type="button"
-                                        onClick={() => setOrdersSearchQuery('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                        onClick={() => { setSelectedTvbhDetail(null); setShowAdminTvbhModal(false); }}
+                                        className="w-7 h-7 rounded-md bg-transparent hover:bg-[#f0f3f8] text-[#8c98aa] hover:text-[#26364b] flex items-center justify-center text-xs cursor-pointer transition-colors shrink-0 ml-3"
+                                        title="Đóng sheet"
                                     >
                                         ✕
                                     </button>
-                                )}
-                            </div>
+                                </div>
 
-                            <div className="flex items-center gap-1.5 ml-auto">
-                                <button
-                                    type="button"
-                                    onClick={handleExportTvbhUsageExcel}
-                                    className="h-8 px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
-                                    title="Xuất danh sách TVBH ra tệp Excel"
-                                >
-                                    <i className="fas fa-file-excel text-emerald-600"></i>
-                                    <span>Xuất Excel</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => loadOrders()}
-                                    disabled={isLoadingOrders}
-                                    className="h-8 px-2.5 bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs flex items-center gap-1 cursor-pointer transition-all"
-                                    title="Làm mới dữ liệu từ hệ thống"
-                                >
-                                    <i className={`fas fa-rotate-right ${isLoadingOrders ? 'animate-spin text-blue-600' : ''}`}></i>
-                                    <span className="hidden sm:inline">Làm mới</span>
-                                </button>
-                            </div>
-                        </div>
+                                {/* Quick Stats in Sheet */}
+                                <div className="grid grid-cols-3 gap-3 p-4 bg-[#fbfbfc] border-b border-[#e9edf2] shrink-0 text-center">
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block">Số Lượt Nạp Thành Công</span>
+                                        <span className="text-base font-semibold text-[#17263b] font-mono mt-1 block">{selectedTvbhDetail.completedOrdersCount}</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block">Tổng Khách Đã Nạp</span>
+                                        <span className="text-base font-semibold text-[#17263b] font-mono mt-1 block">{selectedTvbhDetail.totalLeads} khách</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block">Tổng Tiền Dịch Vụ</span>
+                                        <span className="text-base font-semibold text-[#17263b] font-mono mt-1 block">{selectedTvbhDetail.totalSpent.toLocaleString('vi-VN')}₫</span>
+                                    </div>
+                                </div>
 
-                        {/* TVBH List Table */}
-                        <div className="flex-1 min-h-0 overflow-auto p-4 bg-slate-50/50">
-                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
-                                <table className="w-full text-left border-collapse text-xs">
-                                    <thead className="sticky top-0 bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px] tracking-wider">
-                                        <tr>
-                                            <th className="py-2.5 px-3 w-10 text-center">STT</th>
-                                            <th className="py-2.5 px-3">Tư Vấn Bán Hàng</th>
-                                            <th className="py-2.5 px-3 text-center">Lượt Nạp</th>
-                                            <th className="py-2.5 px-3 text-center">Tổng Khách</th>
-                                            <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
-                                            <th className="py-2.5 px-3">Gần Nhất</th>
-                                            <th className="py-2.5 px-3 text-center w-36">Thao Tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                                        {isLoadingOrders && ordersList.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={7} className="py-12 text-center text-slate-400">
-                                                    <i className="fas fa-spinner fa-spin text-2xl text-blue-500 mb-2 block"></i>
-                                                    Đang tải dữ liệu...
-                                                </td>
-                                            </tr>
-                                        ) : filteredTvbhList.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={7} className="py-12 text-center text-slate-400">
-                                                    <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2 text-xl">
-                                                        <i className="fas fa-users-slash"></i>
-                                                    </div>
-                                                    <p className="font-semibold text-slate-600">Chưa có TVBH nào phù hợp</p>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">Dữ liệu sẽ hiển thị khi có TVBH hoàn tất thanh toán nạp KHTN</p>
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            filteredTvbhList.map((tvbh, idx) => {
-                                                const avatarGrad = getAvatarGradient(tvbh.fullName);
-                                                const initials = getInitials(tvbh.fullName);
-                                                return (
-                                                    <tr key={tvbh.tenTvbh} className="hover:bg-blue-50/40 transition-colors">
-                                                        <td className="py-2.5 px-3 text-center font-mono text-slate-400 text-[11px]">
-                                                            {idx + 1}
-                                                        </td>
-                                                        <td className="py-2.5 px-3">
-                                                            <div className="flex items-center gap-2.5">
-                                                                <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${avatarGrad} text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0`}>
-                                                                    {initials}
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                                                                        <span>{tvbh.fullName}</span>
-                                                                        {selectedUser.replace(/^02\./i, '').toUpperCase() === tvbh.tenTvbh && (
-                                                                            <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded font-semibold">Đang chọn</span>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                                                                        {tvbh.userCyber}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-center">
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                                                                {tvbh.completedOrdersCount} lượt
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-center">
-                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                                {tvbh.totalLeads} khách
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 text-xs">
-                                                            {tvbh.totalSpent.toLocaleString('vi-VN')}₫
-                                                        </td>
-                                                        <td className="py-2.5 px-3">
-                                                            {tvbh.lastUsedAt ? (
-                                                                <div>
-                                                                    <span className="font-semibold text-slate-800 block text-xs">
-                                                                        {formatRelativeTime(tvbh.lastUsedAt)}
+                                {/* Orders Table */}
+                                <div className="flex-1 min-h-0 overflow-auto p-4 bg-[#fff]">
+                                    <div className="border border-[#e9edf2] rounded-lg overflow-hidden">
+                                        <table className="w-full text-left border-collapse text-[11px]">
+                                            <thead className="sticky top-0 bg-[#f7f9fc] text-[#7b879a] border-b border-[#e9edf2] font-semibold uppercase text-[9.5px] tracking-[0.25px]">
+                                                <tr>
+                                                    <th className="py-2.5 px-3 text-center w-10">STT</th>
+                                                    <th className="py-2.5 px-3">Thời Gian</th>
+                                                    <th className="py-2.5 px-3 text-center">Số Lượng</th>
+                                                    <th className="py-2.5 px-3 text-right">Số Tiền</th>
+                                                    <th className="py-2.5 px-3">Mã GD SePay</th>
+                                                    <th className="py-2.5 px-3 text-center">Trạng Thái</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-[#edf0f5]">
+                                                {selectedTvbhDetail.orders.map((ord, idx) => {
+                                                    const isPaid = ord.status === 'completed' || ord.status === 'paid';
+                                                    return (
+                                                        <tr key={ord.id} className="hover:bg-[#f7faff] transition-colors">
+                                                            <td className="py-2.5 px-3 text-center font-mono text-[#8b97a9] text-[11px]">{idx + 1}</td>
+                                                            <td className="py-2.5 px-3 font-mono text-[#435570] text-[11px]">
+                                                                {new Date(ord.paid_at || ord.created_at).toLocaleString('vi-VN')}
+                                                            </td>
+                                                            <td className="py-2.5 px-3 text-center">
+                                                                <span className="inline-block px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#edf3fc] text-[#225aa6]">
+                                                                    {ord.lead_count} khách
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-[#17263b]">
+                                                                {Number(ord.amount || 0).toLocaleString('vi-VN')}₫
+                                                            </td>
+                                                            <td className="py-2.5 px-3">
+                                                                {ord.sepay_transaction_id ? (
+                                                                    <span className="font-mono text-[10.5px] text-[#435570] bg-[#f0f3f8] px-1.5 py-0.5 rounded border border-[#dee4ec]">
+                                                                        {ord.sepay_transaction_id}
                                                                     </span>
-                                                                    <span className="text-[10px] text-slate-400 font-mono">
-                                                                        {new Date(tvbh.lastUsedAt).toLocaleDateString('vi-VN')}
+                                                                ) : (
+                                                                    <span className="text-[#8b97a9] text-[10.5px] italic">Chưa có</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="py-2.5 px-3 text-center">
+                                                                {isPaid ? (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#eef8f2] text-[#337454] border border-[#d2edd9]">
+                                                                        <i className="fas fa-check text-[8px]"></i> {ord.status === 'completed' ? 'Hoàn tất' : 'Đã thanh toán'}
                                                                     </span>
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-slate-400 italic text-[11px]">—</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setSelectedTvbhDetail(tvbh)}
-                                                                    className="px-2 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded text-[11px] font-semibold cursor-pointer transition-colors"
-                                                                    title="Xem chi tiết lịch sử từng lần nạp"
-                                                                >
-                                                                    <i className="fas fa-list-ul mr-1"></i> Chi tiết
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleSelectTvbhForImport(tvbh.userCyber)}
-                                                                    className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[11px] font-bold cursor-pointer transition-colors"
-                                                                    title="Chọn TVBH này và nạp KHTN thay"
-                                                                >
-                                                                    <i className="fas fa-file-import mr-0.5"></i> Nạp
-                                                                </button>
-                                                            </div>
+                                                                ) : (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-[#fffbeb] text-[#ad802c] border border-[#fed7aa]">
+                                                                        <i className="fas fa-clock text-[8px]"></i> Đang chờ
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="px-5 py-3 bg-[#fbfbfc] border-t border-[#e9edf2] flex items-center justify-between shrink-0">
+                                    <span className="text-[10.5px] text-[#7b879a]">
+                                        Tổng cộng: <strong>{selectedTvbhDetail.orders.length}</strong> lần thao tác
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedTvbhDetail(null)}
+                                            className="h-8 px-3.5 bg-white hover:bg-[#f0f3f8] text-[#435570] border border-[#dee4ec] rounded-md text-[11px] font-medium cursor-pointer transition-colors flex items-center gap-1.5"
+                                        >
+                                            <i className="fas fa-arrow-left text-[10px]"></i>
+                                            <span>Quay lại</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const u = selectedTvbhDetail.userCyber;
+                                                setSelectedTvbhDetail(null);
+                                                handleSelectTvbhForImport(u);
+                                            }}
+                                            className="h-8 px-4 bg-[#163e72] hover:bg-[#22518c] text-white rounded-md text-[11px] font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
+                                        >
+                                            <i className="fas fa-file-import text-[10.5px]"></i>
+                                            <span>Nạp KHTN Cho TVBH Này</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            /* Main View: Danh Sách Tổng Hợp TVBH */
+                            <>
+                                {/* Header */}
+                                <div className="px-6 py-4 bg-white border-b border-[#e9edf2] flex items-center justify-between shrink-0">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-lg bg-[#f0f4f9] text-[#2466cd] flex items-center justify-center text-xs font-semibold shrink-0">
+                                            <i className="fas fa-users-gear text-[13px]"></i>
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-sm font-semibold tracking-tight text-[#17263b] truncate">
+                                                    Danh Sách TVBH Đã Sử Dụng Dịch Vụ
+                                                </h3>
+                                                <span className="text-[10px] font-medium bg-[#edf3fc] text-[#2466cd] px-2 py-0.5 rounded border border-[#d1e0f5] shrink-0">
+                                                    Chỉ Admin
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-[#7b879a] mt-0.5 truncate">
+                                                Thống kê tư vấn bán hàng nạp KHTN qua hệ thống SePay
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAdminTvbhModal(false)}
+                                        className="w-7 h-7 rounded-md bg-transparent hover:bg-[#f0f3f8] text-[#8c98aa] hover:text-[#26364b] flex items-center justify-center text-xs cursor-pointer transition-colors shrink-0 ml-3"
+                                        title="Đóng sheet"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {/* Summary KPI Cards */}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#fbfbfc] border-b border-[#e9edf2] shrink-0">
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block tracking-wide truncate">TVBH Đã Nạp</span>
+                                        <div className="flex items-baseline gap-1 mt-1">
+                                            <span className="text-lg font-semibold text-[#17263b] font-mono">{overallStats.totalTvbhUsed}</span>
+                                            <span className="text-[11px] text-[#8b97a9]">nhân sự</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block tracking-wide truncate">Tổng Khách Nạp</span>
+                                        <div className="flex items-baseline gap-1 mt-1">
+                                            <span className="text-lg font-semibold text-[#17263b] font-mono">{overallStats.totalLeadsImported}</span>
+                                            <span className="text-[11px] text-[#8b97a9]">khách</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block tracking-wide truncate">Tổng Phí Đã Thu</span>
+                                        <div className="flex items-baseline gap-1 mt-1">
+                                            <span className="text-lg font-semibold text-[#17263b] font-mono">{overallStats.totalRevenue.toLocaleString('vi-VN')}</span>
+                                            <span className="text-[11px] text-[#8b97a9] font-medium">₫</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-lg border border-[#e2e8f0]">
+                                        <span className="text-[10px] uppercase font-semibold text-[#7b879a] block tracking-wide truncate">Giao Dịch Gần Nhất</span>
+                                        <div className="mt-1 truncate">
+                                            {overallStats.latestOrder ? (
+                                                <span className="text-xs font-semibold text-[#17263b] font-mono">
+                                                    {formatRelativeTime(overallStats.latestOrder.paid_at || overallStats.latestOrder.created_at)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs text-[#8b97a9] italic">Chưa có</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Search & Actions Bar */}
+                                <div className="px-5 py-3 bg-white border-b border-[#e9edf2] flex flex-wrap items-center justify-between gap-2.5 shrink-0">
+                                    <div className="relative flex-1 min-w-[200px] max-w-sm">
+                                        <i className="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8c98aa] text-[11px]"></i>
+                                        <input
+                                            type="text"
+                                            value={ordersSearchQuery}
+                                            onChange={e => setOrdersSearchQuery(e.target.value)}
+                                            placeholder="Tìm theo tên hoặc mã TVBH…"
+                                            className="w-full h-8 pl-8 pr-7 text-[11px] bg-[#fbfbfc] hover:bg-white focus:bg-white border border-[#dee4ec] focus:border-[#698fc5] rounded-md outline-none text-[#26364b] placeholder-[#8c98aa] transition-colors"
+                                        />
+                                        {ordersSearchQuery && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setOrdersSearchQuery('')}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8c98aa] hover:text-[#26364b] text-[10px] cursor-pointer"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2 ml-auto">
+                                        <button
+                                            type="button"
+                                            onClick={handleExportTvbhUsageExcel}
+                                            className="h-8 px-2.5 bg-white hover:bg-[#f4f7fb] text-[#435570] border border-[#e1e7ef] rounded-md text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                                            title="Xuất danh sách TVBH ra tệp Excel"
+                                        >
+                                            <i className="fas fa-file-excel text-[#337454] text-[11px]"></i>
+                                            <span>Xuất Excel</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => loadOrders()}
+                                            disabled={isLoadingOrders}
+                                            className="h-8 px-2.5 bg-white hover:bg-[#f4f7fb] text-[#435570] border border-[#e1e7ef] rounded-md text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors disabled:opacity-45"
+                                            title="Làm mới dữ liệu từ hệ thống"
+                                        >
+                                            <i className={`fas fa-rotate-right text-[10.5px] ${isLoadingOrders ? 'animate-spin text-[#2466cd]' : 'text-[#8191a7]'}`}></i>
+                                            <span className="hidden sm:inline">Làm mới</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* TVBH List Table */}
+                                <div className="flex-1 min-h-0 overflow-auto p-4 bg-[#fff]">
+                                    <div className="border border-[#e9edf2] rounded-lg overflow-hidden">
+                                        <table className="w-full text-left border-collapse text-[11px]">
+                                            <thead className="sticky top-0 bg-[#f7f9fc] text-[#7b879a] border-b border-[#e9edf2] font-semibold uppercase text-[9.5px] tracking-[0.25px]">
+                                                <tr>
+                                                    <th className="py-2.5 px-3 w-10 text-center">STT</th>
+                                                    <th className="py-2.5 px-3">Tư Vấn Bán Hàng</th>
+                                                    <th className="py-2.5 px-3 text-center">Lượt Nạp</th>
+                                                    <th className="py-2.5 px-3 text-center">Tổng Khách</th>
+                                                    <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
+                                                    <th className="py-2.5 px-3">Gần Nhất</th>
+                                                    <th className="py-2.5 px-3 text-center w-32">Thao Tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-[#edf0f5] text-[#35465f]">
+                                                {isLoadingOrders && ordersList.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={7} className="py-12 text-center text-[#8b97a9]">
+                                                            <i className="fas fa-spinner fa-spin text-lg text-[#2466cd] mb-2 block"></i>
+                                                            Đang tải dữ liệu...
                                                         </td>
                                                     </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-                            <span className="text-xs text-slate-500">
-                                Hiển thị <strong>{filteredTvbhList.length}</strong> TVBH đã dùng dịch vụ
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => setShowAdminTvbhModal(false)}
-                                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
-                            >
-                                Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal Chi Tiết Lịch Sử Nạp KHTN của TVBH */}
-            {isAdmin && selectedTvbhDetail && (
-                <div className="fixed inset-0 z-[1250] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-up">
-                        {/* Modal Header */}
-                        <div className="px-5 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs text-white flex items-center justify-center font-bold text-sm shadow-inner">
-                                    {getInitials(selectedTvbhDetail.fullName)}
+                                                ) : filteredTvbhList.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={7} className="py-12 text-center text-[#8b97a9]">
+                                                            <div className="w-10 h-10 rounded-full bg-[#f8fafc] border border-[#e9edf2] text-[#8b97a9] flex items-center justify-center mx-auto mb-2 text-base">
+                                                                <i className="fas fa-users-slash"></i>
+                                                            </div>
+                                                            <p className="font-semibold text-[#435570]">Chưa có TVBH nào phù hợp</p>
+                                                            <p className="text-[10.5px] text-[#8b97a9] mt-0.5">Dữ liệu sẽ hiển thị khi có TVBH hoàn tất thanh toán nạp KHTN</p>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    filteredTvbhList.map((tvbh, idx) => {
+                                                        const initials = getInitials(tvbh.fullName);
+                                                        return (
+                                                            <tr key={tvbh.tenTvbh} className="hover:bg-[#f7faff] transition-colors">
+                                                                <td className="py-2.5 px-3 text-center font-mono text-[#8b97a9] text-[11px]">
+                                                                    {idx + 1}
+                                                                </td>
+                                                                <td className="py-2.5 px-3">
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <div className="w-7 h-7 rounded-full bg-[#edf3fc] text-[#2466cd] border border-[#d1e0f5] flex items-center justify-center font-semibold text-[10px] shrink-0">
+                                                                            {initials}
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <div className="font-semibold text-[#17263b] text-xs flex items-center gap-1.5 truncate">
+                                                                                <span className="truncate">{tvbh.fullName}</span>
+                                                                                {selectedUser.replace(/^02\./i, '').toUpperCase() === tvbh.tenTvbh && (
+                                                                                    <span className="text-[9px] bg-[#edf3fc] text-[#225aa6] px-1.5 py-0.2 rounded font-medium shrink-0">Đang chọn</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="text-[10.5px] text-[#7b879a] font-mono mt-0.5">
+                                                                                {tvbh.userCyber}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="py-2.5 px-3 text-center">
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-medium bg-[#f0f3f8] text-[#53627a]">
+                                                                        {tvbh.completedOrdersCount} lượt
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-2.5 px-3 text-center">
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-semibold bg-[#edf3fc] text-[#225aa6]">
+                                                                        {tvbh.totalLeads} khách
+                                                                    </span>
+                                                                </td>
+                                                                <td className="py-2.5 px-3 text-right font-mono font-semibold text-[#17263b] text-[11px]">
+                                                                    {tvbh.totalSpent.toLocaleString('vi-VN')}₫
+                                                                </td>
+                                                                <td className="py-2.5 px-3">
+                                                                    {tvbh.lastUsedAt ? (
+                                                                        <div>
+                                                                            <span className="font-medium text-[#26364b] block text-[11px]">
+                                                                                {formatRelativeTime(tvbh.lastUsedAt)}
+                                                                            </span>
+                                                                            <span className="text-[9.5px] text-[#8b97a9] font-mono">
+                                                                                {new Date(tvbh.lastUsedAt).toLocaleDateString('vi-VN')}
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span className="text-[#8b97a9] italic text-[11px]">—</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="py-2.5 px-3 text-center">
+                                                                    <div className="flex items-center justify-center gap-1.5">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setSelectedTvbhDetail(tvbh)}
+                                                                            className="h-7 px-2 bg-white hover:bg-[#f0f3f8] text-[#435570] hover:text-[#225aa6] border border-[#dee4ec] rounded text-[10.5px] font-medium cursor-pointer transition-colors"
+                                                                            title="Xem chi tiết lịch sử từng lần nạp"
+                                                                        >
+                                                                            <i className="fas fa-list-ul mr-1 text-[9.5px]"></i> Chi tiết
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleSelectTvbhForImport(tvbh.userCyber)}
+                                                                            className="h-7 px-2.5 bg-[#163e72] hover:bg-[#22518c] text-white border border-[#163e72] rounded text-[10.5px] font-medium cursor-pointer transition-colors"
+                                                                            title="Chọn TVBH này và nạp KHTN thay"
+                                                                        >
+                                                                            <i className="fas fa-file-import mr-0.5 text-[9.5px]"></i> Nạp
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
-                                        <span>{selectedTvbhDetail.fullName}</span>
-                                        <span className="text-[10px] font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded">
-                                            {selectedTvbhDetail.userCyber}
-                                        </span>
-                                    </h3>
-                                    <p className="text-xs text-blue-100/80 mt-0.5">
-                                        Chi tiết lịch sử sử dụng dịch vụ nạp KHTN
-                                    </p>
+
+                                {/* Footer */}
+                                <div className="px-5 py-3 bg-[#fbfbfc] border-t border-[#e9edf2] flex items-center justify-between shrink-0">
+                                    <span className="text-[10.5px] text-[#7b879a]">
+                                        Hiển thị <strong>{filteredTvbhList.length}</strong> TVBH đã dùng dịch vụ
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAdminTvbhModal(false)}
+                                        className="h-8 px-4 bg-white hover:bg-[#f0f3f8] text-[#435570] border border-[#dee4ec] rounded-md text-[11px] font-medium cursor-pointer transition-colors"
+                                    >
+                                        Đóng
+                                    </button>
                                 </div>
-                            </div>
-                            <button
-                                onClick={() => setSelectedTvbhDetail(null)}
-                                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs cursor-pointer transition-colors"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        {/* Quick Stats in Modal */}
-                        <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 border-b border-slate-200 shrink-0 text-center">
-                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Số Lượt Nạp Thành Công</span>
-                                <span className="text-base font-black text-slate-800 font-mono">{selectedTvbhDetail.completedOrdersCount}</span>
-                            </div>
-                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-emerald-600 block">Tổng Khách Đã Nạp</span>
-                                <span className="text-base font-black text-emerald-700 font-mono">{selectedTvbhDetail.totalLeads} khách</span>
-                            </div>
-                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                                <span className="text-[10px] uppercase font-bold text-blue-600 block">Tổng Tiền Dịch Vụ</span>
-                                <span className="text-base font-black text-blue-700 font-mono">{selectedTvbhDetail.totalSpent.toLocaleString('vi-VN')}₫</span>
-                            </div>
-                        </div>
-
-                        {/* Orders Table */}
-                        <div className="flex-1 min-h-0 overflow-auto p-4">
-                            <table className="w-full text-left border-collapse text-xs">
-                                <thead className="sticky top-0 bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px]">
-                                    <tr>
-                                        <th className="py-2 px-2.5 text-center w-10">STT</th>
-                                        <th className="py-2 px-2.5">Thời Gian</th>
-                                        <th className="py-2 px-2.5 text-center">Số Lượng</th>
-                                        <th className="py-2 px-2.5 text-right">Số Tiền</th>
-                                        <th className="py-2 px-2.5">Mã GD SePay</th>
-                                        <th className="py-2 px-2.5 text-center">Trạng Thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {selectedTvbhDetail.orders.map((ord, idx) => {
-                                        const isPaid = ord.status === 'completed' || ord.status === 'paid';
-                                        return (
-                                            <tr key={ord.id} className="hover:bg-slate-50">
-                                                <td className="py-2.5 px-2.5 text-center font-mono text-slate-400 text-[11px]">{idx + 1}</td>
-                                                <td className="py-2.5 px-2.5 font-mono text-slate-700 text-[11px]">
-                                                    {new Date(ord.paid_at || ord.created_at).toLocaleString('vi-VN')}
-                                                </td>
-                                                <td className="py-2.5 px-2.5 text-center">
-                                                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                        {ord.lead_count} khách
-                                                    </span>
-                                                </td>
-                                                <td className="py-2.5 px-2.5 text-right font-mono font-bold text-slate-800">
-                                                    {Number(ord.amount || 0).toLocaleString('vi-VN')}₫
-                                                </td>
-                                                <td className="py-2.5 px-2.5">
-                                                    {ord.sepay_transaction_id ? (
-                                                        <span className="font-mono text-[11px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                                                            {ord.sepay_transaction_id}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-slate-400 text-[11px] italic">Không có</span>
-                                                    )}
-                                                </td>
-                                                <td className="py-2.5 px-2.5 text-center">
-                                                    {isPaid ? (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                                            <i className="fas fa-check text-[9px]"></i> {ord.status === 'completed' ? 'Hoàn tất' : 'Đã thanh toán'}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                                                            <i className="fas fa-clock text-[9px]"></i> Đang chờ
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
-                            <span className="text-[11px] text-slate-500">
-                                Tổng cộng: <strong>{selectedTvbhDetail.orders.length}</strong> lần thao tác
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedTvbhDetail(null)}
-                                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
-                                >
-                                    Đóng
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const u = selectedTvbhDetail.userCyber;
-                                        setSelectedTvbhDetail(null);
-                                        handleSelectTvbhForImport(u);
-                                    }}
-                                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
-                                >
-                                    <i className="fas fa-file-import"></i>
-                                    <span>Nạp KHTN Cho TVBH Này</span>
-                                </button>
-                            </div>
-                        </div>
+                            </>
+                        )}
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

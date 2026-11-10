@@ -253,6 +253,174 @@ def transition_order_to_pending_signature(order_number, dms_info):
     else:
         return False, f"HTTP {res.status_code}: {res.text}"
 
+def get_ndp_config():
+    """Lấy token xác thực tài khoản NDP Dealer Portal (VHKD_01 - Hoàng Thị Hạnh) từ file config hoặc .env."""
+    paths = [
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ndp_token_config.json"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scratch", "ndp_token.json")
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    tok = data.get("accessToken")
+                    if tok:
+                        return {
+                            "token": tok,
+                            "capability": data.get("activeCapability") or "capability:vhkd_01",
+                            "market": data.get("market") or "VN",
+                            "dealerCode": (data.get("dealerCodes") or ["N31913"])[0]
+                        }
+            except Exception:
+                pass
+    env_token = os.environ.get("NDP_ACCESS_TOKEN")
+    if env_token:
+        return {
+            "token": env_token,
+            "capability": os.environ.get("NDP_CAPABILITY") or "capability:vhkd_01",
+            "market": "VN",
+            "dealerCode": os.environ.get("NDP_DEALER_CODE") or "N31913"
+        }
+    return None
+
+def check_ndp_live_api(order_no, vin):
+    """
+    Tra cứu thời gian thực trực tiếp trên API NDP Dealer Portal (dealer-portal-api.vinfast.com)
+    sử dụng Token tài khoản VHKD_01 (Hoàng Thị Hạnh - capability:vhkd_01).
+    """
+    ndp_cfg = get_ndp_config()
+    if not ndp_cfg or not ndp_cfg.get("token"):
+        return {"match": False, "reason": "Chưa nạp token NDP"}
+
+    clean_vin = (vin or "").strip().upper()
+    clean_no_nodash = (order_no or "").replace("-", "").strip().upper()
+    headers = {
+        "Authorization": f"Bearer {ndp_cfg['token']}",
+        "x-active-capability": ndp_cfg.get("capability", "capability:vhkd_01"),
+        "x-market": ndp_cfg.get("market", "VN"),
+        "Accept": "application/json"
+    }
+
+    # 0. Tra cứu trực tiếp theo Mã đơn hàng (/api/orders?search=...) - Chuẩn bảng Quản lý đơn hàng NDP
+    if clean_no_nodash:
+        try:
+            url_ord = f"https://dealer-portal-api.vinfast.com/api/orders?search={clean_no_nodash}"
+            r_ord = requests.get(url_ord, headers=headers, timeout=12)
+            if r_ord.status_code == 200:
+                ord_data = r_ord.json()
+                items = ord_data.get("data") if isinstance(ord_data, dict) and "data" in ord_data else (ord_data if isinstance(ord_data, list) else [])
+                for o_it in items:
+                    o_num = str(o_it.get("orderNumber") or o_it.get("so_don_hang") or o_it.get("id") or "").replace("-", "").strip().upper()
+                    if o_num == clean_no_nodash or len(items) == 1:
+                        o_st = str(o_it.get("status") or o_it.get("orderStatus") or (o_it.get("orderInfo") and o_it.get("orderInfo", {}).get("status")) or "").strip().upper()
+                        if any(x in o_st for x in ["ĐÃ XUẤT HÓA ĐƠN", "INVOICED", "ĐÃ GIAO XE", "DELIVERED"]):
+                            return {
+                                "match": True,
+                                "ari_no": o_it.get("orderNumber") or (order_no or "").strip(),
+                                "invoice_date": o_it.get("updatedAt") or datetime.now().strftime("%Y-%m-%dT%H:%M:%S+07:00"),
+                                "source": "NDP Live API (VHKD_01)"
+                            }
+                        else:
+                            return {
+                                "match": False,
+                                "reason": f"Đơn hàng {(order_no or '').strip()} trên NDP Live trạng thái là '{o_st}' (chưa xuất HĐ)"
+                            }
+        except Exception as e:
+            print(f"   [NDP Live API Warning] Lỗi tra order: {e}", file=sys.stderr)
+
+    # 1. Tra cứu theo VIN qua /api/assets?search={VIN}
+    if clean_vin and len(clean_vin) >= 10:
+        try:
+            url_asset = f"https://dealer-portal-api.vinfast.com/api/assets?search={clean_vin}"
+            r = requests.get(url_asset, headers=headers, timeout=12)
+            if r.status_code == 200:
+                data = r.json()
+                items = data.get("data") if isinstance(data, dict) and "data" in data else (data if isinstance(data, list) else [])
+                for it in items:
+                    it_vin = (it.get("vin") or it.get("vinNumber") or it.get("chassisNumber") or "").strip().upper()
+                    if it_vin == clean_vin:
+                        ast = str(it.get("assetStatus") or it.get("status") or "").strip().upper()
+                        is_sold = bool(it.get("isSold")) or ast in ["INVOICED", "SOLD", "DELIVERED"]
+                        if is_sold:
+                            return {
+                                "match": True,
+                                "ari_no": it.get("id") or it.get("stockNumber") or "NDP-ASSET-INVOICED",
+                                "invoice_date": datetime.now().strftime("%Y-%m-%dT%H:%M:%S+07:00"),
+                                "source": "NDP Live API (VHKD_01)"
+                            }
+                        else:
+                            return {
+                                "match": False,
+                                "reason": f"Xe {clean_vin} trên NDP Live trạng thái là '{ast}' (chưa xuất HĐ)"
+                            }
+            elif r.status_code == 401:
+                return {"match": False, "reason": "Token NDP hết hạn (HTTP 401). Cần refresh lại token."}
+        except Exception as e:
+            print(f"   [NDP Live API Warning] Lỗi tra asset: {e}", file=sys.stderr)
+
+    return {"match": False}
+
+def check_ndp_mirror(order_no, vin):
+    """
+    Kiểm tra đối soát trên hệ thống NDP Dealer Portal Mới (donhanghienhuu & thongtinxe) qua Supabase.
+    Nếu xe/đơn đã được xuất HĐ (INVOICED / Đã xuất hóa đơn / DELIVERED) -> Khớp ngay lập tức 0.00s!
+    """
+    clean_vin = (vin or "").strip().upper()
+    clean_no = (order_no or "").strip()
+    clean_no_nodash = clean_no.replace("-", "").strip().upper()
+    
+    # 1. Tra cứu donhanghienhuu
+    try:
+        params = []
+        if clean_vin:
+            params.append(f"so_vin.eq.{clean_vin}")
+        if clean_no:
+            params.append(f"don_hang_goc.eq.{clean_no}")
+            params.append(f"so_don_hang_ban.eq.{clean_no}")
+        if clean_no_nodash and clean_no_nodash != clean_no:
+            params.append(f"so_don_hang_ban.eq.{clean_no_nodash}")
+            params.append(f"don_hang_goc.eq.{clean_no_nodash}")
+        if params:
+            url_dms = f"{SUPABASE_URL}/rest/v1/donhanghienhuu?select=so_don_hang_ban,don_hang_goc,so_vin,trang_thai,ngay_xuat_hoa_don&or=({','.join(params)})"
+            r = requests.get(url_dms, headers=SUPABASE_HEADERS, timeout=8)
+            if r.status_code == 200:
+                rows = r.json()
+                for row in rows:
+                    st = (row.get("trang_thai") or "").strip().upper()
+                    inv_d = row.get("ngay_xuat_hoa_don")
+                    if any(x in st for x in ["ĐÃ XUẤT HÓA ĐƠN", "INVOICED", "ĐÃ GIAO XE", "DELIVERED", "PGI"]) or inv_d:
+                        return {
+                            "match": True,
+                            "ari_no": row.get("so_don_hang_ban") or "NDP-INVOICED",
+                            "invoice_date": inv_d or datetime.now().strftime("%Y-%m-%dT%H:%M:%S+07:00"),
+                            "source": "NDP Dealer Portal"
+                        }
+    except Exception as e:
+        print(f"   [NDP Check Warning] Lỗi kiểm tra donhanghienhuu: {e}", file=sys.stderr)
+        
+    # 2. Tra cứu thongtinxe
+    if clean_vin:
+        try:
+            url_car = f"{SUPABASE_URL}/rest/v1/thongtinxe?select=vin,asset_status,is_sold,so_may,ma_dms&vin=eq.{clean_vin}"
+            r = requests.get(url_car, headers=SUPABASE_HEADERS, timeout=8)
+            if r.status_code == 200:
+                cars = r.json()
+                if cars:
+                    car = cars[0]
+                    ast = (car.get("asset_status") or "").strip().upper()
+                    if ast in ["INVOICED", "SOLD", "DELIVERED"] or car.get("is_sold"):
+                        return {
+                            "match": True,
+                            "ari_no": "NDP-ASSET-INVOICED",
+                            "invoice_date": datetime.now().strftime("%Y-%m-%dT%H:%M:%S+07:00"),
+                            "source": "NDP Dealer Portal"
+                        }
+        except Exception as e:
+            print(f"   [NDP Check Warning] Lỗi kiểm tra thongtinxe: {e}", file=sys.stderr)
+
+    return {"match": False}
+
 def process_single_order(order, idx, total):
     order_no = (order.get("so_don_hang") or "").strip()
     cust_name = (order.get("ten_khach_hang") or "N/A").strip()
@@ -267,11 +435,93 @@ def process_single_order(order, idx, total):
         dealer_prefix = order_no[:6].strip().upper()
         
     print(f"[{idx}/{total}] Đang tra cứu: {order_no} ({dealer_prefix} | {order_status}) | KH: {cust_name}...")
+
+    # BƯỚC 1: Ưu tiên đối soát Live trực tiếp trên API NDP Dealer Portal (Token VHKD_01)
+    ndp_live = check_ndp_live_api(order_no, vin)
+    if ndp_live.get("match"):
+        ari_no = ndp_live.get("ari_no")
+        inv_date = ndp_live.get("invoice_date")
+        print(f"   🎉 {order_no}: KHỚP TRỰC TIẾP TRÊN NDP LIVE API (VHKD_01)! (Mã: {ari_no})")
+        if order_status == "Đã phê duyệt":
+            ok, msg = transition_order_to_pending_signature(order_no, ndp_live)
+            if ok:
+                print(f"   ✅ {order_no}: ĐÃ CHUYỂN SANG 'Chờ ký hóa đơn' (Nguồn: NDP Live)")
+                return True, {
+                    "order_no": order_no,
+                    "customer": cust_name,
+                    "vin": vin,
+                    "showroom": dealer_prefix,
+                    "ari_no": ari_no,
+                    "invoice_date": inv_date,
+                    "source": "NDP Live API"
+                }
+            else:
+                return False, {
+                    "order_no": order_no,
+                    "customer": cust_name,
+                    "vin": vin,
+                    "showroom": dealer_prefix,
+                    "current_status": order_status,
+                    "reason": f"Lỗi cập nhật Supabase: {msg}"
+                }
+        else:
+            return True, {
+                "order_no": order_no,
+                "customer": cust_name,
+                "vin": vin,
+                "showroom": dealer_prefix,
+                "ari_no": ari_no,
+                "invoice_date": inv_date,
+                "current_status": order_status,
+                "note": f"Khớp trên NDP Live ({order_status})"
+            }
+
+    # BƯỚC 2: Đối soát trên NDP Mirror (donhanghienhuu & thongtinxe)
+    ndp_result = check_ndp_mirror(order_no, vin)
+    if ndp_result.get("match"):
+        ari_no = ndp_result.get("ari_no")
+        inv_date = ndp_result.get("invoice_date")
+        print(f"   🎉 {order_no}: KHỚP TRÊN HỆ THỐNG MỚI NDP DEALER PORTAL! (Mã: {ari_no})")
+        if order_status == "Đã phê duyệt":
+            ok, msg = transition_order_to_pending_signature(order_no, ndp_result)
+            if ok:
+                print(f"   ✅ {order_no}: ĐÃ CHUYỂN SANG 'Chờ ký hóa đơn' (Nguồn: NDP Portal)")
+                return True, {
+                    "order_no": order_no,
+                    "customer": cust_name,
+                    "vin": vin,
+                    "showroom": dealer_prefix,
+                    "ari_no": ari_no,
+                    "invoice_date": inv_date,
+                    "source": "NDP Dealer Portal"
+                }
+            else:
+                return False, {
+                    "order_no": order_no,
+                    "customer": cust_name,
+                    "vin": vin,
+                    "showroom": dealer_prefix,
+                    "current_status": order_status,
+                    "reason": f"Lỗi cập nhật Supabase: {msg}"
+                }
+        else:
+            return True, {
+                "order_no": order_no,
+                "customer": cust_name,
+                "vin": vin,
+                "showroom": dealer_prefix,
+                "ari_no": ari_no,
+                "invoice_date": inv_date,
+                "current_status": order_status,
+                "note": f"Khớp trên NDP Dealer Portal ({order_status})"
+            }
+
+    # BƯỚC 2: Fallback tra cứu trên hệ thống DMS cũ (Dynamics 365 OData) nếu có cookie
     order_headers = get_dms_headers(preferred_dealer=dealer_prefix)
     
     if not order_headers:
-        reason_msg = f"Chưa có Cookie DMS cho showroom [{dealer_prefix}]. Vui lòng dùng Extension đồng bộ."
-        print(f"   ⚠️ {order_no}: {reason_msg}")
+        reason_msg = f"Chưa có thông tin xuất HĐ trên NDP và thiếu Cookie DMS cho showroom [{dealer_prefix}]. Vui lòng dùng Bookmarklet NDP Live."
+        print(f"   ⏳ {order_no}: {reason_msg}")
         return False, {
             "order_no": order_no,
             "customer": cust_name,
