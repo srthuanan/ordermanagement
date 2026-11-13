@@ -1,5 +1,15 @@
 # Agent Rules
 
+- **Quy Chuẩn Phân Quyền Báo Cáo TPKD (TPKD Department-Level Data Isolation Protocol)**:
+  1. **Nguyên Tắc Bất Di Bất Dịch**: Tài khoản Trưởng Phòng Kinh Doanh (TPKD) CHỈ ĐƯỢC PHÉP xem và theo dõi số liệu, danh sách TVBH, hàng đợi xe chờ và đơn hàng thuộc Phòng kinh doanh của chính mình. Tuyệt đối không để lộ hoặc hiển thị bất kỳ số liệu hay đơn hàng nào của các TVBH thuộc phòng khác hoặc toàn showroom cho tài khoản TPKD.
+  2. **Quyền Hạn Toàn Showroom**: Chỉ duy nhất tài khoản Admin / Ban Giám Đốc mới có quyền chọn xem toàn bộ showroom hoặc chuyển đổi qua lại giữa các phòng ban.
+  3. **Cơ Chế Khóa Cứng (Strict Lock & Fallback Guard)**: Khi người dùng là TPKD, hệ thống tự động khóa chặt phạm vi theo dõi vào phòng kinh doanh tương ứng dựa trên `teamData` và `allUsers`. Nếu chưa xác định được phòng, hệ thống chỉ fallback hiển thị dữ liệu của chính cá nhân TPKD đó, tuyệt đối không lấy dữ liệu của phòng khác.
+
+- **Quy Chuẩn Thứ Tự Ưu Tiên Hàng Đợi Ghép Xe (FIFO Waiting Queue Priority by Deposit Date/Time)**:
+  1. **Nguyên Tắc Bất Di Bất Dịch**: Thứ tự ưu tiên ghép xe và xếp hàng chờ xe của khách hàng / TVBH BẮT BUỘC PHẢI DỰA TRÊN THỜI GIAN ĐẶT CỌC (`order['Ngày cọc']` / `ngay_coc` / UNC đặt cọc). Đơn hàng có thời gian cọc sớm nhất (cũ nhất) sẽ đứng ở vị trí #1 hàng đợi.
+  2. **Cơ Chế Fallback**: Chỉ khi đơn hàng hoàn toàn không có thông tin `Ngày cọc`, hệ thống mới fallback sử dụng `Thời gian nhập` làm mốc thời gian đối soát.
+  3. **Minh Bạch Thông Tin Hàng Đợi**: Sheet Thống kê xe chờ ghép và mọi chức năng gợi ý/đối soát ghép xe phải hiển thị rõ ràng ngày cọc, vị trí xếp hàng (`#1`, `#2`, `#3`...) và đánh dấu rõ ràng đơn hàng của TVBH đang đăng nhập.
+
 - **Quy Chuẩn Tra DMS & NDP Tự Động Chờ Ký (NDP & DMS Auto-Transition to Pending Signature Protocol)**:
   1. **Bản Chất Nghiệp Vụ**: Đối với các đơn hàng ở thư mục/trạng thái *Đã phê duyệt* (xe đã ghép VIN, hồ sơ XHĐ đã được Admin/Kế toán duyệt), tính năng tra cứu tự động đối soát xem xe/đơn đã được VinFast xuất HĐ / PGI / ARI hay chưa để tự động chuyển đơn sang *Chờ ký hóa đơn*.
   2. **Tài Khoản & Quyền Hạn Xác Thực NDP Mới (NDP Auth Credentials)**:

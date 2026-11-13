@@ -8,6 +8,7 @@ import { getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils
 import './invoice-workspace.css';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { supabase } from '../../services/supabaseClient';
+import { useStorageDocumentStatus } from '../../hooks/useStorageDocumentStatus';
 import MarqueeText from '../ui/MarqueeText';
 import CyberAssignVehicleModal from '../modals/CyberAssignVehicleModal';
 import {
@@ -137,8 +138,13 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
     const orderNo = (selectedOrder?.['Số đơn hàng'] || (selectedOrder as any)?.so_don_hang || '').trim();
     const liveVtlx = vtlxLiveUrls[orderNo] || {};
-    const effectiveCamKetUrl = (selectedOrder?.url_cam_ket_vtlx || (selectedOrder as any)?.['url_cam_ket_vtlx'] || liveVtlx.camKetUrl || '').trim();
-    const effectiveCavetUrl = (selectedOrder?.url_cavet_vtlx || (selectedOrder as any)?.['url_cavet_vtlx'] || liveVtlx.cavetUrl || '').trim();
+    const effectiveCamKetUrl = (liveVtlx.camKetUrl ?? selectedOrder?.url_cam_ket_vtlx ?? '').trim();
+    const effectiveCavetUrl = (liveVtlx.cavetUrl ?? selectedOrder?.url_cavet_vtlx ?? '').trim();
+    const selectedDocUrl = activeDocKey === 'url_cam_ket_vtlx' ? effectiveCamKetUrl
+        : activeDocKey === 'url_cavet_vtlx' ? effectiveCavetUrl
+        : activeDocKey === 'CyberDKBH' ? cyberDkbhUrls[orderNo] || ''
+        : String(selectedOrder?.[activeDocKey] || '');
+    const documentStatus = useStorageDocumentStatus(selectedDocUrl);
     const effectiveHangXe = (selectedOrder?.vtlx_hang_xe || selectedOrder?.['VTLX Hãng xe'] || (selectedOrder as any)?.vtlx_hang_xe || liveVtlx.hangXe || '').trim();
     const effectiveSoKhung = (selectedOrder?.vtlx_so_khung || selectedOrder?.['VTLX Số khung'] || (selectedOrder as any)?.vtlx_so_khung || liveVtlx.soKhung || '').trim();
     const isVtlxPolicyOrder = useMemo(() => {
@@ -148,13 +154,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     }, [selectedOrder, effectiveCamKetUrl, effectiveCavetUrl, effectiveSoKhung]);
 
     useEffect(() => {
-        if (!orderNo || vtlxLiveUrls[orderNo]) return;
-        supabase.from('yeucauxhd')
+        if (!orderNo) return;
+        let active = true;
+        const refresh = () => supabase.from('yeucauxhd')
             .select('url_cam_ket_vtlx, url_cavet_vtlx, vtlx_hang_xe, vtlx_so_khung')
             .eq('so_don_hang', orderNo)
             .maybeSingle()
             .then(({ data }) => {
-                if (data) {
+                if (active && data) {
                     setVtlxLiveUrls(prev => ({
                         ...prev,
                         [orderNo]: {
@@ -166,7 +173,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                     }));
                 }
             }, () => {});
-    }, [orderNo]);
+        refresh();
+        const channel = supabase.channel(`invoice-documents-${orderNo}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'yeucauxhd', filter: `so_don_hang=eq.${orderNo}` }, refresh)
+            .subscribe();
+        return () => { active = false; void supabase.removeChannel(channel); };
+    }, [orderNo, selectedOrder]);
 
     const loadCyberDkbhPdf = async (order?: Order | null, force = false) => {
         const targetOrder = order || selectedOrder;
@@ -1589,6 +1601,15 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 }
 
                                                 if (currentDocUrl) {
+                                                    if (documentStatus.loading || documentStatus.error) {
+                                                        return (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center text-slate-600" role="status">
+                                                                <i className={`fas ${documentStatus.loading ? 'fa-spinner fa-spin' : 'fa-file-circle-exclamation'} text-2xl`} />
+                                                                <p className="text-sm max-w-md">{documentStatus.loading ? 'Đang kiểm tra hồ sơ…' : documentStatus.error}</p>
+                                                                {documentStatus.error && <button type="button" onClick={documentStatus.retry} className="px-4 py-2 rounded-lg bg-white border text-sm">Thử lại</button>}
+                                                            </div>
+                                                        );
+                                                    }
                                                     const rawUrl = currentDocUrl;
                                                     const lowerUrl = rawUrl.toLowerCase();
                                                     const fileId = getDriveFileId(rawUrl);

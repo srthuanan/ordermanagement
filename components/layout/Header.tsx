@@ -54,6 +54,7 @@ interface HeaderProps {
     reputation?: { score: number; total: number; matched: number };
     onOpenBacklogReport?: () => void;
     isReferenceAccount?: boolean;
+    teamData?: Record<string, string[]>;
 }
 
 
@@ -104,7 +105,8 @@ const Header: React.FC<HeaderProps> = ({
     requestNotificationPermission,
     reputation,
     onOpenBacklogReport: _onOpenBacklogReport,
-    isReferenceAccount
+    isReferenceAccount,
+    teamData
 }) => {
 
 
@@ -183,12 +185,27 @@ const Header: React.FC<HeaderProps> = ({
 
 
 
+    const isTpkd = React.useMemo(() => {
+        if (isCurrentUserAdmin) return true;
+        if (userRole === 'Trưởng Phòng Kinh Doanh' || userRole?.toLowerCase().includes('trưởng') || userRole?.toLowerCase().includes('tpkd')) return true;
+        if (teamData) {
+            const normUser = (currentUser || '').toLowerCase().trim();
+            const normName = (currentUserName || '').toLowerCase().trim();
+            return Object.keys(teamData).some(leader => {
+                const normLeader = leader.toLowerCase().trim();
+                return normLeader === normUser || normLeader === normName;
+            });
+        }
+        return false;
+    }, [isCurrentUserAdmin, userRole, teamData, currentUser, currentUserName]);
+
     const navItems = [
         { id: 'orders', label: 'Đơn Hàng', icon: 'fa-car-side' },
         ...(isStockEnabled || isCurrentUserAdmin ? [{ id: 'stock', label: 'Kho xe', icon: 'fa-warehouse' }] : []),
         ...(isCrmEnabled || isCurrentUserAdmin ? [{ id: 'crm', label: 'KHTN', icon: 'fa-user-plus' }] : []),
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },
+        ...(isTpkd ? [{ id: 'tpkd', label: 'Báo Cáo PKD', icon: 'fa-chart-pie' }] : []),
     ];
 
     if (isCurrentUserAdmin) {

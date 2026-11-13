@@ -43,6 +43,7 @@ interface UseOrderFilteringProps {
 export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeView, orderView }: UseOrderFilteringProps) => {
     const [filters, setFilters] = useState({
         keyword: '',
+        tvbh: [] as string[],
         carModel: [] as string[],
         version: [] as string[],
         status: [] as string[],
@@ -163,6 +164,7 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         setVisibleCount(batchSize);
         setFilters({
             keyword: '',
+            tvbh: [],
             carModel: [],
             version: [],
             status: [],
@@ -192,6 +194,9 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
                     ? index.nfc.includes(normalizedKeywordNFC)
                     : index.normalized.includes(normalizedKeyword);
             });
+        }
+        if (filters.tvbh && filters.tvbh.length > 0) {
+            filteredOrders = filteredOrders.filter(order => filters.tvbh.includes(order["Tên tư vấn bán hàng"]));
         }
         if (filters.carModel.length > 0) {
             filteredOrders = filteredOrders.filter(order => filters.carModel.includes(order["Dòng xe"]));

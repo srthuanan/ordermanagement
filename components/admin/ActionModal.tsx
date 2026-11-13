@@ -117,7 +117,6 @@ const ActionModal: React.FC<ActionModalProps> = ({
                             e.stopPropagation();
                             onClose();
                         }}
-                        onPointerDown={(e) => e.stopPropagation()}
                         disabled={isSubmitting}
                         className="am-close-btn"
                         aria-label="Đóng"
@@ -185,7 +184,6 @@ const ActionModal: React.FC<ActionModalProps> = ({
                             e.stopPropagation();
                             onClose();
                         }}
-                        onPointerDown={(e) => e.stopPropagation()}
                         disabled={isSubmitting}
                         className="am-btn-cancel"
                     >

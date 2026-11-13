@@ -43,6 +43,7 @@
 .request-sheet-pastezone:hover, .request-sheet-pastezone:focus { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
 
 .anchored-cyber-sheet.is-action-sheet { width: min(390px, calc(100vw - 16px)); max-height: min(520px, calc(100dvh - 24px)); }
+.anchored-cyber-sheet.is-stats-sheet { width: min(480px, calc(100vw - 16px)); max-height: min(600px, calc(100dvh - 24px)); }
 .am-anchored-panel { display: flex; flex-direction: column; background: #ffffff; color: #17263b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 .am-header { padding: 12px 14px 10px; border-bottom: 1px solid #e9edf2; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; background: #fbfcfe; }
 .am-title { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.2; color: #17263b; }

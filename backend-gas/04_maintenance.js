@@ -26,7 +26,7 @@ function _processSingleOrder(serviceKey, soDonHang, parentFolder = null) {
   const cleanOrderNo = String(soDonHang).trim();
   
   try {
-    const searchUrl = `${SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=ilike.${cleanOrderNo}&select=*`;
+    const searchUrl = `${SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.${encodeURIComponent(cleanOrderNo)}&select=*`;
     const res = UrlFetchApp.fetch(searchUrl, { headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey } });
     const records = JSON.parse(res.getContentText());
     
@@ -97,21 +97,24 @@ function _processSingleOrder(serviceKey, soDonHang, parentFolder = null) {
     const orderFolder = _getOrCreateSubFolder(folderDay, customerName);
 
     const linkMapping = {};
-    const filesToDelete = [];
+    const migrationErrors = [];
     
     // Bản đồ đặt tên file Tiếng Việt
     const namingMap = {
       'url_hop_dong': 'HĐMB',
       'url_de_nghi_xhd': 'ĐNXHĐ',
-      'url_hoa_don_da_xuat': 'HÓA ĐƠN'
+      'url_hoa_don_da_xuat': 'HÓA ĐƠN',
+      'url_cam_ket_vtlx': 'CAM KẾT VTLX',
+      'url_cavet_vtlx': 'CÀ VẸT XE CŨ'
     };
     
     Object.keys(namingMap).forEach(key => {
       const url = String(record[key] || "");
-      if (url && (url.includes("supabase.co") || url.includes("/storage/v1/object/")) && !url.includes("drive.google.com")) {
+      if (url.startsWith(`${SUPABASE_URL}/storage/v1/object/`)) {
         try {
           const prefix = namingMap[key];
-          const finalFileName = `${prefix} - ${customerName} - ${cleanOrderNo}.pdf`;
+          const sourceName = decodeURIComponent(url.split('?')[0].split('/').pop());
+          const finalFileName = `${prefix} - ${customerName} - ${cleanOrderNo} - ${sourceName}`;
           
           // Bổ sung apikey để đảm bảo quyền truy cập file private (nếu có)
           const response = UrlFetchApp.fetch(url, { 
@@ -125,20 +128,18 @@ function _processSingleOrder(serviceKey, soDonHang, parentFolder = null) {
           if (response.getResponseCode() === 200) {
             const blob = response.getBlob().setName(finalFileName);
             
-            const oldFiles = orderFolder.getFilesByName(finalFileName);
-            while (oldFiles.hasNext()) {
-                const oldFile = oldFiles.next();
-                oldFile.setTrashed(true);
-            }
-
+            // Keep previous versions until a separate, reference-aware retention job is available.
             const file = orderFolder.createFile(blob);
-            try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+            if (file.getSize() !== blob.getBytes().length) throw new Error('Bản sao Drive không đủ dữ liệu');
             
             linkMapping[key] = `https://drive.google.com/file/d/${file.getId()}/preview`;
-            filesToDelete.push(url);
             logAction("Migration", `Đã migrate: ${finalFileName}`);
+          } else {
+            throw new Error(`Không đọc được tệp nguồn (HTTP ${response.getResponseCode()})`);
           }
         } catch (fErr) {
+          migrationErrors.push(key);
           logAction("Migration ERR", `Lỗi tải file ${key}: ${fErr.message}`);
         }
       }
@@ -146,68 +147,39 @@ function _processSingleOrder(serviceKey, soDonHang, parentFolder = null) {
 
     // 2. CẬP NHẬT DATABASE & DỌN DẸP
     if (Object.keys(linkMapping).length > 0) {
-      // a. Cập nhật record
-      UrlFetchApp.fetch(`${SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.${cleanOrderNo}`, {
-        method: "PATCH",
-        contentType: "application/json",
-        headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey },
-        payload: JSON.stringify(linkMapping),
-        muteHttpExceptions: true
+      // Compare source URLs so an archive cannot overwrite a concurrent supplement.
+      const guards = Object.keys(linkMapping).map(key => `${key}=eq.${encodeURIComponent(record[key])}`).join('&');
+      const updated = UrlFetchApp.fetch(`${SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.${encodeURIComponent(cleanOrderNo)}&${guards}`, {
+        method: "PATCH", contentType: "application/json",
+        headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey, "Prefer": "return=representation" },
+        payload: JSON.stringify(linkMapping), muteHttpExceptions: true
       });
-
-      // b. Cập nhật donhang
-      const dhMapping = {};
-      if (linkMapping['url_hop_dong']) dhMapping['link_hop_dong'] = linkMapping['url_hop_dong'];
-      if (linkMapping['url_de_nghi_xhd']) dhMapping['link_de_nghi_xhd'] = linkMapping['url_de_nghi_xhd'];
-      if (linkMapping['url_hoa_don_da_xuat']) dhMapping['link_hoa_don_da_xuat'] = linkMapping['url_hoa_don_da_xuat'];
-      
-      if (Object.keys(dhMapping).length > 0) {
-        UrlFetchApp.fetch(`${SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.${cleanOrderNo}`, {
-          method: "PATCH",
-          contentType: "application/json",
-          headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey },
-          payload: JSON.stringify(dhMapping),
-          muteHttpExceptions: true
-        });
+      if (updated.getResponseCode() !== 200 || JSON.parse(updated.getContentText()).length !== 1) {
+        throw new Error("Archive link update failed or source changed; all source files retained.");
       }
-      
-      logAction("Step 2: OK", `Đã đổi link Drive cho đơn ${cleanOrderNo}`);
-
-      // 3. CHIẾN DỊCH "HÚT BỤI" (Lấy danh sách và xóa toàn bộ folder trên Supabase)
-      try {
-        const bucket = "yeucauxhd-files";
-        const listUrl = `${SUPABASE_URL}/storage/v1/object/list/${bucket}`;
-        const listRes = UrlFetchApp.fetch(listUrl, {
-          method: "POST",
-          contentType: "application/json",
-          headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey },
-          payload: JSON.stringify({ prefix: `${cleanOrderNo}/`, limit: 100 })
+      const columnMap = {
+        url_hop_dong: 'link_hop_dong', url_de_nghi_xhd: 'link_de_nghi_xhd',
+        url_hoa_don_da_xuat: 'link_hoa_don_da_xuat',
+        url_cam_ket_vtlx: 'url_cam_ket_vtlx', url_cavet_vtlx: 'url_cavet_vtlx'
+      };
+      Object.keys(linkMapping).forEach(key => {
+        const column = columnMap[key];
+        const result = UrlFetchApp.fetch(`${SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.${encodeURIComponent(cleanOrderNo)}&${column}=eq.${encodeURIComponent(record[key])}`, {
+          method: "PATCH", contentType: "application/json",
+          headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey, "Prefer": "return=representation" },
+          payload: JSON.stringify({ [column]: linkMapping[key] }), muteHttpExceptions: true
         });
-
-        if (listRes.getResponseCode() === 200) {
-          const filesInFolder = JSON.parse(listRes.getContentText());
-          if (filesInFolder.length > 0) {
-            let deletedCount = 0;
-            filesInFolder.forEach(f => {
-               try {
-                 const filePath = `${cleanOrderNo}/${f.name}`;
-                 const deleteUrl = `${SUPABASE_URL}/storage/v1/object/${bucket}/${filePath}`;
-                 const delRes = UrlFetchApp.fetch(deleteUrl, {
-                   method: "DELETE",
-                   headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey },
-                   muteHttpExceptions: true
-                 });
-                 if (delRes.getResponseCode() === 200) deletedCount++;
-               } catch (e) {}
-            });
-            logAction("Storage Clean", `Đã dọn dẹp ${deletedCount}/${filesInFolder.length} file tại folder ${cleanOrderNo}/`);
-          }
+        if (result.getResponseCode() !== 200 || JSON.parse(result.getContentText()).length !== 1) {
+          migrationErrors.push(key);
+          logAction("Migration Sync Warning", `Cannot sync ${column} for ${cleanOrderNo}; source retained.`);
         }
-      } catch (cleanErr) {
-        logAction("Clean ERR", cleanErr.message);
-      }
+      });
+      // NEVER sweep the order folder: it can contain unmigrated files, concurrent
+      // uploads and files referenced by archived_orders or an open browser.
+      logAction("Archive", `Backed up ${Object.keys(linkMapping).length} files for ${cleanOrderNo}; sources retained.`);
     }
-    
+    if (migrationErrors.length) return { status: "ERROR", message: `Incomplete archive: ${migrationErrors.join(', ')}. Sources retained.` };
+
     return { status: "SUCCESS" };
   } catch (err) {
     logAction("FATAL ERROR", `Lỗi xử lý lưu trữ: ${err.message}`);

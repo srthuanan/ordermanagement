@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { toEmbeddableUrl, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
+import { useStorageDocumentStatus } from '../../hooks/useStorageDocumentStatus';
 
 interface FilePreviewModalProps {
     isOpen: boolean;
@@ -37,6 +38,7 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
     const [showPrintHint, setShowPrintHint] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [iframeFailed, setIframeFailed] = useState(false);
+    const documentStatus = useStorageDocumentStatus(isOpen ? fileUrl : '');
 
     useEffect(() => {
         setIframeFailed(false);
@@ -94,10 +96,16 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
                 onClick={() => setShowControls(prev => !prev)}
             >
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#202124] md:max-h-[88vh] md:max-w-6xl md:rounded-2xl md:border md:border-white/10 md:bg-[#1e1e1e] md:shadow-2xl">
-                    {isImg ? (
+                    {documentStatus.loading || documentStatus.error ? (
+                        <div className="p-6 text-center text-slate-200" role="status">
+                            <p>{documentStatus.loading ? 'Đang kiểm tra hồ sơ…' : documentStatus.error}</p>
+                            {documentStatus.error && <button type="button" onClick={event => { event.stopPropagation(); documentStatus.retry(); }} className="mt-4 rounded-lg border px-4 py-2">Thử lại</button>}
+                        </div>
+                    ) : isImg && !iframeFailed ? (
                         <img 
                             src={fileUrl} 
                             alt={fileLabel} 
+                            onError={() => setIframeFailed(true)}
                             className="h-full w-full object-contain p-1 shadow-xl md:max-h-full md:max-w-full md:p-4"
                         />
 

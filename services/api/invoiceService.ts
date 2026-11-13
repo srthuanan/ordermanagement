@@ -21,7 +21,7 @@ export const requestInvoice = async (
 ) => {
     const requestedBy = getStorageItem("currentConsultant") || "Unknown User";
     const now = new Date().toISOString();
-    const timestamp = Date.now();
+    const timestamp = `${Date.now()}_${crypto.randomUUID()}`;
 
     const gasVinToCheck = (xeXangVin || vtlxData?.soKhung || '').trim().toUpperCase();
     if (gasVinToCheck) {
@@ -71,7 +71,7 @@ export const requestInvoice = async (
                 console.warn('[requestInvoice] Nén hợp đồng fallback lỗi:', e);
             }
         }
-        cPath = `${orderNumber}/HDMB_${custSafe}_${timestamp}.${uploadContract.name.split('.').pop()}`;
+        cPath = `invoice-documents/${orderNumber}/HDMB_${custSafe}_${timestamp}.${uploadContract.name.split('.').pop()}`;
         contractUploadIdx = uploadTasks.length;
         uploadTasks.push(
             supabase.storage.from('yeucauxhd-files').upload(cPath, uploadContract, { upsert: true })
@@ -87,7 +87,7 @@ export const requestInvoice = async (
                 console.warn('[requestInvoice] Nén đề nghị XHĐ fallback lỗi:', e);
             }
         }
-        pPath = `${orderNumber}/DNXHD_${custSafe}_${timestamp}.${uploadProposal.name.split('.').pop()}`;
+        pPath = `invoice-documents/${orderNumber}/DNXHD_${custSafe}_${timestamp}.${uploadProposal.name.split('.').pop()}`;
         proposalUploadIdx = uploadTasks.length;
         uploadTasks.push(
             supabase.storage.from('yeucauxhd-files').upload(pPath, uploadProposal, { upsert: true })
@@ -109,7 +109,7 @@ export const requestInvoice = async (
                 console.warn('[requestInvoice] Nén Cam kết VTLX fallback lỗi:', e);
             }
         }
-        camKetPath = `${orderNumber}/CAMKET_VTLX_${custSafe}_${timestamp}.${uploadCamKet.name.split('.').pop()}`;
+        camKetPath = `invoice-documents/${orderNumber}/CAMKET_VTLX_${custSafe}_${timestamp}.${uploadCamKet.name.split('.').pop()}`;
         camKetUploadIdx = uploadTasks.length;
         uploadTasks.push(
             supabase.storage.from('yeucauxhd-files').upload(camKetPath, uploadCamKet, { upsert: true })
@@ -126,7 +126,7 @@ export const requestInvoice = async (
                 console.warn('[requestInvoice] Nén Cà vẹt xe cũ fallback lỗi:', e);
             }
         }
-        cavetPath = `${orderNumber}/CAVET_VTLX_${custSafe}_${timestamp}.${uploadCavet.name.split('.').pop()}`;
+        cavetPath = `invoice-documents/${orderNumber}/CAVET_VTLX_${custSafe}_${timestamp}.${uploadCavet.name.split('.').pop()}`;
         cavetUploadIdx = uploadTasks.length;
         uploadTasks.push(
             supabase.storage.from('yeucauxhd-files').upload(cavetPath, uploadCavet, { upsert: true })
@@ -250,7 +250,8 @@ export const requestInvoice = async (
     if (maHdCyber) {
         updateDonHangPayload.ma_hd_cyber = maHdCyber;
     }
-    await supabaseAdmin.from('donhang').update(updateDonHangPayload).eq('so_don_hang', orderNumber);
+    const { data: syncedOrder, error: syncOrderError } = await supabaseAdmin.from('donhang').update(updateDonHangPayload).eq('so_don_hang', orderNumber).select('so_don_hang').single();
+    if (syncOrderError || !syncedOrder) throw new Error('Yêu cầu XHĐ đã lưu nhưng chưa đồng bộ được đơn hàng. Vui lòng tải lại và kiểm tra hồ sơ.');
 
     await logAction('REQUEST_INVOICE', { orderNumber, ma_hd_cyber: maHdCyber, policy, commission, vpoint, aiNote, xeXangVin, xeXangHang, xeXangModel, vtlxData: vtlxData ? { hangXe: vtlxData.hangXe, soKhung: vtlxData.soKhung } : undefined }, orderNumber, 'order');
     if (vinLookup) await supabaseAdmin.from('khoxe').delete().eq('vin', vinLookup);
@@ -303,31 +304,29 @@ export const uploadSupplementaryFiles = async (
         }
     }
 ) => {
-    const { data: existing } = await supabase.from('yeucauxhd').select('url_hop_dong, url_de_nghi_xhd, ten_khach_hang, ghi_chu_admin, tvbh, url_cam_ket_vtlx, url_cavet_vtlx').eq('so_don_hang', orderNumber).single();
-    const extractPath = (url: string) => { const marker = '/yeucauxhd-files/'; const idx = url.indexOf(marker); return idx === -1 ? null : decodeURIComponent(url.substring(idx + marker.length)); };
+    const { data: existing, error: existingError } = await supabase.from('yeucauxhd').select('url_hop_dong, url_de_nghi_xhd, ten_khach_hang, ghi_chu_admin, tvbh, url_cam_ket_vtlx, url_cavet_vtlx').eq('so_don_hang', orderNumber).single();
+    if (existingError || !existing) throw new Error('Không đọc được hồ sơ hiện tại. Chưa thay đổi tệp nào.');
     const sanitize = (name: string) => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._\-]/g, '').toUpperCase();
     const custSafe = existing?.ten_khach_hang ? sanitize(existing.ten_khach_hang) : 'KH';
     
-    let urlH = '', urlP = '', urlCK = '', urlCV = '', ts = Date.now();
+    let urlH = '', urlP = '', urlCK = '', urlCV = '';
+    const ts = `${Date.now()}_${crypto.randomUUID()}`;
+    // Retain old sources on upload/database failures and for concurrent readers.
     const tasks: Promise<any>[] = [];
 
     if (contractFile) {
-        if (existing?.url_hop_dong) { const ep = extractPath(existing.url_hop_dong); if (ep) tasks.push(supabaseAdmin.storage.from('yeucauxhd-files').remove([ep]).catch(() => {})); }
-        tasks.push(uploadToSupabase(contractFile, `${orderNumber}/HDMB_${custSafe}_supp_${ts}.${contractFile.name.split('.').pop()}`).then(url => urlH = url));
+        tasks.push(uploadToSupabase(contractFile, `invoice-documents/${orderNumber}/HDMB_${custSafe}_supp_${ts}.${contractFile.name.split('.').pop()}`).then(url => urlH = url));
     }
     if (proposalFile) {
-        if (existing?.url_de_nghi_xhd) { const ep = extractPath(existing.url_de_nghi_xhd); if (ep) tasks.push(supabaseAdmin.storage.from('yeucauxhd-files').remove([ep]).catch(() => {})); }
-        tasks.push(uploadToSupabase(proposalFile, `${orderNumber}/DNXHD_${custSafe}_supp_${ts}.${proposalFile.name.split('.').pop()}`).then(url => urlP = url));
+        tasks.push(uploadToSupabase(proposalFile, `invoice-documents/${orderNumber}/DNXHD_${custSafe}_supp_${ts}.${proposalFile.name.split('.').pop()}`).then(url => urlP = url));
     }
     if (extraData?.vtlxData?.camKetFile) {
         const ckFile = extraData.vtlxData.camKetFile;
-        if (existing?.url_cam_ket_vtlx) { const ep = extractPath(existing.url_cam_ket_vtlx); if (ep) tasks.push(supabaseAdmin.storage.from('yeucauxhd-files').remove([ep]).catch(() => {})); }
-        tasks.push(uploadToSupabase(ckFile, `${orderNumber}/CAMKET_VTLX_${custSafe}_supp_${ts}.${ckFile.name.split('.').pop()}`).then(url => urlCK = url));
+        tasks.push(uploadToSupabase(ckFile, `invoice-documents/${orderNumber}/CAMKET_VTLX_${custSafe}_supp_${ts}.${ckFile.name.split('.').pop()}`).then(url => urlCK = url));
     }
     if (extraData?.vtlxData?.cavetFile) {
         const cvFile = extraData.vtlxData.cavetFile;
-        if (existing?.url_cavet_vtlx) { const ep = extractPath(existing.url_cavet_vtlx); if (ep) tasks.push(supabaseAdmin.storage.from('yeucauxhd-files').remove([ep]).catch(() => {})); }
-        tasks.push(uploadToSupabase(cvFile, `${orderNumber}/CAVET_VTLX_${custSafe}_supp_${ts}.${cvFile.name.split('.').pop()}`).then(url => urlCV = url));
+        tasks.push(uploadToSupabase(cvFile, `invoice-documents/${orderNumber}/CAVET_VTLX_${custSafe}_supp_${ts}.${cvFile.name.split('.').pop()}`).then(url => urlCV = url));
     }
 
     await Promise.all(tasks);
@@ -359,7 +358,8 @@ export const uploadSupplementaryFiles = async (
         const { data: currentOrder } = await supabaseAdmin.from('donhang').select('ket_qua').eq('so_don_hang', orderNumber).maybeSingle();
         const prevStatus = (currentOrder?.ket_qua || '').trim().toLowerCase().normalize('NFC');
 
-        await supabaseAdmin.from('yeucauxhd').update(up).eq('so_don_hang', orderNumber);
+        const { data: saved, error: saveError } = await supabaseAdmin.from('yeucauxhd').update(up).eq('so_don_hang', orderNumber).select('so_don_hang').single();
+        if (saveError || !saved) throw new Error('Không lưu được hồ sơ bổ sung. Tệp cũ vẫn được giữ; vui lòng thử lại.');
         
         // CHỈ đổi ket_qua sang 'Đã bổ sung' nếu trước đó đơn hàng đang ở trạng thái 'Yêu cầu bổ sung'
         // Nếu đơn hàng đang ở trạng thái khác (Đã xuất hóa đơn, Chờ ký, v.v.), GIỮ NGUYÊN trạng thái hiện tại!
@@ -386,7 +386,8 @@ export const uploadSupplementaryFiles = async (
         if (urlCV) updateDonHang.url_cavet_vtlx = urlCV;
 
         if (Object.keys(updateDonHang).length > 0) {
-            await supabaseAdmin.from('donhang').update(updateDonHang).eq('so_don_hang', orderNumber);
+            const { data: synced, error: syncError } = await supabaseAdmin.from('donhang').update(updateDonHang).eq('so_don_hang', orderNumber).select('so_don_hang').single();
+            if (syncError || !synced) throw new Error('Hồ sơ đã lưu nhưng chưa đồng bộ được đơn hàng. Vui lòng tải lại và kiểm tra trước khi gửi tiếp.');
         }
 
         const tvbhName = existing?.tvbh ? ` (${existing.tvbh})` : '';
@@ -427,7 +428,7 @@ export const uploadSupplementaryFiles = async (
             console.warn('Không thể đồng bộ trực tiếp file bổ sung về GS:', e);
         }
     }
-    return { status: 'SUCCESS', message: 'Đã bổ sung hồ sơ thành công (file cũ đã tự động xóa).' };
+    return { status: 'SUCCESS', message: 'Đã bổ sung hồ sơ thành công.' };
 };
 export const getXuathoadonData = async (): Promise<ApiResult> => {
     try {

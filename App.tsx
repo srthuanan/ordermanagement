@@ -9,6 +9,7 @@ const AdminView = React.lazy(() => import('./components/admin/AdminView'));
 const CrmLeadImporterView = React.lazy(() => import('./components/crm/CrmLeadImporterView'));
 const TestDriveForm = React.lazy(() => import('./components/testdrive/TestDriveForm'));
 const VirtualAssistant = React.lazy(() => import('./components/VirtualAssistant'));
+const TPKDReportView = React.lazy(() => import('./components/tpkd/TPKDReportView'));
 
 // Lazy Load Modals (loaded on demand)
 const CancelRequestModal = React.lazy(() => import('./components/modals/CancelRequestModal'));
@@ -168,6 +169,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     } = useOrderOperations({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData, isReferenceAccount });
 
     const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
+    const [statsAnchorEl, setStatsAnchorEl] = useState<HTMLElement | null>(null);
     const [mobileSubTab, setMobileSubTab] = useState<'list' | 'detail'>('list');
     const handleSelectOrderMobile = useCallback((order: Order) => {
         handleViewDetails(order);
@@ -872,16 +874,34 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
         const result = Object.entries(groupedByModel).map(([model, orders]) => {
             const total = orders.length;
-            const variantsCount: Record<string, number> = {};
+            const variantsOrders: Record<string, any[]> = {};
 
             orders.forEach(order => {
                 const phienBan = (order['Phiên bản'] && order['Phiên bản'] !== 'N/A') ? `${order['Phiên bản']} - ` : '';
                 const variantKey = `${phienBan}${order['Ngoại thất'] || 'N/A'} / ${order['Nội thất'] || 'N/A'}`;
-                variantsCount[variantKey] = (variantsCount[variantKey] || 0) + 1;
+                if (!variantsOrders[variantKey]) {
+                    variantsOrders[variantKey] = [];
+                }
+                variantsOrders[variantKey].push(order);
             });
 
-            const variants = Object.entries(variantsCount)
-                .map(([variant, count]) => ({ variant, count }))
+            const variants = Object.entries(variantsOrders)
+                .map(([variant, orderList]) => {
+                    const sortedOrders = [...orderList].sort((a, b) => {
+                        const rawA = a['Ngày cọc'] || a.ngay_coc || a['Thời gian cọc'] || a['Thời gian nhập'];
+                        const rawB = b['Ngày cọc'] || b.ngay_coc || b['Thời gian cọc'] || b['Thời gian nhập'];
+                        const dateA = moment(rawA, [moment.ISO_8601, 'YYYY-MM-DDTHH:mm:ss', 'YYYY-MM-DDTHH:mm', 'DD/MM/YYYY HH:mm:ss', 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD']);
+                        const dateB = moment(rawB, [moment.ISO_8601, 'YYYY-MM-DDTHH:mm:ss', 'YYYY-MM-DDTHH:mm', 'DD/MM/YYYY HH:mm:ss', 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD']);
+                        if (!dateA.isValid()) return 1;
+                        if (!dateB.isValid()) return -1;
+                        return dateA.valueOf() - dateB.valueOf();
+                    });
+                    return {
+                        variant,
+                        count: sortedOrders.length,
+                        orders: sortedOrders
+                    };
+                })
                 .sort((a, b) => b.count - a.count);
 
             return { model, total, variants };
@@ -925,7 +945,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             onFilterChange={handleFilterChange} onReset={handleResetFilters}
             onSelect={handleSelectOrderMobile} onRefresh={() => refetchHistory()}
             onCreateOrder={!isReferenceAccount ? () => setCreateRequestData({ isOpen: true }) : undefined}
-            onStats={() => setIsPendingStatsModalOpen(true)}
+            onStats={anchor => { setStatsAnchorEl(anchor || null); setIsPendingStatsModalOpen(true); }}
             loading={isLoading} error={error} processingOrder={processingOrder}
             loadMoreRef={loadMoreRef} onLoadMore={() => setVisibleCount(count => count + 20)}
             hasArchives={!isLastArchive} loadingArchives={isLoadingArchives} onLoadArchives={handleLoadMoreArchives}
@@ -954,7 +974,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
         const statsButton = (
             <button
-                onClick={() => setIsPendingStatsModalOpen(true)}
+                onClick={e => { setStatsAnchorEl(e.currentTarget); setIsPendingStatsModalOpen(true); }}
                 className="flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-medium rounded-lg bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all duration-150 outline-none whitespace-nowrap cursor-pointer select-none"
                 title="Thống kê xe chờ ghép"
             >
@@ -1589,6 +1609,32 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         );
     }
 
+    // Mobile-first Báo cáo TPKD
+    if (isMobileScreen && activeView === 'tpkd') {
+        return (
+            <div className="h-[100dvh] w-full overflow-hidden bg-[#f8fafc]">
+                <Suspense fallback={<LoadingFallback />}>
+                    <TPKDReportView
+                        allOrders={allHistoryData}
+                        stockData={stockData}
+                        teamData={teamData}
+                        allUsers={allUsers}
+                        currentUser={currentUser}
+                        currentUserName={currentUserName}
+                        userRole={userRole}
+                        isAdmin={isCurrentUserAdmin}
+                        onBack={() => setActiveView('dashboard')}
+                        onSelectOrder={(order) => {
+                            handleViewDetails(order);
+                            setActiveView('orders');
+                        }}
+                        mobileMode
+                    />
+                </Suspense>
+            </div>
+        );
+    }
+
     return (
         <>
             <GlobalNotificationProvider>
@@ -1611,6 +1657,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                              activeView === 'crm' ? 'Khách Hàng' :
                              activeView === 'laithu' ? 'Lái Thử' :
                              activeView === 'sold' ? 'Lịch Sử Bán Hàng' :
+                             activeView === 'tpkd' ? 'Báo Cáo PKD' :
                              activeView === 'admin' ? 'Quản Trị' : activeView}
                         </span>
                     </div>
@@ -1678,6 +1725,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         handleToggleDmsCompareXhdGlobal={handleToggleDmsCompareXhdGlobal}
                         onOpenBacklogReport={() => setIsBacklogModalOpen(true)}
                         isReferenceAccount={isReferenceAccount}
+                        teamData={teamData}
                     />
 
 
@@ -1895,6 +1943,24 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 </Suspense>
                             )}
                         </div>
+                        <div hidden={activeView !== 'tpkd'} className="h-full flex flex-col">
+                            <Suspense fallback={<LoadingFallback />}>
+                                <TPKDReportView
+                                    allOrders={allHistoryData}
+                                    stockData={stockData}
+                                    teamData={teamData}
+                                    allUsers={allUsers}
+                                    currentUser={currentUser}
+                                    currentUserName={currentUserName}
+                                    userRole={userRole}
+                                    isAdmin={isCurrentUserAdmin}
+                                    onSelectOrder={(order) => {
+                                        handleViewDetails(order);
+                                        setActiveView('orders');
+                                    }}
+                                />
+                            </Suspense>
+                        </div>
                     </main >
                     <footer className="hidden lg:flex flex-shrink-0 h-7 px-5 bg-[#142236] border-t border-white/[0.08] text-[#a7b3c4] items-center justify-between text-[10px] select-none">
                         <RealtimeFooterClock />
@@ -1995,8 +2061,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     {isPendingStatsModalOpen && (
                         <PendingStatsModal
                             isOpen={isPendingStatsModalOpen}
-                            onClose={() => setIsPendingStatsModalOpen(false)}
+                            onClose={() => {
+                                setIsPendingStatsModalOpen(false);
+                                setStatsAnchorEl(null);
+                            }}
                             stats={groupedPendingStats}
+                            anchor={statsAnchorEl}
+                            currentUser={currentUser}
+                            currentUserName={currentUserName}
                         />
                     )}
                     {isGlobalSearchOpen && (
@@ -2046,6 +2118,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     isCurrentUserAdmin={isCurrentUserAdmin}
                     currentUser={currentUser}
                     userRole={userRole}
+                    teamData={teamData}
                     onLogout={onLogout}
                     setIsChangePasswordModalOpen={setIsChangePasswordModalOpen}
                     isStockEnabled={isStockEnabled}

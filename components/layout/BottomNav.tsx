@@ -15,21 +15,36 @@ interface BottomNavProps {
     isTogglingStock?: boolean;
     handleToggleStockGlobal?: () => void;
     onOpenGlobalSearch: () => void;
+    teamData?: Record<string, string[]>;
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({
     activeView,
     setActiveView,
     isCurrentUserAdmin,
+    currentUser,
+    userRole,
     isStockEnabled,
     isCrmEnabled = true,
+    teamData
 }) => {
+    const isTpkd = React.useMemo(() => {
+        if (isCurrentUserAdmin) return true;
+        if (userRole === 'Trưởng Phòng Kinh Doanh' || userRole?.toLowerCase().includes('trưởng') || userRole?.toLowerCase().includes('tpkd')) return true;
+        if (teamData) {
+            const normUser = (currentUser || '').toLowerCase().trim();
+            return Object.keys(teamData).some(leader => leader.toLowerCase().trim() === normUser);
+        }
+        return false;
+    }, [isCurrentUserAdmin, userRole, teamData, currentUser]);
+
     const navItems = [
         { id: 'orders', label: 'Đơn Hàng', icon: 'fa-car-side' },
         ...(isStockEnabled || isCurrentUserAdmin ? [{ id: 'stock', label: 'Kho xe', icon: 'fa-warehouse' }] : []),
         ...(isCrmEnabled || isCurrentUserAdmin ? [{ id: 'crm', label: 'KHTN', icon: 'fa-user-plus' }] : []),
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },
+        ...(isTpkd ? [{ id: 'tpkd', label: 'Báo Cáo PKD', icon: 'fa-chart-pie' }] : []),
     ];
 
     if (isCurrentUserAdmin) {

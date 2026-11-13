@@ -125,26 +125,26 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
             iconColor: 'text-sky-600',
             btn: 'bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white',
             chipActive: 'is-active-rescan'
-          }
+        }
         : isSupplementModal
-        ? {
-            badge: 'bg-amber-50 text-amber-800 border-amber-200',
-            iconColor: 'text-amber-600',
-            btn: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white',
-            chipActive: 'is-active-supplement'
-          }
-        : {
-            badge: 'bg-rose-50 text-rose-700 border-rose-200',
-            iconColor: 'text-rose-600',
-            btn: 'bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white',
-            chipActive: 'is-active-danger'
-          };
+            ? {
+                badge: 'bg-amber-50 text-amber-800 border-amber-200',
+                iconColor: 'text-amber-600',
+                btn: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white',
+                chipActive: 'is-active-supplement'
+            }
+            : {
+                badge: 'bg-rose-50 text-rose-700 border-rose-200',
+                iconColor: 'text-rose-600',
+                btn: 'bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white',
+                chipActive: 'is-active-danger'
+            };
 
     const displayTitle = isRescanModal
         ? 'Y/C scan lại hồ sơ'
         : isSupplementModal
-        ? 'Yêu cầu bổ sung'
-        : title;
+            ? 'Yêu cầu bổ sung'
+            : title;
 
     return (
         <AnchoredCyberSheet
@@ -176,7 +176,6 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                             e.stopPropagation();
                             onClose();
                         }}
-                        onPointerDown={(e) => e.stopPropagation()}
                         disabled={isSubmitting}
                         className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors text-xs"
                         title="Đóng (Esc)"
@@ -213,11 +212,10 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                                             }}
                                             className={`request-sheet-chip ${isChecked ? activeThemeClass.chipActive : ''}`}
                                         >
-                                            <span className={`w-3.5 h-3.5 rounded text-[9px] flex items-center justify-center shrink-0 ${
-                                                isChecked 
-                                                    ? (isRescanModal ? 'bg-sky-500 text-white' : 'bg-amber-500 text-white') 
+                                            <span className={`w-3.5 h-3.5 rounded text-[9px] flex items-center justify-center shrink-0 ${isChecked
+                                                    ? (isRescanModal ? 'bg-sky-500 text-white' : 'bg-amber-500 text-white')
                                                     : 'border border-slate-300'
-                                            }`}>
+                                                }`}>
                                                 {isChecked && <i className="fas fa-check"></i>}
                                             </span>
                                             <span>{opt.label}</span>
@@ -238,11 +236,11 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                             onChange={e => setReason(e.target.value)}
                             rows={2}
                             placeholder={
-                                isRescanModal 
-                                    ? "VD: Trang 2 mờ số khung, chụp thiếu trang cam kết..." 
-                                    : isSupplementModal 
-                                    ? "VD: Thiếu hóa đơn thu cũ, bổ sung phụ lục HĐMB..." 
-                                    : "Nhập lý do chi tiết..."
+                                isRescanModal
+                                    ? "VD: Trang 2 mờ số khung, chụp thiếu trang cam kết..."
+                                    : isSupplementModal
+                                        ? "VD: Thiếu hóa đơn thu cũ, bổ sung phụ lục HĐMB..."
+                                        : "Nhập lý do chi tiết..."
                             }
                             className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none resize-none transition-colors"
                         />
@@ -250,10 +248,10 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
                     {/* Paste zone */}
                     <div>
-                        <div 
-                            onPaste={handleImagePaste} 
-                            contentEditable 
-                            suppressContentEditableWarning 
+                        <div
+                            onPaste={handleImagePaste}
+                            contentEditable
+                            suppressContentEditableWarning
                             className="request-sheet-pastezone"
                             tabIndex={0}
                         >
@@ -289,7 +287,6 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                             e.stopPropagation();
                             onClose();
                         }}
-                        onPointerDown={(e) => e.stopPropagation()}
                         disabled={isSubmitting}
                         className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-200/60 transition-colors"
                     >

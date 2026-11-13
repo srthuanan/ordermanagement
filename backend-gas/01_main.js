@@ -72,9 +72,10 @@ function doPost(e) {
           } catch (eJson) {}
         }
         if (orderNoToArchive) {
-          archiveOrderNow(orderNoToArchive);
+          response = createJsonResponse(archiveOrderNow(orderNoToArchive));
+        } else {
+          response = createJsonResponse({ status: "ERROR", message: "Thiếu số đơn hàng." });
         }
-        response = createJsonResponse({ status: "SUCCESS" });
         break;
 
       case 'performOcr':

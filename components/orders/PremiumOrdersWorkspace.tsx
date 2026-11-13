@@ -1,22 +1,24 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { BarChart3, Filter, LoaderCircle, Plus, Search, X } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { BarChart3, LoaderCircle, Plus } from 'lucide-react';
 import moment from 'moment';
 import { Order } from '../../types';
-import MultiSelectDropdown from '../ui/MultiSelectDropdown';
+import InvoiceCompactFilters from '../admin/InvoiceCompactFilters';
+import { DropdownFilterConfig } from '../ui/Filters';
 import './orders-premium.css';
+import '../admin/admin-toolbar.css';
 
 interface Props {
     orders: Order[];
     visibleOrders: Order[];
     filteredCount: number;
     selectedOrderId?: string;
-    filters: { keyword: string; carModel: string[]; version: string[]; status: string[]; exterior: string[] };
+    filters: { keyword: string; tvbh?: string[]; carModel: string[]; version: string[]; status: string[]; exterior: string[] };
     onFilterChange: (value: Partial<Props['filters']>) => void;
     onReset: () => void;
     onSelect: (order: Order) => void;
     onRefresh: () => void;
     onCreateOrder?: () => void;
-    onStats: () => void;
+    onStats?: (anchor?: HTMLElement) => void;
     loading: boolean;
     error: string | null;
     processingOrder: string | null;
@@ -38,74 +40,36 @@ export const orderStatusTone = (value: string) => {
 };
 
 export default function PremiumOrdersWorkspace(props: Props) {
-    const [filtersOpen, setFiltersOpen] = useState(false);
-    const [localKeyword, setLocalKeyword] = useState(props.filters.keyword);
-    const debounceTimerRef = useRef<number | null>(null);
-
-    useEffect(() => {
-        setLocalKeyword(props.filters.keyword);
-    }, [props.filters.keyword]);
-
-    const handleKeywordChange = (newVal: string) => {
-        setLocalKeyword(newVal);
-        if (debounceTimerRef.current) {
-            window.clearTimeout(debounceTimerRef.current);
-        }
-        debounceTimerRef.current = window.setTimeout(() => {
-            props.onFilterChange({ keyword: newVal });
-        }, 250);
-    };
-
-    const handleClearKeyword = () => {
-        if (debounceTimerRef.current) {
-            window.clearTimeout(debounceTimerRef.current);
-        }
-        setLocalKeyword('');
-        props.onFilterChange({ keyword: '' });
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            if (debounceTimerRef.current) {
-                window.clearTimeout(debounceTimerRef.current);
-            }
-            props.onFilterChange({ keyword: localKeyword });
-        }
-    };
-
-    useEffect(() => {
-        return () => {
-            if (debounceTimerRef.current) {
-                window.clearTimeout(debounceTimerRef.current);
-            }
-        };
-    }, []);
-
-    const facets = useMemo(() => {
+    const dropdownConfigs: DropdownFilterConfig[] = useMemo(() => {
         const unique = (key: keyof Order) => [...new Set(props.orders.map(order => String(order[key] || '')).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
         return [
-            { key: 'carModel' as const, label: 'Dòng xe', options: unique('Dòng xe') },
-            { key: 'version' as const, label: 'Phiên bản', options: unique('Phiên bản') },
-            { key: 'status' as const, label: 'Trạng thái', options: [...new Set(props.orders.map(order => order['Trạng thái VC'] || order['Kết quả'] || 'Chưa ghép'))] },
-            { key: 'exterior' as const, label: 'Ngoại thất', options: unique('Ngoại thất') },
+            { id: 'order-filter-tvbh', key: 'tvbh', label: 'TVBH', options: unique('Tên tư vấn bán hàng'), icon: 'fa-user-tie' },
+            { id: 'order-filter-dongxe', key: 'carModel', label: 'Dòng Xe', options: unique('Dòng xe'), icon: 'fa-car' },
+            { id: 'order-filter-version', key: 'version', label: 'Phiên Bản', options: unique('Phiên bản'), icon: 'fa-cogs' },
+            { id: 'order-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: unique('Ngoại thất'), icon: 'fa-palette' },
+            { id: 'order-filter-status', key: 'status', label: 'Trạng Thái', options: [...new Set(props.orders.map(order => order['Trạng thái VC'] || order['Kết quả'] || 'Chưa ghép'))].filter(Boolean).sort((a, b) => a.localeCompare(b, 'vi')), icon: 'fa-tag' },
         ];
     }, [props.orders]);
-    const activeCount = facets.reduce((count, facet) => count + props.filters[facet.key].length, 0);
+
     return <div className="premium-orders">
         <aside className="premium-orders-sidebar" aria-label="Danh sách đơn hàng">
-            <div className="premium-list-heading"><h1>Đơn hàng <span>{props.orders.length}</span></h1><div>
-                <button type="button" aria-label="Thống kê đơn hàng" title="Thống kê" onClick={props.onStats}><BarChart3 size={16} /></button>
+            <div className="premium-list-heading"><h1>Đơn hàng <span>{props.filteredCount}</span></h1><div>
+                <button type="button" aria-label="Thống kê đơn hàng" title="Thống kê" onClick={e => props.onStats?.(e.currentTarget)}><BarChart3 size={16} /></button>
                 {props.onCreateOrder && <button type="button" aria-label="Tạo đơn hàng mới" title="Tạo đơn hàng mới" onClick={props.onCreateOrder}><Plus size={16} /></button>}
             </div></div>
-            <div className="premium-list-search"><label><Search size={16} /><input aria-label="Tìm đơn hàng" placeholder="Tìm khách hàng, mã đơn, VIN…" value={localKeyword} onChange={event => handleKeywordChange(event.target.value)} onKeyDown={handleKeyDown} />{localKeyword && <button type="button" aria-label="Xóa tìm kiếm" onClick={handleClearKeyword}><X size={14} /></button>}</label>
-                <button type="button" aria-label="Bộ lọc đơn hàng" aria-expanded={filtersOpen} aria-controls="premium-order-filters" className="premium-filter-toggle" onClick={() => setFiltersOpen(open => !open)}><Filter size={16} />{activeCount ? <span>{activeCount}</span> : 'Lọc'}</button>
+            <div className="invoice-sidebar-filter-target">
+                <InvoiceCompactFilters
+                    filters={props.filters}
+                    dropdowns={dropdownConfigs}
+                    searchPlaceholder="Tìm SĐH, Tên KH, VIN…"
+                    sidebar
+                    onChange={props.onFilterChange}
+                    onReset={props.onReset}
+                    onRefresh={props.onRefresh}
+                    totalCount={props.filteredCount}
+                    isLoading={props.loading}
+                />
             </div>
-            {filtersOpen && <div id="premium-order-filters" className="premium-filter-panel" onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setFiltersOpen(false); } }}>
-                <div><strong>Bộ lọc</strong><button type="button" onClick={props.onReset}>Đặt lại</button><button type="button" aria-label="Đóng bộ lọc" onClick={() => setFiltersOpen(false)}><X size={15} /></button></div>
-                {facets.map(facet => <div className="premium-filter-facet" key={facet.key}><span>{facet.label}</span><MultiSelectDropdown id={`premium-filter-${facet.key}`} label={facet.label} icon="fa-filter" options={facet.options} selectedOptions={props.filters[facet.key]} onChange={selected => props.onFilterChange({ [facet.key]: selected })} searchable size="compact" displayMode="selection" variant="modern" /></div>)}
-                <button type="button" className="premium-filter-done" onClick={() => setFiltersOpen(false)}>Xem {props.filteredCount} đơn hàng</button>
-            </div>}
-            {(activeCount > 0 || props.filters.keyword) && <div className="premium-filter-summary"><span>{props.filteredCount} kết quả</span><button type="button" onClick={props.onReset}>Xóa bộ lọc</button></div>}
             <div className="premium-order-list" aria-busy={props.loading}>
                 {props.loading && !props.visibleOrders.length && <div className="premium-list-message"><LoaderCircle size={20} className="animate-spin" />Đang tải đơn hàng…</div>}
                 {props.error && <div className="premium-list-message" role="alert"><strong>Không thể tải đơn hàng</strong><p>{props.error}</p><button type="button" onClick={props.onRefresh}>Thử lại</button></div>}
