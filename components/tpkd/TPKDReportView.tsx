@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import moment from 'moment';
 import { Order, StockVehicle, User } from '../../types';
 import '../orders/orders-premium.css';
