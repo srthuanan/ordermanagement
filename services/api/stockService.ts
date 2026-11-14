@@ -2263,6 +2263,11 @@ export interface CyberVinLookupResult {
     found?: boolean;
     ma_kho?: string;
     ten_kho?: string;
+    ctkh_ma_kho?: string;
+    ctkh_ten_kho?: string;
+    ttcp_phan_bo?: string;
+    ttcp_xuat_hd?: string;
+    ten_kh?: string;
     detection_reason?: string;
     alt_warehouses?: Array<{
         ma_kho: string;
@@ -2275,6 +2280,11 @@ export interface CyberVinLookupResult {
         vin: string;
         ma_kho: string;
         ten_kho: string;
+        ctkh_ma_kho?: string;
+        ctkh_ten_kho?: string;
+        ttcp_phan_bo?: string;
+        ttcp_xuat_hd?: string;
+        ten_kh?: string;
         detection_reason?: string;
         alt_warehouses?: Array<{
             ma_kho: string;

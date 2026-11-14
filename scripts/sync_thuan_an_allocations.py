@@ -318,6 +318,7 @@ WAREHOUSE_SHORT_NAMES = {
     'Q12 - HCM': 'Q12 (HCM)',
     'K85': 'Dĩ An',
     'KHCM.PVD': 'Phạm Văn Đồng',
+    'KHCM.ST': 'Suối Tiên (HCM)',
     'K106': 'Hà Huy Giáp',
     'K58': 'Lê Văn Việt',
     'K60': '3/2 (HCM)',
@@ -381,6 +382,7 @@ def clean_location_name(name: str) -> str:
     if 'q12' in low or 'quận 12' in low: return 'Q12 (HCM)'
     if 'dĩ an' in low or 'di an' in low: return 'Dĩ An'
     if 'phạm văn đồng' in low or 'pham van dong' in low or 'pvd' in low: return 'Phạm Văn Đồng'
+    if 'suối tiên' in low or 'suoi tien' in low: return 'Suối Tiên (HCM)'
     if 'hà huy giáp' in low or 'ha huy giap' in low: return 'Hà Huy Giáp'
     if 'lê văn việt' in low or 'le van viet' in low: return 'Lê Văn Việt'
     if 'vũng tàu' in low or 'vung tau' in low: return 'Vũng Tàu'
@@ -501,13 +503,13 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
     # 3. Thuật toán phân giải kho thông minh cho từng xe
     results = {}
     for v in vins_clean:
-        bex_list = vin_bex_map.get(v, [])
+        bex_list = [r for r in vin_bex_map.get(v, []) if (r.get('ma_kho') or '').strip()]
         dnx = vin_dnx_map.get(v)
 
         ton_by_wh = {}
         latest_tx_by_wh = {}
         for r in bex_list:
-            mk = r['ma_kho']
+            mk = (r.get('ma_kho') or '').strip()
             delta = r['so_luong'] if r['nxt'] == '1' else (-1 * r['so_luong'])
             ton_by_wh[mk] = ton_by_wh.get(mk, 0.0) + delta
             if mk not in latest_tx_by_wh:
@@ -585,8 +587,8 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
 
         # Bổ sung các kho từ phiếu DNX vào alt_warehouses nếu chưa có
         if dnx:
-            xuat = dnx.get('ma_kho_xuat')
-            nhan = dnx.get('ma_kho_nhan')
+            xuat = (dnx.get('ma_kho_xuat') or '').strip()
+            nhan = (dnx.get('ma_kho_nhan') or '').strip()
             if xuat and xuat != chosen_wh and not any(a['ma_kho'] == xuat for a in alt_warehouses):
                 alt_warehouses.append({
                     "ma_kho": xuat,
@@ -2122,84 +2124,120 @@ def revoke_cyber_contract_approval(params: dict = {}) -> dict:
             except Exception:
                 pass
 
+DNX_INTERNAL_THUAN_AN_WAREHOUSES = {
+    'K83', 'K85', 'KHCM.ST', 'K87', 'K86', 'K106', 'KHCM.PVD'
+}
+
+DNX_WAREHOUSE_TO_TTCP = {
+    'K83': '02.01.08',       # Kho xe ô tô Thuận An
+    'K85': '02.01.08',       # Kho xe ô tô Dĩ An (bãi nội bộ Thuận An)
+    'KHCM.ST': '02.01.08',   # Kho xe Suối Tiên - TPHCM (bãi nội bộ Thuận An)
+    'K65': '02.01.12',       # Kho xe ô tô Vinfast Vũng Tàu
+    'K72': '02.01.12',       # Kho xe Vũng Tàu
+    'K87': '02.01.21',       # Kho xe ô tô QL13 - HCM
+    'KHCM.PVD': '02.01.21',  # Kho xe Phạm Văn Đồng - TPHCM
+    'K86': '02.01.20',       # Kho xe ô tô Vinfast Q12 - HCM
+    'K106': '02.01.20',      # Kho Hà Huy Giáp
+    'K61': '02.01.10',       # Kho xe Quang Trung
+    'K64': '02.01.10',       # Kho xe Quang Trung
+    'K58': '02.01.09',       # Kho xe ô tô Lê Văn Việt
+    'KHCM.HB': '02.01.07',   # Kho xe Hồng Bàng TPHCM
+    'K60': '02.01.07',       # Kho xe 3/2 (Hồng Bàng)
+    'K57': '02.01.06',       # Kho xe ô tô Vinfast Bắc Ninh
+    'KBN.TS': '02.01.06',    # Kho xe Từ Sơn - Bắc Ninh
+    'K55': '02.01.18',       # Kho ô tô Nguyễn Trãi
+    'KTN.TL': '02.01.23',    # Kho xe Tân Long - Thái Nguyên
+    'KTN.TT': '02.01.17',    # Kho xe Tân Thịnh - Thái Nguyên
+    'KTN.CK': '02.01.01',    # Kho cơ khí Cam Giá
+    'KTN.NM': '02.01.01',    # Kho nhà máy Cam Giá
+    'K66': '02.01.01',       # Kho đăng kiểm Cam Giá
+    'K17': '02.01.01',       # Kho Cam Giá
+    'K74': '02.01.13',       # Kho Mê Linh
+    'K63': '02.01.15',       # Kho Sóc Sơn
+    'K59': '02.01.05',       # Kho Times City
+    'K91': '02.01.19',       # Kho Ocean Park 2
+    'K69': '02.01.11',       # Kho Hòa Bình
+    'KHB.SH': '02.01.11',    # Kho Shop House Hòa Bình
+    'K111': '02.01.24',      # Kho xe ô tô Hải Phòng
+}
+
+
+def resolve_dnx_routing(params: dict = {}) -> dict:
+    """Chuẩn hóa ma_gd (4 vs 9), ma_ttcp_xuat và ma_ttcp_nhan theo quy tắc CP_SysCheckSaveVoucherDNX."""
+    ma_gd = str(params.get("ma_gd") or "").strip()
+    ma_kho_xuat = (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87").strip()
+    ma_kho_nhan = (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83").strip()
+    ly_do = (params.get("ly_do") or params.get("dien_giai") or "Điều chuyển xe nội bộ").strip()
+    req_ttcp = (params.get("ma_ttcp") or "").strip()
+    req_ttcp_n = (params.get("ma_ttcp_n") or "").strip()
+
+    ma_ttcp_xuat = req_ttcp or "02.01.08"
+    warehouse_mapped_n = DNX_WAREHOUSE_TO_TTCP.get(ma_kho_nhan, "")
+    ly_do_low = ly_do.lower()
+    is_internal_reason = ("pdi" in ly_do_low) or ("nội bộ" in ly_do_low) or ("noi bo" in ly_do_low)
+
+    # Tự động phát hiện ma_gd nếu chưa chỉ định hoặc khi kéo về K83 với mục đích PDI/nội bộ
+    if ma_kho_nhan == "K83" and is_internal_reason:
+        ma_gd = "4"
+    elif ma_gd not in ("4", "9"):
+        if ma_kho_nhan == "K83" and (
+            ma_kho_xuat in DNX_INTERNAL_THUAN_AN_WAREHOUSES
+            or not req_ttcp_n
+            or req_ttcp_n == ma_ttcp_xuat
+        ):
+            ma_gd = "4"
+        elif (req_ttcp_n and req_ttcp_n != ma_ttcp_xuat) or (
+            warehouse_mapped_n and warehouse_mapped_n != ma_ttcp_xuat
+        ):
+            ma_gd = "9"
+        else:
+            ma_gd = "4"
+
+    # Chuẩn hóa cặp TTCP theo ma_gd
+    if ma_gd == "4":
+        ma_ttcp_n = ma_ttcp_xuat
+    else:
+        # Mã 9: ưu tiên Điểm KD nhận truyền vào (nếu khác ma_ttcp_xuat), sau đó ánh xạ theo kho nhận;
+        # tuyệt đối không fallback mù về '02.01.12' (Vũng Tàu).
+        if req_ttcp_n and req_ttcp_n != ma_ttcp_xuat and not (ma_kho_nhan == "K83" and is_internal_reason):
+            ma_ttcp_n = req_ttcp_n
+        elif warehouse_mapped_n and warehouse_mapped_n != ma_ttcp_xuat:
+            ma_ttcp_n = warehouse_mapped_n
+        else:
+            return {
+                "success": False,
+                "error": (
+                    f"Phiếu điều chuyển các điểm KD (Mã 9) từ kho {ma_kho_xuat} sang kho {ma_kho_nhan} "
+                    f"thiếu Điểm KD (TTCP) nhận hợp lệ khác {ma_ttcp_xuat}."
+                ),
+            }
+
+    return {
+        "success": True,
+        "ma_gd": ma_gd,
+        "ma_ttcp_xuat": ma_ttcp_xuat,
+        "ma_ttcp_n": ma_ttcp_n,
+    }
+
+
 def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     vins = params.get("vins") or []
     if not vins and params.get("vin"):
         vins = [params.get("vin")]
 
-    ma_gd = str(params.get("ma_gd") or "").strip()
     ma_kho_xuat = (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87").strip()
     ma_kho_nhan = (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83").strip()
     khach_hang  = (params.get("khach_hang") or params.get("ong_ba") or "").strip()
     ly_do       = (params.get("ly_do") or params.get("dien_giai") or "Điều chuyển xe nội bộ").strip()
     ma_dvcs     = (params.get("ma_dvcs") or "02").strip()
-    ma_ttcp     = (params.get("ma_ttcp") or "02.01.08").strip()
     user_name   = (params.get("user_name") or "02.NHANPT").strip()
 
-    WAREHOUSE_TO_TTCP = {
-        'K83': '02.01.08',       # Kho xe ô tô Thuận An
-        'K85': '02.01.08',       # Kho xe ô tô Dĩ An
-        'K65': '02.01.12',       # Kho xe ô tô Vinfast Vũng Tàu
-        'K87': '02.01.21',       # Kho xe ô tô QL13 - HCM
-        'KHCM.PVD': '02.01.21',  # Kho xe Phạm Văn Đồng - TPHCM
-        'K86': '02.01.20',       # Kho xe ô tô Vinfast Q12 - HCM
-        'K106': '02.01.20',      # Kho Hà Huy Giáp
-        'K61': '02.01.10',       # Kho xe Quang Trung
-        'K58': '02.01.09',       # Kho xe ô tô Lê Văn Việt
-        'K57': '02.01.06',       # Kho xe ô tô Vinfast Bắc Ninh
-        'KBN.TS': '02.01.06',    # Kho xe Từ Sơn - Bắc Ninh
-        'K55': '02.01.18',       # Kho ô tô Nguyễn Trãi
-        'KTN.TL': '02.01.23',    # Kho xe Tân Long - Thái Nguyên
-        'KTN.TT': '02.01.17',    # Kho xe Tân Thịnh - Thái Nguyên
-        'KTN.CK': '02.01.01',    # Kho cơ khí Cam Giá
-        'KTN.NM': '02.01.01',    # Kho nhà máy Cam Giá
-        'K66': '02.01.01',       # Kho đăng kiểm Cam Giá
-        'K17': '02.01.01',       # Kho Cam Giá
-        'K74': '02.01.13',       # Kho Mê Linh
-        'K63': '02.01.15',       # Kho Sóc Sơn
-        'K59': '02.01.05',       # Kho Times City
-        'K91': '02.01.19',       # Kho Ocean Park 2
-        'K69': '02.01.11',       # Kho Hòa Bình
-        'KHB.SH': '02.01.11',    # Kho Shop House Hòa Bình
-    }
-
-    # Xác định TTCP xuất và TTCP nhận theo kho và loại giao dịch
-    ma_ttcp_xuat = params.get("ma_ttcp") or WAREHOUSE_TO_TTCP.get(ma_kho_xuat, "02.01.08")
-    ma_ttcp_n = (params.get("ma_ttcp_n") or WAREHOUSE_TO_TTCP.get(ma_kho_nhan, "")).strip()
-
-    if ma_gd not in ('4', '9'):
-        if ma_ttcp_n and ma_ttcp_n != ma_ttcp_xuat:
-            ma_gd = '9'
-        else:
-            ma_gd = '4'
-
-    # Quy chuẩn nghiệp vụ CyberSoft:
-    # - Mã 4: Điều chuyển nội bộ => TTCP xuất và TTCP nhận PHẢI GIỐNG NHAU (Thuận An 02.01.08)
-    # - Mã 9: Điều chuyển các điểm KD => TTCP xuất và TTCP nhận BẮT BUỘC PHẢI KHÁC NHAU!
-    if ma_gd == '4':
-        ma_ttcp_xuat = '02.01.08'
-        ma_ttcp_n = '02.01.08'
-    elif ma_gd == '9':
-        if not ma_ttcp_n or ma_ttcp_n == ma_ttcp_xuat:
-            # Nếu kho nhận là K65 thì TTCP nhận là Vũng Tàu 02.01.12
-            if ma_kho_nhan in ('K65', 'K72'):
-                ma_ttcp_n = '02.01.12'
-            elif ma_kho_nhan in ('K61', 'K64'):
-                ma_ttcp_n = '02.01.10'
-            elif ma_kho_nhan in ('K58',):
-                ma_ttcp_n = '02.01.09'
-            elif ma_kho_nhan in ('K86', 'K106'):
-                ma_ttcp_n = '02.01.20'
-            elif ma_kho_nhan in ('K87', 'KHCM.PVD'):
-                ma_ttcp_n = '02.01.21'
-            elif ma_kho_nhan in ('K57', 'KBN.TS'):
-                ma_ttcp_n = '02.01.06'
-            elif ma_kho_xuat in ('K65',):
-                ma_ttcp_xuat = '02.01.12'
-                ma_ttcp_n = '02.01.08'
-            else:
-                ma_ttcp_n = '02.01.12'  # Mặc định điều chuyển sang Vũng Tàu nếu chưa rõ
-
+    routing = resolve_dnx_routing(params)
+    if not routing.get("success"):
+        return routing
+    ma_gd = routing["ma_gd"]
+    ma_ttcp_xuat = routing["ma_ttcp_xuat"]
+    ma_ttcp_n = routing["ma_ttcp_n"]
     ma_ttcp = ma_ttcp_xuat
 
     if not vins:
@@ -3009,8 +3047,27 @@ def transfer_business_location(params: dict = {}) -> dict:
     to_ttcp_name = (params.get("to_ttcp_name") or "").strip()
     reason = (params.get("reason") or f"Điều chuyển địa điểm kinh doanh sang {to_ttcp_name or to_ttcp}").strip()
     user_name = (params.get("user_name") or "02.NHANPT").strip()
-    ma_kho_xuat = (params.get("ma_kho_xuat") or "").strip()
-    ma_kho_nhan = (params.get("ma_kho_nhan") or "").strip()
+    ttcp_to_default_kho = {
+        "02.01.01": "K17",
+        "02.01.05": "K59",
+        "02.01.06": "K57",
+        "02.01.07": "K60",
+        "02.01.09": "K58",
+        "02.01.10": "K61",
+        "02.01.11": "K69",
+        "02.01.12": "K65",
+        "02.01.13": "K74",
+        "02.01.15": "K63",
+        "02.01.17": "KTN.TT",
+        "02.01.18": "K55",
+        "02.01.19": "K91",
+        "02.01.20": "K86",
+        "02.01.21": "KHCM.PVD",
+        "02.01.23": "KTN.TL",
+        "02.01.24": "K111",
+    }
+    ma_kho_xuat = (params.get("ma_kho_xuat") or "").strip() or "K83"
+    ma_kho_nhan = (params.get("ma_kho_nhan") or "").strip() or ttcp_to_default_kho.get(to_ttcp, "")
 
     if not vins:
         return {"success": False, "error": "Vui lòng chọn ít nhất một xe (số VIN) để điều chuyển địa điểm kinh doanh"}
@@ -3138,7 +3195,7 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 sql_wh = """
                     SELECT RTRIM(LTRIM(ma_kho)) as ma_kho, RTRIM(LTRIM(ten_kho)) as ten_kho
                     FROM Dmkho WITH (NOLOCK)
-                    WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','K103','K106','K58','K65','K66','K36','K91'))
+                    WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','KHCM.ST','K103','K106','K58','K65','K66','K36','K91'))
                       AND Ma_Kho != 'K39'
                       AND Ten_kho NOT LIKE N'%phụ tùng%'
                       AND Ten_kho NOT LIKE N'%phụ kiện%'
@@ -3160,8 +3217,9 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                         WHEN ma_kho = 'K86' THEN 3
                         WHEN ma_kho = 'K85' THEN 4
                         WHEN ma_kho = 'KHCM.PVD' THEN 5
-                        WHEN ma_kho = 'K106' THEN 6
-                        WHEN ma_kho = 'K91' THEN 7
+                        WHEN ma_kho = 'KHCM.ST' THEN 6
+                        WHEN ma_kho = 'K106' THEN 7
+                        WHEN ma_kho = 'K91' THEN 8
                         ELSE 10 
                       END, ma_kho
                 """
@@ -3207,6 +3265,8 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 CtkhInfo AS (
                     SELECT 
                         LTRIM(RTRIM(k.So_khung)) AS So_khung, k.So_May, k.Ma_Kx, k.Ma_Mau, k.Ma_Vitri,
+                        LTRIM(RTRIM(ISNULL(k.Ma_TTCP_I, ''))) AS ma_ttcp_i,
+                        LTRIM(RTRIM(ISNULL(k.Ma_TTCP_DMS, ''))) AS ma_ttcp_dms,
                         ROW_NUMBER() OVER(PARTITION BY LTRIM(RTRIM(k.So_khung)) ORDER BY k.ngay_ct DESC, k.stt_rec DESC) AS rn
                     FROM CTKH k WITH (NOLOCK)
                     WHERE k.So_khung IN ({ph_list})
@@ -3217,6 +3277,16 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                         ROW_NUMBER() OVER(PARTITION BY LTRIM(RTRIM(s.So_khung)) ORDER BY s.So_khung) AS rn
                     FROM DMSOKHUNG s WITH (NOLOCK)
                     WHERE s.So_khung IN ({ph_list})
+                ),
+                HdcInfo AS (
+                    SELECT
+                        LTRIM(RTRIM(cth.So_khung)) AS So_khung,
+                        LTRIM(RTRIM(ISNULL(h.Ma_TTCP_H, ''))) AS ma_ttcp_hdc,
+                        LTRIM(RTRIM(ISNULL(h.Ong_ba, ''))) AS ten_kh_hdc,
+                        ROW_NUMBER() OVER(PARTITION BY LTRIM(RTRIM(cth.So_khung)) ORDER BY h.Ngay_Ct DESC, h.Stt_rec DESC) AS rn
+                    FROM CTHDC cth WITH (NOLOCK)
+                    INNER JOIN PHHDC h WITH (NOLOCK) ON cth.Stt_rec = h.Stt_rec
+                    WHERE cth.So_khung IN ({ph_list})
                 )
                 SELECT 
                     vlist.So_Khung AS so_khung,
@@ -3225,18 +3295,24 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                     COALESCE(NULLIF(LTRIM(RTRIM(kx.Ten_Kx)), ''), NULLIF(LTRIM(RTRIM(kx2.Ten_Kx)), ''), NULLIF(LTRIM(RTRIM(s.ten_kx)), ''), NULLIF(LTRIM(RTRIM(b.Ma_Kx)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Kx)), ''), '') AS ten_kx,
                     COALESCE(NULLIF(LTRIM(RTRIM(b.Ma_Mau)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Mau)), ''), NULLIF(LTRIM(RTRIM(s.Ma_Mau)), ''), '') AS ma_mau,
                     COALESCE(NULLIF(LTRIM(RTRIM(mx.Ten_mau)), ''), NULLIF(LTRIM(RTRIM(mx2.Ten_mau)), ''), NULLIF(LTRIM(RTRIM(s.Ten_mau)), ''), NULLIF(LTRIM(RTRIM(b.Ma_Mau)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Mau)), ''), '') AS ten_mau,
-                    COALESCE(NULLIF(LTRIM(RTRIM(b.Ma_Kho)), ''), NULLIF(LTRIM(RTRIM(kho.Ma_kho)), ''), '') AS ctkh_ma_kho,
-                    COALESCE(NULLIF(LTRIM(RTRIM(kho_b.Ten_kho)), ''), NULLIF(LTRIM(RTRIM(kho.Ten_kho)), ''), '') AS ctkh_ten_kho
+                    COALESCE(NULLIF(LTRIM(RTRIM(kho.Ma_kho)), ''), NULLIF(LTRIM(RTRIM(k.Ma_Vitri)), ''), '') AS ctkh_ma_kho,
+                    ISNULL(LTRIM(RTRIM(kho.Ten_kho)), '') AS ctkh_ten_kho,
+                    COALESCE(NULLIF(k.ma_ttcp_i, ''), NULLIF(k.ma_ttcp_dms, ''), '') AS ttcp_phan_bo,
+                    ISNULL(hdc.ma_ttcp_hdc, '') AS ttcp_xuat_hd,
+                    ISNULL(hdc.ten_kh_hdc, '') AS ten_kh_hdc
                 FROM (
                     SELECT So_Khung FROM BexInfo WHERE rn = 1
                     UNION
                     SELECT So_khung AS So_Khung FROM CtkhInfo WHERE rn = 1
                     UNION
                     SELECT So_khung AS So_Khung FROM SkInfo WHERE rn = 1
+                    UNION
+                    SELECT So_khung AS So_Khung FROM HdcInfo WHERE rn = 1
                 ) vlist
                 LEFT JOIN BexInfo b ON vlist.So_Khung = b.So_Khung AND b.rn = 1
                 LEFT JOIN CtkhInfo k ON vlist.So_Khung = k.So_khung AND k.rn = 1
-                LEFT JOIN SkInfo s ON vlist.So_Khung = s.So_khung AND s.rn = 1
+                LEFT JOIN SkInfo s ON vlist.So_Khung = s.So_Khung AND s.rn = 1
+                LEFT JOIN HdcInfo hdc ON vlist.So_Khung = hdc.So_khung AND hdc.rn = 1
                 LEFT JOIN DmKx kx WITH (NOLOCK) ON b.Ma_Kx = kx.ma_kx
                 LEFT JOIN DmKx kx2 WITH (NOLOCK) ON k.Ma_Kx = kx2.ma_kx
                 LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON b.Ma_Mau = mx.ma_Mau
@@ -3244,7 +3320,7 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 LEFT JOIN Dmkho kho_b WITH (NOLOCK) ON b.Ma_Kho = kho_b.Ma_kho
                 LEFT JOIN Dmkho kho WITH (NOLOCK) ON k.Ma_Vitri = kho.Ma_kho
             """
-            c.execute(sql_info, vin_params + vin_params + vin_params)
+            c.execute(sql_info, vin_params + vin_params + vin_params + vin_params)
             info_rows = c.fetchall()
             if not is_pymssql:
                 cols_info = [comp[0].lower() for comp in c.description]
@@ -3343,7 +3419,8 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
             sql_bx = f"""
                 SELECT 
                     bx.So_khung, bx.Ma_Hd, bx.Stt_Rec0, bx.Ngay_Xep,
-                    h.ngay_ct AS ngay_hd, h.ong_ba AS ten_kh, h.Dien_Thoai AS dien_thoai
+                    h.ngay_ct AS ngay_hd, h.ong_ba AS ten_kh, h.Dien_Thoai AS dien_thoai,
+                    LTRIM(RTRIM(ISNULL(h.Ma_TTCP_H, ''))) AS ma_ttcp_hdx
                 FROM BEXEPXE bx WITH (NOLOCK)
                 LEFT JOIN PHHDX h WITH (NOLOCK) ON RTRIM(bx.Ma_Hd) = RTRIM(h.so_ct)
                 WHERE bx.So_khung IN ({ph_list})
@@ -3360,6 +3437,7 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                         "ngay_xep": _s(ngay_xep)[:10] if ngay_xep else "",
                         "ten_kh": _s(r.get('ten_kh') if is_pymssql else r[5]),
                         "dien_thoai": _s(r.get('dien_thoai') if is_pymssql else r[6]),
+                        "ma_ttcp_hdx": _s(r.get('ma_ttcp_hdx') if is_pymssql else r[7]),
                         "status": "Đã ghép SK"
                     }
 
@@ -3442,6 +3520,27 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                     "ghi_chu": rd.get('ghi_chu', '')
                 }
 
+        TTCP_TO_DEFAULT_KHO = {
+            '02.01.01': 'K17',
+            '02.01.05': 'K59',
+            '02.01.06': 'K57',
+            '02.01.07': 'K60',
+            '02.01.08': 'K83',
+            '02.01.09': 'K58',
+            '02.01.10': 'K61',
+            '02.01.11': 'K69',
+            '02.01.12': 'K65',
+            '02.01.13': 'K74',
+            '02.01.15': 'K63',
+            '02.01.17': 'KTN.TT',
+            '02.01.18': 'K55',
+            '02.01.19': 'K91',
+            '02.01.20': 'K86',
+            '02.01.21': 'K87',
+            '02.01.23': 'KTN.TL',
+            '02.01.24': 'K111',
+        }
+
         info_map = {}
         for r in info_rows:
             rd = {str(k).lower(): str(v or '').strip() for k, v in r.items()} if isinstance(r, dict) else {}
@@ -3460,7 +3559,10 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 "ma_mau": mm,
                 "ten_mau": tm,
                 "ctkh_ma_kho": ck_mk,
-                "ctkh_ten_kho": ck_tk
+                "ctkh_ten_kho": ck_tk,
+                "ttcp_phan_bo": rd.get('ttcp_phan_bo', ''),
+                "ttcp_xuat_hd": rd.get('ttcp_xuat_hd', ''),
+                "ten_kh_hdc": rd.get('ten_kh_hdc', ''),
             }
 
         results = []
@@ -3475,8 +3577,26 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
             
             ma_kho = st.get("ma_kho") or ""
             ten_kho = st.get("ten_kho") or "Đang vận tải"
-            alt_whs = st.get("alt_warehouses") or []
+            alt_whs = list(st.get("alt_warehouses") or [])
             reason = st.get("reason") or ""
+
+            ttcp_pb = inf.get("ttcp_phan_bo") or ""
+            ttcp_xhd = inf.get("ttcp_xuat_hd") or (bx_entry.get("ma_ttcp_hdx") if bx_entry else "") or ""
+            ctkh_mk = inf.get("ctkh_ma_kho") or TTCP_TO_DEFAULT_KHO.get(ttcp_pb, "")
+            ctkh_tk = clean_location_name(inf.get("ctkh_ten_kho") or ctkh_mk) if ctkh_mk else ""
+            ten_kh_val = (bx_entry.get("ten_kh") if bx_entry else "") or inf.get("ten_kh_hdc", "") or (dnx_entry.get("ten_kh") if dnx_entry else "")
+
+            if not ma_kho and ctkh_mk:
+                ma_kho = ctkh_mk
+                ten_kho = ctkh_tk
+                reason = f"Kho phân bổ CTKH ({ctkh_mk})"
+
+            if ctkh_mk and ctkh_mk != ma_kho and not any(a.get("ma_kho") == ctkh_mk for a in alt_whs):
+                alt_whs.append({
+                    "ma_kho": ctkh_mk,
+                    "ten_kho": ctkh_tk,
+                    "reason": "Kho phân bổ CTKH"
+                })
 
             if ma_kho:
                 found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
@@ -3484,6 +3604,11 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 "vin": v,
                 "ma_kho": ma_kho,
                 "ten_kho": ten_kho,
+                "ctkh_ma_kho": ctkh_mk,
+                "ctkh_ten_kho": ctkh_tk,
+                "ttcp_phan_bo": ttcp_pb,
+                "ttcp_xuat_hd": ttcp_xhd,
+                "ten_kh": ten_kh_val,
                 "so_may": (dnx_entry.get("so_may") if dnx_entry else "") or inf.get("so_may", ""),
                 "ma_kx": (dnx_entry.get("ma_kx") if dnx_entry else "") or inf.get("ma_kx", ""),
                 "ten_kx": (dnx_entry.get("ten_kx") if dnx_entry else "") or inf.get("ten_kx", ""),
@@ -3501,6 +3626,11 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
 
         first_mk = found_warehouses[0]["ma_kho"] if found_warehouses else ""
         first_tk = found_warehouses[0]["ten_kho"] if found_warehouses else ""
+        first_ctkh_mk = results[0].get("ctkh_ma_kho", "") if results else ""
+        first_ctkh_tk = results[0].get("ctkh_ten_kho", "") if results else ""
+        first_ttcp_pb = results[0].get("ttcp_phan_bo", "") if results else ""
+        first_ttcp_xhd = results[0].get("ttcp_xuat_hd", "") if results else ""
+        first_ten_kh = results[0].get("ten_kh", "") if results else ""
         first_alt_whs = results[0].get("alt_warehouses", []) if results else []
         first_reason = results[0].get("detection_reason", "") if results else ""
         first_dnx = results[0].get("dnx") if results else None
@@ -3519,6 +3649,11 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
             "found": bool(first_mk),
             "ma_kho": first_mk,
             "ten_kho": first_tk,
+            "ctkh_ma_kho": first_ctkh_mk,
+            "ctkh_ten_kho": first_ctkh_tk,
+            "ttcp_phan_bo": first_ttcp_pb,
+            "ttcp_xuat_hd": first_ttcp_xhd,
+            "ten_kh": first_ten_kh,
             "detection_reason": first_reason,
             "alt_warehouses": first_alt_whs,
             "total_vins": len(vins_clean),
@@ -3970,7 +4105,8 @@ def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = 
             "gio_ct": t.get("gio_ct") or "",
             "ten_tvbh": t.get("ten_tvbh") or t.get("nvkd") or "",
             "ma_gd": t.get("ma_gd") or ("4" if v_type == "DNX" else "TD4"),
-            "ten_gd": t.get("ten_gd") or ("Điều chuyển xe nội bộ điểm KD" if str(t.get("ma_gd")) != "9" else "Điều chuyển xe các điểm KD")
+            "ten_gd": t.get("ten_gd") or ("Điều chuyển xe nội bộ điểm KD" if str(t.get("ma_gd")) != "9" else "Điều chuyển xe các điểm KD"),
+            "ma_ttcp_nhan": t.get("ma_ttcp_nhan") or ""
         }
 
         seen[stt_rec] = {
@@ -4802,10 +4938,11 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 ISNULL(kx.Ten_Kx, ISNULL(c.ma_Kx, '')) AS ten_kx,
                 ISNULL(c.Ma_Mau, '') AS ma_mau,
                 ISNULL(mx.Ten_mau, ISNULL(c.Ma_Mau, '')) AS ten_mau,
-                ISNULL(c.Ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
-                ISNULL(p.Ma_khoN, 'K83') AS ma_kho_nhan,
+                ISNULL(NULLIF(RTRIM(c.Ma_kho_i), ''), ISNULL(NULLIF(RTRIM(p.Ma_kho), ''), '')) AS ma_kho_xuat,
+                ISNULL(NULLIF(RTRIM(c.ma_khoN_i), ''), ISNULL(NULLIF(RTRIM(p.Ma_khoN), ''), 'K83')) AS ma_kho_nhan,
                 ISNULL(p.ma_gd, '4') AS ma_gd,
-                ISNULL(gd.ten_gd, N'Điều chuyển xe nội bộ điểm KD') AS ten_gd
+                ISNULL(gd.ten_gd, N'Điều chuyển xe nội bộ điểm KD') AS ten_gd,
+                ISNULL(NULLIF(RTRIM(c.Ma_TTCP_N_i), ''), ISNULL(NULLIF(RTRIM(p.Ma_TTCP_N), ''), '')) AS ma_ttcp_nhan
             FROM PHDNX p WITH (NOLOCK)
             LEFT JOIN DmMaGD gd WITH (NOLOCK) ON p.ma_ct = gd.ma_ct AND p.ma_gd = gd.ma_gd
             LEFT JOIN CTDNX c WITH (NOLOCK) ON p.stt_rec = c.stt_rec
@@ -5168,4 +5305,4 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
 
 
 if __name__ == "__main__":
-    main()
+    main()

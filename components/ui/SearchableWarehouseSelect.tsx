@@ -117,8 +117,8 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
     const triggerBg = isDark
         ? 'bg-slate-950 border-slate-700 text-white hover:border-slate-600'
         : isDetected
-            ? 'bg-emerald-50/30 border-emerald-500 text-slate-800 hover:border-emerald-600'
-            : 'bg-white border-slate-300 text-slate-800 hover:border-slate-400';
+            ? 'bg-[#f8fafc] border-[#b8cce8] text-[#17263b] hover:border-[#698fc5]'
+            : 'bg-white border-[#dee4ec] text-[#17263b] hover:border-[#b8cce8]';
 
     const dropdownBg = isDark
         ? 'bg-slate-900 border-slate-700 text-slate-200'
@@ -145,8 +145,8 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
             {/* Nút bấm hiển thị kho hiện tại */}
             <div
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`w-full flex items-center justify-between border rounded-lg cursor-pointer transition-all select-none ${
-                    isSm ? 'h-7 px-2 text-xs font-bold' : 'px-3 py-2 text-sm font-semibold rounded-xl'
+                className={`w-full flex items-center justify-between border cursor-pointer transition-all select-none ${
+                    isSm ? 'h-8 px-2.5 text-xs font-medium rounded-[6px]' : 'px-3 py-2 text-sm font-semibold rounded-xl'
                 } ${triggerBg} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 tabIndex={disabled ? -1 : 0}
                 onKeyDown={(e) => {
@@ -159,12 +159,12 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
                 <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                     {selectedItem ? (
                         <>
-                            <span className={`px-1 py-0.2 rounded text-[10px] font-black uppercase tracking-wider ${
-                                isDark ? 'bg-slate-800 text-emerald-400' : 'bg-slate-100 text-blue-700 border border-slate-200'
+                            <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider ${
+                                isDark ? 'font-black bg-slate-800 text-emerald-400' : 'bg-[#edf3fc] text-[#285d9c] border border-[#d2e0f4] font-mono font-semibold'
                             }`}>
                                 {selectedItem.id}
                             </span>
-                            <span className="truncate font-semibold">
+                            <span className="truncate font-medium">
                                 {formatShortWarehouseName(selectedItem.shortName || selectedItem.name)}
                             </span>
                         </>
