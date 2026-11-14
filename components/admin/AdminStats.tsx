@@ -2,6 +2,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { Order } from '../../types';
 import moment from 'moment';
 import html2canvas from 'html2canvas';
+import '../orders/orders-premium.css';
 
 interface AdminStatsProps {
     xuathoadonData: Order[];
@@ -11,7 +12,9 @@ interface AdminStatsProps {
     viewBy?: 'tvbh' | 'team';
 }
 
-const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pairedData, teamData, viewBy = 'tvbh' }) => {
+const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pairedData, teamData, viewBy: initialViewBy = 'tvbh' }) => {
+    const [localViewBy, setLocalViewBy] = useState<'tvbh' | 'team'>(initialViewBy);
+    const viewBy = localViewBy;
     // Modal State
     const [detailModal, setDetailModal] = useState<{
         isOpen: boolean;
@@ -310,92 +313,131 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
     };
 
     return (
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 w-full relative">
-            <div className="flex-1 overflow-auto p-2 custom-scrollbar">
+        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/60 w-full relative">
+            {/* Header gọn gàng tối giản */}
+            <div className="flex-shrink-0 bg-white border-b border-slate-200/80 px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-800">Thống kê</h2>
+                    <span className="text-xs text-slate-400 font-medium">({pairedData.length + pendingData.length} xe)</span>
+                </div>
 
-                {/* 5:5 Grid Layout for Desktop */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 h-full lg:min-h-0">
+                {/* View Switcher: Từng TVBH vs Phòng Kinh Doanh */}
+                <div className="inline-flex p-0.5 bg-slate-100 rounded-lg border border-slate-200/60">
+                    <button
+                        type="button"
+                        onClick={() => setLocalViewBy('tvbh')}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                            viewBy === 'tvbh'
+                                ? 'bg-white text-slate-900 font-bold shadow-xs'
+                                : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                    >
+                        Từng TVBH
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setLocalViewBy('team')}
+                        className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                            viewBy === 'team'
+                                ? 'bg-white text-slate-900 font-bold shadow-xs'
+                                : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                    >
+                        Phòng KD
+                    </button>
+                </div>
+            </div>
 
-                    {/* SECTION 1: TVBH INVOICE STATS */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[400px] lg:min-h-0 overflow-hidden">
-                        <div className="px-3 py-2 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+            {/* Content Body: 2-Column Dashboard */}
+            <div className="flex-1 overflow-auto p-4 custom-scrollbar">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full lg:min-h-0">
+
+                    {/* SECTION 1: INVOICE STATS */}
+                    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 flex flex-col min-h-[400px] lg:min-h-0 overflow-hidden">
+                        <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <i className={viewBy === 'team' ? "fas fa-users text-sm" : "fas fa-file-invoice text-sm"}></i>
+                                <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                    <i className={viewBy === 'team' ? "fa-solid fa-users text-sm" : "fa-solid fa-file-invoice-dollar text-sm"}></i>
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-800 tracking-tight">
-                                    {viewBy === 'team' ? "XUẤT HÓA ĐƠN THEO PHÒNG" : "XUẤT HÓA ĐƠN THEO TVBH"}
-                                </h3>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                                        {viewBy === 'team' ? "Xuất hóa đơn theo Phòng KD" : "Xuất hóa đơn theo TVBH"}
+                                    </h3>
+                                    <span className="text-[11px] text-slate-400">Đơn đã có số hóa đơn & yêu cầu</span>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handleCopySpecificTable(invoiceTableRef, 'Xuat_Hoa_Don_TVBH', 'invoice')}
                                     disabled={copyingTable === 'invoice'}
-                                    className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                                    className="premium-inline-action"
+                                    title="Sao chép bảng thành ảnh"
                                 >
-                                    {copyingTable === 'invoice' ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
-                                    Copy Bảng
+                                    {copyingTable === 'invoice' ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-regular fa-copy" />}
+                                    <span>Copy bảng</span>
                                 </button>
-                                <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Tất cả</span>
+                                <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                                    {xuathoadonData.length} đơn
+                                </span>
                             </div>
                         </div>
 
                         <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={invoiceTableRef}>
                             <table className="w-full text-left border-collapse min-w-[480px]">
-                                <thead className="sticky top-0 z-40 shadow-sm">
-                                    <tr className="bg-slate-50">
-                                        <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">
-                                            {viewBy === 'team' ? 'Phòng Kinh Doanh' : 'Tư Vấn'}
+                                <thead className="sticky top-0 z-40 bg-slate-50/95 backdrop-blur-xs shadow-xs">
+                                    <tr className="border-b border-slate-200">
+                                        <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+                                            {viewBy === 'team' ? 'Phòng Kinh Doanh' : 'Tư Vấn Bán Hàng'}
                                         </th>
                                         {invoiceModels.map(model => (
-                                            <th key={model} className="px-2 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200 text-center">{model}</th>
+                                            <th key={model} className="px-2.5 py-2.5 text-[11px] font-bold text-slate-600 uppercase tracking-tight text-center">{model}</th>
                                         ))}
-                                        <th className="px-4 py-2.5 text-[10px] font-bold text-blue-600 uppercase tracking-wider border border-slate-200 text-center bg-blue-50/40">Tổng</th>
+                                        <th className="px-4 py-2.5 text-[11px] font-bold text-blue-600 uppercase tracking-tight text-center bg-blue-50/40">Tổng</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {Object.entries(tvbhInvoiceStats).length > 0 ? (
                                         Object.entries(tvbhInvoiceStats).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).map(([tvbh, models]) => (
-                                            <tr key={tvbh} className="hover:bg-blue-50/20 transition-colors group">
-                                                <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 px-4 py-2 text-xs font-bold text-slate-700 border border-slate-200 shadow-[1px_0_3px_-1px_rgba(0,0,0,0.05)] whitespace-nowrap overflow-hidden text-ellipsis">
+                                            <tr key={tvbh} className="border-b border-slate-100 hover:bg-blue-50/20 transition-colors group">
+                                                <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 px-4 py-2.5 text-xs font-semibold text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis shadow-[2px_0_4px_-2px_rgba(0,0,0,0.04)]">
                                                     <button onClick={() => showInvoiceDetails(tvbh)} className="hover:text-blue-600 transition-colors">{tvbh}</button>
                                                 </td>
                                                 {invoiceModels.map(model => {
                                                     const count = models[model] || 0;
                                                     return (
-                                                        <td key={model} className={`px-2 py-2 text-xs text-center font-medium border border-slate-100 ${count > 0 ? 'text-slate-900 font-bold bg-emerald-50/5' : 'text-slate-300'}`}>
+                                                        <td key={model} className="px-2.5 py-2.5 text-xs text-center font-medium">
                                                             {count > 0 ? (
-                                                                <button onClick={() => showInvoiceDetails(tvbh, model)} className="w-full h-full hover:text-blue-600 hover:scale-110 transition-all">
+                                                                <button onClick={() => showInvoiceDetails(tvbh, model)} className="font-bold text-slate-800 hover:text-blue-600 hover:scale-110 transition-all">
                                                                     {count}
                                                                 </button>
-                                                            ) : '-'}
+                                                            ) : <span className="text-slate-300">-</span>}
                                                         </td>
                                                     );
                                                 })}
-                                                <td className="px-4 py-2 text-xs font-black text-blue-600 text-center bg-blue-50/10 border border-slate-200">
+                                                <td className="px-4 py-2.5 text-xs font-bold text-blue-600 text-center bg-blue-50/15">
                                                     <button onClick={() => showInvoiceDetails(tvbh)} className="hover:scale-110 transition-transform">{models.total}</button>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={invoiceModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs border border-slate-200">Chưa có yêu cầu XHĐ</td>
+                                            <td colSpan={invoiceModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs">Chưa có yêu cầu XHĐ</td>
                                         </tr>
                                     )}
                                 </tbody>
                                 {Object.entries(tvbhInvoiceStats).length > 0 && (
-                                    <tfoot className="sticky bottom-0 z-30 bg-slate-100">
+                                    <tfoot className="sticky bottom-0 z-30 bg-slate-100/95 backdrop-blur-xs border-t-2 border-slate-200">
                                         <tr>
-                                            <td className="sticky left-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-black text-slate-800 border border-slate-200 text-center">TỔNG</td>
+                                            <td className="sticky left-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-800 text-center">TỔNG</td>
                                             {invoiceModels.map(model => {
                                                 const modelTotal = Object.values(tvbhInvoiceStats).reduce((sum, stats) => sum + (stats[model] || 0), 0);
                                                 return (
-                                                    <td key={model} className="px-2 py-2.5 text-xs font-black text-slate-800 text-center border border-slate-200">
+                                                    <td key={model} className="px-2.5 py-2.5 text-xs font-bold text-slate-800 text-center">
                                                         <button onClick={() => showInvoiceDetails(undefined, model)} className="hover:text-blue-600">{modelTotal || '-'}</button>
                                                     </td>
                                                 );
                                             })}
-                                            <td className="px-4 py-2.5 text-xs font-black text-blue-700 text-center bg-blue-100 border border-slate-300">
+                                            <td className="px-4 py-2.5 text-xs font-black text-blue-700 text-center bg-blue-100">
                                                 <button onClick={() => showInvoiceDetails()} className="hover:scale-110 transition-transform">
                                                     {Object.values(tvbhInvoiceStats).reduce((sum, stats) => sum + stats.total, 0)}
                                                 </button>
@@ -408,240 +450,259 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                     </div>
 
                     {/* SECTION 2 & 3 CONTAINER */}
-                    <div className="flex flex-col gap-1.5 h-full lg:min-h-0 overflow-hidden">
+                    <div className="flex flex-col gap-4 h-full lg:min-h-0 overflow-hidden">
                         {/* SECTION 2: MONTHLY MATCHING STATS */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
-                        <div className="px-3 py-2 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                    <i className="fas fa-layer-group text-sm"></i>
+                        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 flex flex-col flex-1 min-h-[240px] overflow-hidden">
+                            <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                        <i className="fa-solid fa-chart-pie text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-800 tracking-tight">Tiến độ ghép xe (Tất cả đơn)</h3>
+                                        <span className="text-[11px] text-slate-400">Tỷ lệ hoàn thành theo dòng xe</span>
+                                    </div>
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-800 tracking-tight">TIẾN ĐỘ GHÉP XE (TẤT CẢ ĐƠN)</h3>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleCopySpecificTable(matchingProgressTableRef, 'Tien_Do_Ghep_Xe', 'matching_progress')}
+                                        disabled={copyingTable === 'matching_progress'}
+                                        className="premium-inline-action"
+                                        title="Sao chép bảng thành ảnh"
+                                    >
+                                        {copyingTable === 'matching_progress' ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-regular fa-copy" />}
+                                        <span>Copy bảng</span>
+                                    </button>
+                                    <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-full text-[10px] font-semibold text-slate-600">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        <span>Khớp</span>
+                                        <span className="mx-1 text-slate-300">·</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                        <span>Chờ</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="hidden sm:flex items-center gap-2">
-                                <button
-                                    onClick={() => handleCopySpecificTable(matchingProgressTableRef, 'Tien_Do_Ghep_Xe', 'matching_progress')}
-                                    disabled={copyingTable === 'matching_progress'}
-                                    className="px-3 py-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
-                                >
-                                    {copyingTable === 'matching_progress' ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
-                                    Copy Bảng
-                                </button>
-                                <div className="flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    <span className="text-[8px] font-bold text-emerald-700 uppercase">Khớp</span>
-                                </div>
-                                <div className="flex items-center gap-1 bg-slate-100 px-1.5 py-0.5 rounded">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                    <span className="text-[8px] font-bold text-slate-500 uppercase">Chưa</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={matchingProgressTableRef}>
-                            <table className="w-full text-left border-collapse min-w-[320px]">
-                                <thead className="sticky top-0 z-40 shadow-sm">
-                                    <tr className="bg-slate-50">
-                                        <th className="px-5 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Dòng Xe</th>
-                                        <th className="px-2 py-2.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wider border border-slate-200 text-center w-20">Đã Ghép</th>
-                                        <th className="px-2 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border border-slate-200 text-center w-20">Chờ Ghép</th>
-                                        <th className="px-5 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200 text-center w-36">Tiến Độ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {matchingModels.length > 0 ? (
-                                        matchingModels.sort((a, b) => (currentMonthStats[b].matched + currentMonthStats[b].unmatched) - (currentMonthStats[a].matched + currentMonthStats[a].unmatched)).map(model => {
-                                            const data = currentMonthStats[model];
-                                            const total = data.matched + data.unmatched;
-                                            const percent = total > 0 ? (data.matched / total) * 100 : 0;
-                                            return (
-                                                <tr key={model} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="px-5 py-3 text-xs font-bold text-slate-700 border border-slate-100">
-                                                        <button onClick={() => showMatchingDetails(model, 'total')} className="hover:text-emerald-600 transition-colors">{model}</button>
-                                                    </td>
-                                                    <td className="px-2 py-3 text-xs font-bold text-emerald-600 text-center border border-slate-100">
-                                                        {data.matched > 0 ? (
-                                                            <button onClick={() => showMatchingDetails(model, 'matched')} className="w-full h-full hover:scale-110 transition-transform">{data.matched}</button>
-                                                        ) : <span className="text-slate-300 font-normal">-</span>}
-                                                    </td>
-                                                    <td className="px-2 py-3 text-xs font-bold text-slate-400 text-center border border-slate-100">
-                                                        {data.unmatched > 0 ? (
-                                                            <button onClick={() => showMatchingDetails(model, 'unmatched')} className="w-full h-full hover:scale-110 transition-transform">{data.unmatched}</button>
-                                                        ) : <span className="text-slate-300 font-normal">-</span>}
-                                                    </td>
-                                                    <td className="px-5 py-3 border border-slate-100">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className={`h-full transition-all duration-1000 ${percent === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
-                                                                    style={{ width: `${percent}%` }}
-                                                                ></div>
+                            <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={matchingProgressTableRef}>
+                                <table className="w-full text-left border-collapse min-w-[320px]">
+                                    <thead className="sticky top-0 z-40 bg-slate-50/95 backdrop-blur-xs shadow-xs">
+                                        <tr className="border-b border-slate-200">
+                                            <th className="px-5 py-2.5 text-[11px] font-bold text-slate-600 uppercase tracking-tight">Dòng Xe</th>
+                                            <th className="px-3 py-2.5 text-[11px] font-bold text-emerald-600 uppercase tracking-tight text-center w-24">Đã Ghép</th>
+                                            <th className="px-3 py-2.5 text-[11px] font-bold text-slate-400 uppercase tracking-tight text-center w-24">Chờ Ghép</th>
+                                            <th className="px-5 py-2.5 text-[11px] font-bold text-slate-600 uppercase tracking-tight text-center w-40">Tiến Độ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {matchingModels.length > 0 ? (
+                                            matchingModels.sort((a, b) => (currentMonthStats[b].matched + currentMonthStats[b].unmatched) - (currentMonthStats[a].matched + currentMonthStats[a].unmatched)).map(model => {
+                                                const data = currentMonthStats[model];
+                                                const total = data.matched + data.unmatched;
+                                                const percent = total > 0 ? (data.matched / total) * 100 : 0;
+                                                return (
+                                                    <tr key={model} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors group">
+                                                        <td className="px-5 py-3 text-xs font-semibold text-slate-800">
+                                                            <button onClick={() => showMatchingDetails(model, 'total')} className="hover:text-blue-600 transition-colors">{model}</button>
+                                                        </td>
+                                                        <td className="px-3 py-3 text-xs font-bold text-emerald-600 text-center">
+                                                            {data.matched > 0 ? (
+                                                                <button onClick={() => showMatchingDetails(model, 'matched')} className="hover:scale-110 transition-transform">{data.matched}</button>
+                                                            ) : <span className="text-slate-300 font-normal">-</span>}
+                                                        </td>
+                                                        <td className="px-3 py-3 text-xs font-bold text-slate-400 text-center">
+                                                            {data.unmatched > 0 ? (
+                                                                <button onClick={() => showMatchingDetails(model, 'unmatched')} className="hover:scale-110 transition-transform">{data.unmatched}</button>
+                                                            ) : <span className="text-slate-300 font-normal">-</span>}
+                                                        </td>
+                                                        <td className="px-5 py-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full transition-all duration-700 ${percent === 100 ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                                                                        style={{ width: `${percent}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                                <span className="text-[10px] font-mono font-bold text-slate-500 w-8 text-right">{Math.round(percent)}%</span>
                                                             </div>
-                                                            <span className="text-[9px] font-black text-slate-400 w-6">{Math.round(percent)}%</span>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic text-xs border border-slate-200">Không có dữ liệu tháng này</td>
-                                        </tr>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={4} className="px-6 py-12 text-center text-slate-400 italic text-xs">Không có dữ liệu</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                    {matchingModels.length > 0 && (
+                                        <tfoot className="sticky bottom-0 z-20 bg-slate-100/95 backdrop-blur-xs border-t-2 border-slate-200">
+                                            <tr>
+                                                <td className="px-5 py-2.5 text-xs font-bold text-slate-800 text-center">TỔNG</td>
+                                                <td className="px-3 py-2.5 text-xs font-black text-emerald-700 text-center">
+                                                    <button
+                                                        onClick={() => showMatchingDetails(null, 'total_all')}
+                                                        className="px-2.5 py-0.5 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold transition-colors cursor-pointer"
+                                                        title="Bấm để xem chi tiết toàn bộ xe đã ghép"
+                                                    >
+                                                        {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].matched, 0)}
+                                                    </button>
+                                                </td>
+                                                <td className="px-3 py-2.5 text-xs font-black text-slate-600 text-center">
+                                                    <button
+                                                        onClick={() => showMatchingDetails(null, 'unmatched_all')}
+                                                        className="px-2.5 py-0.5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition-colors cursor-pointer"
+                                                        title="Bấm để xem chi tiết toàn bộ xe chờ ghép"
+                                                    >
+                                                        {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].unmatched, 0)}
+                                                    </button>
+                                                </td>
+                                                <td className="px-5 py-2.5 text-center">
+                                                    <span className="text-[11px] font-bold text-slate-700">
+                                                        Tổng: {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].matched + currentMonthStats[m].unmatched, 0)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
                                     )}
-                                </tbody>
-                                {matchingModels.length > 0 && (
-                                    <tfoot className="sticky bottom-0 z-20 bg-slate-100">
-                                        <tr>
-                                            <td className="px-5 py-2.5 text-xs font-black text-slate-800 border border-slate-200 text-center">TỔNG</td>
-                                            <td className="px-2 py-2.5 text-xs font-black text-emerald-700 text-center border border-slate-200">
-                                                <button
-                                                    onClick={() => showMatchingDetails(null, 'total_all')}
-                                                    className="w-full h-full px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-black transition-colors cursor-pointer"
-                                                    title="Bấm để xem chi tiết toàn bộ xe đã ghép"
-                                                >
-                                                    {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].matched, 0)}
-                                                </button>
-                                            </td>
-                                            <td className="px-2 py-2.5 text-xs font-black text-slate-500 text-center border border-slate-200">
-                                                <button
-                                                    onClick={() => showMatchingDetails(null, 'unmatched_all')}
-                                                    className="w-full h-full px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-black transition-colors cursor-pointer"
-                                                    title="Bấm để xem chi tiết toàn bộ xe chờ ghép"
-                                                >
-                                                    {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].unmatched, 0)}
-                                                </button>
-                                            </td>
-                                            <td className="px-5 py-2.5 text-center border border-slate-200">
-                                                <span className="text-[10px] font-black text-slate-700">
-                                                    Tổng: {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].matched + currentMonthStats[m].unmatched, 0)}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                )}
-                            </table>
+                                </table>
+                            </div>
                         </div>
-                    </div>
 
                         {/* SECTION 3: PAIRED / PENDING CARS BY TVBH OR TEAM */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
-                            <div className="px-3 py-2 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
+                        <div className="bg-white rounded-2xl shadow-xs border border-slate-200/80 flex flex-col flex-1 min-h-[240px] overflow-hidden">
+                            <div className="px-4 py-3 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
                                 <div className="flex items-center gap-2.5">
-                                    <div className={`w-8 h-8 rounded-lg ${matchingFilter === 'pending' ? 'bg-amber-50 text-amber-600' : matchingFilter === 'all' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'} flex items-center justify-center`}>
-                                        <i className={viewBy === 'team' ? "fas fa-users text-sm" : "fas fa-car-side text-sm"}></i>
+                                    <div className={`w-8 h-8 rounded-xl ${matchingFilter === 'pending' ? 'bg-amber-50 text-amber-600' : matchingFilter === 'all' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'} flex items-center justify-center`}>
+                                        <i className={viewBy === 'team' ? "fa-solid fa-users text-sm" : "fa-solid fa-car text-sm"}></i>
                                     </div>
-                                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
-                                        {matchingFilter === 'pending'
-                                            ? (viewBy === 'team' ? "SỐ LƯỢNG XE CHỜ GHÉP THEO PHÒNG" : "SỐ LƯỢNG XE CHỜ GHÉP THEO TVBH")
-                                            : matchingFilter === 'all'
-                                            ? (viewBy === 'team' ? "SỐ LƯỢNG XE (ĐÃ + CHỜ GHÉP) THEO PHÒNG" : "SỐ LƯỢNG XE (ĐÃ + CHỜ GHÉP) THEO TVBH")
-                                            : (viewBy === 'team' ? "SỐ LƯỢNG XE GHÉP THEO PHÒNG" : "SỐ LƯỢNG XE GHÉP THEO TVBH")
-                                        }
-                                    </h3>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                                            {matchingFilter === 'pending'
+                                                ? (viewBy === 'team' ? "Xe chờ ghép theo Phòng" : "Xe chờ ghép theo TVBH")
+                                                : matchingFilter === 'all'
+                                                ? (viewBy === 'team' ? "Tổng xe ghép theo Phòng" : "Tổng xe ghép theo TVBH")
+                                                : (viewBy === 'team' ? "Xe đã ghép theo Phòng" : "Xe đã ghép theo TVBH")
+                                            }
+                                        </h3>
+                                        <span className="text-[11px] text-slate-400">Chi tiết phân bổ xe theo dòng xe</span>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    {/* Toggle Filter: Đã ghép | Chờ ghép | Tất cả */}
-                                    <div className="flex items-center p-0.5 bg-slate-100 rounded-lg text-[10px] font-bold">
+                                    {/* Toggle Filter: Đã ghép | Chờ ghép | Tất cả - Synchronized with Tab Ghép Xe Pills */}
+                                    <div className="matching-status-tabs flex items-center gap-1 bg-slate-100 p-1 rounded-full border border-slate-200/60">
                                         <button
+                                            type="button"
                                             onClick={() => setMatchingFilter('paired')}
-                                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${matchingFilter === 'paired' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                                                matchingFilter === 'paired'
+                                                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                                                    : 'text-slate-600 hover:text-slate-900'
+                                            }`}
                                         >
-                                            <i className="fas fa-check-circle text-[9px]"></i>
-                                            <span>Đã ghép ({pairedData.length})</span>
+                                            Đã ghép ({pairedData.length})
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => setMatchingFilter('pending')}
-                                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${matchingFilter === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                                                matchingFilter === 'pending'
+                                                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                                                    : 'text-slate-600 hover:text-slate-900'
+                                            }`}
                                         >
-                                            <i className="fas fa-clock text-[9px]"></i>
-                                            <span>Chờ ghép ({pendingData.length})</span>
+                                            Chờ ghép ({pendingData.length})
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => setMatchingFilter('all')}
-                                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${matchingFilter === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                                                matchingFilter === 'all'
+                                                    ? 'bg-slate-900 text-white font-bold shadow-xs'
+                                                    : 'text-slate-600 hover:text-slate-900'
+                                            }`}
                                         >
-                                            <i className="fas fa-layer-group text-[9px]"></i>
-                                            <span>Tất cả ({pairedData.length + pendingData.length})</span>
+                                            Tất cả ({pairedData.length + pendingData.length})
                                         </button>
                                     </div>
 
                                     <button
                                         onClick={() => handleCopySpecificTable(matchingTvbhTableRef, `Xe_${matchingFilter}_Theo_${viewBy}`, `matching_${matchingFilter}`)}
                                         disabled={copyingTable === `matching_${matchingFilter}`}
-                                        className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                                        className="premium-inline-action"
+                                        title="Sao chép bảng thành ảnh"
                                     >
-                                        {copyingTable === `matching_${matchingFilter}` ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
-                                        Copy Bảng
+                                        {copyingTable === `matching_${matchingFilter}` ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-regular fa-copy" />}
+                                        <span>Copy bảng</span>
                                     </button>
                                 </div>
                             </div>
 
                             <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={matchingTvbhTableRef}>
-                                    <table className="w-full text-left border-collapse min-w-[480px]">
-                                        <thead className="sticky top-0 z-40 shadow-sm">
-                                            <tr className="bg-slate-50">
-                                                <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">
-                                                    {viewBy === 'team' ? 'Phòng Kinh Doanh' : 'Tư Vấn'}
-                                                </th>
-                                                {matchingTvbhModels.map(model => (
-                                                    <th key={model} className="px-2 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200 text-center">{model}</th>
-                                                ))}
-                                                <th className="px-4 py-2.5 text-[10px] font-bold text-blue-600 uppercase tracking-wider border border-slate-200 text-center bg-blue-50/40">Tổng</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {Object.entries(tvbhMatchingStats).length > 0 ? (
-                                                Object.entries(tvbhMatchingStats).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).map(([tvbh, models]) => (
-                                                    <tr key={tvbh} className="hover:bg-blue-50/20 transition-colors group">
-                                                        <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 px-4 py-2 text-xs font-bold text-slate-700 border border-slate-200 shadow-[1px_0_3px_-1px_rgba(0,0,0,0.05)] whitespace-nowrap overflow-hidden text-ellipsis">
-                                                            <button onClick={() => showMatchingDetailsTvbh(tvbh)} className="hover:text-blue-600 transition-colors">{tvbh}</button>
-                                                        </td>
-                                                        {matchingTvbhModels.map(model => {
-                                                            const count = models[model] || 0;
-                                                            return (
-                                                                <td key={model} className={`px-2 py-2 text-xs text-center font-medium border border-slate-100 ${count > 0 ? (matchingFilter === 'pending' ? 'text-amber-700 font-bold bg-amber-50/20' : 'text-slate-900 font-bold bg-emerald-50/5') : 'text-slate-300'}`}>
-                                                                    {count > 0 ? (
-                                                                        <button onClick={() => showMatchingDetailsTvbh(tvbh, model)} className="w-full h-full hover:text-blue-600 hover:scale-110 transition-all">
-                                                                            {count}
-                                                                        </button>
-                                                                    ) : '-'}
-                                                                </td>
-                                                            );
-                                                        })}
-                                                        <td className="px-4 py-2 text-xs font-black text-blue-600 text-center bg-blue-50/10 border border-slate-200">
-                                                            <button onClick={() => showMatchingDetailsTvbh(tvbh)} className="hover:scale-110 transition-transform">{models.total}</button>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan={matchingTvbhModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs border border-slate-200">
-                                                        Chưa có xe {matchingFilter === 'pending' ? 'chờ ghép' : matchingFilter === 'all' ? 'nào' : 'đã ghép'}
+                                <table className="w-full text-left border-collapse min-w-[480px]">
+                                    <thead className="sticky top-0 z-40 bg-slate-50/95 backdrop-blur-xs shadow-xs">
+                                        <tr className="border-b border-slate-200">
+                                            <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+                                                {viewBy === 'team' ? 'Phòng Kinh Doanh' : 'Tư Vấn Bán Hàng'}
+                                            </th>
+                                            {matchingTvbhModels.map(model => (
+                                                <th key={model} className="px-2.5 py-2.5 text-[11px] font-bold text-slate-600 uppercase tracking-tight text-center">{model}</th>
+                                            ))}
+                                            <th className="px-4 py-2.5 text-[11px] font-bold text-blue-600 uppercase tracking-tight text-center bg-blue-50/40">Tổng</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {Object.entries(tvbhMatchingStats).length > 0 ? (
+                                            Object.entries(tvbhMatchingStats).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).map(([tvbh, models]) => (
+                                                <tr key={tvbh} className="border-b border-slate-100 hover:bg-blue-50/20 transition-colors group">
+                                                    <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 px-4 py-2.5 text-xs font-semibold text-slate-700 whitespace-nowrap overflow-hidden text-ellipsis shadow-[2px_0_4px_-2px_rgba(0,0,0,0.04)]">
+                                                        <button onClick={() => showMatchingDetailsTvbh(tvbh)} className="hover:text-blue-600 transition-colors">{tvbh}</button>
                                                     </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                        {Object.entries(tvbhMatchingStats).length > 0 && (
-                                            <tfoot className="sticky bottom-0 z-30 bg-slate-100">
-                                                <tr>
-                                                    <td className="sticky left-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-black text-slate-800 border border-slate-200 text-center">TỔNG</td>
                                                     {matchingTvbhModels.map(model => {
-                                                        const modelTotal = Object.values(tvbhMatchingStats).reduce((sum, stats) => sum + (stats[model] || 0), 0);
+                                                        const count = models[model] || 0;
                                                         return (
-                                                            <td key={model} className="px-2 py-2.5 text-xs font-black text-slate-800 text-center border border-slate-200">
-                                                                <button onClick={() => showMatchingDetailsTvbh(undefined, model)} className="hover:text-blue-600">{modelTotal || '-'}</button>
+                                                            <td key={model} className="px-2.5 py-2.5 text-xs text-center font-medium">
+                                                                {count > 0 ? (
+                                                                    <button onClick={() => showMatchingDetailsTvbh(tvbh, model)} className={`font-bold hover:text-blue-600 hover:scale-110 transition-all ${matchingFilter === 'pending' ? 'text-amber-700' : 'text-slate-800'}`}>
+                                                                        {count}
+                                                                    </button>
+                                                                ) : <span className="text-slate-300">-</span>}
                                                             </td>
                                                         );
                                                     })}
-                                                    <td className="px-4 py-2.5 text-xs font-black text-blue-700 text-center bg-blue-100 border border-slate-300">
-                                                        <button onClick={() => showMatchingDetailsTvbh()} className="hover:scale-110 transition-transform">
-                                                            {Object.values(tvbhMatchingStats).reduce((sum, stats) => sum + stats.total, 0)}
-                                                        </button>
+                                                    <td className="px-4 py-2.5 text-xs font-bold text-blue-600 text-center bg-blue-50/15">
+                                                        <button onClick={() => showMatchingDetailsTvbh(tvbh)} className="hover:scale-110 transition-transform">{models.total}</button>
                                                     </td>
                                                 </tr>
-                                            </tfoot>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={matchingTvbhModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs">
+                                                    Chưa có xe {matchingFilter === 'pending' ? 'chờ ghép' : matchingFilter === 'all' ? 'nào' : 'đã ghép'}
+                                                </td>
+                                            </tr>
                                         )}
-                                    </table>
+                                    </tbody>
+                                    {Object.entries(tvbhMatchingStats).length > 0 && (
+                                        <tfoot className="sticky bottom-0 z-30 bg-slate-100/95 backdrop-blur-xs border-t-2 border-slate-200">
+                                            <tr>
+                                                <td className="sticky left-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-800 text-center">TỔNG</td>
+                                                {matchingTvbhModels.map(model => {
+                                                    const modelTotal = Object.values(tvbhMatchingStats).reduce((sum, stats) => sum + (stats[model] || 0), 0);
+                                                    return (
+                                                        <td key={model} className="px-2.5 py-2.5 text-xs font-bold text-slate-800 text-center">
+                                                            <button onClick={() => showMatchingDetailsTvbh(undefined, model)} className="hover:text-blue-600">{modelTotal || '-'}</button>
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="px-4 py-2.5 text-xs font-black text-blue-700 text-center bg-blue-100">
+                                                    <button onClick={() => showMatchingDetailsTvbh()} className="hover:scale-110 transition-transform">
+                                                        {Object.values(tvbhMatchingStats).reduce((sum, stats) => sum + stats.total, 0)}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    )}
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -702,29 +763,29 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                         <div className="flex-1 overflow-auto p-0 custom-scrollbar bg-slate-50">
                             <div className="overflow-x-auto p-4" ref={tableRef}>
                                 {/* Bọc thêm 1 div bg-white để khi chụp ảnh có viền trắng đẹp */}
-                                <div className="bg-white overflow-hidden">
-                            <table className="w-full text-left border-collapse border-2 border-slate-400 min-w-[800px] text-[11px] font-medium bg-white font-sans">
-                                <thead className="sticky top-0 bg-slate-100 z-10 shadow-sm">
-                                    <tr>
-                                        <th className="px-2 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center w-8 bg-slate-200">STT</th>
-                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Số đơn</th>
-                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Khách hàng / TVBH</th>
-                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Dòng xe / Phiên bản</th>
-                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Màu sắc (Ngoại/Nội)</th>
+                                <div className="bg-white overflow-hidden rounded-xl border border-slate-200/80 shadow-xs">
+                            <table className="w-full text-left border-collapse min-w-[800px] text-xs font-medium bg-white font-sans">
+                                <thead className="sticky top-0 bg-slate-50 z-10 shadow-xs">
+                                    <tr className="border-b border-slate-200">
+                                        <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center w-10">STT</th>
+                                        <th className="px-3 py-2.5 font-bold text-slate-600 uppercase">Số đơn</th>
+                                        <th className="px-3 py-2.5 font-bold text-slate-600 uppercase">Khách hàng / TVBH</th>
+                                        <th className="px-3 py-2.5 font-bold text-slate-600 uppercase">Dòng xe / Phiên bản</th>
+                                        <th className="px-3 py-2.5 font-bold text-slate-600 uppercase">Màu sắc (Ngoại/Nội)</th>
                                         {detailModal.isMatchedView ? (
                                             <>
-                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200 text-center">Số VIN</th>
-                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Trạng thái</th>
+                                                <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Số VIN</th>
+                                                <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Trạng thái</th>
                                                 {detailModal.showDaysColumn && (
-                                                    <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Số ngày ghép</th>
+                                                    <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Số ngày ghép</th>
                                                 )}
-                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Ngày ghép</th>
+                                                <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Ngày ghép</th>
                                             </>
                                         ) : (
                                             <>
-                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Trạng thái</th>
-                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Ngày Yêu Cầu</th>
-                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Ngày Cọc</th>
+                                                <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Trạng thái</th>
+                                                <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Ngày Yêu Cầu</th>
+                                                <th className="px-3 py-2.5 font-bold text-slate-600 uppercase text-center">Ngày Cọc</th>
                                             </>
                                         )}
                                     </tr>
@@ -736,47 +797,47 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                             ? Math.max(0, moment().diff(moment(matchedDate), 'days'))
                                             : null;
                                         return (
-                                        <tr key={order['Số đơn hàng'] || order.VIN || index} className="hover:bg-slate-50">
-                                            <td className="px-2 py-2 text-center text-slate-600 border border-slate-300">{index + 1}</td>
-                                            <td className="px-3 py-2 text-slate-900 border border-slate-300 whitespace-nowrap">{order['Số đơn hàng']}</td>
-                                            <td className="px-3 py-2 text-slate-900 border border-slate-300">
-                                                <div>{order['Tên khách hàng'] || order['TÊN KHÁCH HÀNG']}</div>
-                                                <div className="text-slate-500">{order['Tên tư vấn bán hàng'] || order['Tư vấn bán hàng'] || order['Người YC']}</div>
+                                        <tr key={order['Số đơn hàng'] || order.VIN || index} className="hover:bg-slate-50 border-b border-slate-100">
+                                            <td className="px-3 py-2 text-center text-slate-500">{index + 1}</td>
+                                            <td className="px-3 py-2 font-mono text-slate-900 whitespace-nowrap">{order['Số đơn hàng']}</td>
+                                            <td className="px-3 py-2 text-slate-900">
+                                                <div className="font-semibold">{order['Tên khách hàng'] || order['TÊN KHÁCH HÀNG']}</div>
+                                                <div className="text-slate-500 text-[11px]">{order['Tên tư vấn bán hàng'] || order['Tư vấn bán hàng'] || order['Người YC']}</div>
                                             </td>
-                                            <td className="px-3 py-2 text-slate-900 border border-slate-300">
-                                                <div>{order['Dòng xe'] || order['DÒNG XE']}</div>
-                                                <div className="text-slate-500">{order['Phiên bản'] || order['PHIÊN BẢN']}</div>
+                                            <td className="px-3 py-2 text-slate-900">
+                                                <div className="font-medium">{order['Dòng xe'] || order['DÒNG XE']}</div>
+                                                <div className="text-slate-500 text-[11px]">{order['Phiên bản'] || order['PHIÊN BẢN']}</div>
                                             </td>
-                                            <td className="px-3 py-2 text-slate-900 border border-slate-300">
+                                            <td className="px-3 py-2 text-slate-900">
                                                 <div>{order['Ngoại thất']}</div>
-                                                <div className="text-slate-500">{order['Nội thất']}</div>
+                                                <div className="text-slate-500 text-[11px]">{order['Nội thất']}</div>
                                             </td>
                                             {detailModal.isMatchedView ? (
                                                 <>
-                                                    <td className="px-3 py-2 text-slate-900 font-mono whitespace-nowrap border border-slate-300 text-center">
+                                                    <td className="px-3 py-2 text-slate-900 font-mono whitespace-nowrap text-center font-bold">
                                                         {order.VIN || order['SỐ VIN'] || '-'}
                                                     </td>
-                                                    <td className="px-3 py-2 text-center border border-slate-300 whitespace-nowrap text-emerald-700 font-bold">
+                                                    <td className="px-3 py-2 text-center whitespace-nowrap text-emerald-700 font-bold">
                                                         {order['Kết quả'] || order['Trạng thái VC'] || 'Đã ghép'}
                                                     </td>
                                                     {detailModal.showDaysColumn && (
-                                                        <td className={`px-3 py-2 text-center border border-slate-300 font-bold ${daysSinceMatch !== null && daysSinceMatch >= 20 ? 'text-red-600' : daysSinceMatch !== null && daysSinceMatch >= 10 ? 'text-amber-600' : 'text-slate-800'}`}>
+                                                        <td className={`px-3 py-2 text-center font-bold ${daysSinceMatch !== null && daysSinceMatch >= 20 ? 'text-red-600' : daysSinceMatch !== null && daysSinceMatch >= 10 ? 'text-amber-600' : 'text-slate-800'}`}>
                                                             {daysSinceMatch !== null ? `${daysSinceMatch}` : '-'}
                                                         </td>
                                                     )}
-                                                    <td className="px-3 py-2 text-center text-slate-800 border border-slate-300 whitespace-nowrap font-medium">
+                                                    <td className="px-3 py-2 text-center text-slate-800 whitespace-nowrap font-medium">
                                                         {matchedDate ? moment(matchedDate).format('DD/MM/YYYY') : '-'}
                                                     </td>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td className="px-3 py-2 text-center border border-slate-300 whitespace-nowrap text-amber-600 font-bold">
+                                                    <td className="px-3 py-2 text-center whitespace-nowrap text-amber-600 font-bold">
                                                         {order['Kết quả'] || order['Trạng thái VC'] || 'Chưa ghép'}
                                                     </td>
-                                                    <td className="px-3 py-2 text-center text-slate-800 border border-slate-300 whitespace-nowrap font-medium">
+                                                    <td className="px-3 py-2 text-center text-slate-800 whitespace-nowrap font-medium">
                                                         {moment(order['Thời gian YC'] || order['Thời gian nhập']).format('DD/MM/YYYY')}
                                                     </td>
-                                                    <td className="px-3 py-2 text-center text-slate-800 border border-slate-300 whitespace-nowrap font-medium">
+                                                    <td className="px-3 py-2 text-center text-slate-800 whitespace-nowrap font-medium">
                                                         {order['Ngày cọc'] ? moment(order['Ngày cọc']).format('DD/MM/YYYY') : <span className="text-slate-300">-</span>}
                                                     </td>
                                                 </>

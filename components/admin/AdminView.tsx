@@ -314,7 +314,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const categories = {
         orders: {
             label: 'ĐƠN HÀNG',
-            icon: 'fa-file-invoice-dollar',
+            icon: 'fa-layer-group',
             views: ['matching', 'invoices', 'cyber_plan', 'car_swap', 'don_ton'] as AdminSubView[]
         },
         inventory: {
@@ -965,20 +965,76 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             <>
             {/* Desktop navigation: all visible tabs live in the compact rail. */}
             <nav ref={railRef} className="admin-tab-rail hidden md:flex" aria-label="Phân hệ quản trị">
+                {/* 3 tác vụ tác nghiệp nhanh được đưa ra ngoài trực tiếp, đồng bộ chuẩn giao diện rail */}
+                {[
+                    { view: 'matching' as AdminSubView, label: 'Ghép xe', icon: 'fa-link', count: counts.matching },
+                    { view: 'invoices' as AdminSubView, label: 'Hóa đơn', icon: 'fa-file-invoice-dollar', count: counts.invoices },
+                    { view: 'cyber_plan' as AdminSubView, label: 'K.H Cyber', icon: 'fa-network-wired', count: counts.cyber_plan },
+                ]
+                    .filter(item => !hiddenTabs.includes(item.view))
+                    .map(item => {
+                        const isActive = adminView === item.view;
+                        const count = item.count;
+                        return (
+                            <div className="admin-tab-rail-group" key={item.view} role="group" aria-label={item.label}>
+                                <button
+                                    type="button"
+                                    className="admin-rail-group-toggle"
+                                    data-active={isActive}
+                                    aria-current={isActive ? 'page' : undefined}
+                                    title={labels[item.view]}
+                                    onClick={() => {
+                                        setCurrentCategory('orders');
+                                        setAdminView(item.view);
+                                        setOpenRailGroup(null);
+                                    }}
+                                >
+                                    <i className={`fas ${item.icon}`} aria-hidden="true" />
+                                    <span>{item.label}</span>
+                                    {count != null && count > 0 && (
+                                        <span className="admin-rail-badge">
+                                            {count > 99 ? '99+' : count}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        );
+                    })}
+
                 {Object.entries(categories).map(([key, category]) => {
-                    const views = category.views.filter(view => !hiddenTabs.includes(view));
+                    // Đối với mục đơn hàng, 3 tab chính đã đưa ra ngoài nên menu dropdown gom gọn các tab còn lại
+                    const quickKeys: AdminSubView[] = ['matching', 'invoices', 'cyber_plan'];
+                    const views = category.views.filter(view => !hiddenTabs.includes(view) && (key !== 'orders' || !quickKeys.includes(view)));
                     if (!views.length) return null;
-                    const expanded = openRailGroup === key;
+                    const isSingleView = views.length === 1;
+                    const expanded = openRailGroup === key && !isSingleView;
+                    const isGroupActive = key === 'orders'
+                        ? views.some(v => v === adminView)
+                        : category.views.filter(v => !hiddenTabs.includes(v)).includes(adminView);
                     return <div className="admin-tab-rail-group" key={key} role="group" aria-label={category.label}>
                         <button type="button" className="admin-rail-group-toggle"
-                            aria-expanded={expanded} aria-controls={`admin-rail-group-${key}`}
-                            title={category.label}
-                            data-active={views.includes(adminView)}
-                            onClick={() => setOpenRailGroup(expanded ? null : key)}>
+                            aria-expanded={isSingleView ? undefined : expanded}
+                            aria-controls={isSingleView ? undefined : `admin-rail-group-${key}`}
+                            title={isSingleView ? labels[views[0]] : category.label}
+                            data-active={isGroupActive}
+                            onClick={() => {
+                                if (isSingleView) {
+                                    setCurrentCategory(key as keyof typeof categories);
+                                    setAdminView(views[0]);
+                                    setOpenRailGroup(null);
+                                } else {
+                                    setOpenRailGroup(expanded ? null : key);
+                                }
+                            }}>
                             <i className={`fas ${category.icon}`} aria-hidden="true" />
                             <span>{({ orders: 'Đơn hàng', inventory: 'Kho xe', system: 'Hệ thống', stats: 'Thống kê' } as Record<string, string>)[key]}</span>
+                            {isSingleView && counts[views[0]] != null && counts[views[0]]! > 0 && (
+                                <span className="admin-rail-badge">
+                                    {counts[views[0]]! > 99 ? '99+' : counts[views[0]]}
+                                </span>
+                            )}
                         </button>
-                        {expanded && <div className="admin-rail-group-items" id={`admin-rail-group-${key}`}>
+                        {expanded && !isSingleView && <div className="admin-rail-group-items" id={`admin-rail-group-${key}`}>
                         <strong>{category.label}</strong>
                         {views.map(view => <button key={view} type="button"
                             aria-current={adminView === view ? 'page' : undefined}

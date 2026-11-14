@@ -1162,36 +1162,31 @@ export const MobileCyberPlanView: React.FC<MobileCyberPlanViewProps> = ({
                                     {/* Card: Kho xuất & Kho nhận */}
                                     <div className="p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
                                         <div className="grid grid-cols-2 gap-2.5">
-                                            <div>
-                                                <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                    Kho xuất
-                                                </label>
-                                                <select
-                                                    value={dnxMaKhoXuat}
-                                                    onChange={e => setDnxMaKhoXuat(e.target.value)}
-                                                    className="w-full h-9 px-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-blue-500 bg-slate-50"
-                                                >
-                                                    <option value="K87">K87 (Kho xe Thuận An)</option>
-                                                    <option value="K83">K83 (Kho PDI / Showroom)</option>
-                                                    <option value="K65">K65 (Kho Bình Triệu)</option>
-                                                    <option value="K61">K61 (Kho Quang Trung)</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                                                    Kho nhận
-                                                </label>
-                                                <select
-                                                    value={dnxMaKhoNhan}
-                                                    onChange={e => setDnxMaKhoNhan(e.target.value)}
-                                                    className="w-full h-9 px-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-blue-500 bg-slate-50"
-                                                >
-                                                    <option value="K83">K83 (Kho PDI / Showroom)</option>
-                                                    <option value="K87">K87 (Kho xe Thuận An)</option>
-                                                    <option value="K65">K65 (Kho Bình Triệu)</option>
-                                                    <option value="K61">K61 (Kho Quang Trung)</option>
-                                                </select>
-                                            </div>
+                                            {[
+                                                { label: 'Kho xuất', val: dnxMaKhoXuat, setter: setDnxMaKhoXuat, includeFirst: 'K87' },
+                                                { label: 'Kho nhận', val: dnxMaKhoNhan, setter: setDnxMaKhoNhan, includeFirst: 'K83' },
+                                            ].map(field => (
+                                                <div key={field.label}>
+                                                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                                                        {field.label}
+                                                    </label>
+                                                    <select
+                                                        value={field.val}
+                                                        onChange={e => field.setter(e.target.value)}
+                                                        className="w-full h-9 px-2 rounded-xl border border-slate-200 text-xs font-semibold focus:border-blue-500 bg-slate-50"
+                                                    >
+                                                        {field.includeFirst === 'K83' && <option value="K83">K83 (Thuận An PDI)</option>}
+                                                        <option value="K87">K87 (QL13 - HCM)</option>
+                                                        <option value="KHCM.ST">KHCM.ST (Suối Tiên)</option>
+                                                        {field.includeFirst !== 'K83' && <option value="K83">K83 (Thuận An PDI)</option>}
+                                                        <option value="K86">K86 (Q12 - HCM)</option>
+                                                        <option value="K85">K85 (Dĩ An)</option>
+                                                        <option value="KHCM.PVD">KHCM.PVD (Phạm Văn Đồng)</option>
+                                                        <option value="K65">K65 (Vũng Tàu)</option>
+                                                        <option value="K61">K61 (Quang Trung)</option>
+                                                    </select>
+                                                </div>
+                                            ))}
                                         </div>
 
                                         <div>

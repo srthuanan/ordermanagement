@@ -47,6 +47,13 @@ const RAW_POPULAR_WAREHOUSES: CyberWarehouseItem[] = [
         isPopular: true
     },
     {
+        id: "KHCM.ST",
+        name: "KHCM.ST – Kho xe Suối Tiên - TPHCM",
+        shortName: "Kho xe Suối Tiên - TPHCM",
+        dvcs: "02",
+        isPopular: true
+    },
+    {
         id: "K106",
         name: "K106 – Kho xe ô tô - Hà Huy Giáp",
         shortName: "Kho xe ô tô - Hà Huy Giáp",

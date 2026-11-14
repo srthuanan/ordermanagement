@@ -85,8 +85,9 @@ export const WAREHOUSE_SHORT_NAMES: Record<string, string> = {
     'K83': 'Thuận An',
     'K87': 'QL13 (HCM)',
     'K86': 'Q12 (HCM)',
-    'K85': 'K85',
+    'K85': 'Dĩ An',
     'KHCM.PVD': 'Phạm Văn Đồng',
+    'KHCM.ST': 'Suối Tiên (HCM)',
     'K106': 'Hà Huy Giáp',
     'K58': 'Lê Văn Việt',
     'K60': '3/2 (HCM)',
@@ -162,6 +163,7 @@ export const formatShortWarehouseName = (name: string | undefined | null): strin
     if (lowerRaw.includes('q12') || lowerRaw.includes('quận 12')) return 'Q12 (HCM)';
     if (lowerRaw.includes('dĩ an') || lowerRaw.includes('di an')) return 'Dĩ An';
     if (lowerRaw.includes('phạm văn đồng') || lowerRaw.includes('pham van dong') || lowerRaw.includes('pvd')) return 'Phạm Văn Đồng';
+    if (lowerRaw.includes('suối tiên') || lowerRaw.includes('suoi tien')) return 'Suối Tiên (HCM)';
     if (lowerRaw.includes('hà huy giáp') || lowerRaw.includes('ha huy giap')) return 'Hà Huy Giáp';
     if (lowerRaw.includes('lê văn việt') || lowerRaw.includes('le van viet')) return 'Lê Văn Việt';
     if (lowerRaw.includes('vũng tàu') || lowerRaw.includes('vung tau')) return 'Vũng Tàu';
